@@ -1,0 +1,425 @@
+@import '@fontsource-variable/plus-jakarta-sans';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+:root[data-theme='light'] {
+  --bg: #f5f6f7;
+  --bg-glow: radial-gradient(52rem 40rem at 78% 38%, rgb(255 110 50 / 0.16), transparent 62%),
+    radial-gradient(40rem 26rem at -8% 108%, rgb(255 150 90 / 0.1), transparent 60%);
+  --surface: rgb(255 255 255 / 0.7);
+  --surface-solid: #ffffff;
+  --text: #0b1a22;
+  --muted: #5a6670;
+  --border: rgb(20 17 15 / 0.1);
+  --shadow: 0 10px 30px -12px rgb(20 17 15 / 0.18);
+  --accent: #f04e12; /* grands titres et décors */
+  --accent-strong: #d63f00; /* boutons et petits textes : contraste AA avec du blanc */
+  --accent-contrast: #ffffff;
+  --accent-soft: rgb(240 78 18 / 0.1);
+  --ok: #0f7a3b;
+  --warn: #9a5b00;
+  --danger: #b4231a;
+  /* hero de l'accueil : studio clair, nom géant en encre (inversé au passage du buste, voir .hero-name) */
+  --hero-bg: radial-gradient(46rem 34rem at 50% 42%, rgb(255 120 60 / 0.22), transparent 64%),
+    radial-gradient(80rem 50rem at 50% 120%, rgb(20 30 60 / 0.1), transparent 70%), #ecebe7;
+  --hero-text: #0b1a22;
+  --hero-muted: #3f4b55;
+  --hero-chip: rgb(255 255 255 / 0.75);
+  --hero-chip-border: rgb(11 26 34 / 0.08);
+  --hero-name: #ffffff;
+  --hero-name-blend: difference;
+  --hero-cta: #d63f00;
+  /* univers code : l'éditeur reste sombre dans les deux thèmes, comme un vrai terminal */
+  --code-bg: rgb(13 15 20 / 0.82);
+  --code-border: rgb(255 255 255 / 0.09);
+  --code-text: #e8e3dc;
+  --code-muted: #8b919c;
+  --code-gutter: #4d535e;
+  --code-keyword: #ff8a4c;
+  --code-fn: #7cc4ff;
+  --code-string: #a5e88a;
+  --code-number: #f5c26b;
+  --code-comment: #6b7280;
+  --code-bad: #ff6b6b;
+  --code-bad-bg: rgb(255 80 80 / 0.14);
+  --code-good: #5ee08f;
+  --code-good-bg: rgb(60 220 130 / 0.12);
+  --code-rain: rgb(11 26 34 / 0.14);
+}
+
+:root[data-theme='dark'] {
+  --bg: #120f0d;
+  --bg-glow: radial-gradient(60rem 36rem at 85% -10%, rgb(255 90 31 / 0.2), transparent 60%),
+    radial-gradient(48rem 30rem at -10% 110%, rgb(255 120 60 / 0.1), transparent 60%);
+  --surface: rgb(255 255 255 / 0.06);
+  --surface-solid: #1c1714;
+  --text: #f6f1ec;
+  --muted: #b3a89f;
+  --border: rgb(255 255 255 / 0.12);
+  --shadow: 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  --accent: #ff6a33;
+  --accent-strong: #ff6a33;
+  --accent-contrast: #1a0f0a;
+  --accent-soft: rgb(255 106 51 / 0.14);
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  /* hero de l'accueil : studio sombre, nom géant blanc comme sur une affiche */
+  --hero-bg: radial-gradient(44rem 34rem at 50% 40%, rgb(255 110 40 / 0.2), transparent 62%),
+    radial-gradient(70rem 40rem at 50% 115%, rgb(40 70 160 / 0.22), transparent 70%), #0d0b0a;
+  --hero-text: #f6f1ec;
+  --hero-muted: #cfc6be;
+  --hero-chip: rgb(255 255 255 / 0.08);
+  --hero-chip-border: rgb(255 255 255 / 0.1);
+  --hero-name: #ffffff;
+  --hero-name-blend: normal;
+  --hero-cta: #d63f00;
+  /* univers code : l'éditeur reste sombre dans les deux thèmes, comme un vrai terminal */
+  --code-bg: rgb(13 15 20 / 0.82);
+  --code-border: rgb(255 255 255 / 0.09);
+  --code-text: #e8e3dc;
+  --code-muted: #8b919c;
+  --code-gutter: #4d535e;
+  --code-keyword: #ff8a4c;
+  --code-fn: #7cc4ff;
+  --code-string: #a5e88a;
+  --code-number: #f5c26b;
+  --code-comment: #6b7280;
+  --code-bad: #ff6b6b;
+  --code-bad-bg: rgb(255 80 80 / 0.14);
+  --code-good: #5ee08f;
+  --code-good-bg: rgb(60 220 130 / 0.12);
+  --code-rain: rgb(255 255 255 / 0.09);
+}
+
+html {
+  color-scheme: light;
+}
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  overflow-x: clip; /* la scène 3D déborde sur toute la largeur sans créer de défilement horizontal */
+  background: var(--bg-glow), var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .glass {
+    background: var(--surface);
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+}
+
+@layer components {
+  .hero-name {
+    color: var(--hero-name);
+    mix-blend-mode: var(--hero-name-blend);
+  }
+  .hero-chip {
+    background: var(--hero-chip);
+    border: 1px solid var(--hero-chip-border);
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  }
+}
+
+@layer components {
+  .code-card {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    box-shadow: 0 30px 60px -24px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.05);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .code-rain {
+    color: var(--code-rain);
+    mask-image: radial-gradient(34% 58% at 50% 42%, #000 35%, transparent 100%);
+    -webkit-mask-image: radial-gradient(34% 58% at 50% 42%, #000 35%, transparent 100%);
+  }
+  /* chat : la pluie occupe les marges et s'efface sous la conversation */
+  .code-rain.code-rain-wide {
+    mask-image: linear-gradient(90deg, #000, transparent 30%, transparent 70%, #000);
+    -webkit-mask-image: linear-gradient(90deg, #000, transparent 30%, transparent 70%, #000);
+  }
+}
+
+/* Mouvements doux : rien ne saute ni ne tremble, tout glisse (frictions du 2026-10-31). */
+@keyframes rain-fall {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+.code-rain-col { animation: rain-fall 90s linear infinite; }
+
+/* gardée pour les cartes de la landing : une respiration lente au lieu d'un tremblement */
+@keyframes boil {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.boil { animation: boil 6s ease-in-out infinite; }
+.boil-alt { animation: boil 7s ease-in-out infinite reverse; }
+
+@keyframes caret-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+.caret { animation: caret-blink 1.1s ease-in-out infinite; }
+
+/* faisceau qui balaie le visage de l'IA */
+@keyframes face-scan {
+  0%, 8% { top: 0%; opacity: 0; }
+  12% { opacity: 1; }
+  55% { top: 100%; opacity: 1; }
+  60%, 100% { top: 100%; opacity: 0; }
+}
+.face-scan { animation: face-scan 6s ease-in-out infinite; }
+
+@keyframes scan-sweep {
+  from { top: 0%; }
+  to { top: 100%; }
+}
+.scan-sweep {
+  background: linear-gradient(90deg, transparent, rgb(255 106 51 / 0.12), transparent);
+  animation: scan-sweep 3s ease-in-out infinite;
+}
+
+@keyframes orb-flow {
+  to { stroke-dashoffset: -48; }
+}
+@keyframes orb-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.orb-flow { animation: orb-flow 3.2s linear infinite; }
+[data-thinking='true'] .orb-flow { animation-duration: 0.9s; }
+[data-thinking='true'] .orb-glow { animation: orb-pulse 1.4s ease-in-out infinite; transform-origin: center; }
+.rise-in { animation: rise-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.fade-up { animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* « l'agent travaille » : étoile qui tourne lentement et texte qui brille, comme les interfaces de chat connues */
+@keyframes spin-soft { to { transform: rotate(360deg); } }
+.spin-soft { animation: spin-soft 2.4s linear infinite; }
+@keyframes breathe { 0%, 100% { transform: scale(0.85); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+.breathe { animation: breathe 1.8s ease-in-out infinite; }
+@keyframes shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.shimmer {
+  background: linear-gradient(90deg, var(--muted) 0%, var(--muted) 40%, var(--text) 50%, var(--muted) 60%, var(--muted) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* pliage en douceur (raisonnement) : la hauteur glisse au lieu de sauter */
+.fold {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+}
+.fold[data-open='false'] { grid-template-rows: 0fr; opacity: 0; }
+.fold > * { min-height: 0; overflow: hidden; }
+
+/* fondu sous la zone de saisie : les messages glissent dessous */
+.composer-dock {
+  background: linear-gradient(to bottom, transparent, var(--bg) 38%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-flow, .orb-glow, .rise-in, .fade-up, .code-rain-col, .boil, .boil-alt, .caret, .face-scan, .scan-sweep, .spin-soft, .breathe, .shimmer, .stage-aura { animation: none !important; }
+  .shimmer { color: var(--muted); }
+  .face-scan { opacity: 0; }
+  * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
+@media print {
+  body * { visibility: hidden; }
+  #printable, #printable * { visibility: visible; }
+  #printable { position: absolute; inset: 0; max-height: none; overflow: visible; }
+}
+
+/* barre du haut du chat : translucide, le texte défile dessous sans à-coup */
+.chat-toolbar {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Accueil : une scène plein écran, nom géant en filigrane, halo de lumière à droite. Couleurs par thème. */
+:root,
+:root[data-theme='light'] {
+  --stage-bg: #f3efe8;
+  --stage-ink: #1a1410;
+  --stage-text: #3d342d;
+  --stage-muted: #7a6f66;
+  --stage-line: rgb(26 20 16 / 0.18);
+  --stage-line-strong: rgb(26 20 16 / 0.45);
+  --stage-field: rgb(255 255 255 / 0.72);
+  --stage-star: rgb(120 70 30 / 0.35);
+  --stage-word-top: rgb(26 20 16 / 0.34);
+  --stage-word-mid: rgb(26 20 16 / 0.12);
+  --stage-word-end: rgb(26 20 16 / 0.03);
+  --stage-word-stroke: rgb(26 20 16 / 0.16);
+  --stage-word-glow: rgb(240 120 40 / 0.18);
+  --stage-aura: radial-gradient(circle,
+    rgb(255 248 235 / 1) 0%,
+    rgb(255 205 140 / 0.9) 9%,
+    rgb(250 150 70 / 0.55) 22%,
+    rgb(240 110 40 / 0.22) 38%,
+    rgb(240 110 40 / 0.06) 52%,
+    transparent 66%);
+  --stage-reflet: rgb(255 140 60 / 0.14);
+  --stage-send-bg: #1a1410;
+  --stage-send-fg: #fdfaf6;
+  --stage-shadow: 0 20px 60px -24px rgb(180 90 30 / 0.35);
+  --stage-focus: 0 0 0 4px rgb(240 120 40 / 0.14), 0 20px 60px -18px rgb(180 90 30 / 0.45);
+}
+:root[data-theme='dark'] {
+  --stage-bg: #0a0908;
+  --stage-ink: #f3efe9;
+  --stage-text: #cfc8c0;
+  --stage-muted: #8d8780;
+  --stage-line: rgb(255 255 255 / 0.22);
+  --stage-line-strong: rgb(255 255 255 / 0.6);
+  --stage-field: rgb(10 9 8 / 0.72);
+  --stage-star: rgb(255 240 220 / 0.7);
+  --stage-word-top: rgb(255 255 255 / 0.42);
+  --stage-word-mid: rgb(255 255 255 / 0.14);
+  --stage-word-end: rgb(255 255 255 / 0.04);
+  --stage-word-stroke: rgb(255 255 255 / 0.2);
+  --stage-word-glow: rgb(255 170 90 / 0.22);
+  --stage-aura: radial-gradient(circle,
+    rgb(255 250 240 / 1) 0%,
+    rgb(255 222 160 / 0.85) 8%,
+    rgb(245 170 90 / 0.5) 20%,
+    rgb(220 110 40 / 0.22) 36%,
+    rgb(180 70 20 / 0.08) 50%,
+    transparent 66%);
+  --stage-reflet: rgb(255 150 70 / 0.16);
+  --stage-send-bg: #f3efe9;
+  --stage-send-fg: #0a0908;
+  --stage-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 20px 60px -20px rgb(255 160 80 / 0.25);
+  --stage-focus: 0 0 0 4px rgb(255 180 110 / 0.12), 0 20px 60px -16px rgb(255 160 80 / 0.4);
+}
+.stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  container-type: inline-size;
+  background: var(--stage-bg);
+  color: var(--stage-ink);
+}
+.stage::after {
+  /* fondu vers le fond de la page, pour que la suite de l'accueil prolonge la scène sans cassure */
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: -1;
+  height: 9rem;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+.stage-text { color: var(--stage-text); }
+.stage-muted { color: var(--stage-muted); }
+.stage-muted:hover { color: var(--stage-ink); }
+.stage-stars {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, var(--stage-star), transparent 60%),
+    radial-gradient(1px 1px at 68% 12%, var(--stage-star), transparent 60%),
+    radial-gradient(1px 1px at 82% 64%, var(--stage-star), transparent 60%),
+    radial-gradient(1px 1px at 34% 78%, var(--stage-star), transparent 60%),
+    radial-gradient(1.5px 1.5px at 91% 30%, var(--stage-star), transparent 60%),
+    radial-gradient(1px 1px at 52% 44%, var(--stage-star), transparent 60%);
+  background-size: 420px 380px;
+}
+.stage-aura {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -30rem;
+  width: 72rem;
+  height: 72rem;
+  border-radius: 9999px;
+  transform: translateY(-50%);
+  background: var(--stage-aura);
+  animation: aura 10s ease-in-out infinite alternate;
+}
+.stage-aura::after {
+  /* reflet chaud qui remonte vers le nom */
+  content: '';
+  position: absolute;
+  inset: 10% 55% 10% -90%;
+  background: radial-gradient(closest-side, var(--stage-reflet), transparent);
+}
+@media (max-width: 639px) {
+  .stage-aura { top: 34%; right: -26rem; width: 40rem; height: 40rem; }
+}
+@keyframes aura {
+  from { opacity: 0.85; transform: translateY(-50%) scale(0.97); }
+  to { opacity: 1; transform: translateY(-50%) scale(1.03); }
+}
+.wordmark {
+  font-size: clamp(3rem, 17cqw, 15rem);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  color: transparent;
+  background: linear-gradient(180deg, var(--stage-word-top) 0%, var(--stage-word-mid) 55%, var(--stage-word-end) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: 1px var(--stage-word-stroke);
+  filter: drop-shadow(0 0 60px var(--stage-word-glow));
+}
+.stage-input {
+  border: 1px solid var(--stage-line);
+  background: var(--stage-field);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--stage-shadow);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.stage-input:focus-within {
+  border-color: var(--stage-line-strong);
+  box-shadow: var(--stage-focus);
+}
+.stage-input input { color: var(--stage-ink); }
+.stage-input input::placeholder { color: var(--stage-muted); }
+.stage-send { background: var(--stage-send-bg); color: var(--stage-send-fg); }
+.stage-label,
+.stage-pill {
+  border: 1px solid var(--stage-line);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--stage-ink);
+}
+.stage-label { background: var(--stage-field); }
+.stage-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.55rem 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.stage-pill:hover { border-color: var(--stage-line-strong); background: var(--stage-field); }
