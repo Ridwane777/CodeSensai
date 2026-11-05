@@ -1,0 +1,35 @@
+# Qui relit quoi. GitHub demande automatiquement la relecture du propriétaire
+# quand une PR touche ses fichiers.
+#
+# ⚠️ Ce sont des pseudos GitHub, pas les noms affichés dans les commits : les
+# deux diffèrent souvent. Un pseudo faux ne provoque aucune erreur, la ligne
+# est simplement ignorée — le fichier échoue en silence. Vérifier qu'un pseudo
+# existe : ouvrir https://github.com/<pseudo>.
+#
+# GitHub ne demande la relecture d'un propriétaire que s'il a accès en écriture
+# au dépôt. Quelqu'un d'absent de l'organisation ne sera jamais sollicité.
+#
+# La dernière règle qui correspond à un fichier gagne : les motifs généraux
+# sont donc en haut, les cas précis en bas.
+
+# Par défaut : le lot A, qui tient l'architecture et les contrats partagés.
+*                               @fresnel-cyber
+
+# Lot B — exécution de code et garde-fous
+/src/sensai/execution/          @Meric-BG
+/src/sensai/tools/sandbox_tool.py  @Meric-BG
+/docs/recherche/model-choices.md          @Meric-BG
+/docs/recherche/infra-options.md          @Meric-BG
+
+# Lot C — recherche dans le code et mémoire de session
+/src/sensai/knowledge/          @Ridwane777
+/src/sensai/tools/rag_tool.py   @Ridwane777
+
+# Lot D — interface web, observabilité, branchements externes
+/src/sensai/web/                @Christopher142769
+/src/sensai/observability/      @Christopher142769
+/src/sensai/tools/mcp_tool.py   @Christopher142769
+
+# Le contrat que tout le monde utilise : une modification ici casse les trois
+# autres lots, donc elle passe par le lot A.
+/src/sensai/core/tools.py       @fresnel-cyber
