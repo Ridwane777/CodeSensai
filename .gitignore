@@ -1,0 +1,20 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+config.local.json
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.superpowers/
+frontend/node_modules/
+frontend/dist/
+
+# macOS
+.DS_Store
+
+# Dossiers locaux de Claude Code (worktrees des sous-agents) : jamais dans le dépôt
+.claude/
+# Temporaire (demande du 2026-11-01)
+CLAUDE.md
