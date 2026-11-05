@@ -1,0 +1,34 @@
+{
+  "machine": {
+    "python": "3.12.3",
+    "system": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "cpu": "AMD EPYC Processor (with IBPB)",
+    "cores": 8
+  },
+  "date": "2026-10-11 19:07",
+  "search": {
+    "dims": 1024,
+    "sizes": {
+      "300": {
+        "python_ms_median": 24.43,
+        "numpy_ms_median": 0.265,
+        "repetitions": 20
+      },
+      "2000": {
+        "python_ms_median": 192.35,
+        "numpy_ms_median": 1.449,
+        "repetitions": 20
+      },
+      "20000": {
+        "python_ms_median": 1614.28,
+        "numpy_ms_median": 4.505,
+        "repetitions": 20
+      },
+      "100000": {
+        "python_ms_median": 8333.34,
+        "numpy_ms_median": 18.295,
+        "repetitions": 3
+      }
+    }
+  }
+}
