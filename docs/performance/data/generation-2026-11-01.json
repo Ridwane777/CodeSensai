@@ -1,0 +1,975 @@
+{
+ "model": "qwen3-coder:30b",
+ "runs": 3,
+ "num_ctx": 8192,
+ "date": "2026-11-01",
+ "results": {
+  "ollama-defaults": {
+   "options": {},
+   "accuracy": 1.0,
+   "stable_cases": 4,
+   "cases": 6,
+   "gen_tokens_per_s_median": 115.3,
+   "prompt_tokens_per_s_median": 712.9,
+   "wall_s_median": 0.96,
+   "rows": [
+    {
+     "text": "0",
+     "wall_s": 0.81,
+     "eval_count": 2,
+     "eval_s": 0.012194,
+     "prompt_count": 48,
+     "prompt_s": 0.10447,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "```bash\npytest -q\n```",
+     "wall_s": 0.95,
+     "eval_count": 9,
+     "eval_s": 0.140709,
+     "prompt_count": 50,
+     "prompt_s": 0.068464,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.94,
+     "eval_count": 23,
+     "eval_s": 0.509995,
+     "prompt_count": 70,
+     "prompt_s": 0.119609,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.81,
+     "eval_count": 4,
+     "eval_s": 0.033484,
+     "prompt_count": 50,
+     "prompt_s": 0.071883,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.41,
+     "eval_count": 66,
+     "eval_s": 1.530341,
+     "prompt_count": 57,
+     "prompt_s": 0.106855,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.9,
+     "eval_count": 4,
+     "eval_s": 0.033397,
+     "prompt_count": 52,
+     "prompt_s": 0.078581,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.98,
+     "eval_count": 2,
+     "eval_s": 0.012625,
+     "prompt_count": 48,
+     "prompt_s": 0.102585,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 1.35,
+     "eval_count": 4,
+     "eval_s": 0.03488,
+     "prompt_count": 50,
+     "prompt_s": 0.047797,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 3.07,
+     "eval_count": 23,
+     "eval_s": 0.437732,
+     "prompt_count": 70,
+     "prompt_s": 0.010843,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.9,
+     "eval_count": 4,
+     "eval_s": 0.033205,
+     "prompt_count": 50,
+     "prompt_s": 0.115443,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.37,
+     "eval_count": 66,
+     "eval_s": 1.495102,
+     "prompt_count": 57,
+     "prompt_s": 0.049915,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.72,
+     "eval_count": 4,
+     "eval_s": 0.034507,
+     "prompt_count": 52,
+     "prompt_s": 0.051601,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.78,
+     "eval_count": 2,
+     "eval_s": 0.012657,
+     "prompt_count": 48,
+     "prompt_s": 0.104498,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 1.86,
+     "eval_count": 4,
+     "eval_s": 0.033744,
+     "prompt_count": 50,
+     "prompt_s": 0.119347,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    if not notes:\n        return 0\n    return sum(notes) / len(notes)",
+     "wall_s": 1.35,
+     "eval_count": 28,
+     "eval_s": 0.609859,
+     "prompt_count": 70,
+     "prompt_s": 0.010399,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.9,
+     "eval_count": 4,
+     "eval_s": 0.033964,
+     "prompt_count": 50,
+     "prompt_s": 0.066703999,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.18,
+     "eval_count": 66,
+     "eval_s": 1.420483,
+     "prompt_count": 57,
+     "prompt_s": 0.070407,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.78,
+     "eval_count": 4,
+     "eval_s": 0.067335,
+     "prompt_count": 52,
+     "prompt_s": 0.010426,
+     "case": 5,
+     "ok": true
+    }
+   ]
+  },
+  "t0-seed": {
+   "options": {
+    "temperature": 0,
+    "seed": 42
+   },
+   "accuracy": 1.0,
+   "stable_cases": 6,
+   "cases": 6,
+   "gen_tokens_per_s_median": 118.5,
+   "prompt_tokens_per_s_median": 2438.7,
+   "wall_s_median": 1.02,
+   "rows": [
+    {
+     "text": "0",
+     "wall_s": 0.71,
+     "eval_count": 2,
+     "eval_s": 0.012913,
+     "prompt_count": 48,
+     "prompt_s": 0.062327,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.73,
+     "eval_count": 4,
+     "eval_s": 0.033939,
+     "prompt_count": 50,
+     "prompt_s": 0.061956,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.33,
+     "eval_count": 23,
+     "eval_s": 0.429445,
+     "prompt_count": 70,
+     "prompt_s": 0.010367,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.92,
+     "eval_count": 4,
+     "eval_s": 0.030889,
+     "prompt_count": 50,
+     "prompt_s": 0.012882,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.22,
+     "eval_count": 66,
+     "eval_s": 1.521794,
+     "prompt_count": 57,
+     "prompt_s": 0.086611,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.76,
+     "eval_count": 4,
+     "eval_s": 0.031798,
+     "prompt_count": 52,
+     "prompt_s": 0.010541,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.91,
+     "eval_count": 2,
+     "eval_s": 0.012813,
+     "prompt_count": 48,
+     "prompt_s": 0.066956,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.82,
+     "eval_count": 4,
+     "eval_s": 0.033585,
+     "prompt_count": 50,
+     "prompt_s": 0.086682,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.12,
+     "eval_count": 23,
+     "eval_s": 0.452839,
+     "prompt_count": 70,
+     "prompt_s": 0.010454,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 2.46,
+     "eval_count": 4,
+     "eval_s": 0.030086,
+     "prompt_count": 50,
+     "prompt_s": 0.01027,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.35,
+     "eval_count": 66,
+     "eval_s": 1.52985,
+     "prompt_count": 57,
+     "prompt_s": 0.123151,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.71,
+     "eval_count": 4,
+     "eval_s": 0.030004,
+     "prompt_count": 52,
+     "prompt_s": 0.010252,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 1.53,
+     "eval_count": 2,
+     "eval_s": 0.01258,
+     "prompt_count": 48,
+     "prompt_s": 0.087774,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.73,
+     "eval_count": 4,
+     "eval_s": 0.034871,
+     "prompt_count": 50,
+     "prompt_s": 0.072234,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.21,
+     "eval_count": 23,
+     "eval_s": 0.432855,
+     "prompt_count": 70,
+     "prompt_s": 0.010857,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 1.96,
+     "eval_count": 4,
+     "eval_s": 0.047348,
+     "prompt_count": 50,
+     "prompt_s": 0.010337,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.44,
+     "eval_count": 66,
+     "eval_s": 1.510103,
+     "prompt_count": 57,
+     "prompt_s": 0.057231,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.82,
+     "eval_count": 4,
+     "eval_s": 0.030878,
+     "prompt_count": 52,
+     "prompt_s": 0.011502,
+     "case": 5,
+     "ok": true
+    }
+   ]
+  },
+  "t0.2-p0.9": {
+   "options": {
+    "temperature": 0.2,
+    "top_p": 0.9
+   },
+   "accuracy": 1.0,
+   "stable_cases": 6,
+   "cases": 6,
+   "gen_tokens_per_s_median": 119.0,
+   "prompt_tokens_per_s_median": 2828.2,
+   "wall_s_median": 0.99,
+   "rows": [
+    {
+     "text": "0",
+     "wall_s": 0.73,
+     "eval_count": 2,
+     "eval_s": 0.012793,
+     "prompt_count": 48,
+     "prompt_s": 0.076605,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.83,
+     "eval_count": 4,
+     "eval_s": 0.033827,
+     "prompt_count": 50,
+     "prompt_s": 0.119341,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.2,
+     "eval_count": 23,
+     "eval_s": 0.462458,
+     "prompt_count": 70,
+     "prompt_s": 0.010544,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.66,
+     "eval_count": 4,
+     "eval_s": 0.045907,
+     "prompt_count": 50,
+     "prompt_s": 0.010351,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.61,
+     "eval_count": 66,
+     "eval_s": 1.430156,
+     "prompt_count": 57,
+     "prompt_s": 0.108531,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 1.65,
+     "eval_count": 4,
+     "eval_s": 0.033341,
+     "prompt_count": 52,
+     "prompt_s": 0.011443,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.8,
+     "eval_count": 2,
+     "eval_s": 0.013108,
+     "prompt_count": 48,
+     "prompt_s": 0.043158,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 1.65,
+     "eval_count": 4,
+     "eval_s": 0.033399,
+     "prompt_count": 50,
+     "prompt_s": 0.088795,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.31,
+     "eval_count": 23,
+     "eval_s": 0.51333,
+     "prompt_count": 70,
+     "prompt_s": 0.010281,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.81,
+     "eval_count": 4,
+     "eval_s": 0.030441,
+     "prompt_count": 50,
+     "prompt_s": 0.010293,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.38,
+     "eval_count": 66,
+     "eval_s": 1.529945,
+     "prompt_count": 57,
+     "prompt_s": 0.117912,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 1.52,
+     "eval_count": 4,
+     "eval_s": 0.030099,
+     "prompt_count": 52,
+     "prompt_s": 0.010264,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.76,
+     "eval_count": 2,
+     "eval_s": 0.012474,
+     "prompt_count": 48,
+     "prompt_s": 0.095843,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.63,
+     "eval_count": 4,
+     "eval_s": 0.034187,
+     "prompt_count": 50,
+     "prompt_s": 0.045279,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.16,
+     "eval_count": 23,
+     "eval_s": 0.554218,
+     "prompt_count": 70,
+     "prompt_s": 0.010369,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.69,
+     "eval_count": 4,
+     "eval_s": 0.031017,
+     "prompt_count": 50,
+     "prompt_s": 0.010352,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.4,
+     "eval_count": 66,
+     "eval_s": 1.420236,
+     "prompt_count": 57,
+     "prompt_s": 0.11668,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.67,
+     "eval_count": 4,
+     "eval_s": 0.030349,
+     "prompt_count": 52,
+     "prompt_s": 0.010352,
+     "case": 5,
+     "ok": true
+    }
+   ]
+  },
+  "t0.7-p0.9": {
+   "options": {
+    "temperature": 0.7,
+    "top_p": 0.9
+   },
+   "accuracy": 1.0,
+   "stable_cases": 4,
+   "cases": 6,
+   "gen_tokens_per_s_median": 97.5,
+   "prompt_tokens_per_s_median": 2975.0,
+   "wall_s_median": 1.1,
+   "rows": [
+    {
+     "text": "0",
+     "wall_s": 0.86,
+     "eval_count": 2,
+     "eval_s": 0.01273,
+     "prompt_count": 48,
+     "prompt_s": 0.102457,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.72,
+     "eval_count": 4,
+     "eval_s": 0.034362,
+     "prompt_count": 50,
+     "prompt_s": 0.048521,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    if not notes:\n        return 0\n    return sum(notes) / len(notes)",
+     "wall_s": 1.32,
+     "eval_count": 28,
+     "eval_s": 0.536654,
+     "prompt_count": 70,
+     "prompt_s": 0.010407,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 1.17,
+     "eval_count": 4,
+     "eval_s": 0.050852,
+     "prompt_count": 50,
+     "prompt_s": 0.010399,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 4.82,
+     "eval_count": 66,
+     "eval_s": 1.399732,
+     "prompt_count": 57,
+     "prompt_s": 0.103265,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 1.4,
+     "eval_count": 4,
+     "eval_s": 0.074294,
+     "prompt_count": 52,
+     "prompt_s": 0.010718,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.65,
+     "eval_count": 2,
+     "eval_s": 0.012609,
+     "prompt_count": 48,
+     "prompt_s": 0.042514,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.81,
+     "eval_count": 4,
+     "eval_s": 0.033198999,
+     "prompt_count": 50,
+     "prompt_s": 0.113782,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.19,
+     "eval_count": 23,
+     "eval_s": 0.432656,
+     "prompt_count": 70,
+     "prompt_s": 0.010679,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.69,
+     "eval_count": 4,
+     "eval_s": 0.030428,
+     "prompt_count": 50,
+     "prompt_s": 0.010359,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.25,
+     "eval_count": 66,
+     "eval_s": 1.495928,
+     "prompt_count": 57,
+     "prompt_s": 0.050109,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.65,
+     "eval_count": 4,
+     "eval_s": 0.063324,
+     "prompt_count": 52,
+     "prompt_s": 0.010491,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 1.1,
+     "eval_count": 2,
+     "eval_s": 0.012652,
+     "prompt_count": 48,
+     "prompt_s": 0.116406,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 1.02,
+     "eval_count": 4,
+     "eval_s": 0.033423,
+     "prompt_count": 50,
+     "prompt_s": 0.100586,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.09,
+     "eval_count": 23,
+     "eval_s": 0.442958,
+     "prompt_count": 70,
+     "prompt_s": 0.011231,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.9,
+     "eval_count": 4,
+     "eval_s": 0.030207,
+     "prompt_count": 50,
+     "prompt_s": 0.010413,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes_triees = sorted(notes)\n    n = len(notes_triees)\n    if n % 2 == 1:\n        return notes_triees[n // 2]\n    else:\n        return (notes_triees[n // 2 - 1] + notes_triees[n // 2]) / 2\n```",
+     "wall_s": 2.71,
+     "eval_count": 84,
+     "eval_s": 1.917548,
+     "prompt_count": 57,
+     "prompt_s": 0.049638,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 1.28,
+     "eval_count": 4,
+     "eval_s": 0.030448,
+     "prompt_count": 52,
+     "prompt_s": 0.010234,
+     "case": 5,
+     "ok": true
+    }
+   ]
+  },
+  "t1.0": {
+   "options": {
+    "temperature": 1.0
+   },
+   "accuracy": 1.0,
+   "stable_cases": 4,
+   "cases": 6,
+   "gen_tokens_per_s_median": 115.9,
+   "prompt_tokens_per_s_median": 2916.7,
+   "wall_s_median": 1.04,
+   "rows": [
+    {
+     "text": "0",
+     "wall_s": 0.8,
+     "eval_count": 2,
+     "eval_s": 0.012636,
+     "prompt_count": 48,
+     "prompt_s": 0.120256,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 0.75,
+     "eval_count": 4,
+     "eval_s": 0.033851,
+     "prompt_count": 50,
+     "prompt_s": 0.116622,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    if not notes:\n        return 0\n    return sum(notes) / len(notes)",
+     "wall_s": 1.16,
+     "eval_count": 28,
+     "eval_s": 0.536779,
+     "prompt_count": 70,
+     "prompt_s": 0.010513,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.69,
+     "eval_count": 4,
+     "eval_s": 0.033858,
+     "prompt_count": 50,
+     "prompt_s": 0.010718,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.33,
+     "eval_count": 66,
+     "eval_s": 1.590474,
+     "prompt_count": 57,
+     "prompt_s": 0.050841,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.92,
+     "eval_count": 4,
+     "eval_s": 0.030226,
+     "prompt_count": 52,
+     "prompt_s": 0.010229,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 0.77,
+     "eval_count": 2,
+     "eval_s": 0.012785,
+     "prompt_count": 48,
+     "prompt_s": 0.12055,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "```bash\npytest -q\n```",
+     "wall_s": 1.49,
+     "eval_count": 9,
+     "eval_s": 0.221313,
+     "prompt_count": 50,
+     "prompt_s": 0.042512,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.19,
+     "eval_count": 23,
+     "eval_s": 0.498618,
+     "prompt_count": 70,
+     "prompt_s": 0.010443,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.71,
+     "eval_count": 4,
+     "eval_s": 0.031964,
+     "prompt_count": 50,
+     "prompt_s": 0.010736,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.11,
+     "eval_count": 66,
+     "eval_s": 1.440471,
+     "prompt_count": 57,
+     "prompt_s": 0.108861,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.62,
+     "eval_count": 4,
+     "eval_s": 0.030455,
+     "prompt_count": 52,
+     "prompt_s": 0.010256,
+     "case": 5,
+     "ok": true
+    },
+    {
+     "text": "0",
+     "wall_s": 1.27,
+     "eval_count": 2,
+     "eval_s": 0.012513,
+     "prompt_count": 48,
+     "prompt_s": 0.101264,
+     "case": 0,
+     "ok": true
+    },
+    {
+     "text": "pytest -q",
+     "wall_s": 1.23,
+     "eval_count": 4,
+     "eval_s": 0.035187,
+     "prompt_count": 50,
+     "prompt_s": 0.091415,
+     "case": 1,
+     "ok": true
+    },
+    {
+     "text": "def moyenne(notes):\n    return sum(notes) / len(notes) if notes else 0",
+     "wall_s": 1.23,
+     "eval_count": 23,
+     "eval_s": 0.436973,
+     "prompt_count": 70,
+     "prompt_s": 0.010491,
+     "case": 2,
+     "ok": true
+    },
+    {
+     "text": "404",
+     "wall_s": 0.65,
+     "eval_count": 4,
+     "eval_s": 0.0309,
+     "prompt_count": 50,
+     "prompt_s": 0.010563,
+     "case": 3,
+     "ok": true
+    },
+    {
+     "text": "```python\ndef mediane(notes):\n    notes.sort()\n    n = len(notes)\n    if n % 2 == 1:\n        return notes[n // 2]\n    else:\n        return (notes[n // 2 - 1] + notes[n // 2]) / 2\n```",
+     "wall_s": 2.07,
+     "eval_count": 66,
+     "eval_s": 1.410037,
+     "prompt_count": 57,
+     "prompt_s": 0.050117,
+     "case": 4,
+     "ok": true
+    },
+    {
+     "text": "`json`",
+     "wall_s": 0.72,
+     "eval_count": 4,
+     "eval_s": 0.053671,
+     "prompt_count": 52,
+     "prompt_s": 0.01055,
+     "case": 5,
+     "ok": true
+    }
+   ]
+  }
+ },
+ "rescored": "2026-11-01: regexes of cases 1 (pytest --quiet), 2 and 4 widened after the runs (they rejected right answers); accuracy recomputed from the recorded answers, nothing re-run."
+}
