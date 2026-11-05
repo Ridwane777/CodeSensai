@@ -1,0 +1,52 @@
+{
+  "system": {
+    "active": "v3",
+    "versions": [
+      {
+        "id": "v1",
+        "date": "2026-09-22",
+        "author": "fresnel-cyber",
+        "description": "prompt initial (repris de prompts/system_prompt.txt)",
+        "sha256": "a1dc7c036391953b4c1881a330f24f208f15dc00f637e5afde085daaa30fc53f"
+      },
+      {
+        "id": "v2",
+        "date": "2026-10-24",
+        "author": "Ridwane777",
+        "description": "règles A2 : déléguer à partir de trois fichiers, jamais pour une question simple ; confier l'écriture de code à l'équipe (essais sur le pod)",
+        "sha256": "986b848088350166759ddadba00e1c4dcf7ce0e5199453dc1176e9573ea38d8e"
+      },
+      {
+        "id": "v3",
+        "date": "2026-11-01",
+        "author": "Ridwane777",
+        "description": "ne jamais inventer une valeur précise ni déclarer un fichier absent sans read_file (essai réel du 2026-11-01)",
+        "sha256": "75a074b4a030bec7c6b8e6989702a2b398ef849baf5cf57656490057e4cc5d83"
+      }
+    ]
+  },
+  "memory": {
+    "active": "v1",
+    "versions": [
+      {
+        "id": "v1",
+        "date": "2026-10-12",
+        "author": "Ridwane777",
+        "description": "consigne de session reprise, après les essais de M1 (repris de prompts/memory_prompt.txt)",
+        "sha256": "c34b68e6c71632f7b73de74e483efb50366360b8ab45504cadd3e9dda1cc41e7"
+      }
+    ]
+  },
+  "judge": {
+    "active": "v1",
+    "versions": [
+      {
+        "id": "v1",
+        "date": "2026-10-14",
+        "author": "Meric-Gbemetonou",
+        "description": "premier prompt du juge EV1 : pertinence, cohérence (1 à 5) et verdict par affirmation",
+        "sha256": "907c6b12bdc5fcbf060553b5c3005ee4adb150cf221b560cfff06ee237ce7322"
+      }
+    ]
+  }
+}
