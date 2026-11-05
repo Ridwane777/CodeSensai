@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sensai"
+version = "0.1.0"
+description = "CodeSensei — agent développeur local (Ollama, sans framework LLM)"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.31",
+    "numpy>=1.24",
+    "puremagic>=2.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "docker>=7.0",
+    "rich>=13.0",
+    "prompt_toolkit>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6", "httpx>=0.27"]
+
+[project.scripts]
+sensai = "sensai.cli:main"
+sensai-prompt = "sensai.prompt_cli:main"
+sensai-schedule = "sensai.schedule_cli:main"
+sensai-eval = "sensai.eval.cli:main"
+sensai-web = "sensai.web.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+# 100 colonnes : les descriptions d'outils et les commentaires sont en français,
+# plus verbeux que l'anglais. 88 obligeait à couper des phrases en deux.
+line-length = 100
+# Le dossier docker/ à la racine (image Chromium) n'est pas le paquet `docker` du SDK.
+src = ["src"]
+
+[tool.ruff.lint]
+# Jeu de règles explicite : sans ça, `ruff` en CI suit ses défauts, qui changent
+# d'une version à l'autre — la CI casserait toute seule sans qu'on ait touché au code.
+select = ["E", "F", "I", "UP", "B", "RUF"]
+# UP042 propose StrEnum : str() d'un StrEnum rend la valeur, pas « Risk.WRITE ».
+# Changement de comportement, à faire à part s'il le faut, pas au passage à 3.12.
+ignore = ["UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# Hors du paquet : un prototype gardé comme trace (spike) et un script de
+# préparation d'images du frontend. Lignes longues tolérées, le reste est vérifié.
+"docs/conception/web_facade_spike.py" = ["E501"]
+"frontend/scripts/prepare_ai_frames.py" = ["E501"]
+
+[tool.pytest.ini_options]
+markers = [
+    "docker: runs real containers; skipped when no Docker daemon is reachable",
+]
