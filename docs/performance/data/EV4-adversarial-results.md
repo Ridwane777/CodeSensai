@@ -132,4 +132,4 @@ Méthode et analyse : [docs/securite/EV4-tests-adversariaux.md](../../securite/E
 - **EV4-NET-08** — Seuls le schéma et l'hôte Bing sont filtrés, pas les adresses internes : search_parsing.py:99 (_external_url). Sans conséquence tant qu'aucun outil n'ouvre ces liens ; bloquant dès qu'il y en aura un.
   Observé : retenus : ['http://127.0.0.1:11434/api/tags', 'http://localhost:8080/admin', 'http://[::1]/', 'http://10.0.0.5/admin', 'http://169.254.169.254/latest/meta-data/', 'http://169.254.169.254/']
 - **EV4-OUT-03** — Seule JSONDecodeError est rattrapée ; RecursionError fait tomber le tour : agent.py:167-168.
-  Observé : RecursionError: maximum recursion depth exceeded while decoding a JSON array from a unicode stri
+  Observé : RecursionError

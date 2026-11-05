@@ -131,6 +131,11 @@ class AttackCase:
             outcome, detail = self.check(self.payload, workspace)
         except CaseSkipped:
             raise
+        except RecursionError:
+            # Le message dépend de l'interpréteur et de la pile de la machine
+            # (« maximum recursion depth… » ou « Stack overflow (used N kB)… ») :
+            # on ne garde que le type pour que le document reste reproductible.
+            outcome, detail = Outcome.CRASHED, "RecursionError"
         except Exception as exc:
             outcome, detail = Outcome.CRASHED, f"{type(exc).__name__}: {str(exc)[:80]}"
         # Le détail finit dans un document versionné : pas de chemin temporaire.
