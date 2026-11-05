@@ -1,0 +1,9 @@
+{
+  "model": "qwen3:8b",
+  "host": "http://localhost:11434",
+  "max_iterations": 6,
+  "generation": {
+    "temperature": 0.2,
+    "top_p": 0.9
+  }
+}
