@@ -1,0 +1,519 @@
+{
+  "machine": {
+    "python": "3.12.3",
+    "system": "Linux-6.8.0-146-generic-x86_64-with-glibc2.39",
+    "cpu": "AMD EPYC Processor (with IBPB)",
+    "cores": 8
+  },
+  "date": "2026-10-11 18:49",
+  "quality": {
+    "corpus_files": 55,
+    "corpus_chunks": 106,
+    "models": {
+      "nomic-embed-text": {
+        "hit@1": "8/15",
+        "hit@3": "14/15",
+        "hit@5": "14/15",
+        "mrr": 0.716,
+        "index_seconds": 141.1,
+        "query_ms_median": 104,
+        "positive_top_score_min": 0.6759,
+        "positive_top_score_median": 0.7185,
+        "negative_top_score_max": 0.6977,
+        "negative_top_scores": [
+          0.6457,
+          0.6546,
+          0.6977
+        ],
+        "details": [
+          {
+            "question": "Quel modèle utilise-t-on en développement et lequel pour la démo ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0004-modele-et-infrastructure.md:1",
+              "docs/decisions/0003-tool-calling-natif-ollama.md:31",
+              "docs/decisions/0004-modele-et-infrastructure.md:31"
+            ],
+            "top_score": 0.7213
+          },
+          {
+            "question": "Pourquoi n'utilise-t-on pas LangChain ni LlamaIndex ?",
+            "rank": 2,
+            "top3": [
+              "docs/decisions/0005-interface-web-facade.md:31",
+              "docs/decisions/0001-pas-de-framework-llm.md:1",
+              "docs/decisions/0005-interface-web-facade.md:1"
+            ],
+            "top_score": 0.7001
+          },
+          {
+            "question": "Comment choisit-on la session à reprendre au démarrage ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0007-persistance-des-sessions.md:61",
+              "docs/decisions/0007-persistance-des-sessions.md:31",
+              "docs/decisions/0007-persistance-des-sessions.md:1"
+            ],
+            "top_score": 0.747
+          },
+          {
+            "question": "Où sont supprimées les sessions inactives depuis 30 jours ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0007-persistance-des-sessions.md:151",
+              "docs/legal/donnees-locales.md:31",
+              "README.md:31"
+            ],
+            "top_score": 0.7156
+          },
+          {
+            "question": "Comment le profil de l'utilisateur est-il ajouté au prompt système ?",
+            "rank": 2,
+            "top3": [
+              "prompts/system_prompt.txt:1",
+              "src/sensai/knowledge/memory.py:1",
+              "docs/decisions/0005-interface-web-facade.md:31"
+            ],
+            "top_score": 0.7359
+          },
+          {
+            "question": "Quel contrat chaque outil appelable par l'agent doit-il respecter ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0002-registre-d-outils-partage.md:1",
+              "docs/decisions/0003-tool-calling-natif-ollama.md:31",
+              "docs/decisions/0005-interface-web-facade.md:1"
+            ],
+            "top_score": 0.6916
+          },
+          {
+            "question": "Comment la réponse d'Ollama est-elle reçue en streaming ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/core/ollama_client.py:1",
+              "docs/decisions/0001-pas-de-framework-llm.md:1",
+              "README.md:31"
+            ],
+            "top_score": 0.6953
+          },
+          {
+            "question": "Comment trouve-t-on config.json quand on lance sensai depuis un autre dossier ?",
+            "rank": 3,
+            "top3": [
+              "docs/legal/donnees-locales.md:31",
+              "docs/legal/donnees-locales.md:1",
+              "src/sensai/config.py:1"
+            ],
+            "top_score": 0.7505
+          },
+          {
+            "question": "Comment doit-on nommer les branches git ?",
+            "rank": 1,
+            "top3": [
+              "CONTRIBUTING.md:1",
+              "docs/legal/donnees-locales.md:1",
+              "docs/legal/donnees-locales.md:31"
+            ],
+            "top_score": 0.7396
+          },
+          {
+            "question": "Qui doit relire une modification du registre d'outils ?",
+            "rank": 2,
+            "top3": [
+              "docs/decisions/0002-registre-d-outils-partage.md:1",
+              "CONTRIBUTING.md:91",
+              "CONTRIBUTING.md:61"
+            ],
+            "top_score": 0.7252
+          },
+          {
+            "question": "Pourquoi l'interface web ne doit-elle pas réimplémenter l'agent ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0005-interface-web-facade.md:1",
+              "docs/decisions/0005-interface-web-facade.md:31",
+              "src/sensai/web/README.md:1"
+            ],
+            "top_score": 0.8146
+          },
+          {
+            "question": "Que se passe-t-il si la base des sessions est corrompue ?",
+            "rank": 15,
+            "top3": [
+              "docs/decisions/0007-persistance-des-sessions.md:151",
+              "docs/legal/donnees-locales.md:31",
+              "docs/legal/donnees-locales.md:1"
+            ],
+            "top_score": 0.7185
+          },
+          {
+            "question": "Quelles données personnelles sont enregistrées sur le disque ?",
+            "rank": 1,
+            "top3": [
+              "docs/legal/donnees-locales.md:1",
+              "docs/decisions/0002-registre-d-outils-partage.md:1",
+              "docs/legal/donnees-locales.md:31"
+            ],
+            "top_score": 0.7006
+          },
+          {
+            "question": "Combien d'itérations maximum la boucle de raisonnement peut-elle faire ?",
+            "rank": 2,
+            "top3": [
+              "docs/decisions/0003-tool-calling-natif-ollama.md:31",
+              "src/sensai/core/agent.py:1",
+              "docs/decisions/0007-persistance-des-sessions.md:1"
+            ],
+            "top_score": 0.6759
+          },
+          {
+            "question": "Quelles commandes lancer avant de demander une relecture ?",
+            "rank": 3,
+            "top3": [
+              "tests/test_cli_persistence.py:61",
+              "tests/test_cli_persistence.py:31",
+              ".github/pull_request_template.md:1"
+            ],
+            "top_score": 0.6782
+          }
+        ]
+      },
+      "qwen3-embedding:0.6b": {
+        "hit@1": "10/15",
+        "hit@3": "13/15",
+        "hit@5": "14/15",
+        "mrr": 0.774,
+        "index_seconds": 615.4,
+        "query_ms_median": 487,
+        "positive_top_score_min": 0.5401,
+        "positive_top_score_median": 0.7074,
+        "negative_top_score_max": 0.5146,
+        "negative_top_scores": [
+          0.3457,
+          0.4019,
+          0.5146
+        ],
+        "details": [
+          {
+            "question": "Quel modèle utilise-t-on en développement et lequel pour la démo ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0004-modele-et-infrastructure.md:1",
+              "docs/decisions/0004-modele-et-infrastructure.md:31",
+              "docs/architecture.md:61"
+            ],
+            "top_score": 0.5401
+          },
+          {
+            "question": "Pourquoi n'utilise-t-on pas LangChain ni LlamaIndex ?",
+            "rank": 2,
+            "top3": [
+              "src/sensai/knowledge/rag.py:1",
+              "docs/decisions/0001-pas-de-framework-llm.md:1",
+              "docs/decisions/0003-tool-calling-natif-ollama.md:1"
+            ],
+            "top_score": 0.6488
+          },
+          {
+            "question": "Comment choisit-on la session à reprendre au démarrage ?",
+            "rank": 3,
+            "top3": [
+              "tests/knowledge/test_memory.py:241",
+              "tests/knowledge/test_memory.py:211",
+              "docs/decisions/0007-persistance-des-sessions.md:31"
+            ],
+            "top_score": 0.7509
+          },
+          {
+            "question": "Où sont supprimées les sessions inactives depuis 30 jours ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0007-persistance-des-sessions.md:91",
+              "tests/knowledge/test_memory.py:151",
+              "tests/test_cli_persistence.py:151"
+            ],
+            "top_score": 0.7207
+          },
+          {
+            "question": "Comment le profil de l'utilisateur est-il ajouté au prompt système ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/knowledge/memory.py:301",
+              "tests/knowledge/test_memory.py:331",
+              "tests/knowledge/test_memory.py:301"
+            ],
+            "top_score": 0.7096
+          },
+          {
+            "question": "Quel contrat chaque outil appelable par l'agent doit-il respecter ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0002-registre-d-outils-partage.md:1",
+              "docs/architecture.md:31",
+              "src/sensai/core/tools.py:1"
+            ],
+            "top_score": 0.6599
+          },
+          {
+            "question": "Comment la réponse d'Ollama est-elle reçue en streaming ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/core/ollama_client.py:1",
+              "docs/decisions/0001-pas-de-framework-llm.md:1",
+              "src/sensai/core/ollama_client.py:31"
+            ],
+            "top_score": 0.7735
+          },
+          {
+            "question": "Comment trouve-t-on config.json quand on lance sensai depuis un autre dossier ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/config.py:1",
+              "src/sensai/config.py:31",
+              "tests/test_config.py:1"
+            ],
+            "top_score": 0.7158
+          },
+          {
+            "question": "Comment doit-on nommer les branches git ?",
+            "rank": 1,
+            "top3": [
+              "CONTRIBUTING.md:1",
+              ".github/CODEOWNERS:1",
+              "CONTRIBUTING.md:31"
+            ],
+            "top_score": 0.6637
+          },
+          {
+            "question": "Qui doit relire une modification du registre d'outils ?",
+            "rank": 4,
+            "top3": [
+              "docs/decisions/0002-registre-d-outils-partage.md:1",
+              "src/sensai/core/tools.py:31",
+              "src/sensai/core/tools.py:1"
+            ],
+            "top_score": 0.6276
+          },
+          {
+            "question": "Pourquoi l'interface web ne doit-elle pas réimplémenter l'agent ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0005-interface-web-facade.md:1",
+              "docs/decisions/0005-interface-web-facade.md:31",
+              "docs/architecture.md:31"
+            ],
+            "top_score": 0.7895
+          },
+          {
+            "question": "Que se passe-t-il si la base des sessions est corrompue ?",
+            "rank": 33,
+            "top3": [
+              "docs/decisions/0007-persistance-des-sessions.md:121",
+              "docs/decisions/0007-persistance-des-sessions.md:91",
+              "tests/test_cli_persistence.py:121"
+            ],
+            "top_score": 0.7432
+          },
+          {
+            "question": "Quelles données personnelles sont enregistrées sur le disque ?",
+            "rank": 1,
+            "top3": [
+              "docs/legal/donnees-locales.md:31",
+              "docs/legal/donnees-locales.md:1",
+              "docs/decisions/0007-persistance-des-sessions.md:121"
+            ],
+            "top_score": 0.7074
+          },
+          {
+            "question": "Combien d'itérations maximum la boucle de raisonnement peut-elle faire ?",
+            "rank": 2,
+            "top3": [
+              "prompts/react_prompt.txt:1",
+              "src/sensai/core/agent.py:1",
+              "prompts/system_prompt.txt:1"
+            ],
+            "top_score": 0.6039
+          },
+          {
+            "question": "Quelles commandes lancer avant de demander une relecture ?",
+            "rank": 1,
+            "top3": [
+              ".github/pull_request_template.md:1",
+              "prompts/system_prompt.txt:1",
+              "prompts/react_prompt.txt:1"
+            ],
+            "top_score": 0.5883
+          }
+        ]
+      },
+      "bge-m3": {
+        "hit@1": "11/15",
+        "hit@3": "14/15",
+        "hit@5": "14/15",
+        "mrr": 0.842,
+        "index_seconds": 311.1,
+        "query_ms_median": 202,
+        "positive_top_score_min": 0.5235,
+        "positive_top_score_median": 0.5884,
+        "negative_top_score_max": 0.467,
+        "negative_top_scores": [
+          0.4071,
+          0.4381,
+          0.467
+        ],
+        "details": [
+          {
+            "question": "Quel modèle utilise-t-on en développement et lequel pour la démo ?",
+            "rank": 1,
+            "top3": [
+              "docs/model-choices.md:91",
+              "docs/model-choices.md:1",
+              "docs/decisions/0004-modele-et-infrastructure.md:1"
+            ],
+            "top_score": 0.5274
+          },
+          {
+            "question": "Pourquoi n'utilise-t-on pas LangChain ni LlamaIndex ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0001-pas-de-framework-llm.md:1",
+              "docs/architecture.md:61",
+              "docs/model-choices.md:1"
+            ],
+            "top_score": 0.5263
+          },
+          {
+            "question": "Comment choisit-on la session à reprendre au démarrage ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/knowledge/memory.py:331",
+              "src/sensai/knowledge/memory.py:301",
+              "docs/decisions/0007-persistance-des-sessions.md:61"
+            ],
+            "top_score": 0.6777
+          },
+          {
+            "question": "Où sont supprimées les sessions inactives depuis 30 jours ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/knowledge/memory.py:211",
+              "docs/decisions/0007-persistance-des-sessions.md:121",
+              "src/sensai/config.py:91"
+            ],
+            "top_score": 0.6085
+          },
+          {
+            "question": "Comment le profil de l'utilisateur est-il ajouté au prompt système ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/knowledge/memory.py:301",
+              "tests/knowledge/test_memory.py:331",
+              "src/sensai/cli.py:91"
+            ],
+            "top_score": 0.6565
+          },
+          {
+            "question": "Quel contrat chaque outil appelable par l'agent doit-il respecter ?",
+            "rank": 2,
+            "top3": [
+              "docs/decisions/0003-tool-calling-natif-ollama.md:31",
+              "src/sensai/core/tools.py:1",
+              "docs/architecture.md:31"
+            ],
+            "top_score": 0.5831
+          },
+          {
+            "question": "Comment la réponse d'Ollama est-elle reçue en streaming ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/core/ollama_client.py:1",
+              "docs/decisions/0003-tool-calling-natif-ollama.md:31",
+              "src/sensai/core/ollama_client.py:31"
+            ],
+            "top_score": 0.5884
+          },
+          {
+            "question": "Comment trouve-t-on config.json quand on lance sensai depuis un autre dossier ?",
+            "rank": 1,
+            "top3": [
+              "src/sensai/config.py:1",
+              "src/sensai/config.py:61",
+              "src/sensai/config.py:31"
+            ],
+            "top_score": 0.6979
+          },
+          {
+            "question": "Comment doit-on nommer les branches git ?",
+            "rank": 1,
+            "top3": [
+              "CONTRIBUTING.md:1",
+              ".github/CODEOWNERS:1",
+              "CONTRIBUTING.md:31"
+            ],
+            "top_score": 0.5945
+          },
+          {
+            "question": "Qui doit relire une modification du registre d'outils ?",
+            "rank": 2,
+            "top3": [
+              "docs/decisions/0002-registre-d-outils-partage.md:1",
+              ".github/CODEOWNERS:1",
+              "src/sensai/core/tools.py:31"
+            ],
+            "top_score": 0.5528
+          },
+          {
+            "question": "Pourquoi l'interface web ne doit-elle pas réimplémenter l'agent ?",
+            "rank": 1,
+            "top3": [
+              "docs/decisions/0005-interface-web-facade.md:1",
+              "docs/decisions/0005-interface-web-facade.md:31",
+              "docs/architecture.md:61"
+            ],
+            "top_score": 0.643
+          },
+          {
+            "question": "Que se passe-t-il si la base des sessions est corrompue ?",
+            "rank": 8,
+            "top3": [
+              "docs/decisions/0007-persistance-des-sessions.md:91",
+              "docs/decisions/0007-persistance-des-sessions.md:121",
+              "docs/decisions/0007-persistance-des-sessions.md:31"
+            ],
+            "top_score": 0.5598
+          },
+          {
+            "question": "Quelles données personnelles sont enregistrées sur le disque ?",
+            "rank": 1,
+            "top3": [
+              "docs/legal/donnees-locales.md:31",
+              "docs/legal/donnees-locales.md:1",
+              "src/sensai/knowledge/memory.py:271"
+            ],
+            "top_score": 0.5453
+          },
+          {
+            "question": "Combien d'itérations maximum la boucle de raisonnement peut-elle faire ?",
+            "rank": 2,
+            "top3": [
+              "prompts/react_prompt.txt:1",
+              "src/sensai/core/agent.py:1",
+              "docs/model-choices.md:61"
+            ],
+            "top_score": 0.5235
+          },
+          {
+            "question": "Quelles commandes lancer avant de demander une relecture ?",
+            "rank": 1,
+            "top3": [
+              "CONTRIBUTING.md:31",
+              ".github/pull_request_template.md:1",
+              "src/sensai/knowledge/memory.py:361"
+            ],
+            "top_score": 0.6275
+          }
+        ]
+      }
+    }
+  }
+}
