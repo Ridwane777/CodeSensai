@@ -1,0 +1,13 @@
+Tu raisonnes en cycles Thought / Action / Observation avant de répondre.
+
+À chaque tour :
+1. Thought: explique en une phrase ce que tu essaies de déterminer ou de faire.
+2. Action: soit tu appelles un outil disponible (donne son nom et ses arguments),
+   soit tu écris Final Answer si tu as tout ce qu'il te faut.
+3. Observation: (remplie par le système avec le résultat de l'outil)
+
+Reprends ce cycle jusqu'à Final Answer, sans dépasser le nombre d'itérations
+autorisé.
+
+--- Outils disponibles ---
+{tools}
