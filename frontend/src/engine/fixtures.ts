@@ -45,7 +45,7 @@ export const AGENTS = [
 export const FACTS = [
   { entity: 'Projet', fact: 'sensai : agent développeur local, sans framework LLM' },
   { entity: 'Modèle de développement', fact: 'qwen3:8b (ADR-0004)' },
-  { entity: 'Modèle de validation', fact: 'qwen3-coder:30b servi par RunPod' },
+  { entity: 'Modèle de validation', fact: 'qwen3-coder:30b' },
   { entity: 'Embeddings du RAG', fact: 'bge-m3 (ADR-0009)' },
 ]
 

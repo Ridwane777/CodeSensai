@@ -63,8 +63,9 @@ def main(argv: list[str] | None = None) -> None:
 
     settings = get_settings(rest, prog="sensai-web")
     # Paramètres de génération (ADR-0057) : appliqués à chaque appel de chat.
-    from sensai.core.ollama_client import set_generation_options
+    from sensai.core.ollama_client import set_generation_options, set_request_timeout
     set_generation_options(settings.get("generation"))
+    set_request_timeout(settings.get("request_timeout"))
     try:
         runtime = WebRuntime(settings, Path.cwd())
     except ValueError as e:  # règle d'entrée mal écrite (ADR-0027), profil…

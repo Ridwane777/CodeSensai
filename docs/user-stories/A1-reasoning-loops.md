@@ -29,7 +29,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 ---
 
 ## US-A1-3 — Choose how long the agent may search before it stops
-*Added on 2026-11-01 by the stories audit. It describes code that already existed ([ADR-0057](../decisions/0057-generation-parameters-and-loop-limit.md)), so it was written after the code.*
+> **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, the developer whose agent sometimes needs more than a few steps to find a bug,
 **I want** to set the maximum number of model calls per turn in `config.json` or on the command line,
@@ -41,7 +41,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 - The same setting applies in `sensai-web` and in scheduled tasks.
 
 ## US-A1-4 — A tool call written as text is not silently lost
-*Added on 2026-11-01 by the stories audit. It describes code that already existed ([ADR-0031](../decisions/0031-appels-d-outils-ecrits-en-texte.md)), so it was written after the code.*
+> **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, whose local model sometimes writes its tool call as text instead of using Ollama's `tool_calls` field,
 **I want** the agent to read a call that stands alone in the answer (with the same confirmation as any call), and to ask the model again when a call is mixed with prose,

@@ -40,6 +40,11 @@ docker build -t sensai-browser:latest docker/browser   # navigateur de recherche
 sensai
 # modèle de dev par défaut : qwen3:8b (voir docs/decisions/0004-modele-et-infrastructure.md)
 
+# qwen3:8b en local, explicitement (Ollama sur cette machine) :
+ollama serve &                          # si Ollama ne tourne pas déjà
+sensai --host http://localhost:11434 --model qwen3:8b
+sensai-web --host http://localhost:11434 --model qwen3:8b   # interface web
+
 # validation sur le gros modèle, servi par un pod RunPod (proxy HTTP du pod) :
 sensai --host https://<id-du-pod>-11434.proxy.runpod.net --model qwen3-coder:30b
 ```

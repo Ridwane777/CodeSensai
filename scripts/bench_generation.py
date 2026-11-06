@@ -12,7 +12,7 @@ sous plusieurs réglages, plusieurs fois chacun, et relève pour chaque réglage
 
 Le jeu a été écrit avant la mesure. Usage :
 
-    python scripts/bench_generation.py --host http://<pod>:11434 \
+    python scripts/bench_generation.py --host http://<hôte-ollama>:11434 \
         --model qwen3-coder:30b --runs 3 --out docs/performance/data/generation.json
 
 Sur le poste de développement (qwen3:8b, raisonnement coupé pour mesurer la réponse) :
@@ -113,7 +113,7 @@ def ask(host, model, question, options, num_ctx, think=None):
                             {"role": "user", "content": question}],
                # num_predict borné pour tous les réglages : sans limite, une génération
                # à haute température peut ne jamais s'arrêter (une requête bloquée 600 s
-               # sur le pod le 2026-11-02).
+               # le 2026-11-02).
                "options": {**options, "num_ctx": num_ctx, "num_predict": NUM_PREDICT}}
     # qwen3 (dont qwen3:8b) raisonne par défaut avant de répondre : `think` le coupe
     # (off) ou le garde (on) ; non envoyé, le modèle fait comme il veut.

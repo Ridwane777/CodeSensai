@@ -36,7 +36,7 @@ Préambule écrit par l'humain.
 
 ## Problèmes connus
 
-- L'indexation est lente sur le pod.
+- L'indexation est lente.
 
 ## Notes perso
 

@@ -1,6 +1,8 @@
 """Le corps des requêtes envoyées à Ollama (`/api/chat`), sans réseau — M2, ADR-0045."""
 import json
 
+import pytest
+
 from sensai.core import ollama_client
 from sensai.core.ollama_client import stream_chat, stream_chat_messages
 
@@ -65,3 +67,41 @@ def test_une_option_de_l_appel_l_emporte_sur_le_reglage_global(monkeypatch):
     ollama_client.set_generation_options({"temperature": 0.7})
     list(stream_chat_messages("http://h", "m", [], options={"temperature": 0}))
     assert envoyes[0]["options"] == {"temperature": 0}
+
+
+# --- Délai d'attente d'Ollama (essai du 2026-11-06 sur CPU) ---
+
+def _capture_timeout(monkeypatch):
+    delais = []
+
+    def faux_post(url, json=None, timeout=None, **kwargs):
+        delais.append(timeout)
+        return FausseReponse()
+
+    monkeypatch.setattr(ollama_client.requests, "post", faux_post)
+    return delais
+
+
+def test_la_connexion_reste_courte_et_la_lecture_attend_le_cpu(monkeypatch):
+    """Sur CPU, qwen3:8b met plusieurs minutes avant le premier morceau : 60 s
+    faisaient échouer chaque tour ; un Ollama arrêté doit rester signalé vite."""
+    delais = _capture_timeout(monkeypatch)
+    list(stream_chat_messages("http://h", "m", []))
+    assert delais[0] == (ollama_client.CONNECT_TIMEOUT, ollama_client.DEFAULT_REQUEST_TIMEOUT)
+    assert ollama_client.CONNECT_TIMEOUT <= 10 < 300 <= ollama_client.DEFAULT_REQUEST_TIMEOUT
+
+
+def test_le_delai_regle_au_demarrage_s_applique(monkeypatch):
+    delais = _capture_timeout(monkeypatch)
+    ollama_client.set_request_timeout(1200)
+    list(stream_chat_messages("http://h", "m", []))
+    assert delais[0][1] == 1200
+
+
+def test_un_timeout_donne_un_message_qui_dit_quoi_regler(monkeypatch):
+    def lent(*args, **kwargs):
+        raise ollama_client.requests.exceptions.ReadTimeout()
+
+    monkeypatch.setattr(ollama_client.requests, "post", lent)
+    with pytest.raises(ollama_client.OllamaError, match="request_timeout"):
+        list(stream_chat_messages("http://h", "m", []))

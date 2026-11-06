@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 
 from sensai.core.agent import MAX_ITERATIONS
-from sensai.core.ollama_client import GENERATION_KEYS
+from sensai.core.ollama_client import DEFAULT_REQUEST_TIMEOUT, GENERATION_KEYS
 from sensai.execution.file_permissions import FilePermissions
 from sensai.execution.tool_policy import ToolPreferences
 from sensai.knowledge.compression import DEFAULT_NUM_CTX, budget_from_num_ctx
@@ -46,7 +46,7 @@ DEFAULT_FEWSHOT_MIN_SCORE = 0.75
 DEFAULT_TOKEN_BUDGET_KEEP_RECENT = 6
 # Paramètres de génération envoyés à Ollama (ADR-0057). Température basse : un
 # assistant de code doit donner la même commande, le même chemin, le même appel
-# d'outil d'une fois sur l'autre. Valeurs comparées sur le pod :
+# d'outil d'une fois sur l'autre. Valeurs comparées avec le vrai modèle :
 # docs/performance/generation-parameters.md (scripts/bench_generation.py).
 DEFAULT_GENERATION = {"temperature": 0.2, "top_p": 0.9}
 
@@ -94,6 +94,16 @@ def max_iterations_from_config(file_config: dict) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 50:
         raise ValueError(
             f"config.json : max_iterations doit être un entier de 1 à 50 (reçu : {value!r})")
+    return value
+
+
+def request_timeout_from_config(file_config: dict) -> int:
+    """Le `request_timeout` de config.json (ou le défaut), en secondes : combien
+    attendre Ollama avant d'abandonner. Sur CPU, plusieurs minutes sont normales."""
+    value = file_config.get("request_timeout", DEFAULT_REQUEST_TIMEOUT)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(
+            f"config.json : request_timeout doit être un entier positif (reçu : {value!r})")
     return value
 
 
@@ -282,6 +292,12 @@ def get_settings(argv: list[str] | None = None, prog: str | None = None) -> dict
         default=file_config.get("max_iterations", MAX_ITERATIONS),
         help="Nombre maximal d'appels au modèle par tour (garde-fou anti-boucle)",
     )
+    parser.add_argument(
+        "--request-timeout",
+        type=int,
+        default=file_config.get("request_timeout", DEFAULT_REQUEST_TIMEOUT),
+        help="Secondes d'attente d'une réponse d'Ollama (sur CPU, plusieurs minutes)",
+    )
     # Budget de tokens et résumé glissant (M2, ADR-0045) : activé par défaut,
     # le catalogue demande un déclenchement automatique en approchant la limite.
     parser.add_argument(
@@ -333,6 +349,8 @@ def get_settings(argv: list[str] | None = None, prog: str | None = None) -> dict
         parser.error("--num-predict doit être positif, ou -1 pour ne pas limiter")
     if not 1 <= args.max_iterations <= 50:
         parser.error("--max-iterations doit être compris entre 1 et 50")
+    if args.request_timeout < 1:
+        parser.error("--request-timeout doit être au moins 1")
     if args.token_budget_max is None:
         args.token_budget_max = budget_from_num_ctx(args.num_ctx)
     if args.token_budget_max < 1:
@@ -392,6 +410,7 @@ def get_settings(argv: list[str] | None = None, prog: str | None = None) -> dict
             "seed": args.seed, "num_predict": args.num_predict,
         }.items() if v is not None},
         "max_iterations": args.max_iterations,
+        "request_timeout": args.request_timeout,
         "token_budget": args.token_budget,
         "token_budget_max": args.token_budget_max,
         "token_budget_keep_recent": args.token_budget_keep_recent,

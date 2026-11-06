@@ -10,7 +10,7 @@ la MÊME passerelle (ADR-0006) : une action risquée demande confirmation que
 ce soit l'agent principal ou un sous-agent qui la décide, et les garde-fous
 EV2 s'appliquent pareil.
 
-Choix mesurés sur le pod avec le vrai modèle :
+Choix mesurés avec le vrai modèle :
 - le sous-agent reçoit le prompt du projet (profil, SENSAI.md, faits), sinon il
   ignore ce que l'agent principal sait et peut le contredire ;
 - un sous-agent ne redélègue pas (MAX_DELEGATION_DEPTH = 1) : en profondeur 2,

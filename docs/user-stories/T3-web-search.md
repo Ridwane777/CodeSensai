@@ -54,7 +54,6 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-T3-3 — Get dated, numbered web results the agent can cite
-*Added on 2026-11-01 by the stories audit. It describes what the `web_search` tool really does today, so it was written after the code.*
 
 **As** Camille, who asks "what is the latest version of pytest?" during the invoice-report fix,
 **I want** the agent to search the web and get a short numbered list of results with their address and the search date,
@@ -67,7 +66,6 @@ Other user stories of the interface: [README.md](README.md).
 - By default a search does not ask for confirmation (it reads, it does not change the machine).
 
 ## US-T3-4 — Keep control over what web pages can make the agent do
-*Added on 2026-11-01 by the stories audit, for the same reason as US-T3-3.*
 
 **As** Marc, the lead who configures CodeSensei for the team,
 **I want** to make web search ask for confirmation, or to require a confirmation for any later search once untrusted results have been read, and to have hostile text in results cleaned and secrets masked,

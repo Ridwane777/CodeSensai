@@ -12,10 +12,10 @@ Pas encore exécuté (pas d'Ollama avec un modèle de chat disponible au
 moment d'écrire ce script) : `CHARS_PER_TOKEN`, `DEFAULT_NUM_CTX`, la marge de
 réponse (`RESPONSE_MARGIN_TOKENS`, dont dérive le budget par défaut) et
 `DEFAULT_KEEP_RECENT` restent des **estimations**, pas des mesures (ADR-0045).
-Faire tourner ce script sur le pod et reporter le résultat dans
+Faire tourner ce script avec le vrai modèle et reporter le résultat dans
 docs/performance/M2-token-budget.md.
 
-    python scripts/bench_token_budget.py --host http://<pod>:11434 --model qwen3:8b
+    python scripts/bench_token_budget.py --host http://<hôte-ollama>:11434 --model qwen3:8b
 """
 from __future__ import annotations
 

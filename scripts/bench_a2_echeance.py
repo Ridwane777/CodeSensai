@@ -1,6 +1,6 @@
 """Point 2 de la #87 : combien de temps dure une vraie délégation, et que se passe-t-il au-delà ?
 
-Lancé avec le vrai modèle sur le pod.
+Lancé avec le vrai modèle.
 Projet lu : ce dépôt, en lecture seule.
 
     python scripts/bench_a2_echeance.py <hôte Ollama> durees|fantome

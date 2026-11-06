@@ -1,10 +1,5 @@
 # Persona and usage scenario
 
-Written on 2026-11-01: the earlier scenario ("a developer in her code base")
-had no precise user and no concrete situation, and its latency was not
-realistic on our hardware. This page fixes **one** user, **one** day of work, and says honestly what "local" means
-for CodeSensei today.
-
 Every user story names the persona it serves (index:
 [user-stories/README.md](../user-stories/README.md)); each feature is linked to
 its step of the scenario in [traceability.md](traceability.md); the demo
@@ -155,7 +150,6 @@ we validate it with.
   question 16.2 s from the model and 0.6 s from the cache. A cold pod made the
   first answer take more than 2 minutes
   ([afternoon trial](../performance/essais/essai-2026-11-01-soir.md)).
-  These numbers are **pod numbers**, not laptop numbers.
 - Generation speed of `qwen3-coder:30b` on the pod's GPU: about **119
   tokens/s** ([generation-parameters.md](../performance/generation-parameters.md)).
   The same measure for `qwen3:8b` on a team laptop without GPU (i7-1355U,
