@@ -18,6 +18,7 @@ rather than handle everything in a single line of reasoning.
 ---
 
 ## US-A2-1 — Split a task into delegated sub-tasks
+> **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer giving the agent a composite task,
 **I want** it to delegate each sub-task to a sub-agent that reasons on its
@@ -45,6 +46,7 @@ reasoning that mixes everything.
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): `delegate_task` with the explorer role streamed the relays `main → explorateur → main` and the sub-agent's `subagent_step` events.
 
 ## US-A2-2 — Not loop forever nor work behind the user's back
+> **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who wants neither a delegation loop nor ghost work,
 **I want** a sub-agent to be unable to delegate again and to stop at its
@@ -64,6 +66,7 @@ deadline,
 > **Status on 2026-10-24:** ✅ Checked on the pod: 0 re-delegation (tool hidden), stop at the deadline with no tool or confirmation afterwards, partial answer returned; sub-agent failure rendered as a message (tested).
 
 ## US-A2-3 — Specialised agents, each with its own tools
+> **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer handing a task to several agents,
 **I want** each agent to have a role (explorer, developer, reviewer) with
@@ -81,6 +84,7 @@ never modifies a file).
 > **Status on 2026-10-24:** ✅ Checked on the pod: out of 10 write requests made to an explorer or a reviewer, 0 file created and 0 confirmation. Yet the model once claimed it had created the file: what it says is not proof.
 
 ## US-A2-4 — Work passes from one agent to the next, with a critique
+> **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking for a code change,
 **I want** the explorer to gather the context, the developer to produce the

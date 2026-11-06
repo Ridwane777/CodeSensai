@@ -22,6 +22,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-T1-1 — See when the agent uses an external tool
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. Every real tool is shown with the same card (checked with `read_file` and `write_file`). However, the server registers no MCP tool: the `mcp.fetch` call is still simulated.
 >
 > **Status on 2026-10-29:** ◐ Partly. Tools named `mcp_<server>_<tool>` now get an "MCP" badge in the reasoning ribbon ([ADR-0047](../decisions/0047-real-agent-handoffs-in-the-web.md), proposed). Checked by frontend tests only: still not tried with a published MCP server in the web interface.
@@ -35,6 +36,7 @@ Other user stories of the interface: [README.md](README.md).
 - The external tool is presented like any other tool (same card).
 
 ## US-T1-2 — Find the external calls in the log
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The Log page lists the real calls (checked with `read_file`), but no real MCP call exists yet.
 
 **As** Camille, the developer auditing a session,
@@ -57,6 +59,7 @@ Persona: Camille, the developer of the scenario
 ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 
 ## US-T1-3 — The agent decides to call a tool without ambiguity (was User Story 1 of T1-native-tool-calling.md)
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who lets the agent act on her code**, I want **the model to call tools through a structured format** (no text parsing), so that **every tool call is truly intended and executed without a parsing error**.
 
@@ -68,6 +71,7 @@ As **Camille, the developer who lets the agent act on her code**, I want **the m
 - Parsing errors do not exist (the model cannot generate text that breaks the interpretation)
 
 ## US-T1-4 — The agent drops the tool call if the arguments are invalid (was User Story 2 of T1-native-tool-calling.md)
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose local model sometimes gets the arguments wrong**, I want **the tools to refuse invalid arguments before execution and return a clear error message**, so that **a model bug does not break the system**.
 
@@ -89,6 +93,7 @@ Personas: Marc, the lead who configures the tool for the team, and Camille,
 the developer of the scenario ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 
 ## US-T1-5 — The agent uses an external MCP tool with no hard-coded dependency (was User Story 1 of T1-mcp-integration.md)
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Marc, the lead who plugs the company's own tools into the agent**, I want **the agent to call tools through MCP without changing the agent's core code**, so that **new tools (databases, third-party APIs, etc.) can be plugged in easily, without recompiling**.
 
@@ -100,6 +105,7 @@ As **Marc, the lead who plugs the company's own tools into the agent**, I want *
 - Adding a new MCP tool does not change the agent's core code
 
 ## US-T1-6 — A broken MCP tool does not block the agent (was User Story 2 of T1-mcp-integration.md)
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose work must not stop when an MCP server is down**, I want **the agent to continue with the available tools if an MCP server does not answer**, so that **an external dependency does not paralyse the whole application**.
 

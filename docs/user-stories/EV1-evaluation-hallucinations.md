@@ -15,6 +15,7 @@ right.
 ---
 
 ## US-EV1-1 — Know whether a new prompt improves or degrades the answers
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who changes the system prompt (A4),
 **I want** to run the same set of questions before and after the change and compare both results,
@@ -27,6 +28,7 @@ right.
 - Cases present in only one of the two reports are listed, not silently ignored.
 
 ## US-EV1-2 — See which claims are doubtful, and which passage to look at
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who receives a report,
 **I want** to see, for each answer, the contradicted or unverifiable claims with the cited passage,
@@ -40,6 +42,7 @@ right.
 - A case's faithfulness is the share of `SUPPORTED` claims; it is empty (`null`) when the answer has no claim to check, and never counted as 0 or 1.
 
 ## US-EV1-3 — A judge failure must not pass for a bad answer
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who runs the evaluation on a small local model,
 **I want** unusable judge outputs to be retried, then counted separately,
@@ -52,6 +55,7 @@ right.
 - A case with no answer (and without `--generate`) is `skipped`, also counted separately.
 
 ## US-EV1-4 — Do not compare two reports that do not measure the same thing
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead comparing two reports made at different times,
 **I want** to be warned when the judge, its prompt, the data or the origin of the passages changed,
@@ -70,6 +74,7 @@ the evaluation document). The `--sources rag` mode was only tested with a
 simulated index in the tests.
 
 ## US-EV1-5 — Run an evaluation from the chat
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead presenting the agent to the team,
 **I want** to type `/eval run --dataset … --out …` in the conversation,

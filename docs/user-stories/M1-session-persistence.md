@@ -11,6 +11,7 @@ M1.
 ---
 
 ## US-M1-1 — Pick up where I left off
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who works on the same project over several days,
 **I want** to find my previous conversation with CodeSensei when I restart the CLI,
@@ -29,6 +30,7 @@ M1.
   cannot be committed by mistake.
 
 ## US-M1-2 — Not repeat my preferences
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer with her own habits (Python 3.12, pytest, answers in French, no unnecessary dependency),
 **I want** CodeSensei to know my preferences and instructions from startup, without me repeating them,
@@ -44,6 +46,7 @@ M1.
   empty profile and a warning — it does not crash.
 
 ## US-M1-3 — Choose which conversation to resume
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who handles several topics in parallel (an authentication bug, an API redesign),
 **I want** to list my past conversations and choose the one to resume, or start a new one,

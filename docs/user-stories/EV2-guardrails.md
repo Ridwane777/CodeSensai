@@ -17,6 +17,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 ---
 
 ## US-EV2-1 — An API key pasted in the code never leaves
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose script contains a fake API key,
 **I want** the key to be masked before it reaches a tool, the logs or the model,
@@ -28,6 +29,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 - The text returned by a tool (sandbox output, file read) is filtered in the same way before the model, the logs or the user see it.
 
 ## US-EV2-2 — Mask personal data in what comes back
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose client files or a web page contain e-mail addresses and card numbers,
 **I want** them to be masked in the tool results,
@@ -39,6 +41,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 - The known limits (formats not covered) are written in the documentation, without being presented as covered.
 
 ## US-EV2-3 — Not be manipulated by the text of a page or a file
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose agent reads a web page or a file she did not write,
 **I want** the content to be cleaned and presented to the model as data,
@@ -50,6 +53,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 - The result sent back to the model is capped (20,000 characters by default) so as not to drown its context.
 
 ## US-EV2-4 — Refuse an obviously dangerous request before it reaches the model
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who rolls the agent out to the rest of the team,
 **I want** obvious attempts to bypass its instructions or make it write malware to be refused at once,
@@ -62,6 +66,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 - Written limits: the filter can be bypassed by rephrasing and sometimes refuses a legitimate question that quotes an attack sentence (ADR-0027).
 
 ## US-EV2-5 — A key pasted in the chat is not kept
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who pastes an error message containing an API key,
 **I want** the key to be masked before it reaches the model,
@@ -73,6 +78,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 - Pasted code is sent back as is: only invisible characters and ANSI sequences are removed. Typed e-mails are not masked on input (they still are in tool results).
 
 ## US-EV2-6 — Define what is out of scope for my project
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead of a project that must not handle some topics (e.g. individual salaries),
 **I want** to add my own rules in `config.json` (`input_blocklist`),
@@ -86,6 +92,7 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 ---
 
 ## US-EV2-7 — A secret the model writes in its answer is masked too
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, who asks the agent to explain a configuration file containing a key,
 **I want** the model's own answer to go through the same filter as tool results,

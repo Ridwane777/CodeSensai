@@ -28,6 +28,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-T3-1 — Check the cited web sources
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The `web_search` tool is real on the server side, but the server does not send `web_results` yet: the pages consulted appear in the step's observation, not in the Sources tab. Not tried in the browser yet.
 >
 > **Update on 2026-11-01:** ✅ The server reads the results back from the tool's answer and sends `web_results`; the interface keeps only http(s) links. Tested, not yet seen in the browser with the real model.
@@ -42,6 +43,7 @@ Other user stories of the interface: [README.md](README.md).
 - In the demo, no network request is made: the results are scripted.
 
 ## US-T3-2 — Not rely on information from memory
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ⏳ Not checked yet: it depends on the model's answer.
 
 **As** Camille, the developer who needs an up-to-date version number,
@@ -54,6 +56,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-T3-3 — Get dated, numbered web results the agent can cite
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, who asks "what is the latest version of pytest?" during the invoice-report fix,
 **I want** the agent to search the web and get a short numbered list of results with their address and the search date,
@@ -66,6 +69,7 @@ Other user stories of the interface: [README.md](README.md).
 - By default a search does not ask for confirmation (it reads, it does not change the machine).
 
 ## US-T3-4 — Keep control over what web pages can make the agent do
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who configures CodeSensei for the team,
 **I want** to make web search ask for confirmation, or to require a confirmation for any later search once untrusted results have been read, and to have hostile text in results cleaned and secrets masked,
@@ -81,6 +85,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-T3-5 — Search the web for recent information without exposing the agent
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking about a recent version of a library,
 **I want** the agent to be able to search the web and cite its sources,
@@ -93,6 +98,7 @@ Other user stories of the interface: [README.md](README.md).
 - An empty query, one longer than 400 characters or one with control characters is refused before any container is started.
 
 ## US-T3-6 — Understand why a search fails
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose search returns nothing,
 **I want** a message that tells apart an anti-bot block, an empty page, a real network problem and an unexpected page,

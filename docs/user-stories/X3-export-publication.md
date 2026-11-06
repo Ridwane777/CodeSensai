@@ -22,6 +22,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X3-1 — Keep a record of the session
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The Markdown preview contains the real conversation and its tool calls (checked). The JSON, Markdown and PDF files are produced by the browser from what is displayed, and have not been downloaded with the real agent. The server also offers an export with secrets filtered out (`/export`), which the interface does not use yet.
 
 **As** Camille, the developer who must report on her work,
@@ -35,6 +36,7 @@ Other user stories of the interface: [README.md](README.md).
 - A preview of the Markdown is visible before the export.
 
 ## US-X3-2 — Share the session through a link
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** 🎭 Simulated: the share link stays fake, and the interface says so.
 >
 > **Update on 2026-10-29:** ◐ Real with the server ([ADR-0048](../decisions/0048-share-links.md)). "Créer un lien de partage" on the Export page publishes a read-only copy of the conversation, secrets masked, at `/share/<token>`: no API token needed to open it, valid 7 days, revocable (`POST /api/shares/<token>/revoke`, "Révoquer le lien" button since 2026-10-31). Checked by the server tests (`tests/web/test_shares.py`) and the frontend tests; not yet opened in a browser with the real agent. The link only works for people who can reach the `sensai-web` server, which listens on this machine only by default. Without the server (simulated engine), the link stays fake and the page says so.
@@ -59,6 +61,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X3-3 — Export the session from the server, secrets masked
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, who must attach the session to her report for Marc,

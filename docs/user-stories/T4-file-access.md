@@ -9,6 +9,7 @@ for the team ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 ---
 
 ## US-T4-1 — Let the agent read my project without exposing my secrets
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks "explain this module",
 **I want** the agent to read my project's files but never `.env`, my keys or `.git`,
@@ -21,6 +22,7 @@ for the team ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 - A binary or too large file returns a readable error, not a crash.
 
 ## US-T4-2 — Approve each write while seeing what changes
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent edit her code,
 **I want** to see the exact path and a diff before the file is written,
@@ -33,6 +35,7 @@ for the team ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 - Writing outside the project or to a protected file is refused before the question is even asked.
 
 ## US-T4-3 — Limit where the agent can write
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who wants an agent "allowed to read and write in `/src`" for the team,
 **I want** to declare separate read and write folders in the config,

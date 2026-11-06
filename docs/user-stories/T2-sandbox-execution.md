@@ -17,6 +17,7 @@ these stories guarantee that the error comes back complete enough for that to wo
 ---
 
 ## US-T2-1 — Run code without putting my machine at risk
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent test its code,
 **I want** this code to run in a disposable container, with no network and no access to my files,
@@ -30,6 +31,7 @@ these stories guarantee that the error comes back complete enough for that to wo
 - If Docker is missing or broken, the tool returns a readable error (`SandboxError`); it does not crash the agent.
 
 ## US-T2-2 — Get a usable error to fix the code
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose agent writes a script that crashes,
 **I want** the tool to return the error type, its message and the call trace,

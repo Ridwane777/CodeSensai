@@ -24,6 +24,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X2-1 — Resume from an edited message without losing the original
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: "Modifier" then "Envoyer la variante" creates "Variante 1", which is a new session on the server side with its own answer. Going back to the main branch is covered by the engine's tests (`httpEngine.test.ts`), without having been clicked.
 
 **As** Camille, the developer who phrased a request badly,
@@ -37,6 +38,7 @@ Other user stories of the interface: [README.md](README.md).
 - An empty edited message is not sent.
 
 ## US-X2-2 — Interrupt and redirect the agent
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. "Arrêter" is checked: "Génération interrompue", no more words arrive. **Not met with the real agent**: a message cannot be sent during a generation, because the server handles one turn at a time (ADR-0022); "Arrêter" must be clicked first.
 
 **As** Camille, the developer whose agent is heading the wrong way,
@@ -51,6 +53,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X2-3 — Stop a turn that is going the wrong way
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, whose agent starts rewriting the wrong file,

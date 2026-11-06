@@ -10,6 +10,7 @@ feed it into another tool), without extracting the information from free text.
 ---
 
 ## US-T5-1 — Get an answer that follows a given schema
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who will consume the answer in a script,
 **I want** to ask for a JSON answer that matches a schema I provide,
@@ -25,6 +26,7 @@ guessing where each field is.
   a prose description of the JSON.
 
 ## US-T5-2 — Be clearly warned when the constraint cannot be met
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who uses `/structured` in a script,
 **I want** an explicit error message if the schema is unreadable or if
@@ -43,6 +45,7 @@ receiving a truncated object without knowing it.
   structured result.
 
 ## US-T5-3 — A structured answer about the real project
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks for a JSON about her code,
 **I want** the answer to rely on the project's files,

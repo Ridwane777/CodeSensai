@@ -25,6 +25,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-EV3-1 — Read back what the agent did
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: `read_file`, its arguments, 21 ms, "Succès".
 >
 > **Update on 2026-11-01:** ◐ tested, not yet with the real model. With the real server the page now reads the journal **stored by the server** (`GET /api/journal`, `<data_dir>/journal.db`): it survives a reload and reopening the conversation, includes the CLI's turns, and shows each turn's model time and each tool's server-measured duration (sub-agent tools included). Checked by pytest (scripted model) and vitest.
@@ -39,6 +40,7 @@ Other user stories of the interface: [README.md](README.md).
 - *(Added 2026-11-01)* With the real server, the journal of the open conversation is still there after reloading the page; secrets in the arguments are masked.
 
 ## US-EV3-2 — Spot a reliability or slowness problem
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: the indicators are computed on the real calls (1 call, 21 ms on average, 0 % failures). The "Tokens utilisés" box was still simulated (0).
 >
 > **Update on 2026-11-01:** ◐ tested, not yet with the real model. "Tous les outils" view: per tool, calls, failures, mean and max duration over 7 days, all conversations and both interfaces (`GET /api/journal/metrics`), plus the model's turn count and mean/max model time.
