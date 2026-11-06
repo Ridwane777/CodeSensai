@@ -65,6 +65,7 @@ the decision changes, a new ADR replaces it. Full rules:
 | [0056](0056-scope-review-features-to-drop-or-limit.md) | Features we drop or limit (completes ADR-0008) | 2026-11-01 | Accepted (all five items applied) |
 | [0057](0057-generation-parameters-and-loop-limit.md) | Generation parameters and loop limit come from the configuration | 2026-11-01 | Accepted |
 | [0058](0058-filtered-answers-and-context-command.md) | The model's answer is filtered while it streams; /context shows what is sent | 2026-11-01 | Accepted |
+| [0059](0059-list-files-tool.md) | A read-only `list_files` tool so the agent can see the project | 2026-11-06 | Proposed |
 
 ADR-0012 (sandbox) was first merged under number 0007, already taken by
 session persistence: it was renumbered without changing its content.
