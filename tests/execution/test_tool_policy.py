@@ -118,3 +118,15 @@ def test_load_reads_json_file(tmp_path):
 
 def test_confirm_after_untrusted_is_off_by_default():
     assert ToolPreferences().confirm_after_untrusted is False
+
+
+def test_delai_des_sous_agents_garde_le_defaut_et_se_regle():
+    """Essai du 2026-11-06 sur CPU : 120 s ne laissent pas un seul appel au modèle
+    au sous-agent ; le délai se règle, le défaut reste celui de l'outil."""
+    from sensai.tools.delegate_tool import DELEGATION_TIMEOUT_S
+
+    assert ToolPreferences.from_dict({}).delegation_timeout_s == DELEGATION_TIMEOUT_S == 120.0
+    assert ToolPreferences.from_dict({"delegation_timeout_s": 1800}).delegation_timeout_s == 1800.0
+    for faux in (0, -1, "long", True):
+        with pytest.raises(ValueError, match="delegation_timeout_s"):
+            ToolPreferences.from_dict({"delegation_timeout_s": faux})

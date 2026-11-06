@@ -455,9 +455,12 @@ class WebRuntime:
                                           resumed=False, persona=persona,
                                           prompt_version=prompt_version, started=started),
                                       num_ctx=self.num_ctx, handoffs=handoffs)
+        delegate.timeout_s = gateway.preferences.delegation_timeout_s
         registry.register(delegate)
-        registry.register(TeamTool(delegate, on_handoff=handoffs.to if handoffs else None,
-                                   test_runner=project_test_runner(self.project)))
+        team = TeamTool(delegate, on_handoff=handoffs.to if handoffs else None,
+                        test_runner=project_test_runner(self.project))
+        team.timeout_s = gateway.preferences.delegation_timeout_s
+        registry.register(team)
         return gateway
 
     def command(self, text: str) -> str | None:

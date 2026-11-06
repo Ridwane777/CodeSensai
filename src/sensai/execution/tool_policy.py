@@ -54,6 +54,7 @@ _KNOWN_KEYS = {
     "max_output_chars",
     "confirm_timeout_s",
     "tool_timeout_s",
+    "delegation_timeout_s",
     "confirm_after_untrusted",
 }
 
@@ -85,6 +86,11 @@ class ToolPreferences:
     # Plafond de durée d'un appel d'outil. Un outil peut déclarer un `timeout_s`
     # plus court ; jamais plus long : l'utilisateur garde le dernier mot.
     tool_timeout_s: float = 120.0
+    # Durée laissée à un sous-agent (delegate_task, team_task, ADR-0037/0038) ;
+    # même défaut que DELEGATION_TIMEOUT_S. Sur CPU, un seul appel au modèle
+    # dépasse ce délai (essai du 2026-11-06) : l'augmenter avec tool_timeout_s,
+    # qui reste le plafond de tout appel d'outil.
+    delegation_timeout_s: float = 120.0
     # Once untrusted content (a web page, a document) has been read, any tool
     # that is not read-only asks for confirmation, even if its mode is "allow".
     # Limits what an injected instruction can do without the user noticing.
@@ -137,6 +143,14 @@ class ToolPreferences:
         ):
             raise ValueError("'tool_timeout_s' doit être un nombre > 0")
 
+        delegation_timeout = data.get("delegation_timeout_s", cls.delegation_timeout_s)
+        if (
+            isinstance(delegation_timeout, bool)
+            or not isinstance(delegation_timeout, (int, float))
+            or delegation_timeout <= 0
+        ):
+            raise ValueError("'delegation_timeout_s' doit être un nombre > 0")
+
         after_untrusted = data.get("confirm_after_untrusted", cls.confirm_after_untrusted)
         if not isinstance(after_untrusted, bool):
             raise ValueError("'confirm_after_untrusted' must be true or false")
@@ -147,6 +161,7 @@ class ToolPreferences:
             max_output_chars=max_chars,
             confirm_timeout_s=float(timeout),
             tool_timeout_s=float(tool_timeout),
+            delegation_timeout_s=float(delegation_timeout),
             confirm_after_untrusted=after_untrusted,
         )
 
