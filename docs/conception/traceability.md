@@ -39,6 +39,23 @@ For each: its user stories, the main ADRs, the main code (paths under
 | X4 Questions and forms | [X4](../user-stories/X4-questions-forms.md) (C) | [0046](../decisions/0046-ask-user-tool.md) | `tools/ask_user_tool.py`, `web/questions.py` | `tests/tools/test_ask_user_tool.py`, `tests/web/test_questions.py` | S5 |
 | X5 Scheduling | [X5](../user-stories/X5-scheduling.md) (C, M) | [0016](../decisions/0016-planification-des-taches.md), [0028](../decisions/0028-commandes-schedule-et-eval-dans-le-chat.md), [0052](../decisions/0052-schedule-task-tool.md) | `scheduling/`, `schedule_cli.py`, `tools/schedule_task_tool.py` | `tests/scheduling/`, `tests/tools/test_schedule_task_tool.py` | S9 |
 
+## Features dropped or changed along the way
+
+What was removed, limited or reshaped after it was built, and the stories it
+touched. Withdrawn and replaced stories stay in their files, with their
+original text, for the record.
+
+| Feature | What changed | Date | Decision | Stories concerned |
+| --- | --- | --- | --- | --- |
+| X1 Web interface, decorative layer | **Dropped**: 3D scene, WebGL fallback, animated code scenery and `three` removed; the home page becomes the chat | 2026-10-31 (home page), 2026-11-02 (code removed) | [ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md), [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 1 | [US-X1-6](../user-stories/X1-web-interface.md#us-x1-6--watch-the-agent-analyze-code-and-judge-a-bug-live) withdrawn; [US-X1-4](../user-stories/X1-web-interface.md#us-x1-4--see-a-polished-sober-and-whole-agent) replaced by US-X1-5 to US-X1-7 (2026-10-14); US-X1-3 replaced by US-X1-C8 and US-X1-5 by US-X1-C9 (2026-10-31) |
+| X3 Share links | **Limited**: public links off by default; Marc turns them on with `"share_links": true`, otherwise the API answers 403 | 2026-11-02 | [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 2 | [US-X3-2](../user-stories/X3-export-publication.md#us-x3-2--share-the-session-through-a-link) modified (update of 2026-11-03); US-X3-1 and US-X3-3 (local and server export) unchanged |
+| A2 Team of agents | **Changed**: in `team_task`, the project's tests (`pytest -q -x`) give the verdict instead of the LLM reviewer, which kept validating wrong work; the reviewer stays only when the project has no tests | 2026-11-02 | [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 3 | [US-A2-4](../user-stories/A2-multi-agent-orchestration.md#us-a2-4--work-passes-from-one-agent-to-the-next-with-a-critique) modified (update of 2026-11-02); US-A2-1 to US-A2-3 (`delegate_task`) unchanged |
+| A5 Persona | **Limited**: keyword routing (`auto_route`) and session-only personas (`/persona add`) removed; a `keywords` field now stops the program with a message | 2026-11-02 | [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 4, replacing part of [ADR-0043](../decisions/0043-persona-enhancements.md) | [Stories 3 and 5](../user-stories/A5-persona.md) withdrawn; stories 1, 2, 4, 6 and 7 unchanged |
+| A6 Semantic cache | **Off by default**: opt-in with `--cache` or `"cache": true` | 2026-11-02 | [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 5 | [US-A6-1 to US-A6-3](../user-stories/A6-semantic-cache.md): behaviour unchanged once enabled; the stories do not yet say it is opt-in |
+| A7 Automatic few-shot | **Unchanged, optional**: already needed an examples file from Marc | 2026-11-02 | [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 5 | [Stories 1 and 2](../user-stories/A7-prompt-optimization.md) unchanged |
+| X5 Scheduling | **Unchanged, optional**: only through `sensai-schedule` or `schedule_task` | 2026-11-02 | [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md) item 5 | [US-X5-1 to US-X5-5](../user-stories/X5-scheduling.md) unchanged |
+| T2 / T3 Isolated web search | **Moved**: the browser sandbox stories belong to web search, not to code execution | 2026-11-02 | Story reorganisation ([index](../user-stories/README.md)) | US-T2-3 and US-T2-4 renumbered [US-T3-5 and US-T3-6](../user-stories/T3-web-search.md#us-t3-5--search-the-web-for-recent-information-without-exposing-the-agent); content unchanged |
+
 **Gaps this matrix shows.**
 - R2 has no visible step: its effect is only on which sources are cited
   (measured in [R2-rag.md](../performance/R2-rag.md)).

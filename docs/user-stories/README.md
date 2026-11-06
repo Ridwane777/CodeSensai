@@ -12,7 +12,9 @@ Every story is written for one of the two personas of the scenario
 Roles were rewritten on 2026-11-01 to name these personas (they used to say
 "developer", "user", "team member", "reviewer"); acceptance criteria and
 dated statuses were not changed. Feature → story → ADR → code → tests →
-scenario step: [traceability.md](../conception/traceability.md).
+scenario step: [traceability.md](../conception/traceability.md). Features
+dropped or changed along the way, with the stories withdrawn, replaced or
+modified: [traceability.md](../conception/traceability.md#features-dropped-or-changed-along-the-way).
 
 Format: "As … I want … so that …" plus observable acceptance criteria, at
 least two stories per feature (subject requirement).
