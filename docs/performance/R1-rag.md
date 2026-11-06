@@ -1,5 +1,7 @@
 # Mesures de performance — [R1] Basic RAG
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: "where is `maximum` defined?": ✅ `stats.py:6` with both models, qwen3:8b on CPU 7 min 41, qwen3-coder:30b on GPU 57 s, indexing included. Earlier measurements below.
+
 Mesures faites le 2026-10-11 pour trancher trois décisions de
 [l'ADR-0009](../decisions/0009-rag-sur-la-codebase.md) : le modèle d'embeddings
 (décision 2), la méthode de recherche (décision 1) et le seuil « rien trouvé »

@@ -44,6 +44,9 @@ sensai
 ollama serve &                          # si Ollama ne tourne pas déjà
 sensai --host http://localhost:11434 --model qwen3:8b
 sensai-web --host http://localhost:11434 --model qwen3:8b   # interface web
+# sur un portable sans GPU : 7 à 11 min par question, prévoir "request_timeout": 1800
+# (docs/guide/lancer-et-utiliser.md) ; team_task (A2) et /structured (T5) échouent
+# avec ce modèle (docs/performance/essais/essai-2026-11-06.md)
 
 # validation sur le gros modèle, servi par un pod RunPod (proxy HTTP du pod) :
 sensai --host https://<id-du-pod>-11434.proxy.runpod.net --model qwen3-coder:30b

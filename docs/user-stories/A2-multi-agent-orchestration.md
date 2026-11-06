@@ -17,6 +17,8 @@ rather than handle everything in a single line of reasoning.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `team_task` on `moyenne([])`: qwen3:8b ❌ (the team did not finish, even with 30 min); qwen3-coder:30b ❌ 0 of 4 with RAG off (the agent did not find `stats.py`, backlog #25), ✅ 3 of 3 with RAG on (64–73 s, project tests pass); with RAG off after `list_files` (ADR-0059): 0 of 3, blocked by the trial script's confirmations typed in advance (once the agent proposed the right change to `stats.py` and the script refused it). A run by hand found two bugs, fixed the same day (backlog #27): a team that wrote nothing was "validé" because the unchanged project's tests passed, and the explorer had no `list_files`. Rerun by hand after the fixes, RAG off: ✅ validated, the team changed `stats.py` and added a `pytest.raises(ValueError)` test, project tests pass; defects on the way listed in backlog #28.
+
 ## US-A2-1 — Split a task into delegated sub-tasks
 > **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

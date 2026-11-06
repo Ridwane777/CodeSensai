@@ -1,5 +1,7 @@
 # Essai réel — [M4] Document d'état du projet
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/state`: ✅ with both set-ups (< 1 s). Earlier measurements below.
+
 Vérification de M4 avec le vrai modèle, en plus des tests automatiques
 (`tests/knowledge/test_state_document.py`, `tests/tools/test_state_tool.py`,
 et les tests M4 de `tests/test_cli_rag.py`, `tests/core/test_events.py`,

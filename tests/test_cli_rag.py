@@ -423,6 +423,27 @@ def test_structured_s_appuie_sur_ce_que_l_agent_a_trouve(lancer, projet, monkeyp
     assert vus and "D'accord." in vus[0] and "liste les fonctions" in vus[0]
 
 
+def test_structured_en_premiere_commande_a_une_recherche_qui_marche(lancer_agent, projet,
+                                                                     monkeypatch):
+    """Essai du 2026-11-06 (T5) : tapé avant toute question, /structured laissait
+    `search_codebase` sans index (« projet non indexé ») et l'agent devinait des
+    noms de fichiers. L'index doit être ouvert avant sa phase de recherche."""
+    import json
+
+    from sensai.core import structured
+
+    (projet / "schema.json").write_text(json.dumps({"type": "object"}), encoding="utf-8")
+    original = structured.handle_structured_command
+    monkeypatch.setattr(cli, "handle_structured_command", lambda line, **kw: original(
+        line, query=lambda host, model, prompt, schema: {"ok": True}, **kw))
+
+    observe = lancer_agent(["/structured schema.json Où vérifie-t-on le token ?"])
+
+    appel = observe[0]["appel"]
+    assert appel is not None and appel.ok, appel.content if appel else "outil absent"
+    assert "src/auth.py" in appel.content
+
+
 def test_les_outils_mcp_de_la_config_sont_proposes(lancer_agent, capsys):
     """T1 (ADR-0041) : les outils d'un serveur MCP déclaré dans config.json sont
     proposés à l'agent ; un serveur introuvable n'empêche pas le démarrage."""

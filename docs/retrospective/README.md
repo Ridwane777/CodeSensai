@@ -23,6 +23,7 @@ update it.
 | Decisions | 41 ADRs |
 | Catalogue features | 28 targeted (ADR-0008); not delivered: A5 Persona, A7 Prompt optimisation, M2 Token budgeting |
 | Update 2026-11-01 | 1,652 tests passing and 20 expected failures (`pytest -q`); 58 ADRs; A5, A7 and M2 have since been delivered ([user-stories audit](../user-stories/README.md)); scope decision proposed in ADR-0056 |
+| Update 2026-11-06 | 1,661 tests passing and 19 expected failures (`pytest -q`); 59 ADRs (ADR-0059 proposed); every feature run on both set-ups ([trial](../performance/essais/essai-2026-11-06.md)): `qwen3:8b` on the laptop CPU 26 of 28 scenarios at 7–11 min a turn, `qwen3-coder:30b` on a GPU all 28 after reruns and fixes (A3 in the web 2 of 4) at 4–20 s a turn; four bugs found and fixed that day (Ollama timeout, `/structured` without index, no `list_files`, team "validé" with nothing written) |
 | Update 2026-11-02 | 1,645 tests passing and 19 expected failures (`pytest -q`); 58 ADRs, ADR-0056 to ADR-0058 accepted; 533 commits, 76 merged PRs; 16,609 lines of Python in `src/`, 15,153 lines of tests, 76 TypeScript files in `frontend/src/`; generation speed measured: 115–119 tok/s for `qwen3-coder:30b` on the pod's GPU, 4.5–4.8 tok/s for `qwen3:8b` on a team laptop without GPU ([generation-parameters.md](../performance/generation-parameters.md)) |
 
 ## What we would build differently
@@ -264,7 +265,10 @@ RAM ([ADR-0004](../decisions/0004-modele-et-infrastructure.md)). The
 validated model, `qwen3-coder:30b`, needs a 24 GB GPU (21.7 GB of VRAM
 measured). `qwen3:8b` on a laptop without GPU generates 4.5–4.8 tokens/s
 ([generation-parameters.md](../performance/generation-parameters.md)): too
-slow for the agent loop. The sandbox and the web search need Docker
+slow for the agent loop. Measured on 2026-11-06 with every feature: one
+ordinary question takes 7 to 11 minutes on the laptop CPU, against 4 to 20 s
+on the GPU pod ([trial](../performance/essais/essai-2026-11-06.md)); until
+that trial, a 60 s client timeout made every turn fail on CPU. The sandbox and the web search need Docker
 (a 1.1 GB image).
 **What happened.** Every trial with the real model, every recording and the
 demo depend on a rented RunPod pod; a new pod means installing Ollama and

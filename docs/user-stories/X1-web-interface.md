@@ -21,6 +21,8 @@ Other user stories for the interface: [README.md](README.md).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: one streamed web turn (SSE): ✅ with both models (9 min 04 on CPU, 7 s on GPU).
+
 ## US-X1-1 — Follow an answer and its reasoning live
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. **Real, checked in the browser**: the answer arrives as it is written, with a cursor; each step shows the tool, its arguments, the result and the duration (e.g. `read_file`, 21 ms); a failure is shown as "✗ Échec"; the block collapses and expands. **Simulated**: the token bar stays at 0, because the server does not send the usage yet. The badge now shows "Agent réel · modèle" when the interface is connected, and "Moteur simulé" otherwise.

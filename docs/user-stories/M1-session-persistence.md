@@ -10,6 +10,8 @@ M1.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: resume a session and recall a word: ✅ with both models (20 min 33 on CPU, 16 s on GPU).
+
 ## US-M1-1 — Pick up where I left off
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

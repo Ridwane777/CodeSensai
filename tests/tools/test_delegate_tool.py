@@ -361,3 +361,13 @@ def test_un_sous_agent_qui_tente_de_deleguer_recoit_un_refus_explicite():
     DelegateTool("h", "m", tools=_Gateway(), run_turn=sub_agent).run(task="x")
 
     assert not seen[0].ok and "ne redélègue pas" in seen[0].content
+
+
+def test_les_roles_qui_lisent_voient_les_fichiers_du_projet():
+    """Essai du 2026-11-06 : sans RAG, l'explorateur sans list_files ne trouvait pas
+    stats.py et le développeur créait un nouveau moyenne.py (ADR-0059)."""
+    from sensai.tools.delegate_tool import ROLES
+
+    for role in ("explorateur", "developpeur", "relecteur"):
+        assert "list_files" in ROLES[role].tools, role
+    assert "write_file" not in ROLES["explorateur"].tools

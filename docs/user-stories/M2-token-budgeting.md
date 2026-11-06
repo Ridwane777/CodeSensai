@@ -6,6 +6,8 @@ itself, never touching the saved session). The session-persistence half of
 M2's old scope (resuming a conversation across runs) is delivered by M1 —
 see [M1-session-persistence.md](M1-session-persistence.md).
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/context`: ✅ with both set-ups (< 1 s).
+
 ## US-M2-1 — A long session keeps working instead of hitting a wall (was User Story 1 of M2-token-budgeting.md)
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

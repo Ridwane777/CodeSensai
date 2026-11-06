@@ -1,5 +1,7 @@
 # Essais réels — [M1] Persistance de session & profils
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: resume a session and recall a word: ✅ with both models, qwen3:8b on CPU 20 min 33 (2 turns), qwen3-coder:30b on GPU 16 s. Earlier measurements below.
+
 Ce document garde la trace des vérifications de M1 faites avec de vrais
 modèles, en plus des tests automatiques (`tests/knowledge/test_memory.py`,
 `tests/test_cli_persistence.py`). Choix : [ADR-0007](../decisions/0007-persistance-des-sessions.md).

@@ -178,12 +178,44 @@ def test_un_fichier_toujours_mal_place_n_est_jamais_valide():
 
 # --- Les tests du projet comme verdict (ADR-0056, point 3) --------------------------
 
-def team_with_tests(answers, results):
-    """Une équipe dont le verdict vient d'un faux lanceur de tests du projet."""
-    outil, received = team(answers)
+def team_with_tests(answers, results, writes=True):
+    """Une équipe dont le verdict vient d'un faux lanceur de tests du projet ; le
+    développeur écrit stats.py à chaque passage (sauf `writes=False`)."""
+    from sensai.core.tools import ToolResult
+
+    queues = {role: iter(texts) for role, texts in answers.items()}
+    received = []
+
+    class Delegue:
+        def delegate(self, consigne, *, role, deadline, on_call):
+            received.append((role, consigne))
+            text = next(queues[role])
+            if role == "developpeur" and writes:
+                on_call("write_file", {"path": "stats.py", "content": text},
+                        ToolResult(ok=True, content="Replaced stats.py"))
+            return ToolResult(ok=True, content=text)
+
+    outil = TeamTool(Delegue())
     runs = iter(results)
     outil.test_runner = lambda: next(runs)
     return outil, received
+
+
+def test_sans_fichier_modifie_les_tests_ne_valident_pas():
+    """Essai du 2026-11-06 : l'écriture du développeur est refusée, le projet n'a pas
+    changé, ses tests passent… et l'équipe annonçait « validé »."""
+    lances = []
+    outil, received = team_with_tests({"explorateur": ["R"], "developpeur": ["V1", "V2"]},
+                                      [], writes=False)
+    outil.test_runner = lambda: lances.append(1) or (True, "1 passed")
+
+    result = outil.run(task="moyenne([]) doit lever ValueError")
+
+    assert lances == [], "les tests d'un projet inchangé ne sont pas lancés"
+    assert [r for r, _ in received] == ["explorateur", "developpeur", "developpeur"]
+    assert "Aucun fichier n'a été modifié" in received[2][1]
+    assert "validé" not in result.content
+    assert "aucun fichier modifié" in result.content
 
 
 def test_des_tests_qui_passent_valident_sans_relecteur():

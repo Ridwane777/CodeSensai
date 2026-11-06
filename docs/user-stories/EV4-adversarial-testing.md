@@ -11,6 +11,8 @@ decision in [ADR-0018](../decisions/0018-ecarts-adversariaux-xfail-stricts.md).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: adversarial corpus (no model): ✅ 85 cases, 19 known gaps.
+
 ## US-EV4-1 — Know what the defences really stop
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

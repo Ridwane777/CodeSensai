@@ -1,11 +1,13 @@
 # Évaluation des réponses et des hallucinations — [EV1]
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `sensai-eval run` on `ev1_sample.jsonl` (5 cases) was run for real: qwen3:8b as model and judge on CPU, report written in 25 min; qwen3-coder:30b on GPU in 19 s, mean relevance **3.40 / 5**, coherence **5.00 / 5**, faithfulness **0.42** (4 cases with claims), 3 claims of 7 flagged. These are a model's estimates, not measurements (see "Limites"). Earlier measurements below.
+
 Méthode, format des rapports, commandes pour reproduire et limites de
 l'évaluation par juge LLM décidée dans
 [l'ADR-0019](../decisions/0019-evaluation-par-juge-llm.md). Besoins :
 [user stories EV1](../user-stories/EV1-evaluation-hallucinations.md).
 
-**Résultat d'une exécution réelle : non mesuré.** Aucun serveur Ollama n'était
+**Jusqu'au 2026-11-06, résultat d'une exécution réelle : non mesuré** (voir l'encadré ci-dessus pour l'exécution réelle). Aucun serveur Ollama n'était
 joignable sur la machine où EV1 a été écrit (2026-10-14) : tout ce qui est
 testé l'est avec un juge simulé (`tests/eval/`), hors ligne. Aucune note de
 pertinence, de cohérence ou de fidélité n'est donc donnée dans ce dépôt. La

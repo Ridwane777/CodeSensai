@@ -13,6 +13,8 @@ internal Q&A, RAG). Agent loops and multi-turn conversations are excluded.
 The main risk is the false positive: two questions close in meaning that call
 for different answers. Hence the use case chosen here, the "repository FAQ".
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: cache on, same question twice: qwen3:8b ✅ (5 min 37, then 0.5 s); qwen3-coder:30b ✅ (9.0 s, then 1.8 s). Identical question only, not a rephrasing.
+
 ## US-A6-1 — The project FAQ
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >

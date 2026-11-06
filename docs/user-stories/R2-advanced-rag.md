@@ -20,6 +20,8 @@ threshold) are settled in the ADR dedicated to R2.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: same RAG scenario as R1: ✅ with both models; the ranking itself is measured in [R2-rag.md](../performance/R2-rag.md).
+
 ## US-R2-1 — The passage that really answers, first
 > **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

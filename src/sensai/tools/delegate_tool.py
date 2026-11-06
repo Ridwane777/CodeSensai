@@ -60,7 +60,8 @@ class Role:
     tools: frozenset[str]
 
 
-_READ = frozenset({"read_file", "search_codebase", "recall_facts"})
+# list_files (ADR-0059) : sans RAG, seul moyen pour un rôle de voir les fichiers du projet.
+_READ = frozenset({"read_file", "list_files", "search_codebase", "recall_facts"})
 ROLES: dict[str, Role] = {
     "explorateur": Role(
         "Tu es l'explorateur de l'équipe. Tu lis et cherches dans le projet, tu ne "

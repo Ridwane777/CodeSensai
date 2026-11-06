@@ -90,6 +90,7 @@ You > Read calcul.py, run it, fix the bug, then verify.
 | Tool | What it does |
 |---|---|
 | `search_codebase` | Searches the project's code and docs (`kind` filter: `code` or `doc`, and `path`: a folder) |
+| `list_files` | Lists the project's files, or one folder's (`.gitignore` and secrets left out, 200 paths max; [ADR-0059](../decisions/0059-list-files-tool.md)) |
 | `read_file` | Reads a file from the current folder (1 MB max) |
 | `write_file` | Creates or replaces a file, with diff and confirmation |
 | `run_code` | Runs Python in a disposable Docker container |

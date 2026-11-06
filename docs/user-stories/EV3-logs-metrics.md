@@ -24,6 +24,8 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: turn journal and metrics through the web API: ✅ with both set-ups.
+
 ## US-EV3-1 — Read back what the agent did
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: `read_file`, its arguments, 21 ms, "Succès".

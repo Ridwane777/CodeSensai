@@ -16,6 +16,8 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: AWS example key written by the model: ✅ masked with both models (7 min 36 on CPU, 3 s on GPU).
+
 ## US-EV2-1 — An API key pasted in the code never leaves
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

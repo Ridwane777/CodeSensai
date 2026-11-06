@@ -1,5 +1,7 @@
 # A2 — Orchestration multi-agent : essais réels
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `team_task` on `moyenne([])`: qwen3:8b on the laptop CPU ❌ (team does not finish); qwen3-coder:30b on a GPU ✅ 3 of 3 with RAG on (64–73 s), ✅ by hand with RAG off after `list_files` (ADR-0059) and the team fixes (backlog #27); open defects in backlog #28. Earlier measurements below.
+
 Essais faits le 2026-10-24 sur le pod RunPod (GPU, Ollama), modèle
 `qwen3-coder:30b`, depuis un poste Linux (client Python 3.12). Décisions :
 [ADR-0037](../decisions/0037-delegation-sous-agent-outil.md) et
