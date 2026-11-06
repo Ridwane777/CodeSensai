@@ -209,7 +209,9 @@ def open_rag_index(settings: dict, data_dir: Path, project: str) -> RagIndex:
 # Outils dont une réponse peut être mise en cache (A6, ADR-0033) : ils lisent le
 # projet, et les fichiers lus sont suivis pour invalider la réponse. Après tout
 # autre outil (écriture, exécution, web, mémoire de faits), on ne la garde pas.
-CACHEABLE_TOOLS = {"read_file", "search_codebase"}
+# list_files (ADR-0059) ne fait que lire : sans lui, une réponse qui avait
+# listé les fichiers n'entrait jamais en cache (répétition du 2026-11-06).
+CACHEABLE_TOOLS = {"read_file", "list_files", "search_codebase"}
 _PASSAGE_SOURCE = re.compile(r"^--- (.+?):\d+-\d+$", re.MULTILINE)
 
 

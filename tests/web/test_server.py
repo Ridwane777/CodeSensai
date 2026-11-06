@@ -382,6 +382,19 @@ def test_le_cache_repond_sans_rappeler_le_modele(make_env):
     assert len(env.script.calls) == 2, "/again redemande au modèle"
 
 
+def test_une_reponse_qui_a_liste_les_fichiers_va_en_cache(make_env):
+    """Répétition de la démo du 2026-11-06 : list_files (ADR-0059) ne fait que lire,
+    mais n'étant pas dans les outils « cachables », la réponse n'était jamais gardée."""
+    env = make_env(cache=True)
+    env.script.steps = [("call", "list_files", {}), Token("pytest -q"), Done("final_answer")]
+    session_id = env.session()
+    question = "Comment lancer les tests du projet ?"
+    env.stream(session_id, question)
+    events = env.stream(env.session(), question)
+    assert types(events)[0] == "cache_hit"
+    assert len(env.script.calls) == 1
+
+
 def test_les_sources_du_rag_sont_envoyees(make_env):
     env = make_env(rag=True)
     events = env.stream(env.session(), "Comment lancer les tests ?")

@@ -23,18 +23,32 @@ Target length: 6 to 7 minutes.
 
 ```bash
 (cd frontend && npm ci && npm run build)   # once
-cd <demo project>
-sensai-web --host <Ollama> --model qwen3-coder:30b   # http://127.0.0.1:8000
+python scripts/prepare_demo_project.py /tmp/codesensei-demo --force
+rm -rf /tmp/codesensei-demo-data
+cd /tmp/codesensei-demo
+SENSAI_HOME=/tmp/codesensei-demo-data \
+  sensai-web --host <Ollama> --model qwen3-coder:30b   # http://127.0.0.1:8000
 ```
+
+`SENSAI_HOME` keeps the demo's sessions, cache, facts and journal apart from
+your own `~/.sensai`: without it, an old conversation or an old cached answer
+of the same project path comes back on stage.
+
+`scripts/prepare_demo_project.py` builds the scenario's project (the invoice
+report's `stats.py`, a test, `deploiement.txt` with AWS's documentation example
+key) and Marc's `config.json` of step S0: the "reviewer" persona, the blocked
+topic, an MCP server, few-shot examples, cache and share links on, 300 s to
+answer a confirmation and 10 steps per turn. The Ollama address is given on
+the command line, never written in the project.
 
 Paste the access token printed at start into the interface. The "Moteur
 simulé" badge must **not** be shown; if it is, the server is not reachable
 (see the fallback plan).
 
-The features listed above are covered by automated tests and a headless
-browser run **without a model**; they have not been tried with
-`qwen3-coder:30b` yet. **Rehearse the full script with the real model on the
-presentation setup before the demo.** The model's answers vary from one
+Every feature was run with `qwen3-coder:30b` on 2026-11-06
+([trial](../performance/essais/essai-2026-11-06.md)); A3's approval in the web
+passed 2 times out of 4, keep its recording ready. **Rehearse the full script
+with the real model on the presentation setup before the demo.** The model's answers vary from one
 run to the next: the script below gives what to show, not the exact text.
 
 ## Script with the real server (use case: a developer picks up a project)
@@ -73,7 +87,7 @@ Real server, `qwen3-coder:30b` on the rented pod: say so at the start
 | S1 | Camille | Sidebar: reopen yesterday's conversation, "Reprends où on en était"; the agent knows her preferences and saved facts | M1, X1, M3 | [web-7](web/web-7-memoire-export-partage.webm), terminal [cli-4](cli/cli-4-memoire.webm) |
 | S2 | Camille | "Comment lancer les tests du projet ?" → answer with its source and "Inspirée de l'exemple" | R1, R2, A7 | [web-1](web/web-1-chat-sources-exemple.webm), [cli-1](cli/cli-1-agent.webm) |
 | S3 | Camille | "Le rapport plante quand un client n'a pas de facture, trouve pourquoi" → `read_file`, `run_code` in the sandbox, cause explained | A1, T4, T2, T1 | [cli-1](cli/cli-1-agent.webm) |
-| S4 | Camille | The agent proposes the fix: refuse once with an instruction ("lève plutôt une ValueError"), then "Autoriser" on the coloured diff | A3, T4 | [web-2](web/web-2-ecriture-diff.webm), [cli-8](cli/cli-8-dire-quoi-faire.webm), [cli-8b](cli/cli-8b-refus.webm) |
+| S4 | Camille | The agent proposes the fix: click "Refuser", then type "Non, lève plutôt une ValueError quand la liste est vide" (the web card has only Autoriser / Refuser; "Non, et dire quoi faire" is the terminal's menu), then "Autoriser" on the new coloured diff | A3, T4 | [web-2](web/web-2-ecriture-diff.webm), [cli-8](cli/cli-8-dire-quoi-faire.webm), [cli-8b](cli/cli-8b-refus.webm) |
 | S5 | Camille | "Ajoute un fichier de tests, demande-moi ce qu'il te manque" → form in the chat, filled | X4 | [web-3](web/web-3-formulaire.webm) |
 | S6 | Camille | "Ajoute une médiane au rapport" → relays explorer → developer → reviewer in the conversation, then the Agents page | A2, X1 | [web-4](web/web-4-delegation.webm), [cli-9](cli/cli-9-equipe.webm), [cli-5](cli/cli-5-delegation.webm) |
 | S7 | Camille | "Quelle est la dernière version de pytest ?" (web search, sources); "Regarde deploiement.txt" (AWS key masked); a company MCP tool | T3, EV2, T1 | [cli-7](cli/cli-7-mcp-web.webm), [cli-2](cli/cli-2-persona-garde-fous.webm) |
@@ -83,13 +97,31 @@ Real server, `qwen3-coder:30b` on the rented pod: say so at the start
 | S9 c | Marc | Journal page (each tool call, its duration); Quality page: "Évaluer la dernière réponse", then "Relancer les attaques" (85 cases) | EV3, EV1, EV4 | [web-6](web/web-6-journal-qualite-planification.webm) |
 | S9 d | Marc | Prompts page: "Essayer dans cette conversation" on the previous version; "Agent actif": switch to the "reviewer" persona and ask it to write a file (refused) | A4, A5 | [web-5](web/web-5-persona-prompts.webm) (versions, diff and persona switch; check in the video whether "Essayer" is clicked before quoting it) |
 
-Before the demo, add the "reviewer" persona (with `write_file` and `run_code` disabled) to the demo project's `config.json`: the repository's own config does not define it.
+The "reviewer" persona (with `write_file` and `run_code` disabled) is in the
+`config.json` written by `scripts/prepare_demo_project.py`; the repository's
+own config does not define it.
 
 What this script still does not cover from the journey: the **full EV1
 evaluation set** (`/eval run` in the chat runs it, but it takes minutes; on
 stage, evaluate the last answer instead) and **R2**, which is internal. The
 recordings were made before this script: their order differs, and some
 show the terminal where the script uses the web.
+
+### Phrases that worked in the rehearsal of 2026-11-06
+
+Rehearsed with `qwen3-coder:30b` in the web interface. Without the tool's name,
+the model often answers in text, and sometimes **claims an action it did not
+do** ("J'ai examiné le code", "J'ai enregistré le fait") with no tool call in
+the Journal (backlog #30). Name the tool, and check the Journal page.
+
+| Step | Say | Not |
+| --- | --- | --- |
+| S4 | Click **Refuser**, then type "Non, lève plutôt une ValueError quand la liste est vide"; then **Autoriser** the new diff | (the web card has no "dire quoi faire" option) |
+| S5 | "Ajoute un fichier de tests. Avant de l'écrire, utilise ask_user pour me demander dans un formulaire le nom du fichier et le style de test (pytest ou unittest)." | "Ajoute un fichier de tests, demande-moi ce qu'il te manque" (questions in text) |
+| S6 | "Utilise team_task : ajoute à stats.py une fonction mediane(notes) qui lève ValueError sur une liste vide, et un test pour ce cas." Refusing the developer's `run_code` calls is safe (backlog #28) | "Ajoute une médiane au rapport" (a plan in text, no team) |
+| S7 | "Quelle est la dernière version de pytest ?" (`web_search` was called); "Regarde deploiement.txt"; "Utilise l'outil de l'entreprise pour additionner 19 et 23" | |
+| S8 | "Utilise update_state pour noter dans SENSAI.md la décision : liste vide → ValueError."; for the fact, the chat command `/remember le rapport mensuel demande au moins une facture` (the model did not call `save_fact`, even named); the cache question again **in a new conversation** | "Retiens ce fait…" (claimed, not saved) |
+| S9 a | "Utilise schedule_task pour programmer chaque matin à 9 h un résumé des changements du projet." | |
 
 ### Criteria checked live, announced before each step
 

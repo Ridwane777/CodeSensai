@@ -24,6 +24,8 @@ Other user stories of the interface: [README.md](README.md).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `ask_user` form answered through `/answer`: ✅ with both models (8 min 57 on CPU, 8 s on GPU).
 
+> **Update on 2026-11-06 (demo rehearsal):** with `qwen3-coder:30b` in the web, "demande-moi ce qu'il te manque" made the model ask its questions **in text**; the form appeared only when the request named `ask_user` and a form. The agent does not yet choose the form on its own (backlog #30).
+
 ## US-X4-1 — Answer the agent without leaving the chat
 > **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ The real server now sends the agent's questions
