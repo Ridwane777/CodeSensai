@@ -73,6 +73,7 @@ class Scenario:
 
 
 class Trial:
+    rag = False  # --rag : le RAG reste actif dans tous les scénarios
     """Le projet jetable et les moyens de le piloter."""
 
     def __init__(self, base: Path, model: str, host: str,
@@ -120,7 +121,7 @@ class Trial:
         argv = [str(BIN / "sensai"), "--model", self.model, "--host", self.host, *extra]
         if new:
             argv.append("--new-session")
-        if not any(a.startswith("--rag") for a in extra):
+        if not self.rag and not any(a.startswith("--rag") for a in extra):
             argv.append("--no-rag")  # le RAG n'est mesuré que par R1/R2 : sinon trop lent sur CPU
         return self.run(argv, [*lines, "exit"])
 
@@ -445,6 +446,8 @@ def main() -> None:
     parser.add_argument("--host", default="http://localhost:11434")
     parser.add_argument("--only", help="features à jouer, séparées par des virgules")
     parser.add_argument("--no-web", action="store_true")
+    parser.add_argument("--rag", action="store_true",
+                        help="garder le RAG dans tous les scénarios (désactivé par défaut, sauf R1/R2)")
     parser.add_argument("--delegation-timeout", type=int,
                         help="délai des sous-agents (section tools de config.json), en secondes")
     parser.add_argument("--scenario-timeout", type=int, default=CLI_TIMEOUT,
@@ -456,8 +459,9 @@ def main() -> None:
     base = Path(tempfile.mkdtemp(prefix="sensai-essai-"))
     CLI_TIMEOUT = args.scenario_timeout
     t = Trial(base, args.model, args.host, args.delegation_timeout)
+    t.rag = args.rag
     report = {"date": date.today().isoformat(), "model": args.model,
-              "delegation_timeout": args.delegation_timeout, "results": []}
+              "delegation_timeout": args.delegation_timeout, "rag": args.rag, "results": []}
 
     def record(s: Scenario) -> None:
         print(f"[{s.feature}] {s.what} …", flush=True)

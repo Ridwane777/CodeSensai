@@ -3,7 +3,7 @@
 Persona: Camille, the developer of the scenario
 ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: read `stats.py` and explain `moyenne`: qwen3:8b on the laptop CPU ✅ (8 min 26); qwen3-coder:30b on a GPU ✅ (87 s; file read and right answer, although the script's check marked it failed).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: read `stats.py` and explain `moyenne`: qwen3:8b on the laptop CPU ✅ (8 min 26); qwen3-coder:30b on a GPU ✅ (file read and right answer; the first run was marked failed by the script's check, then 3 of 3 once fixed, 5–7 s).
 
 ## User Story 1: Debug a failing test by exploring the code
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).

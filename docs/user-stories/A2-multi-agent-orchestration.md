@@ -17,7 +17,7 @@ rather than handle everything in a single line of reasoning.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `team_task` on `moyenne([])`: qwen3:8b ❌ (the team did not finish, even with 30 min); qwen3-coder:30b ❌ (`team_task` never called: with RAG off the agent did not find `stats.py`, backlog #25). The same task passed on 2026-11-03.
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `team_task` on `moyenne([])`: qwen3:8b ❌ (the team did not finish, even with 30 min); qwen3-coder:30b ❌ 0 of 4 with RAG off (the agent did not find `stats.py`, backlog #25), ✅ 3 of 3 with RAG on (64–73 s, project tests pass).
 
 ## US-A2-1 — Split a task into delegated sub-tasks
 > **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).

@@ -13,7 +13,7 @@ Persona: Camille, the developer of the scenario
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: CLI refusal: ✅ with both models (nothing written). Web approval through `/confirm`: qwen3:8b ✅; qwen3-coder:30b ❌ (call written as text after a sentence, never run by design, ADR-0031, backlog #26).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: CLI refusal: ✅ with both models (nothing written). Web approval through `/confirm`: qwen3:8b ✅; qwen3-coder:30b 2 of 4 (failures: once a call written as text after a sentence, never run by design, ADR-0031, backlog #26; once a confirmation asked in words instead of calling `write_file`).
 
 ## US-A3-1 — See the exact plan before code runs
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).

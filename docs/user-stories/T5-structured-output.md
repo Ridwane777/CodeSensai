@@ -9,7 +9,7 @@ feed it into another tool), without extracting the information from free text.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/structured` on the project: ❌ with both models, schema respected but content wrong (qwen3:8b) or vague (qwen3-coder:30b); with RAG off the agent did not find `stats.py` (backlog #25).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/structured` on the project: ❌ with qwen3:8b; qwen3-coder:30b 0 of 4 with RAG off, 1 of 3 with RAG on. The schema is always respected, but the agent guesses file names instead of finding `stats.py`, once answering with a file that does not exist (backlog #25).
 
 ## US-T5-1 — Get an answer that follows a given schema
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
