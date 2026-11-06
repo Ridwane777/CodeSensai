@@ -96,7 +96,9 @@ TurnRunner = Callable[[str, str, list[dict], Any], Iterator[Event]]
 
 # Comme le CLI (A6, ADR-0033) : seule une réponse appuyée sur ces outils de
 # lecture du projet peut être mise en cache.
-CACHEABLE_TOOLS = {"read_file", "search_codebase"}
+# list_files (ADR-0059) ne fait que lire : sans lui, une réponse qui avait
+# listé les fichiers n'entrait jamais en cache (répétition du 2026-11-06).
+CACHEABLE_TOOLS = {"read_file", "list_files", "search_codebase"}
 _PASSAGE_SOURCE = re.compile(r"^--- (.+?):\d+-\d+$", re.MULTILINE)
 # Résultats de web_search (« 1. titre » puis l'URL, voir web_search_tool._format) :
 # l'onglet Sources de l'interface les liste (US-T3-1). Liens http(s) seulement.

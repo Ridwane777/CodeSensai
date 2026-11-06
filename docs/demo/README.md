@@ -24,9 +24,15 @@ Target length: 6 to 7 minutes.
 ```bash
 (cd frontend && npm ci && npm run build)   # once
 python scripts/prepare_demo_project.py /tmp/codesensei-demo --force
+rm -rf /tmp/codesensei-demo-data
 cd /tmp/codesensei-demo
-sensai-web --host <Ollama> --model qwen3-coder:30b   # http://127.0.0.1:8000
+SENSAI_HOME=/tmp/codesensei-demo-data \
+  sensai-web --host <Ollama> --model qwen3-coder:30b   # http://127.0.0.1:8000
 ```
+
+`SENSAI_HOME` keeps the demo's sessions, cache, facts and journal apart from
+your own `~/.sensai`: without it, an old conversation or an old cached answer
+of the same project path comes back on stage.
 
 `scripts/prepare_demo_project.py` builds the scenario's project (the invoice
 report's `stats.py`, a test, `deploiement.txt` with AWS's documentation example
@@ -100,6 +106,22 @@ evaluation set** (`/eval run` in the chat runs it, but it takes minutes; on
 stage, evaluate the last answer instead) and **R2**, which is internal. The
 recordings were made before this script: their order differs, and some
 show the terminal where the script uses the web.
+
+### Phrases that worked in the rehearsal of 2026-11-06
+
+Rehearsed with `qwen3-coder:30b` in the web interface. Without the tool's name,
+the model often answers in text, and sometimes **claims an action it did not
+do** ("J'ai examiné le code", "J'ai enregistré le fait") with no tool call in
+the Journal (backlog #30). Name the tool, and check the Journal page.
+
+| Step | Say | Not |
+| --- | --- | --- |
+| S4 | Click **Refuser**, then type "Non, lève plutôt une ValueError quand la liste est vide"; then **Autoriser** the new diff | (the web card has no "dire quoi faire" option) |
+| S5 | "Ajoute un fichier de tests. Avant de l'écrire, utilise ask_user pour me demander dans un formulaire le nom du fichier et le style de test (pytest ou unittest)." | "Ajoute un fichier de tests, demande-moi ce qu'il te manque" (questions in text) |
+| S6 | "Utilise team_task : ajoute à stats.py une fonction mediane(notes) qui lève ValueError sur une liste vide, et un test pour ce cas." Refusing the developer's `run_code` calls is safe (backlog #28) | "Ajoute une médiane au rapport" (a plan in text, no team) |
+| S7 | "Quelle est la dernière version de pytest ?" (`web_search` was called); "Regarde deploiement.txt"; "Utilise l'outil de l'entreprise pour additionner 19 et 23" | |
+| S8 | "Utilise update_state pour noter dans SENSAI.md la décision : liste vide → ValueError."; for the fact, the chat command `/remember le rapport mensuel demande au moins une facture` (the model did not call `save_fact`, even named); the cache question again **in a new conversation** | "Retiens ce fait…" (claimed, not saved) |
+| S9 a | "Utilise schedule_task pour programmer chaque matin à 9 h un résumé des changements du projet." | |
 
 ### Criteria checked live, announced before each step
 

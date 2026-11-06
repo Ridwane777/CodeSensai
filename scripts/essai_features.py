@@ -447,7 +447,8 @@ def main() -> None:
     parser.add_argument("--only", help="features à jouer, séparées par des virgules")
     parser.add_argument("--no-web", action="store_true")
     parser.add_argument("--rag", action="store_true",
-                        help="garder le RAG dans tous les scénarios (désactivé par défaut, sauf R1/R2)")
+                        help="garder le RAG dans tous les scénarios "
+                             "(désactivé par défaut, sauf R1/R2)")
     parser.add_argument("--delegation-timeout", type=int,
                         help="délai des sous-agents (section tools de config.json), en secondes")
     parser.add_argument("--scenario-timeout", type=int, default=CLI_TIMEOUT,
