@@ -157,6 +157,13 @@ With the simulated engine:
 > because [reason: network, pod, model]. The quality figures shown are
 > examples, not measurements."
 
+On the hardware, with the numbers of the
+[trial of 2026-11-06](../performance/essais/essai-2026-11-06.md):
+
+> "On our laptops without a GPU, `qwen3:8b` passes 26 of the 28 feature
+> scenarios, but one question takes 7 to 11 minutes. On a rented 24 GB GPU,
+> `qwen3-coder:30b` answers in 4 to 20 seconds; that is what you see here."
+
 Never let the audience believe that simulated answers come from a model. If
 asked what is real: [simule-vs-reel.md](../architecture/web/simule-vs-reel.md).
 

@@ -1,5 +1,7 @@
 # Interface web réelle : essai de bout en bout
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: web scenarios through `sensai-web`'s API: X1 streamed turn ✅ (qwen3:8b 9 min 04, qwen3-coder:30b 7 s), X4 form ✅, X2 fork ✅, X3 export and share ✅, EV3 journal ✅; A3 approval through `/confirm` ✅ with qwen3:8b, 2 of 4 with qwen3-coder:30b (backlog #26). Earlier measurements below.
+
 Décision : [ADR-0035](../decisions/0035-serveur-web-reel.md).
 
 **Méthode** (2026-10-18). `sensai-web` lancé sur un petit projet d'essai (un

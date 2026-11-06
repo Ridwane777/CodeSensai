@@ -1,5 +1,7 @@
 # Essai réel — [M3] Mémoire de faits
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/remember` then `/profile`: ✅ with both set-ups (< 1 s). Earlier measurements below.
+
 Vérification de M3 avec le vrai modèle, en plus des tests automatiques
 (`tests/knowledge/test_facts.py`, `tests/tools/test_fact_tools.py`, et les
 tests M3 de `tests/test_cli_rag.py`). Choix :

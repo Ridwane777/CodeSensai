@@ -1,5 +1,7 @@
 # T5 — Sortie structurée : la réponse est-elle fondée sur le projet ?
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/structured` on the project: qwen3-coder:30b on GPU ✅ 3 of 3 with RAG on after the index fix, ✅ 3 of 3 with RAG off after `list_files` (10–24 s); qwen3:8b on CPU ❌ (calls no tool, names one of its own MCP tools). Earlier measurements below.
+
 Mesures du 2026-10-24 sur le pod RunPod (GPU, Ollama), modèle
 `qwen3-coder:30b`, client Linux (Python 3.12). Décisions :
 [ADR-0036](../decisions/0036-sortie-structuree-format-json-schema.md) et

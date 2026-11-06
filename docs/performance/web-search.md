@@ -1,5 +1,7 @@
 # T3 — Recherche web : essais réels du moteur
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: isolated web search: ✅ `python.org` with both models, qwen3:8b on CPU 11 min 16, qwen3-coder:30b on GPU 10 s. Earlier measurements below.
+
 Mesures du 2026-10-24, poste Linux (Docker local, image `sensai-browser`),
 agent sur le pod RunPod (`qwen3-coder:30b`). Décision :
 [ADR-0040](../decisions/0040-recherche-web-duckduckgo-et-repli-bing.md).

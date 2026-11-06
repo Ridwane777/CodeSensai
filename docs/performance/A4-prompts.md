@@ -1,5 +1,7 @@
 # Essai réel — [A4] Prompt Versioning
 
+> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `sensai-prompt history` and `check`: ✅ (< 1 s, no model call). Earlier measurements below.
+
 Ce document garde la trace de la vérification d'A4 avec un vrai modèle, en
 plus des tests automatiques (`tests/knowledge/test_prompt_versions.py`,
 `tests/test_prompt_cli.py`, `tests/test_config.py`,
