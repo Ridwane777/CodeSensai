@@ -21,6 +21,8 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: MCP tool `calc`: ✅ `42` with both models (7 min 33 on CPU, 4 s on GPU).
+
 ## US-T1-1 — See when the agent uses an external tool
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. Every real tool is shown with the same card (checked with `read_file` and `write_file`). However, the server registers no MCP tool: the `mcp.fetch` call is still simulated.

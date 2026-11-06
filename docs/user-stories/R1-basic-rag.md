@@ -17,6 +17,8 @@ database, embedding model, splitting) are settled in the ADR dedicated to R1.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: where is `maximum` defined: ✅ `stats.py:6` with both models (7 min 41 on CPU, 57 s on GPU, indexing included).
+
 ## US-R1-1 — Ask a question about my own code
 > **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

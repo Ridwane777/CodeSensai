@@ -4,6 +4,8 @@ See [ADR-0044](../decisions/0044-automatic-few-shot.md) for the design
 (semantic few-shot selection, reusing the EV1 dataset format and the R1
 embedder).
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: few-shot example `pytest -q`: ✅ with both models (6 min 03 on CPU, 16 s on GPU).
+
 ## User Story 1: Writing a few-shot library without inventing a new format
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

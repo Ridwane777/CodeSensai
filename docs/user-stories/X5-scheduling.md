@@ -7,6 +7,8 @@ Translated from French on 2026-10-29.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-schedule add` then `run`: ✅ with both models (3 min 56 on CPU, 4 s on GPU).
+
 ## US-X5-1 — Get a summary every day without starting anything by hand
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

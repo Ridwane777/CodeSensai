@@ -27,6 +27,8 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: isolated web search: ✅ `python.org` with both models (11 min 16 on CPU, 10 s on GPU).
+
 ## US-T3-1 — Check the cited web sources
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The `web_search` tool is real on the server side, but the server does not send `web_results` yet: the pages consulted appear in the step's observation, not in the Sources tab. Not tried in the browser yet.

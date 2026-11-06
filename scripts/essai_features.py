@@ -134,7 +134,8 @@ def has(pattern: str, text: str) -> bool:
 
 def b1_a1(t: Trial):
     r = t.chat(["Lis stats.py et dis-moi en une phrase ce que fait la fonction moyenne."])
-    return has(r"read_file", r.out) and has(r"moyenne|somme|divis", r.out), r
+    # Le CLI affiche « Lecture(stats.py) », pas le nom de l'outil (essai du 2026-11-06).
+    return has(r"read_file|Lecture\(", r.out) and has(r"moyenne|somme|divis", r.out), r
 
 
 def t4_write(t: Trial):

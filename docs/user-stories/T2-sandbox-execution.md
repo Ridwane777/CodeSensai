@@ -16,6 +16,8 @@ these stories guarantee that the error comes back complete enough for that to wo
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `run_code` in the Docker sandbox: ✅ `42` with both models (7 min 43 on CPU, 5 s on GPU).
+
 ## US-T2-1 — Run code without putting my machine at risk
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

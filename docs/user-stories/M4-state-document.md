@@ -20,6 +20,8 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/state`: ✅ with both set-ups (< 1 s).
+
 ## US-M4-1 — Know where the project stands when coming back to it
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

@@ -16,6 +16,8 @@ version identifiers, commands) are decided in the A4 ADR
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-prompt history` and `check`: ✅ with both set-ups (< 1 s).
+
 ## US-A4-1 — Find what changed in a prompt, and when
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

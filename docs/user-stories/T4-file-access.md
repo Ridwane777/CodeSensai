@@ -8,6 +8,8 @@ for the team ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: write after confirmation: ✅ with both models (10 min 39 on CPU, 8 s on GPU).
+
 ## US-T4-1 — Let the agent read my project without exposing my secrets
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

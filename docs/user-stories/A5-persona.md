@@ -6,6 +6,8 @@ design (config-driven profiles, switch without losing context) and
 enrichments below user story 2 (keyword routing, per-persona tool
 restriction, session-only personas).
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/persona list` and `GET /api/personas`: ✅ with both set-ups (< 1 s).
+
 ## User Story 1: Configuring a persona without touching the code
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >

@@ -14,6 +14,8 @@ right.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-eval run` on 5 cases: qwen3:8b ✅ (25 min); qwen3-coder:30b ✅ (19 s; relevance 3.40/5, coherence 5.00/5, faithfulness 0.42).
+
 ## US-EV1-1 — Know whether a new prompt improves or degrades the answers
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

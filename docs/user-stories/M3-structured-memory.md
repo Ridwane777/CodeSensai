@@ -25,6 +25,8 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/remember` then `/profile`: ✅ with both set-ups (< 1 s).
+
 ## US-M3-1 — The agent remembers a fact without being told again
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 

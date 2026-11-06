@@ -23,6 +23,8 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: fork after the first message: ✅ with both set-ups.
+
 ## US-X2-1 — Resume from an edited message without losing the original
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: "Modifier" then "Envoyer la variante" creates "Variante 1", which is a new session on the server side with its own answer. Going back to the main branch is covered by the engine's tests (`httpEngine.test.ts`), without having been clicked.

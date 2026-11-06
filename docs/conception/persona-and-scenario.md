@@ -162,6 +162,12 @@ we validate it with.
   The same measure for `qwen3:8b` on a team laptop without GPU (i7-1355U,
   2026-11-02): about **4.5–4.8 tokens/s**, about 7 s for a short answer
   ([generation-parameters.md](../performance/generation-parameters.md)).
+- **Every feature on both set-ups, 2026-11-06**
+  ([trial](../performance/essais/essai-2026-11-06.md), same script, same
+  scenarios): on the team laptop's CPU with `qwen3:8b`, 26 of 28 scenarios
+  pass but one question takes **7 to 11 minutes**; on a 24 GB GPU pod with
+  `qwen3-coder:30b`, 24 of 28 pass (25 in fact) in **4 to 20 s** a turn. The
+  laptop shows that each feature works; Camille's day needs the GPU.
 
 **What "local" means here.** CodeSensei has no server of ours and calls no
 third-party AI API. The code, the index, the sessions, the facts and the
