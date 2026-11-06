@@ -51,7 +51,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X2-3 — Stop a turn that is going the wrong way
-*Added on 2026-11-01 by the stories audit. It describes what the server and the interface do today, so it was written after the code. The "send during a generation" part of US-X2-2 is still missing.*
+> **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, whose agent starts rewriting the wrong file,
 **I want** to stop the current turn with "■ Arrêter" or Escape and then send another instruction,

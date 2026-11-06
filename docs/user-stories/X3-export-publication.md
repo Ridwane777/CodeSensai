@@ -59,7 +59,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X3-3 — Export the session from the server, secrets masked
-*Added on 2026-11-01 by the stories audit. It describes the server export that the Export page uses with the real agent, so it was written after the code.*
+> **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, who must attach the session to her report for Marc,
 **I want** to download the conversation as JSON or Markdown built by the server, with secrets masked,
