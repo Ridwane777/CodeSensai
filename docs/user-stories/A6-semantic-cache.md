@@ -15,6 +15,7 @@ for different answers. Hence the use case chosen here, the "repository FAQ".
 
 ## US-A6-1 — The project FAQ
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+>
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
 
 **As** Camille, the developer arriving on a project,
@@ -31,6 +32,7 @@ Acceptance criteria:
 
 ## US-A6-2 — Not be fooled
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+>
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
 
 **As** Camille, the developer who relies on the answers to edit the code,
@@ -49,6 +51,7 @@ Acceptance criteria:
 
 ## US-A6-3 — Know and decide
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+>
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
 
 **As** Camille, the developer,
