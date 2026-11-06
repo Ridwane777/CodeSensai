@@ -196,7 +196,13 @@ class TeamTool:
         wrong: list[tuple[str, str]] = []
         for attempt in range(MAX_CORRECTIONS + 1):
             wrong = misplaced(task, created)
-            if wrong:
+            if self.test_runner is not None and not written:
+                # Les tests d'un projet inchangé passent : ils ne prouvent rien. Essai
+                # du 2026-11-06 : écriture refusée, et pourtant « validé ».
+                critique = ("À CORRIGER. Aucun fichier n'a été modifié : lis les fichiers "
+                            "concernés, puis fais la modification avec write_file.")
+                state = "à corriger"
+            elif wrong:
                 # Contrôle mécanique, avant toute relecture : un fichier écrit au
                 # mauvais endroit n'a pas à être jugé, il est renvoyé tel quel.
                 critique = "À CORRIGER. " + " ; ".join(
@@ -230,6 +236,9 @@ class TeamTool:
             state = "à corriger"
         judge = "des tests du projet" if self.test_runner is not None else "du relecteur"
         end = f"verdict {judge} : {state}"
+        if self.test_runner is not None and not written:
+            state = "à corriger"
+            end = "verdict : à corriger — aucun fichier modifié, les tests n'ont pas été lancés"
         if wrong:
             end = ("verdict : à corriger — fichier écrit au mauvais endroit : " + ", ".join(
                 f"{made} (la tâche demandait {asked}, qui n'a pas été modifié)"
