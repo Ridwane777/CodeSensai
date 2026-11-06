@@ -1,7 +1,7 @@
 {
   "date": "2026-11-06",
   "model": "qwen3-coder:30b",
-  "what": "reruns: B1/A1, T5, A2, A3-web with RAG off (runs), then T5 and A2 with RAG on (runs_rag); 3 runs each",
+  "what": "reruns: B1/A1, T5, A2, A3-web with RAG off (runs), then T5 and A2 with RAG on (runs_rag); 3 runs each; T5 with RAG on after the /structured index fix (runs_t5_after_fix)",
   "runs": [
     {
       "date": "2026-11-06",
@@ -191,6 +191,56 @@
           "seconds": 64.5,
           "exit": 0,
           "output": "                                     │\n│ 8  def maximum(notes):                                                     │\n│ 7 -    return max(notes)                                                   │\n│ 9 +    return max(notes)                                                   │\n╰────────────────────────────────────────────────────────────────────────────╯\nAutoriser ? [y/N] \n╭─ L'agent veut utiliser l'outil « write_file » (risque : write) ──────────────╮\n│    REPLACE /tmp/sensai-essai-pv6ivusm/projet/tests/test_stats.py (389        │\n│    bytes). Changes:                                                          │\n│                                                                              │\n│    ⋮                                                                         │\n│  3                                                                           │\n│  4  def test_moyenne():                                                      │\n│  5      assert moyenne([10, 20]) == 15                                       │\n│  6 +                                                                         │\n│  7 +def test_moyenne_liste_vide():                                           │\n│  8 +    \"\"\"Test que la fonction moyenne lève une ValueError quand la liste   │\n│    est vide.\"\"\"                                                              │\n│  9 +    try:                                                                 │\n│ 10 +        moyenne([])                                                      │\n│ 11 +        assert False, \"Une ValueError aurait dû être levée\"              │\n│ 12 +    except ValueError as e:                                              │\n│ 13 +        assert str(e) == \"La liste des notes ne peut pas être vide.\"     │\n╰──────────────────────────────────────────────────────────────────────────────╯\nAutoriser ? [y/N] équipe : tests du projet\n  ⎿  Chemin : explorateur → developpeur ; verdict des tests du projet : validé.\nLa tâche a été traitée avec succès par l'équipe. Voici les modifications apportées :\n\n1. **Fichier `stats.py`** :\n   - La fonction `moyenne` a été modifiée pour lever une `ValueError` lorsque la liste passée en paramètre est vide.\n   - Implémentation :\n     ```python\n     def moyenne(notes):\n         \"\"\"Moyenne d'une liste de notes.\"\"\"\n         if not notes:\n             raise ValueError(\"La liste ne peut pas être vide.\")\n         return sum(notes) / len(notes)\n     ```\n\n2. **Fichier `tests/test_stats.py`** :\n   - Un nouveau test a été ajouté pour vérifier que la fonction `moyenne` lève bien une `ValueError` lorsqu'une liste vide est passée.\n   - Implémentation du test :\n     ```python\n     def test_moyenne_liste_vide():\n         with pytest.raises(ValueError):\n             moyenne([])\n     ```\n\nLes tests du projet passent correctement, confirmant que les modifications sont fonctionnelles et ne causent pas de régression.\n> \n[pytest] ..                                                                       [100%]\n2 passed in 0.00s\n"
+        }
+      ]
+    }
+  ],
+  "runs_t5_after_fix": [
+    {
+      "date": "2026-11-06",
+      "model": "qwen3-coder:30b",
+      "delegation_timeout": null,
+      "rag": true,
+      "results": [
+        {
+          "feature": "T5",
+          "what": "réponse JSON conforme à un schéma (/structured)",
+          "ok": true,
+          "seconds": 24.0,
+          "exit": 0,
+          "output": "╭───────────────────────────────────────────────────────────╮\n│ ✻ Bienvenue dans CodeSensei !                             │\n│                                                           │\n│   /help pour l'aide, exit pour quitter                    │\n│                                                           │\n│   modèle  : qwen3-coder:30b                               │\n│   serveur : https://<id-du-pod>   -11434.proxy.runpod.net │\n│   projet  : /tmp/sensai-essai-nuvfv_b4/projet             │\n│   session : fc1159704d23 (nouvelle)                       │\n│   prompts : system v3, memory v1                          │\n╰───────────────────────────────────────────────────────────╯\n> Indexation du projet pour la recherche (bge-m3)...\n\n  1/5 fichiers\n  2/5 fichiers\n  3/5 fichiers\n  4/5 fichiers\n  5/5 fichiers\nIndex du projet à jour : 6 passages (5 fichier(s) indexé(s), 0 retiré(s)).\n● Recherche projet(fonction qui calcule une moyenne)\n  ⎿  2 passage(s) trouvé(s)\nLa fonction qui calcule une moyenne se nomme `moyenne` et se trouve dans le fichier `stats.py`. Elle prend une liste de notes en paramètre et retourne la moyenne arithmétique.\n\nVoici son code :\n```python\ndef moyenne(notes):\n    \"\"\"Moyenne d'une liste de notes.\"\"\"\n    return sum(notes) / len(notes)\n```\n\nUn test associé est présent dans `tests/test_stats.py` :\n```python\ndef test_moyenne():\n    assert moyenne([10, 20]) == 15\n```{\n  \"fonction\": \"moyenne\",\n  \"fichier\": \"stats.py\"\n}\n> "
+        }
+      ]
+    },
+    {
+      "date": "2026-11-06",
+      "model": "qwen3-coder:30b",
+      "delegation_timeout": null,
+      "rag": true,
+      "results": [
+        {
+          "feature": "T5",
+          "what": "réponse JSON conforme à un schéma (/structured)",
+          "ok": true,
+          "seconds": 16.7,
+          "exit": 0,
+          "output": "╭───────────────────────────────────────────────────────────╮\n│ ✻ Bienvenue dans CodeSensei !                             │\n│                                                           │\n│   /help pour l'aide, exit pour quitter                    │\n│                                                           │\n│   modèle  : qwen3-coder:30b                               │\n│   serveur : https://<id-du-pod>   -11434.proxy.runpod.net │\n│   projet  : /tmp/sensai-essai-b5nt00ga/projet             │\n│   session : 7e48343052cd (nouvelle)                       │\n│   prompts : system v3, memory v1                          │\n╰───────────────────────────────────────────────────────────╯\n> Indexation du projet pour la recherche (bge-m3)...\n\n  1/5 fichiers\n  2/5 fichiers\n  3/5 fichiers\n  4/5 fichiers\n  5/5 fichiers\nIndex du projet à jour : 6 passages (5 fichier(s) indexé(s), 0 retiré(s)).\n● Recherche projet(fonction qui calcule une moyenne)\n  ⎿  2 passage(s) trouvé(s)\nLa fonction qui calcule une moyenne se trouve dans le fichier `stats.py`, à la ligne 1 :\n\n```python\ndef moyenne(notes):\n    \"\"\"Moyenne d'une liste de notes.\"\"\"\n    return sum(notes) / len(notes)\n```\n\nUn test pour cette fonction est présent dans `tests/test_stats.py` à la ligne 4.{\n  \"fonction\": \"moyenne\",\n  \"fichier\": \"stats.py\"\n}\n> "
+        }
+      ]
+    },
+    {
+      "date": "2026-11-06",
+      "model": "qwen3-coder:30b",
+      "delegation_timeout": null,
+      "rag": true,
+      "results": [
+        {
+          "feature": "T5",
+          "what": "réponse JSON conforme à un schéma (/structured)",
+          "ok": true,
+          "seconds": 18.5,
+          "exit": 0,
+          "output": "╭───────────────────────────────────────────────────────────╮\n│ ✻ Bienvenue dans CodeSensei !                             │\n│                                                           │\n│   /help pour l'aide, exit pour quitter                    │\n│                                                           │\n│   modèle  : qwen3-coder:30b                               │\n│   serveur : https://<id-du-pod>   -11434.proxy.runpod.net │\n│   projet  : /tmp/sensai-essai-pqlk4bxt/projet             │\n│   session : 068d6cc93a40 (nouvelle)                       │\n│   prompts : system v3, memory v1                          │\n╰───────────────────────────────────────────────────────────╯\n> Indexation du projet pour la recherche (bge-m3)...\n\n  1/5 fichiers\n  2/5 fichiers\n  3/5 fichiers\n  4/5 fichiers\n  5/5 fichiers\nIndex du projet à jour : 6 passages (5 fichier(s) indexé(s), 0 retiré(s)).\n● Recherche projet(fonction qui calcule une moyenne)\n  ⎿  2 passage(s) trouvé(s)\nLa fonction qui calcule une moyenne se nomme `moyenne` et se trouve dans le fichier `stats.py`. Elle prend une liste de notes en paramètre et retourne la moyenne arithmétique.\n\nVoici son code :\n```python\ndef moyenne(notes):\n    \"\"\"Moyenne d'une liste de notes.\"\"\"\n    return sum(notes) / len(notes)\n```\n\nUn test associé à cette fonction est présent dans `tests/test_stats.py`.{\n  \"fonction\": \"moyenne\",\n  \"fichier\": \"stats.py\"\n}\n> "
         }
       ]
     }

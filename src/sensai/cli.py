@@ -497,9 +497,31 @@ def main() -> None:
     cache = open_answer_cache(settings, data_dir, project)
     last_question = ""
 
+    def ensure_rag_index() -> RagIndex:
+        """Ouvre l'index du projet au premier besoin, puis le tient à jour.
+
+        Partagé par la boucle de chat et `/structured` : l'outil `search_codebase`
+        n'a d'index qu'une fois celui-ci ouvert. Sans cela, un `/structured` tapé
+        avant toute question répondait « projet non indexé » et l'agent devinait
+        des noms de fichiers (essai du 2026-11-06, T5)."""
+        nonlocal rag_index
+        if rag_index is None:
+            rag_index = open_rag_index(settings, data_dir, project)
+            rag_tool.index = rag_index
+        else:
+            # Fichiers créés ou modifiés depuis l'ouverture (souvent par
+            # l'agent) : au plus une mise à jour toutes les 30 s.
+            rag_index.refresh_if_stale(Path(project))
+        return rag_index
+
     def gather_for_structured(question: str) -> str:
         """T5 en deux temps (ADR-0039) : l'agent cherche avec ses outils, à travers
         la même passerelle (mêmes confirmations), avant la mise en forme par schéma."""
+        if rag_on:
+            try:
+                ensure_rag_index()
+            except (EmbeddingError, sqlite3.Error, OSError) as e:
+                ui.warn(f"(avertissement : recherche dans le projet indisponible — {e})")
         view = ui.TurnView()
         found = ""
         messages = [{"role": "system", "content": system_prompt()},
@@ -654,13 +676,7 @@ def main() -> None:
         sources: list[str] = []
         if rag_on:
             try:
-                if rag_index is None:
-                    rag_index = open_rag_index(settings, data_dir, project)
-                    rag_tool.index = rag_index
-                else:
-                    # Fichiers créés ou modifiés depuis l'ouverture (souvent par
-                    # l'agent) : au plus une mise à jour toutes les 30 s.
-                    rag_index.refresh_if_stale(Path(project))
+                ensure_rag_index()
                 hits = rag_index.search(
                     user_input, top_k=settings["rag_top_k"], min_score=settings["rag_min_score"]
                 )
