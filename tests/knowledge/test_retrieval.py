@@ -96,7 +96,7 @@ def test_reclassement_rate_garde_l_ordre_de_la_fusion(monkeypatch, contenu):
 
 def test_modele_injoignable_garde_l_ordre(monkeypatch):
     def panne(*a, **k):
-        raise requests.ConnectionError("pod éteint")
+        raise requests.ConnectionError("Ollama éteint")
 
     monkeypatch.setattr(requests, "post", panne)
     assert LlmReranker("http://h", "m")("q", passages(2)) == passages(2)

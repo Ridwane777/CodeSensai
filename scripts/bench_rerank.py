@@ -11,8 +11,8 @@ Deux jeux de questions : celui de R1 (15 questions, `bench_rag.py`) et un jeu
 « tenu à part » de 10 questions sur le code arrivé depuis, écrit avant toute
 mesure, pour vérifier que le choix ne vaut pas seulement sur le jeu de R1.
 
-    python scripts/bench_rerank.py --host http://<pod>:11434 --out r2.json
-    python scripts/bench_rerank.py --host http://<pod>:11434 --production
+    python scripts/bench_rerank.py --host http://<hôte-ollama>:11434 --out r2.json
+    python scripts/bench_rerank.py --host http://<hôte-ollama>:11434 --production
 
 `--production` mesure le code livré à la place des variantes : `RagIndex.search`
 avec `LlmReranker`, le seuil et le nombre de passages par défaut du CLI.

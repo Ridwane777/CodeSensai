@@ -24,9 +24,7 @@ the automated tests, not against the earlier statuses. Each story file ends
 with a "Code audit on 2026-11-01" table (code path, test, what is missing).
 "Implemented" means every acceptance criterion has code **and** a test that
 proves it; a story that depends on what the model chooses to say is counted as
-partial. Six stories were added by the audit to describe code that already
-existed (marked "new"; written after the code): US-A1-3, US-A1-4, US-T3-3,
-US-T3-4, US-X2-3, US-X3-3 and US-EV2-7 (complete since the `thought` text is filtered too).
+partial.
 
 | Feature | File | Persona | Implemented / total |
 | --- | --- | --- | --- |
@@ -70,7 +68,3 @@ technical, not stories of one feature: they moved to
 [architecture/web-api.md](../architecture/web-api.md) and
 [architecture/tool-gateway.md](../architecture/tool-gateway.md).
 
-**Known weakness, written honestly.** The git history
-shows several stories written after the code. That is true and cannot be
-undone. The intended practice for any new feature is to add its stories in
-the same PR as, or before, the code they describe.

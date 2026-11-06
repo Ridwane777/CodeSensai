@@ -111,8 +111,8 @@ RERANK_PROMPT = (
 class LlmReranker:
     """Le modèle de chat reclasse les `depth` premiers passages, en un seul appel.
 
-    Mesuré sur le pod (ADR-0032) : le bon fichier passe de 5 à 12 fois sur 15
-    en première position, pour environ 3 s de plus. En cas d'échec (pod
+    Mesuré avec le vrai modèle (ADR-0032) : le bon fichier passe de 5 à 12 fois sur 15
+    en première position, pour environ 3 s de plus. En cas d'échec (Ollama
     injoignable, JSON invalide), l'ordre reçu est rendu tel quel : le
     reclassement améliore la recherche, il ne doit jamais la casser.
     """

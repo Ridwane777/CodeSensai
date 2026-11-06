@@ -33,6 +33,7 @@ from sensai.core.ollama_client import (
     OllamaError,
     generation_options,
     set_generation_options,
+    set_request_timeout,
     stream_chat,
 )
 from sensai.core.structured import StructuredOutputError, handle_structured_command
@@ -143,7 +144,7 @@ def preload_model(host: str, model: str, num_ctx: int | None = None) -> None:
     """Charge le modèle dans la mémoire du serveur avant la première question.
 
     Sans ça, le premier appel attend le chargement (environ 80 s pour
-    qwen3-coder:30b sur le pod) et dépasse le délai du client. En cas d'échec,
+    qwen3-coder:30b) et dépasse le délai du client. En cas d'échec,
     on prévient et on continue : la première question réessaiera.
 
     `num_ctx` (M2, ADR-0045) : Ollama recharge le modèle quand la fenêtre d'une
@@ -290,6 +291,7 @@ def main() -> None:
     num_ctx = settings.get("num_ctx")
     # Paramètres de génération (ADR-0057) : appliqués à chaque appel de chat.
     set_generation_options(settings.get("generation"))
+    set_request_timeout(settings.get("request_timeout"))
 
     # --- Mémoire entre sessions (feature M1, ADR-0007) ---
     data_dir = Path(settings["data_dir"]).expanduser() if settings["data_dir"] else None

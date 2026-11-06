@@ -20,8 +20,10 @@ import pytest
 def _parametres_de_generation_neutres():
     """Le CLI règle les paramètres de génération pour tout le processus (ADR-0057) :
     sans remise à zéro, un test qui lance le CLI les laisserait aux tests suivants."""
-    from sensai.core.ollama_client import set_generation_options
+    from sensai.core.ollama_client import set_generation_options, set_request_timeout
 
     set_generation_options(None)
+    set_request_timeout(None)
     yield
     set_generation_options(None)
+    set_request_timeout(None)

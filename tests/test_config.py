@@ -327,3 +327,14 @@ def test_le_cache_est_desactive_par_defaut(tmp_path, monkeypatch):
     assert get_settings()["cache"] is False
     monkeypatch.setattr("sys.argv", ["sensai", "--cache"])
     assert get_settings()["cache"] is True
+
+
+def test_request_timeout_de_config_json(tmp_path):
+    from sensai.config import request_timeout_from_config
+    from sensai.core.ollama_client import DEFAULT_REQUEST_TIMEOUT
+
+    assert request_timeout_from_config({}) == DEFAULT_REQUEST_TIMEOUT
+    assert request_timeout_from_config({"request_timeout": 900}) == 900
+    for faux in (0, -5, "600", True, 1.5):
+        with pytest.raises(ValueError, match="request_timeout"):
+            request_timeout_from_config({"request_timeout": faux})

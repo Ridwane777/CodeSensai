@@ -10,7 +10,7 @@ tester la recherche sans réseau ni modèle.
 
 Les tests qui comptent le plus :
 - `test_env_jamais_indexe_meme_sans_gitignore` : un secret indexé peut partir
-  au modèle, voire sur le pod distant. Il échoue si on retire la liste
+  au modèle, voire vers un serveur Ollama distant. Il échoue si on retire la liste
   interdite en dur.
 - `test_fichier_supprime_n_est_plus_cite` : sinon l'agent cite du code qui
   n'existe plus.
@@ -301,7 +301,7 @@ def test_le_contexte_cite_fichier_et_lignes(projet, index):
 
 
 def test_le_contexte_numerote_chaque_ligne(projet, index):
-    """Essai réel sur RunPod : sans numéros, le modèle a cité cli.py:123-127 pour
+    """Essai réel : sans numéros, le modèle a cité cli.py:123-127 pour
     du code situé ligne 112. Un modèle ne compte pas les lignes d'un passage : il
     doit lire le numéro devant chacune."""
     index.update(projet)

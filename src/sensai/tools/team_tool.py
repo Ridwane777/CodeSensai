@@ -34,7 +34,7 @@ from sensai.tools.delegate_tool import (
 
 MAX_CORRECTIONS = 1
 # En dessous, lancer une étape de plus ne servirait à rien : un seul appel au
-# modèle en prend souvent autant (mesuré sur le pod, 6 à 30 s par sous-agent).
+# modèle en prend souvent autant (mesuré, 6 à 30 s par sous-agent).
 MIN_STEP_S = 10.0
 # Au-delà, le contenu d'un fichier écrit est tronqué dans la consigne du relecteur.
 MAX_REVIEWED_CHARS = 12_000
@@ -65,7 +65,7 @@ def misplaced(task: str, created: set[str]) -> list[tuple[str, str]]:
 
 def review_request(task: str, work: str, written: dict[str, str]) -> str:
     """La consigne du relecteur : la tâche, le compte rendu du développeur et
-    surtout le contenu RÉELLEMENT écrit. Mesuré sur le pod : avec le seul compte
+    surtout le contenu RÉELLEMENT écrit. Mesuré avec le vrai modèle : avec le seul compte
     rendu, le relecteur validait 6 fois sur 6 un travail faux, sans rien lire."""
     if written:
         files = "\n\n".join(
@@ -133,7 +133,7 @@ class TeamTool:
     ):
         self.delegate = delegate
         # Les tests du projet, s'il en a (ADR-0056, point 3) : ils remplacent le
-        # verdict du relecteur, qui validait des travaux faux sur le pod.
+        # verdict du relecteur, qui validait des travaux faux lors des essais.
         self.test_runner = test_runner
         # Affiche chaque passage de relais pendant le travail (le terminal, en CLI).
         self.notify = notify or (lambda message: None)
@@ -236,7 +236,7 @@ class TeamTool:
                 for made, asked in wrong))
         if state != "validé":
             # La chaîne a fait son travail : c'est un résultat, pas une panne. Mesuré
-            # sur le pod : rendu comme un échec, l'agent principal relançait l'équipe
+            # avec le vrai modèle : rendu comme un échec, l'agent principal relançait l'équipe
             # (3 fois, 190 s) au lieu de transmettre les remarques.
             end += " ; ne relance pas l'équipe, transmets ces remarques à l'utilisateur"
         return self._report(path, steps, end, ok=True)

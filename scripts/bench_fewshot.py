@@ -10,10 +10,10 @@ bibliothèque, on calcule la similarité (bge-m3, cosinus) avec :
 
 Pas encore exécuté (pas d'Ollama avec bge-m3 disponible au moment d'écrire
 ce script) : `DEFAULT_MIN_SCORE = 0.75` dans `knowledge/fewshot.py` reste
-une **estimation**, pas une mesure. Faire tourner ce script sur le pod et
+une **estimation**, pas une mesure. Faire tourner ce script avec le vrai modèle et
 reporter les résultats dans docs/performance/A7-fewshot.md (revue PR #96).
 
-    python scripts/bench_fewshot.py --host http://<pod>:11434 --out a7.json
+    python scripts/bench_fewshot.py --host http://<hôte-ollama>:11434 --out a7.json
 """
 from __future__ import annotations
 

@@ -35,6 +35,22 @@ def generation_options() -> dict[str, Any]:
     return dict(_generation)
 
 
+# Délais HTTP (connexion, lecture). La lecture couvre l'attente du premier
+# morceau : sur CPU, qwen3:8b lit le prompt système et les outils (plusieurs
+# milliers de tokens) à ~10 tokens/s, soit plusieurs minutes avant de répondre.
+# 60 s faisaient échouer chaque tour sur le portable de développement
+# (docs/performance/essais/essai-2026-11-06.md). La connexion reste courte : un
+# Ollama arrêté est signalé aussitôt.
+CONNECT_TIMEOUT = 10
+DEFAULT_REQUEST_TIMEOUT = 600
+_timeout = {"read": DEFAULT_REQUEST_TIMEOUT}
+
+
+def set_request_timeout(seconds: float | None) -> None:
+    """Délai d'attente d'une réponse d'Ollama, réglé au démarrage (None : le défaut)."""
+    _timeout["read"] = seconds or DEFAULT_REQUEST_TIMEOUT
+
+
 def stream_chat_messages(
     host: str,
     model: str,
@@ -73,7 +89,8 @@ def stream_chat_messages(
         payload["options"] = merged
 
     try:
-        response = requests.post(url, json=payload, stream=True, timeout=60)
+        response = requests.post(url, json=payload, stream=True,
+                                 timeout=(CONNECT_TIMEOUT, _timeout["read"]))
         response.raise_for_status()
     except requests.exceptions.ConnectionError as e:
         raise OllamaError(
@@ -81,7 +98,10 @@ def stream_chat_messages(
             "Vérifiez que `ollama serve` tourne bien."
         ) from e
     except requests.exceptions.Timeout as e:
-        raise OllamaError("Ollama ne répond pas (timeout).") from e
+        raise OllamaError(
+            f"Ollama ne répond pas (timeout de {_timeout['read']:g} s). Sur CPU, augmenter "
+            "\"request_timeout\" dans config.json ou --request-timeout."
+        ) from e
     except requests.exceptions.HTTPError as e:
         detail = response.text[:200] if response is not None else str(e)
         raise OllamaError(f"Erreur Ollama : {detail}") from e

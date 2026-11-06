@@ -1,7 +1,7 @@
 """
 Les tests du projet comme verdict de la chaîne d'équipe (ADR-0056, point 3).
 
-Mesuré sur le pod : un relecteur qui est un modèle validait un travail faux
+Mesuré avec le vrai modèle : un relecteur qui est un modèle validait un travail faux
 6 fois sur 6 tant qu'il ne recevait pas le contenu écrit (retrospective,
 section 9). Quand le projet a des tests, c'est eux qui décident : ils ne se
 laissent pas convaincre par le compte rendu du développeur.

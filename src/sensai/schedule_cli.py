@@ -27,9 +27,10 @@ from sensai.config import (
     load_prompts,
     max_iterations_from_config,
     num_ctx_from_config,
+    request_timeout_from_config,
 )
 from sensai.core.agent import run_agent_turn
-from sensai.core.ollama_client import set_generation_options
+from sensai.core.ollama_client import set_generation_options, set_request_timeout
 from sensai.execution.file_permissions import FilePermissions
 from sensai.execution.guardrails import InputRules
 from sensai.execution.tool_policy import ToolPreferences
@@ -124,6 +125,7 @@ def _make_scheduler(
     num_ctx = num_ctx_from_config(file_config)
     # Paramètres de génération et nombre d'étapes (ADR-0057), comme le CLI.
     set_generation_options(generation_from_config(file_config))
+    set_request_timeout(request_timeout_from_config(file_config))
     max_iterations = max_iterations_from_config(file_config)
     return Scheduler(
         store,

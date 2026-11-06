@@ -30,8 +30,14 @@ from sensai.config import (
     load_config_file,
     load_prompts,
     num_ctx_from_config,
+    request_timeout_from_config,
 )
-from sensai.core.ollama_client import OllamaError, set_generation_options, stream_chat
+from sensai.core.ollama_client import (
+    OllamaError,
+    set_generation_options,
+    set_request_timeout,
+    stream_chat,
+)
 from sensai.eval.dataset import DatasetError, load_dataset
 from sensai.eval.judge import (
     DEFAULT_MAX_RETRIES,
@@ -198,6 +204,7 @@ def run_command(args: argparse.Namespace) -> int:
         # ADR-0057 : les réponses générées (--generate) suivent les mêmes paramètres
         # que le CLI ; le juge garde sa température 0 (judge.py).
         set_generation_options(generation_from_config(file_config))
+        set_request_timeout(request_timeout_from_config(file_config))
     except ValueError as e:
         _error(str(e))
         return EXIT_USAGE

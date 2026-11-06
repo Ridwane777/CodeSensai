@@ -10,7 +10,7 @@ avec :
 Le jeu a été écrit le 2026-10-18, avant toute mesure. Résultats et choix :
 docs/performance/A6-cache.md.
 
-    python scripts/bench_cache.py --host http://<pod>:11434 --out a6.json
+    python scripts/bench_cache.py --host http://<hôte-ollama>:11434 --out a6.json
 """
 # ruff: noqa: E501  (les jeux de questions tiennent sur une ligne chacun)
 from __future__ import annotations

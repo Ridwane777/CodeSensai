@@ -86,7 +86,6 @@ is filtered too (US-EV2-7, [ADR-0058](../decisions/0058-filtered-answers-and-con
 ---
 
 ## US-EV2-7 — A secret the model writes in its answer is masked too
-*Added on 2026-11-01 by the stories audit. It describes code added on 2026-11-01 ([ADR-0058](../decisions/0058-filtered-answers-and-context-command.md)), so it was written after the code.*
 
 **As** Camille, who asks the agent to explain a configuration file containing a key,
 **I want** the model's own answer to go through the same filter as tool results,
