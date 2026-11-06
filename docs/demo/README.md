@@ -23,18 +23,26 @@ Target length: 6 to 7 minutes.
 
 ```bash
 (cd frontend && npm ci && npm run build)   # once
-cd <demo project>
+python scripts/prepare_demo_project.py /tmp/codesensei-demo --force
+cd /tmp/codesensei-demo
 sensai-web --host <Ollama> --model qwen3-coder:30b   # http://127.0.0.1:8000
 ```
+
+`scripts/prepare_demo_project.py` builds the scenario's project (the invoice
+report's `stats.py`, a test, `deploiement.txt` with AWS's documentation example
+key) and Marc's `config.json` of step S0: the "reviewer" persona, the blocked
+topic, an MCP server, few-shot examples, cache and share links on, 300 s to
+answer a confirmation and 10 steps per turn. The Ollama address is given on
+the command line, never written in the project.
 
 Paste the access token printed at start into the interface. The "Moteur
 simulé" badge must **not** be shown; if it is, the server is not reachable
 (see the fallback plan).
 
-The features listed above are covered by automated tests and a headless
-browser run **without a model**; they have not been tried with
-`qwen3-coder:30b` yet. **Rehearse the full script with the real model on the
-presentation setup before the demo.** The model's answers vary from one
+Every feature was run with `qwen3-coder:30b` on 2026-11-06
+([trial](../performance/essais/essai-2026-11-06.md)); A3's approval in the web
+passed 2 times out of 4, keep its recording ready. **Rehearse the full script
+with the real model on the presentation setup before the demo.** The model's answers vary from one
 run to the next: the script below gives what to show, not the exact text.
 
 ## Script with the real server (use case: a developer picks up a project)
@@ -83,7 +91,9 @@ Real server, `qwen3-coder:30b` on the rented pod: say so at the start
 | S9 c | Marc | Journal page (each tool call, its duration); Quality page: "Évaluer la dernière réponse", then "Relancer les attaques" (85 cases) | EV3, EV1, EV4 | [web-6](web/web-6-journal-qualite-planification.webm) |
 | S9 d | Marc | Prompts page: "Essayer dans cette conversation" on the previous version; "Agent actif": switch to the "reviewer" persona and ask it to write a file (refused) | A4, A5 | [web-5](web/web-5-persona-prompts.webm) (versions, diff and persona switch; check in the video whether "Essayer" is clicked before quoting it) |
 
-Before the demo, add the "reviewer" persona (with `write_file` and `run_code` disabled) to the demo project's `config.json`: the repository's own config does not define it.
+The "reviewer" persona (with `write_file` and `run_code` disabled) is in the
+`config.json` written by `scripts/prepare_demo_project.py`; the repository's
+own config does not define it.
 
 What this script still does not cover from the journey: the **full EV1
 evaluation set** (`/eval run` in the chat runs it, but it takes minutes; on
