@@ -329,6 +329,15 @@ def test_le_cache_est_desactive_par_defaut(tmp_path, monkeypatch):
     assert get_settings()["cache"] is True
 
 
+def test_un_request_timeout_invalide_dans_config_json_arrete_le_cli(tmp_path, monkeypatch):
+    """`true` valait 1 s une fois passé à argparse : le CLI doit refuser."""
+    (tmp_path / "config.json").write_text('{"request_timeout": true}', encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("sys.argv", ["sensai"])
+    with pytest.raises(SystemExit):
+        get_settings()
+
+
 def test_request_timeout_de_config_json(tmp_path):
     from sensai.config import request_timeout_from_config
     from sensai.core.ollama_client import DEFAULT_REQUEST_TIMEOUT

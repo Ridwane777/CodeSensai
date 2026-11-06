@@ -349,6 +349,12 @@ def get_settings(argv: list[str] | None = None, prog: str | None = None) -> dict
         parser.error("--num-predict doit être positif, ou -1 pour ne pas limiter")
     if not 1 <= args.max_iterations <= 50:
         parser.error("--max-iterations doit être compris entre 1 et 50")
+    # Même contrôle que les autres commandes : `true` ou "600" dans config.json
+    # ne doivent pas passer pour un délai valide.
+    try:
+        request_timeout_from_config(file_config)
+    except ValueError as e:
+        parser.error(str(e))
     if args.request_timeout < 1:
         parser.error("--request-timeout doit être au moins 1")
     if args.token_budget_max is None:

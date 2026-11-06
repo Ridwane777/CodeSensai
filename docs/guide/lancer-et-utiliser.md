@@ -212,6 +212,31 @@ turn may make before it stops. The EV1 judge and the R2 re-ranker keep their
 own temperature of 0. `/context` shows what is actually sent. Measurement of
 these settings: [generation-parameters.md](../performance/generation-parameters.md).
 
+### Running on a laptop without a GPU
+
+On CPU, `qwen3:8b` reads the system prompt and the tools before its first
+word: one ordinary question takes **7 to 11 minutes** on the team laptop
+([trial of 2026-11-06](../performance/essais/essai-2026-11-06.md)). Two
+settings matter:
+
+```json
+{
+  "request_timeout": 1800,
+  "tools": {"tool_timeout_s": 1800, "delegation_timeout_s": 1800}
+}
+```
+
+- `request_timeout` (or `--request-timeout`): seconds to wait for Ollama's
+  answer, **600 by default**; the connection itself still fails after 10 s, so
+  a stopped Ollama is reported at once.
+- `delegation_timeout_s`: how long a sub-agent (`delegate_task`, `team_task`)
+  may run, **120 s by default**; `tool_timeout_s` (120 s) caps every tool call,
+  so raise both.
+
+Even with these settings, `qwen3:8b` does not complete `team_task` (A2) and
+gave a wrong structured answer (T5) in that trial: use `qwen3-coder:30b` on a
+24 GB GPU for those.
+
 ### Useful options
 
 | Option | Effect |
@@ -254,7 +279,8 @@ sensai-eval run --dataset datasets/eval/ev1_sample.jsonl --out report.json
 | Connection error | Ollama isn't running: `ollama serve`, or check `--host` |
 | Model not found | `ollama pull <model>` |
 | `run_code` / `web_search` fail | Docker missing or images not built (step 2) |
-| Unknown key in `config.json` | The CLI deliberately stops: fix the key |
+| Unknown key in `config.json` | Inside a section (`tools`, `generation`…) the CLI deliberately stops: fix the key. An unknown **top-level** key is still ignored silently ([trial of 2026-11-06](../performance/essais/essai-2026-11-06.md)) |
+| "Ollama ne répond pas (timeout de … s)" | Slow model on CPU: raise `request_timeout` (see "Running on a laptop without a GPU") |
 | First question is slow | Project indexing (bge-m3); later ones are incremental |
 
 ## 7. Tests
