@@ -8,6 +8,7 @@ restriction, session-only personas).
 
 ## User Story 1: Configuring a persona without touching the code
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** "so that" for the scenario: so that **the team gets a "reviewer" persona that reads and reviews code without being able to write files, set up once in `config.json` with no code change** (step S0). The legal-assistant and math-tutor example came from the feature catalogue, not from Marc's needs.
 
 As **Marc, the lead who sets CodeSensei up for a specific use case**, I want **the agent's
 name, tone, role and response scope to be configurable in `config.json`**,
@@ -28,6 +29,7 @@ a code change**.
 
 ## User Story 2: Switching persona mid-conversation without losing context
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** "so that" for the scenario: so that **Camille can have her change checked by the "reviewer" persona in the same conversation, without restarting the chat or retyping what the agent already knows** (step S9). The support and tutoring examples came from the feature catalogue, not from Camille's day.
 
 As **Camille, the developer chatting with the agent**, I want to **switch which persona is
 active during an ongoing conversation**, so that **a support flow can hand
@@ -107,6 +109,7 @@ and restart**.
 
 ## User Story 6: Choosing the persona of a conversation in the web interface
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** "so that" for the scenario: so that **Camille can hand her open conversation to the "reviewer" persona from the page she is already working in, and its disabled tools are refused there too** (step S9).
 
 *Update on 2026-11-01 ([ADR-0054](../decisions/0054-personas-in-the-web.md)):
 ◐ tested with pytest and vitest, not yet with the real model.*
