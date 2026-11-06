@@ -48,6 +48,10 @@ sub-folder.
   model must call it again on sub-folders.
 - ❌ It reuses two private helpers of `knowledge/rag.py` (`_git_files`,
   `_walk_files`): a change there changes both.
-- Follow-up: tests in `tests/tools/test_list_files_tool.py`; rerun T5 and A2
-  with RAG off on both models (backlog #25); revisit the cap if a real project
-  hits it.
+- Measured after the change (pod, `qwen3-coder:30b`, RAG off): T5 3 of 3,
+  `list_files` then `read_file stats.py` (10–12 s), against 0 of 4 before. A2
+  could not be judged: the trial script's confirmations, typed in advance,
+  refused the agent's writes.
+- Follow-up: tests in `tests/tools/test_list_files_tool.py`; judge A2 with RAG
+  off with confirmations answered as they come; revisit the cap if a real
+  project hits it.

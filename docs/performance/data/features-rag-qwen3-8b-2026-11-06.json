@@ -27,5 +27,21 @@
       "exit": 0,
       "output": "╭───────────────────────────────────────────────╮\n│ ✻ Bienvenue dans CodeSensei !                 │\n│                                               │\n│   /help pour l'aide, exit pour quitter        │\n│                                               │\n│   modèle  : qwen3:8b                          │\n│   serveur : http://localhost:11434            │\n│   projet  : /tmp/sensai-essai-a_jxo4zu/projet │\n│   session : d41748a47dae (nouvelle)           │\n│   prompts : system v3, memory v1              │\n╰───────────────────────────────────────────────╯\nExemples few-shot chargés (1) pour le choix automatique (A7).\n> ✻ Okay, the user is asking how to run the tests for the project. Let me think.\n\nFirst, I need to check if there's a specific test file mentioned. The previous example mentioned tests/test_stats.py, so maybe this project has a similar structure. But I shouldn't assume. Let me see if there's a setup.py or a README that mentions test commands. Wait, the user might have a pytest setup. Common practice is to use pytest, so maybe running pytest in the root directory would find all test files. Alternatively, there could be a specific file like tests/test_all.py. But without seeing the project structure, I should go with the standard approach. So the answer would be to run pytest in the root directory. Let me confirm that there's no other specific instruction in the project files. Since I can't read files here, I'll stick with the common method. So the response is to execute pytest -q at the root.\nPour lancer les tests, exécute `pytest -q` à la racine du projet : cela découvre automatiquement tous les fichiers de test (comme `tests/test_*.py`).\n> "
     }
-  ]
+  ],
+  "t5_after_structured_fix": {
+    "date": "2026-11-06",
+    "model": "qwen3:8b",
+    "delegation_timeout": null,
+    "rag": true,
+    "results": [
+      {
+        "feature": "T5",
+        "what": "réponse JSON conforme à un schéma (/structured)",
+        "ok": false,
+        "seconds": 706.5,
+        "exit": 0,
+        "output": "╭───────────────────────────────────────────────╮\n│ ✻ Bienvenue dans CodeSensei !                 │\n│                                               │\n│   /help pour l'aide, exit pour quitter        │\n│                                               │\n│   modèle  : qwen3:8b                          │\n│   serveur : http://localhost:11434            │\n│   projet  : /tmp/sensai-essai-0bs5hlh6/projet │\n│   session : 4793c39d836b (nouvelle)           │\n│   prompts : system v3, memory v1              │\n╰───────────────────────────────────────────────╯\n> Indexation du projet pour la recherche (bge-m3)...\n\n  1/5 fichiers\n  2/5 fichiers\n  3/5 fichiers\n  4/5 fichiers\n  5/5 fichiers\nIndex du projet à jour : 6 passages (5 fichier(s) indexé(s), 0 retiré(s)).\n✻ Okay, the user is asking which function in the project calculates an average and in which file. Let me look at the provided tools.\n\nFirst, I'll check the list of functions. The relevant ones here are mcp_calc_add, mcp_calc_leak, mcp_calc_fail, and mcp_calc_bad_name_. Wait, none of these seem to calculate an average. The mcp_calc_add function adds two numbers, but that's not averaging. The other functions are for leaking secrets, failing, or handling bad names. \n\nSince there's no function listed that computes an average, I should inform the user that none of the provided functions perform that task. Also, the user mentioned \"ce projet,\" so maybe the average function isn't among the tools listed. I should check if there's a possibility of another function not mentioned here. But based on the given tools, there's no average function. Therefore, the answer is that none of the functions listed calculate an average.\nAucune des fonctions listées ne calcule une moyenne. La fonction `mcp_calc_add` additionne deux nombres, mais aucune ne réalise une moyenne. Vérifiez si le projet contient d'autres fonctions non mentionnées ici.{\n  \"fonction\": \"mcp_calc_add\",\n  \"fichier\": \"\"\n}\n> "
+      }
+    ]
+  }
 }
