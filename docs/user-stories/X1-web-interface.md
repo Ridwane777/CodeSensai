@@ -22,6 +22,7 @@ Other user stories for the interface: [README.md](README.md).
 ---
 
 ## US-X1-1 — Follow an answer and its reasoning live
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. **Real, checked in the browser**: the answer arrives as it is written, with a cursor; each step shows the tool, its arguments, the result and the duration (e.g. `read_file`, 21 ms); a failure is shown as "✗ Échec"; the block collapses and expands. **Simulated**: the token bar stays at 0, because the server does not send the usage yet. The badge now shows "Agent réel · modèle" when the interface is connected, and "Moteur simulé" otherwise.
 
 **As** Camille, the developer who hands a task to the agent,
@@ -36,6 +37,7 @@ Other user stories for the interface: [README.md](README.md).
 - A "Moteur simulé" badge is visible on every page.
 
 ## US-X1-2 — Switch agents without losing the conversation
+> **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** 🎭 Simulated. With the real agent, the selector only changes the displayed name: there is no second agent (A2 is not delivered), and the server does not send handoffs.
 >
 > **Update on 2026-10-24:** 🎭 Still simulated. A2 now exists on the agent side (explorer, developer and reviewer roles and `team_task`, also registered in the web server), but the server does not send handoffs to the interface yet and the selector does not choose a role. Still to connect.
@@ -56,6 +58,7 @@ Other user stories for the interface: [README.md](README.md).
 - A "CodeSensei → Relecteur" handoff appears in the conversation and on the Agents page.
 
 ## US-X1-3 — Be welcomed before chatting
+> **Update on 2026-11-06:** no scenario step: replaced by US-X1-C8 ([traceability](../conception/traceability.md#features-dropped-or-changed-along-the-way)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: the welcome screen, the greeting and the input field that only appears after "Activer la conversation". The displayed status follows the mode ("agent réel (modèle)" or "moteur simulé"). The WebGL fallback and the reduced animations do not depend on the engine and were not checked again.
 >
 > **Update on 2026-10-31:** Replaced by [US-X1-C8](X1-web-interface.md#us-x1-c8--write-as-soon-as-the-chat-opens-in-a-page-that-uses-the-space): there is no "Activer la conversation" button any more and no 3D scene on the chat welcome screen ([ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md)).
@@ -72,6 +75,7 @@ Other user stories for the interface: [README.md](README.md).
 - Animations are strongly reduced if the user asked for less motion (`prefers-reduced-motion`).
 
 ## US-X1-4 — See a polished, sober and whole agent
+> **Update on 2026-11-06:** no scenario step: replaced by US-X1-5 to US-X1-7 ([traceability](../conception/traceability.md#features-dropped-or-changed-along-the-way)).
 > **Status on 2026-10-18:** Replaced by US-X1-5 to US-X1-7 (see below).
 
 
@@ -91,6 +95,7 @@ Other user stories for the interface: [README.md](README.md).
 - If the browser does not support WebGL, an animated orb replaces the visual and the page stays usable.
 
 ## US-X1-5 — Understand at a glance what CodeSensei is
+> **Update on 2026-11-06:** no scenario step: replaced by US-X1-C9 ([traceability](../conception/traceability.md#features-dropped-or-changed-along-the-way)).
 > **Status on 2026-10-18:** ✅ Does not depend on the engine. The pill shows "Connecté à l'agent réel · modèle" when the interface is connected (checked), and "Disponible hors ligne · démo simulée" otherwise.
 >
 > **Update on 2026-10-31:** Replaced by [US-X1-C9](X1-web-interface.md#us-x1-c9--ask-a-first-question-from-a-calm-full-screen-home-page): the poster with the portrait was removed from the home page ([ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md)).
@@ -109,6 +114,7 @@ Other user stories for the interface: [README.md](README.md).
 - On mobile (375 px), nothing overlaps the text: tagline, portrait with the name, then introduction and button; no horizontal scrolling.
 
 ## US-X1-6 — Watch the agent analyze code and judge a bug, live
+> **Update on 2026-11-06:** no scenario step: withdrawn ([traceability](../conception/traceability.md#features-dropped-or-changed-along-the-way)).
 > **Status on 2026-10-18:** 🎭 Scripted by design: this home page scenery does not show the analysis of the visitor's project, whether the engine is real or simulated.
 >
 > **Update on 2026-10-31:** Withdrawn. The scripted code scenery (typed snippets, judged bugs, parallax) is no longer on the home page, so the home page shows nothing scripted any more ([ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md)).
@@ -130,6 +136,7 @@ Other user stories for the interface: [README.md](README.md).
 - The code cards are hidden below 1024 px wide or 700 px high, so they never cover the text.
 
 ## US-X1-7 — Chat with the agent as in a terminal
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked in the browser with the real agent: "› Pensée", "$ Action", "← Observation", "✗ Échec", "● en direct", "en cours…" and the collapsible block.
 
 **As** Camille, the developer who uses the chat,
@@ -158,6 +165,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 ---
 
 ## US-X1-C1 — Read answers that contain code
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ Rendering checked in a browser on a saved answer (heading, numbered list, Python block coloured with "Copier", link); covered by `frontend/tests/markdown.test.tsx`. Not yet seen while the real model streams.
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): in the browser, a Markdown answer with a coloured code block (27 coloured tokens) and "Copier".
@@ -172,6 +180,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - Only `http(s)` links are clickable and open in a new tab; HTML written by the model stays text.
 
 ## US-X1-C2 — Ask again or stop
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ Covered by `frontend/tests/regenerate.test.tsx` and `chat.test.tsx`; the "↻ Régénérer" button was seen in a browser. Not yet tried with the real model.
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): "↻ Régénérer" showed a second answer in the browser; through the API, `/again` gave a new answer without the cache.
@@ -186,6 +195,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - Escape in the message field stops the answer being generated, like "■ Arrêter".
 
 ## US-X1-C3 — Keep several conversations side by side
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ Checked in a browser (list, current conversation highlighted, reopen); delete and new conversation covered by `frontend/tests/conversations.test.tsx` and `tests/web/test_server.py`.
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): a conversation was listed, reloaded and continued through the API (the agent remembered the function discussed) and reopened from the sidebar in the browser.
@@ -200,6 +210,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - Deleting asks for confirmation in the line; it is refused while an answer is being generated.
 
 ## US-X1-C4 — Show a file to the agent
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ Covered by `frontend/tests/attachments.test.tsx`; not yet tried with the real model.
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): a message with a fenced `outils.py` got the function explained.
@@ -213,6 +224,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - The content is sent in a code block after the question; a message over 20,000 characters is blocked before sending.
 
 ## US-X1-C5 — See exactly what a file write changes
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ Covered by `frontend/tests/cards.test.tsx`; the diff itself is computed by the server (`write_file`), already tested. Not yet seen with the real agent.
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): `write_file` showed a coloured diff (one added line in green), and "Autoriser" changed the file.
@@ -226,6 +238,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - A request without a diff (creation, other tools) stays plain text.
 
 ## US-X1-C6 — Find every page and conversation in one left sidebar
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ `frontend/src/ui/Sidebar.tsx`, covered by `frontend/tests/sidebar.test.tsx`. Not yet seen in a browser with the real model.
 >
 > **Update on 2026-10-31:** ✅ Seen in a browser against a real `sensai-web` through the Vite proxy, with the only local model, `granite3.1-moe` (3.3B, `--no-rag`); not yet with `qwen3-coder:30b`: the sidebar listed the real conversations, reopened one, and the badge showed the real agent.
@@ -242,6 +255,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - On small screens the sidebar is a drawer opened and closed by a menu button ("Ouvrir le menu" / "Fermer le menu"); it closes on Escape, on a click outside it and after choosing a page.
 
 ## US-X1-C7 — See that the agent is working, without the page jumping around
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-31:** ◐ ([ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md)): `frontend/src/features/chat/ThinkingIndicator.tsx`, `ReasoningRibbon.tsx`, `MessageList.tsx`, covered by `frontend/tests/cards.test.tsx`. Checked in a browser with the simulated engine; not yet with the real model.
 >
 > **Update on 2026-10-31:** ✅ Seen against a real `sensai-web` through the Vite proxy, with the only local model, `granite3.1-moe` (3.3B, `--no-rag`); not yet with `qwen3-coder:30b`: indicator with the elapsed seconds during the turn, reasoning block folded at the end, and an immediate follow-up question accepted (no 409, since a turn now ends when the server closes the stream).
@@ -257,6 +271,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - If I scroll up during an answer, the page stays where I am and a "↓ Revenir en bas" button appears.
 
 ## US-X1-C8 — Write as soon as the chat opens, in a page that uses the space
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-31:** ◐ ([ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md)): `frontend/src/features/chat/Welcome.tsx`, `frontend/src/pages/Chat.tsx`, covered by `frontend/tests/welcome.test.tsx`, `chat.test.tsx` and `panels.test.tsx`. Checked in a browser at 1440×900 and 375×812 with the simulated engine.
 >
 > **Update on 2026-10-31:** ✅ Seen against a real `sensai-web` through the Vite proxy, with the only local model, `granite3.1-moe` (3.3B, `--no-rag`); not yet with `qwen3-coder:30b`: first question typed on the welcome screen, streamed answer, input docked at the bottom.
@@ -271,6 +286,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - The Artefact / Sources panel is folded by default, opened by an "Artefact · Sources" button with a dot when there is new content; my choice is remembered; on a phone it opens as a drawer.
 
 ## US-X1-C9 — Ask a first question from a calm, full-screen home page
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-31:** ✅ ([ADR-0051](../decisions/0051-calm-chat-layout-and-motion.md)): `frontend/src/features/hero/LandingHero.tsx`, covered by `frontend/tests/landing.test.tsx`. Checked in a browser at 1440×900 and 375×812, light and dark themes; a question typed on the home page was answered by the real `sensai-web` through the Vite proxy, with the only local model, `granite3.1-moe` (3.3B, `--no-rag`); not yet with `qwen3-coder:30b`.
 
 **As** Camille, the developer who opens CodeSensei,
@@ -285,6 +301,7 @@ Status: ✅ checked with the real agent · ◐ partly · 🎭 simulated · ⏳ n
 - The page follows the light and dark themes and has no horizontal scrolling at 375 px.
 
 ## US-X1-C10 — Reach the real agent without configuring anything
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-31:** ✅ `frontend/vite.config.ts` (proxy), `frontend/src/state/connection.tsx` (retry every 3 s, for 5 minutes at most), covered by `frontend/tests/connection.test.tsx`. Checked in a browser: with `npm run dev` and `sensai-web` started **after** the page, the page asked for the token within seconds and then talked to the real agent.
 
 **As** Marc, the lead who sets the interface up while adjusting the server,

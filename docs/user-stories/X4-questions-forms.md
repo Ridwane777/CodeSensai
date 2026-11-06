@@ -23,6 +23,7 @@ Other user stories of the interface: [README.md](README.md).
 ---
 
 ## US-X4-1 — Answer the agent without leaving the chat
+> **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ The real server now sends the agent's questions
 > (`ask_user`, ADR-0046) and returns the answers to the model. Checked through
 > the real server with a scripted model (`tests/web/test_questions.py`) and in
@@ -44,6 +45,7 @@ Other user stories of the interface: [README.md](README.md).
   agent says it is missing the information instead of guessing it.
 
 ## US-X4-2 — Decide before an irreversible action takes place
+> **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: the card shows the action, its detail and its risk; "Allow" creates the file ("✓ Allowed"); "Refuse" creates nothing ("✕ Refused") and the agent says so. Also covered by the server tests (yes, no, timeout, late answer).
 
 **As** Camille, the developer who stays in control of her project,

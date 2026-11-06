@@ -18,6 +18,7 @@ database, embedding model, splitting) are settled in the ADR dedicated to R1.
 ---
 
 ## US-R1-1 — Ask a question about my own code
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who takes over a project she barely knows,
 **I want** to ask a question in natural language about the project's code and docs ("where is the login token checked?"),
@@ -33,6 +34,7 @@ database, embedding model, splitting) are settled in the ADR dedicated to R1.
 - It works on code (`.py`…) **and** on documentation (`.md`).
 
 ## US-R1-2 — Index my project without leaks or useless waiting
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who starts CodeSensei on her repository,
 **I want** the project to be indexed once, then kept up to date when I edit files,
@@ -49,6 +51,7 @@ database, embedding model, splitting) are settled in the ADR dedicated to R1.
 - The index is stored locally, outside the repository, like M1's sessions.
 
 ## US-R1-3 — Know when the project does not hold the answer
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who trusts the agent's answers to edit her code,
 **I want** CodeSensei to tell me when it found nothing relevant in the project,
@@ -64,6 +67,7 @@ database, embedding model, splitting) are settled in the ADR dedicated to R1.
   shown and the conversation continues without RAG.
 
 ## US-R1-4 — Query documents that are not code
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who also works from the client's specification, a project brief and meeting notes,
 **I want** to ask questions about these documents ("what are the constraints on frameworks?", "how many user stories per feature?"),

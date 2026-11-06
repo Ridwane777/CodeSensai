@@ -75,7 +75,8 @@ class Scenario:
 class Trial:
     """Le projet jetable et les moyens de le piloter."""
 
-    def __init__(self, base: Path, model: str, host: str) -> None:
+    def __init__(self, base: Path, model: str, host: str,
+                 delegation_timeout: int | None = None) -> None:
         self.base, self.model, self.host = base, model, host
         self.project = base / "projet"
         self.data = base / "data"
@@ -90,6 +91,9 @@ class Trial:
         config.update(model=model, host=host, share_links=True,
                       mcp_servers={"calc": {"command": sys.executable,
                                             "args": [str(FAKE_MCP), "normal"]}})
+        if delegation_timeout:  # A2 sur CPU : laisser aux sous-agents le temps d'un appel
+            config["tools"] = {"tool_timeout_s": delegation_timeout,
+                               "delegation_timeout_s": delegation_timeout}
         (self.project / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
         for cmd in (["git", "init", "-q"], ["git", "add", "."],
                     ["git", "-c", "user.name=essai", "-c", "user.email=essai@local",
@@ -98,7 +102,8 @@ class Trial:
         self.env = {**os.environ, "SENSAI_HOME": str(self.data), "NO_COLOR": "1",
                     "PYTHONUNBUFFERED": "1"}
 
-    def run(self, argv: list[str], lines: list[str] = (), timeout: int = CLI_TIMEOUT) -> Run:
+    def run(self, argv: list[str], lines: list[str] = (), timeout: int | None = None) -> Run:
+        timeout = timeout or CLI_TIMEOUT
         start = time.monotonic()
         try:
             p = subprocess.run(argv, cwd=self.project, env=self.env, text=True,
@@ -257,11 +262,11 @@ def ev4_adversarial(t: Trial):
 def x5_schedule(t: Trial):
     s = [str(BIN / "sensai-schedule"), "--data-dir", str(t.data), "--model", t.model,
          "--host", t.host]
-    a = t.run([*s, "add", "resume", "--every", "1d", "--tools", "read_file,list_files",
-               "--prompt", "Liste les fichiers Python du projet en une ligne."])
+    a = t.run([*s, "add", "resume", "--every", "1d", "--tools", "read_file",
+               "--prompt", "Lis stats.py et liste ses fonctions en une ligne."])
     r = t.run([*s, "run", "resume"])
     h = t.run([*s, "history", "resume"])
-    ok = a.code == 0 and r.code == 0 and has(r"stats\.py", r.out + h.out)
+    ok = a.code == 0 and r.code == 0 and has(r"moyenne|maximum", r.out + h.out)
     return ok, Run(a.out + r.out + h.out, a.seconds + r.seconds, r.code)
 
 
@@ -289,7 +294,7 @@ class Web:
                 time.sleep(1)
 
     def session(self) -> str:
-        return self.http.post("/api/sessions", json={}).json()["id"]
+        return self.http.post("/api/sessions", json={}).json()["session_id"]
 
     def send(self, sid: str, text: str, on_event=None) -> list[dict]:
         events = []
@@ -326,33 +331,55 @@ def web_scenarios(w: Web) -> list[Scenario]:
 
     def a3_web(t):
         def approve(sid, e):
-            if e.get("type") == "confirm":
+            if e.get("type") == "confirm_request":
                 w.http.post(f"/api/sessions/{sid}/confirm",
                             json={"confirm_id": e["confirm_id"], "approved": True})
 
         ev, s = timed(w.session(), "Crée le fichier web.txt contenant le mot web.", approve)
-        ok = (t.project / "web.txt").exists() and any(e.get("type") == "confirm" for e in ev)
+        asked = any(e.get("type") == "confirm_request" for e in ev)
+        ok = (t.project / "web.txt").exists() and asked
         return ok, Run(text_of(ev), s, 0)
 
     def x4(t):
+        def values_of(e):
+            values = {}
+            for f in e.get("fields") or []:
+                if f["kind"] == "choice":
+                    values[f["id"]] = next((o for o in f["options"] if "rust" in o.lower()),
+                                           f["options"][0])
+                else:
+                    values[f["id"]] = True if f["kind"] == "toggle" else "Rust"
+            return values
+
         def answer(sid, e):
             if e.get("type") == "question":
-                fields = e.get("fields") or []
                 w.http.post(f"/api/sessions/{sid}/answer",
-                            json={"question_id": e.get("question_id") or e.get("id"),
-                                  "values": {f["name"]: "Rust" for f in fields if "name" in f}})
+                            json={"question_id": e["question_id"], "values": values_of(e)})
 
-        ev, s = timed(w.session(), "Utilise ask_user pour me demander mon langage préféré "
-                                   "dans un formulaire, puis répète ma réponse.", answer)
-        ok = any(e.get("type") == "question" for e in ev) and has(r"rust", text_of(ev))
+        chosen = []
+
+        def answer_and_note(sid, e):
+            answer(sid, e)
+            if e.get("type") == "question":
+                chosen.extend(str(v) for v in values_of(e).values() if v is not True)
+
+        ev, s = timed(w.session(), "Utilise ask_user pour me demander mon langage de "
+                                   "programmation préféré dans un formulaire, puis répète ma "
+                                   "réponse.", answer_and_note)
+        # Le modèle choisit lui-même les options : on vérifie que la valeur envoyée revient.
+        ok = bool(chosen) and all(has(re.escape(c), text_of(ev)) for c in chosen)
         return ok, Run(text_of(ev) + "\n" + json.dumps([e for e in ev if e.get("type") ==
                                                         "question"], ensure_ascii=False), s, 0)
 
     def x2(t):
         sid = w.session()
         w.send(sid, "Réponds juste : bonjour.")
-        fork = w.http.post(f"/api/sessions/{sid}/fork", json={})
-        return fork.status_code == 201, Run(fork.text, 0, fork.status_code)
+        # Bifurquer après la 1re question : la nouvelle session n'a qu'elle.
+        fork = w.http.post(f"/api/sessions/{sid}/fork", json={"at_message": 1})
+        if fork.status_code != 201:
+            return False, Run(fork.text, 0, fork.status_code)
+        copy = w.http.get(f"/api/sessions/{fork.json()['session_id']}")
+        return has(r"bonjour", copy.text), Run(fork.text + "\n" + copy.text[:500], 0, 201)
 
     def x3(t):
         sid = w.session()
@@ -363,10 +390,12 @@ def web_scenarios(w: Web) -> list[Scenario]:
         return ok, Run(exp.text[:300] + "\n" + share.text, 0, share.status_code)
 
     def ev3(t):
+        sid = w.session()
+        w.send(sid, "Réponds juste : bonjour.")
         m = w.http.get("/api/journal/metrics")
-        j = w.http.get("/api/journal")
-        ok = j.status_code == 200 and has(r"\"turns\":\s*[1-9]", m.text)
-        return ok, Run(m.text[:800], 0, m.status_code)
+        j = w.http.get("/api/journal", params={"session": sid})
+        ok = has(r"\"turns\":\s*[1-9]", m.text) and has(r"\"turns\":\s*\[\s*\{", j.text)
+        return ok, Run(m.text[:800] + "\n" + j.text[:800], 0, j.status_code)
 
     def a5_web(t):
         p = w.http.get("/api/personas")
@@ -409,18 +438,25 @@ CLI = [
 
 
 def main() -> None:
+    global CLI_TIMEOUT
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--model", default="qwen3:8b")
     parser.add_argument("--host", default="http://localhost:11434")
     parser.add_argument("--only", help="features à jouer, séparées par des virgules")
     parser.add_argument("--no-web", action="store_true")
+    parser.add_argument("--delegation-timeout", type=int,
+                        help="délai des sous-agents (section tools de config.json), en secondes")
+    parser.add_argument("--scenario-timeout", type=int, default=CLI_TIMEOUT,
+                        help="durée maximale d'un scénario CLI, en secondes")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     only = set(args.only.split(",")) if args.only else None
 
     base = Path(tempfile.mkdtemp(prefix="sensai-essai-"))
-    t = Trial(base, args.model, args.host)
-    report = {"date": date.today().isoformat(), "model": args.model, "results": []}
+    CLI_TIMEOUT = args.scenario_timeout
+    t = Trial(base, args.model, args.host, args.delegation_timeout)
+    report = {"date": date.today().isoformat(), "model": args.model,
+              "delegation_timeout": args.delegation_timeout, "results": []}
 
     def record(s: Scenario) -> None:
         print(f"[{s.feature}] {s.what} …", flush=True)

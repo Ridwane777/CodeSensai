@@ -7,6 +7,7 @@ M2's old scope (resuming a conversation across runs) is delivered by M1 —
 see [M1-session-persistence.md](M1-session-persistence.md).
 
 ## US-M2-1 — A long session keeps working instead of hitting a wall (was User Story 1 of M2-token-budgeting.md)
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer in a long debugging session**, I want **the agent to keep
 answering correctly even once our conversation has grown very long**, so
@@ -33,6 +34,7 @@ cross some invisible limit**.
   summarized the way a long CLI session is.
 
 ## US-M2-2 — Resuming later still finds the whole conversation (was User Story 2 of M2-token-budgeting.md)
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who closes the CLI and comes back the next day**
 (`--session <id>`, feature M1), I want **my resumed conversation to still
@@ -50,6 +52,7 @@ condensed away for an earlier question is still there if I need it later**.
   compression again, independently, from the full history.
 
 ## US-M2-3 — Ollama never cuts the conversation without anyone noticing (was User Story 3 of M2-token-budgeting.md)
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose conversation (or whose project passages) is larger than the
 model's context window**, I want **the agent to size its requests to that
@@ -90,6 +93,7 @@ Persona: Camille, the developer of the scenario
 ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 
 ## US-M2-4 — The conversation history persists between sessions (was User Story 1 of M2-context-management.md)
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer in the middle of a long debugging session**, I want **my conversation to be saved and to be able to resume it later**, so that **I can continue a 2-hour debugging session without losing the context**.
 
@@ -101,6 +105,7 @@ As **Camille, the developer in the middle of a long debugging session**, I want 
 - The agent has access to the whole past history (no arbitrary limit)
 
 ## US-M2-5 — The model's context stays readable and consistent (was User Story 2 of M2-context-management.md)
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who relies on the agent's answers**, I want **the system prompt and the messages to be well organised** before they are sent to the model, so that **the model receives a clear instruction and a structured history**.
 

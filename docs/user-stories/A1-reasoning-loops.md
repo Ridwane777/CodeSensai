@@ -4,6 +4,7 @@ Persona: Camille, the developer of the scenario
 ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
 
 ## User Story 1: Debug a failing test by exploring the code
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who took over an unfamiliar code base**, I want the agent to **explore the project, read the code and the error traces to find the root cause**, so that **I can fix the bug without reading every file by hand**.
 
@@ -15,6 +16,7 @@ As **Camille, the developer who took over an unfamiliar code base**, I want the 
 - The answer includes the cause of the bug and a suggested fix
 
 ## User Story 2: Generate code from a vague requirement
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, handed a vague requirement by her lead**, I want the agent to **clarify an imprecise requirement by asking questions, look for similar examples, then generate the code**, so that **I can start developing without a clarification meeting**.
 
@@ -29,6 +31,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 ---
 
 ## US-A1-3 — Choose how long the agent may search before it stops
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, the developer whose agent sometimes needs more than a few steps to find a bug,
@@ -41,6 +44,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 - The same setting applies in `sensai-web` and in scheduled tasks.
 
 ## US-A1-4 — A tool call written as text is not silently lost
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, whose local model sometimes writes its tool call as text instead of using Ollama's `tool_calls` field,

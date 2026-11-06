@@ -1,5 +1,12 @@
 # Persona and usage scenario
 
+> **Update on 2026-11-01:** a usage scenario already existed ("a developer in
+> her code base"), but it did not fit the project well enough: no precise
+> user, no concrete situation, and a latency that was not realistic on our
+> hardware. It was updated into this page: **one** user, **one** day of work,
+> and what "local" really means for CodeSensei
+> ([Local vs rented GPU](#local-vs-rented-gpu)).
+
 Every user story names the persona it serves (index:
 [user-stories/README.md](../user-stories/README.md)); each feature is linked to
 its step of the scenario in [traceability.md](traceability.md); the demo

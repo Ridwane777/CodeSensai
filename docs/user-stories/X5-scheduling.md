@@ -8,6 +8,7 @@ Translated from French on 2026-10-29.
 ---
 
 ## US-X5-1 — Get a summary every day without starting anything by hand
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who wants to know what changed in her project every morning,
 **I want** to register a task "summarise today's log" that replays by itself every 24 h,
@@ -21,6 +22,7 @@ Translated from French on 2026-10-29.
 - An interval under 60 seconds is refused; if the computer was off, the task does not catch up missed runs: it runs once at the next pass.
 
 ## US-X5-2 — Be sure an unattended task can neither write nor run code
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who leaves the agent running at night,
 **I want** a scheduled task to never be able to write a file or run code, even if a preference or content read by the model suggests it,
@@ -34,6 +36,7 @@ Translated from French on 2026-10-29.
 - The report only contains the names of the tools called and their outcome, never their arguments.
 
 ## US-X5-3 — A broken task blocks neither the others nor itself
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who schedules several tasks for the team,
 **I want** a task that crashes or exceeds its time limit not to prevent the next ones, and a task already running never to be started twice,
@@ -47,6 +50,7 @@ Translated from French on 2026-10-29.
 - An unreadable `tasks.json` makes the command stop with code 2 and a message naming the file; the file is never modified.
 
 ## US-X5-4 — Schedule and check tasks without leaving the conversation
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer already working in the chat,
 **I want** to type `/schedule add …`, `/schedule list` or `/schedule history …` in the conversation,
@@ -63,6 +67,7 @@ Translated from French on 2026-10-29.
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): tasks were created, listed, paused and removed through the API and the Planning page, and a task created in the web was run by `sensai-schedule run-due` with its status visible in the web.
 
 ## US-X5-5 — Ask for a scheduled task in plain language
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` in the CLI: "Planifie une tâche : chaque jour, résume les TODO du projet." → confirmation card, task `resume-todo` created after "y" and listed by `sensai-schedule list` ([ADR-0052](../decisions/0052-schedule-task-tool.md)).
 > Refusal checked the same day: "Utilise schedule_task … bilan-tests" → card → "n" → the agent says it was refused, `bilan-tests` not created. Through `sensai-web`: `veille-web` created after approval (listed by `GET /api/schedule/tasks`), `nettoyage-web` refused and not created. Then `sensai-schedule run resume-todo` ran the task created in plain language: status ok, it summarised the project's `TODO.md`.
 

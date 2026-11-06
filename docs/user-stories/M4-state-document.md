@@ -21,6 +21,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 ---
 
 ## US-M4-1 — Know where the project stands when coming back to it
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer coming back to her project after several days,
 **I want** a state document kept up to date by the agent (what is done, what is in progress, the decisions taken, the known problems),
@@ -35,6 +36,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
   the first update.
 
 ## US-M4-2 — A targeted update, never a destructive one
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who wrote part of the document myself,
 **I want** the agent to change only the section concerned,
@@ -48,6 +50,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 - An interrupted write (crash, Ctrl+C) never leaves a half-written file.
 
 ## US-M4-3 — See and control what the agent changes
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent maintain the document,
 **I want** to see each change and be able to go back,

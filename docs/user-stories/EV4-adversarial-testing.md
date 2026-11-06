@@ -12,6 +12,7 @@ decision in [ADR-0018](../decisions/0018-ecarts-adversariaux-xfail-stricts.md).
 ---
 
 ## US-EV4-1 — Know what the defences really stop
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who must vouch for the agent's security before the team uses it,
 **I want** a corpus of replayable attacks (injection, secret leaks, trapped paths, permission bypass, web search, sandbox),
@@ -24,6 +25,7 @@ decision in [ADR-0018](../decisions/0018-ecarts-adversariaux-xfail-stricts.md).
 - Removing a defence (for example the file deny list) makes the cases that target it fail.
 
 ## US-EV4-2 — Do not lose a known hole
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who gets a flaw fixed,
 **I want** every attack that passes today to be a strict expected failure, with its cause and its file:line,
@@ -36,6 +38,7 @@ decision in [ADR-0018](../decisions/0018-ecarts-adversariaux-xfail-stricts.md).
 - No assertion is weakened to turn green.
 
 ## US-EV4-3 — Reproduce the measurements exactly
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who reports on the agent's robustness,
 **I want** to rerun a script and get exactly the report's table,
@@ -47,6 +50,7 @@ decision in [ADR-0018](../decisions/0018-ecarts-adversariaux-xfail-stricts.md).
 - A test fails if the committed file or the report's table differs from the script's output.
 
 ## US-EV4-4 — Rerun the attacks from the web interface
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ◐ tested (pytest on the real routes, vitest on the page), not yet tried in a browser on the real server. The corpus never calls the model, so the model is not involved.
 
 **As** Marc, the lead who shows the defences to the team,

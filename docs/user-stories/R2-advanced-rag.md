@@ -21,6 +21,7 @@ threshold) are settled in the ADR dedicated to R2.
 ---
 
 ## US-R2-1 — The passage that really answers, first
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking a precise question about her code,
 **I want** the search to re-rank the passages found so that the one that really answers the question comes first,
@@ -34,6 +35,7 @@ threshold) are settled in the ADR dedicated to R2.
   crashing.
 
 ## US-R2-2 — Search only where needed
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who knows where the answer is,
 **I want** to limit a search to one part of the project (the docs, the code, the tests, a folder),
@@ -46,6 +48,7 @@ threshold) are settled in the ADR dedicated to R2.
 - An unknown filter gives a clear message instead of an empty result.
 
 ## US-R2-3 — Discard the passages that look alike without answering
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who relies on the cited passages,
 **I want** each passage to have a relevance score, and the weakest to be discarded before reaching the model,

@@ -26,6 +26,7 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
 ---
 
 ## US-M3-1 — The agent remembers a fact without being told again
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who explains her project over the sessions,
 **I want** the agent to record the important facts by itself (an entity, what characterises it, its links with others),
@@ -38,6 +39,7 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
 - A fact that already exists is not created twice: it is updated.
 
 ## US-M3-2 — The agent finds the facts useful to answer
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks a question weeks later,
 **I want** the agent to search its structured memory before answering,
@@ -51,6 +53,7 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
 - If it knows nothing, it says so instead of inventing.
 
 ## US-M3-3 — Correct or forget a fact
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose project changes,
 **I want** the agent to update a fact that has become wrong, and to be able to delete one,

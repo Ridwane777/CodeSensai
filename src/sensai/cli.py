@@ -441,10 +441,12 @@ def main() -> None:
     # car l'outil s'en sert pour faire tourner le sous-agent — avec les mêmes
     # permissions, garde-fous et confirmations que l'agent principal.
     delegate = DelegateTool(host, model, tools, system_prompt=system_prompt, num_ctx=num_ctx)
+    delegate.timeout_s = tools.preferences.delegation_timeout_s
     registry.register(delegate)
     # Équipe d'agents spécialisés (A2, ADR-0038) : chaque relais s'affiche.
-    registry.register(TeamTool(delegate, notify=ui.info,
-                               test_runner=project_test_runner(project)))
+    team = TeamTool(delegate, notify=ui.info, test_runner=project_test_runner(project))
+    team.timeout_s = tools.preferences.delegation_timeout_s
+    registry.register(team)
     # Questions de l'agent (X4, ADR-0046) : posées dans le terminal.
     registry.register(AskUserTool(terminal_asker()))
     # Planifier en langage naturel (X5, ADR-0052) : toujours sur accord explicite.

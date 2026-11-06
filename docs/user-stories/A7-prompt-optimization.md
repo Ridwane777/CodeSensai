@@ -5,6 +5,7 @@ See [ADR-0044](../decisions/0044-automatic-few-shot.md) for the design
 embedder).
 
 ## User Story 1: Writing a few-shot library without inventing a new format
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Marc, the lead improving the agent's answers on a recurring kind of
 question**, I want to **write a library of good examples (question +
@@ -24,6 +25,7 @@ feature**.
   clear warning at startup; it never stops the CLI from working otherwise.
 
 ## User Story 2: Getting a relevant example without asking for one
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer asking a question close to one already answered well before**,
 I want **the agent to see that earlier example automatically**, so that

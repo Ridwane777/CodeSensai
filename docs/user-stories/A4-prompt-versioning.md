@@ -17,6 +17,7 @@ version identifiers, commands) are decided in the A4 ADR
 ---
 
 ## US-A4-1 — Find what changed in a prompt, and when
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who notices the agent has answered differently for a few days,
 **I want** to see the list of a prompt's versions with their date, and compare two versions,
@@ -34,6 +35,7 @@ had a login bug") — see
 [docs/performance/M1-sessions.md](../performance/M1-sessions.md).*
 
 ## US-A4-2 — Save a new version effortlessly
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who edits a prompt (for example the ReAct prompt),
 **I want** my change to become a new dated version, with a short description,
@@ -45,6 +47,7 @@ had a login bug") — see
 - A change that does not alter the text creates no version.
 
 ## US-A4-3 — Go back in one command
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who notices that a new version degrades the answers,
 **I want** to go back to a previous version in a single command,
@@ -57,6 +60,7 @@ had a login bug") — see
   version in one command.
 
 ## US-A4-4 — Browse the real registry from the web interface
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01 (
 [ADR-0055](../decisions/0055-prompt-versions-in-the-web.md)): ◐ tested with
@@ -76,6 +80,7 @@ description, active one), the text of a version and a diff between two versions,
   registry files keep the same bytes (checked by a test).
 
 ## US-A4-5 — Try a system prompt version in one conversation
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01: ◐ tested with a scripted model (pytest) and vitest,
 not yet with the real model.*
