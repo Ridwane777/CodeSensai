@@ -9,10 +9,10 @@ function compact(args: Record<string, unknown> | undefined) {
 }
 
 /**
- * Le raisonnement affiché comme un terminal : chaque étape Thought → Action → Observation devient des lignes
- * numérotées (« › pensée », « $ outil(args) », « ← observation »), l'étape en cours garde le curseur.
- * Ouvert pendant le tour, il se replie en glissant quand la réponse est finie (comme la « réflexion » des
- * interfaces de chat) ; un clic le rouvre.
+ * The reasoning shown as a terminal: each Thought → Action → Observation step becomes numbered lines
+ * ("› thought", "$ tool(args)", "← observation"); the current step keeps the cursor.
+ * Open during the turn, it slides closed when the answer is done (like the "thinking" of chat
+ * interfaces); a click reopens it.
  */
 export function ReasoningRibbon({ steps, active, took = null }: { steps: ReasoningStep[]; active: boolean; took?: number | null }) {
   const [open, setOpen] = useState(true)
@@ -25,7 +25,7 @@ export function ReasoningRibbon({ steps, active, took = null }: { steps: Reasoni
   let n = 0
   const num = () => ++n
   return (
-    <section className="code-card mb-3 overflow-hidden rounded-2xl font-mono text-[12.5px] shadow-none" aria-label="Raisonnement de l'agent">
+    <section className="code-card mb-3 overflow-hidden rounded-2xl font-mono text-[12.5px] shadow-none" aria-label="Agent reasoning">
       <div className={`flex items-center gap-2 px-3 py-2 transition-colors ${open ? 'border-b border-[color:var(--code-border)]' : ''}`}>
         <span className="flex gap-1.5" aria-hidden="true">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
@@ -39,7 +39,7 @@ export function ReasoningRibbon({ steps, active, took = null }: { steps: Reasoni
           className="ml-1 rounded-md px-1.5 py-0.5 text-[color:var(--code-muted)] transition-colors hover:text-[color:var(--code-text)]"
         >
           <span aria-hidden="true" className={`mr-1 inline-block transition-transform duration-300 ${open ? 'rotate-90' : ''}`}>▸</span>
-          Raisonnement · {steps.length} {steps.length > 1 ? 'étapes' : 'étape'}
+          Reasoning · {steps.length} {steps.length > 1 ? 'steps' : 'step'}
           {took !== null && took > 0 && ` · ${formatSeconds(took)}`}
         </button>
       </div>
@@ -52,7 +52,7 @@ export function ReasoningRibbon({ steps, active, took = null }: { steps: Reasoni
               <li key={st.id} className="rise-in">
                 {st.thought && (
                   <Line n={num()}>
-                    <span className="text-[color:var(--code-keyword)]">› Pensée</span>{' '}
+                    <span className="text-[color:var(--code-keyword)]">› Thought</span>{' '}
                     <span className="text-[color:var(--code-text)]">{st.thought}</span>
                   </Line>
                 )}
@@ -61,7 +61,7 @@ export function ReasoningRibbon({ steps, active, took = null }: { steps: Reasoni
                     <span className="text-[color:var(--code-muted)]">$ </span>
                     <span className="sr-only">Action </span>
                     {st.tool.startsWith('mcp_') && (
-                      <span className="mr-1 rounded bg-accent-soft px-1 text-[10px] font-bold" title="Outil d'un serveur MCP externe (T1)">MCP</span>
+                      <span className="mr-1 rounded bg-accent-soft px-1 text-[10px] font-bold" title="Tool from an external MCP server (T1)">MCP</span>
                     )}
                     <span className="text-[color:var(--code-fn)]">{st.tool}</span>
                     <span className="break-all text-[color:var(--code-string)]">({compact(st.args)})</span>
@@ -70,7 +70,7 @@ export function ReasoningRibbon({ steps, active, took = null }: { steps: Reasoni
                 {st.observation !== undefined ? (
                   <Line n={num()} tone={st.ok === false ? 'bad' : 'good'}>
                     <span className={st.ok === false ? 'text-[color:var(--code-bad)]' : 'text-[color:var(--code-good)]'}>
-                      {st.ok === false ? '✗ Échec' : '← Observation'}
+                      {st.ok === false ? '✗ Failed' : '← Observation'}
                     </span>{' '}
                     <span className="text-[color:var(--code-text)]">{st.observation}</span>
                     {st.ms !== undefined && <span className="ml-2 text-[color:var(--code-muted)]">{st.ms} ms</span>}

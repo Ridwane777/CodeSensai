@@ -13,26 +13,26 @@ const wrap = (ui: React.ReactElement) =>
     </MemoryRouter>,
   )
 
-test("l'accueil salue selon l'heure et se présente", () => {
+test("the welcome screen greets by time of day and introduces itself", () => {
   wrap(<Welcome now={new Date(2026, 9, 13, 20, 0)} />)
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Bonsoir/)
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/CodeSensei/)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Good evening/)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/CodeSensai/)
 })
 
-test("l'accueil propose tout de suite le champ de saisie, sans bouton d'activation", () => {
+test("the welcome screen shows the input right away, with no activation button", () => {
   wrap(<Welcome now={new Date()} />)
   expect(screen.getByRole('textbox', { name: /message/i })).toHaveFocus()
-  expect(screen.queryByRole('button', { name: /activer la conversation/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /enable the conversation/i })).not.toBeInTheDocument()
 })
 
-test("l'accueil indique que le moteur est simulé et propose des départs rapides", () => {
+test("the welcome screen says the engine is simulated and offers quick starts", () => {
   wrap(<Welcome now={new Date()} />)
-  expect(screen.getByText(/moteur simulé/i)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /chercher dans le code/i })).toBeInTheDocument()
+  expect(screen.getByText(/simulated engine/i)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /search the code/i })).toBeInTheDocument()
 })
 
-test("les chiffres de la landing arrivent à leur valeur finale", async () => {
+test("the landing figures reach their final value", async () => {
   wrap(<Landing />)
   expect(await screen.findByText('28', {}, { timeout: 3000 })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: /lancer la démo/i })).toHaveAttribute('href', '/chat')
+  expect(screen.getByRole('link', { name: /start the demo/i })).toHaveAttribute('href', '/chat')
 })

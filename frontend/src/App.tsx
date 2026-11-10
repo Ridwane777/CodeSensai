@@ -17,11 +17,11 @@ const Journal = lazy(() => import('./pages/Journal'))
 const Planning = lazy(() => import('./pages/Planning'))
 const Export = lazy(() => import('./pages/Export'))
 
-/** Le vrai agent si `sensai-web` répond et que le jeton est bon, sinon la démonstration (ADR-0035). */
+/** The real agent if `sensai-web` answers and the token is valid, otherwise the demo (ADR-0035). */
 function Engine({ children }: { children: ReactNode }) {
   const conn = useConnection()
   if (!conn || conn.mode === 'checking' || conn.mode === 'login') return <ConnectGate />
-  // Une clé par moteur : une reconnexion repart d'une conversation neuve.
+  // One key per engine: a reconnection starts from a fresh conversation.
   return (
     <EngineProvider key={conn.engine ? `live-${conn.generation}` : 'demo'} engine={conn.engine ?? undefined}>
       {children}

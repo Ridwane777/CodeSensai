@@ -6,15 +6,15 @@ import { EngineProvider } from '../src/state/useEngine'
 
 const file = (name: string, text: string) => new File([text], name, { type: 'text/plain' })
 
-test('seuls les fichiers texte sont lus ; le binaire et les formats inconnus sont refusés avec un message', async () => {
+test('only text files are read; binary and unknown formats are rejected with a message', async () => {
   const { ok, errors } = await readAttachments([file('a.py', 'print(1)\n'), file('b.pdf', '%PDF'), file('c.txt', 'x\u0000y')])
   expect(ok).toEqual([{ name: 'a.py', lang: 'python', text: 'print(1)\n' }])
   expect(errors).toHaveLength(2)
 })
 
-test('le message envoyé contient la question puis chaque fichier dans un bloc de code', () => {
-  expect(withAttachments(' Explique ', [{ name: 'a.py', lang: 'python', text: 'print(1)\n' }])).toBe(
-    'Explique\n\nFichier joint : a.py\n```python\nprint(1)\n```',
+test('the sent message holds the question, then each file in a code block', () => {
+  expect(withAttachments(' Explain ', [{ name: 'a.py', lang: 'python', text: 'print(1)\n' }])).toBe(
+    'Explain\n\nFichier joint : a.py\n```python\nprint(1)\n```',
   )
 })
 
@@ -25,28 +25,28 @@ function renderComposer() {
   return e
 }
 
-test('joindre un fichier, le voir, puis envoyer : le contenu part avec le message', async () => {
+test('attach a file, see it, then send: the content goes with the message', async () => {
   const e = renderComposer()
   await act(async () => {
-    fireEvent.change(screen.getByLabelText('Fichiers à joindre'), { target: { files: [file('a.py', 'print(1)')] } })
+    fireEvent.change(screen.getByLabelText('Files to attach'), { target: { files: [file('a.py', 'print(1)')] } })
   })
   expect(screen.getByText(/a\.py/)).toBeInTheDocument()
-  fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), { target: { value: 'Explique' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Envoyer' }))
+  fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), { target: { value: 'Explain' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Send' }))
   expect(e.send).toHaveBeenCalledWith(expect.objectContaining({ text: expect.stringContaining('```python\nprint(1)\n```') }))
   expect(screen.queryByText(/a\.py/)).not.toBeInTheDocument()
 })
 
-test('un fichier glissé-déposé est joint ; un message trop long est bloqué avant le serveur', async () => {
+test('a dropped file is attached; a too-long message is blocked before the server', async () => {
   const e = renderComposer()
   const form = screen.getByRole('textbox', { name: 'Message' }).closest('form')!
   await act(async () => {
-    fireEvent.drop(form, { dataTransfer: { files: [file('gros.txt', 'x'.repeat(MAX_MESSAGE_CHARS))] } })
+    fireEvent.drop(form, { dataTransfer: { files: [file('big.txt', 'x'.repeat(MAX_MESSAGE_CHARS))] } })
   })
-  expect(screen.getByText(/gros\.txt/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'Envoyer' }))
+  expect(screen.getByText(/big\.txt/)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Send' }))
   expect(e.send).not.toHaveBeenCalled()
-  expect(screen.getByRole('status')).toHaveTextContent('trop long')
-  fireEvent.click(screen.getByRole('button', { name: 'Retirer gros.txt' }))
-  expect(screen.queryByText(/gros\.txt/)).not.toBeInTheDocument()
+  expect(screen.getByRole('status')).toHaveTextContent('too long')
+  fireEvent.click(screen.getByRole('button', { name: 'Remove big.txt' }))
+  expect(screen.queryByText(/big\.txt/)).not.toBeInTheDocument()
 })

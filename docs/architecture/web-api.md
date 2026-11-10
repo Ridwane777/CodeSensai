@@ -2,26 +2,26 @@
 
 > Moved from `docs/user-stories/` on 2026-11-02: these are technical requirements shared by the features, not user stories of one catalogue feature.
 
-Lot D — Interface & wiring (Valentino). These stories describe how the **web server**
+Workstream D — Interface & wiring (Christopher). These stories describe how the **web server**
 should behave, seen from the browser, **before** aligning the ADRs. They complete
 [README.md](../user-stories/README.md), which describes the interface itself.
 
-Sources: Lot A's contract ([api-contract.md](../architecture/web/api-contract.md), [web-api.md](../architecture/web/web-api.md)), the code
+Sources: Workstream A's contract ([api-contract.md](../architecture/web/api-contract.md), [web-api.md](../architecture/web/web-api.md)), the code
 merged into `main` (`sensai.core`, `sensai.execution`, `sensai.knowledge`) and
-[ADR-0005](../decisions/0005-interface-web-facade.md).
+[ADR-0005](../decisions/0005-web-interface-facade.md).
 
 Confirmation on the core side (the broker that waits for the browser's answer) has its own stories, written by
-Lot B: [A3-human-in-the-loop.md](../user-stories/A3-human-in-the-loop.md). US-WEB-3 and US-WEB-4 describe the same rule seen from
+Workstream B: [A3-human-in-the-loop.md](../user-stories/A3-human-in-the-loop.md). US-WEB-3 and US-WEB-4 describe the same rule seen from
 the server and from the browser.
 
 **Original general status: none of these routes was implemented on the server side.** Each story says where its
 behaviour comes from:
-- **Lot A**: already described in `web-api.md` or `api-contract.md`.
-- **Clarified**: Lot A describes it, but a point was missing or wrong (see [web-api-alignement.md](../architecture/web/web-api-alignement.md)).
-- **Extension**: absent from Lot A's contract, proposed here; to be validated with Lot A. If the extension is refused,
+- **Workstream A**: already described in `web-api.md` or `api-contract.md`.
+- **Clarified**: Workstream A describes it, but a point was missing or wrong (see [web-api-alignment.md](../architecture/web/web-api-alignment.md)).
+- **Extension**: absent from Workstream A's contract, proposed here; to be validated with Workstream A. If the extension is refused,
   the story says what the interface does instead.
 
-> **Status on 2026-10-29:** the real server `sensai-web` ([ADR-0035](../decisions/0035-serveur-web-reel.md)) now
+> **Status on 2026-10-29:** the real server `sensai-web` ([ADR-0035](../decisions/0035-real-web-server.md)) now
 > serves health, config, sessions (create, list, read, fork, delete, export, share), messages, confirm, answer,
 > interrupt, profile (read only), facts and state (`src/sensai/web/server.py`). Stories touched by the merges of
 > 2026-10-29 carry their own status line below. Statuses: ✅ checked with the real agent · ◐ partly ·
@@ -30,10 +30,10 @@ behaviour comes from:
 
 | Story | Subject | Source |
 | --- | --- | --- |
-| US-WEB-1 | Streamed answer | Lot A |
-| US-WEB-2 | Reasoning and tools | Lot A |
+| US-WEB-1 | Streamed answer | Workstream A |
+| US-WEB-2 | Reasoning and tools | Workstream A |
 | US-WEB-3 | Confirmation before a risky action | Clarified |
-| US-WEB-4 | Disconnection during a confirmation | Lot A |
+| US-WEB-4 | Disconnection during a confirmation | Workstream A |
 | US-WEB-5 | Create and resume a session | Clarified |
 | US-WEB-6 | List sessions and profile | Clarified |
 | US-WEB-7 | Interrupt a generation | Extension |
@@ -82,7 +82,7 @@ behaviour comes from:
 > `tool_return` ([ADR-0047](../decisions/0047-real-agent-handoffs-in-the-web.md), proposed). Checked by `tests/web/test_handoffs.py` with a scripted
 > model, not with the real model. Sub-agents' own steps are still not streamed.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): `delegate_task` and `team_task` relays were streamed, with the sub-agents' `subagent_step` events.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): `delegate_task` and `team_task` relays were streamed, with the sub-agents' `subagent_step` events.
 
 ## Confirmation before a risky action
 
@@ -94,7 +94,7 @@ behaviour comes from:
 **Acceptance criteria:**
 - Before a tool whose mode is "ask", the stream contains a `confirm_request` event with an identifier, the tool name, its risk level (`read`, `network`, `write`, `execute`), a readable `summary`, the **complete** `arguments` (the exact code, the exact content) and `timeout_s`.
 - The browser answers with `POST /api/sessions/{id}/confirm` with `{"confirm_id": "...", "approved": true|false}`; the response is `204`.
-- The identifier field is called `confirm_id` **in the event as in the answer** (see the alignment: Lot A's contract uses `id` in one and `confirm_id` in the other).
+- The identifier field is called `confirm_id` **in the event as in the answer** (see the alignment: Workstream A's contract uses `id` in one and `confirm_id` in the other).
 - Approved: the tool runs and a `tool_return` follows. Refused: the tool does not run and the `tool_return` reports the refusal (`ok: false`); the turn goes on.
 - **No answer before `timeout_s` = refusal**, never acceptance. The delay is enforced by the gateway; the server does not count it again.
 - An answer to an unknown, already resolved or expired `confirm_id` is ignored with no effect: `404` or `409`, never an execution.
@@ -119,7 +119,7 @@ behaviour comes from:
 
 **Acceptance criteria:**
 - `POST /api/sessions` returns `201` with `session_id`; with an existing `session_id` in the body, it resumes that session.
-- The first message creates the session if none exists for the project: the client does not need an explicit call first (Lot A's contract left this point open).
+- The first message creates the session if none exists for the project: the client does not need an explicit call first (Workstream A's contract left this point open).
 - `GET /api/sessions/{id}` returns the messages (`role`, `content`) in order. **It does not return a timestamp per message**: the storage (`SessionStore`) does not keep one, only `created_at` and `updated_at` for the whole session.
 - A message whose turn fails (model unreachable, stream cut) is **not** saved: on resume, the history contains no half turn.
 - An unknown session gives `404` with an error body `{"error", "code", "details"}`.
@@ -130,7 +130,7 @@ behaviour comes from:
 > `GET /api/sessions/{id}`, no server change). The chat also has a conversation sidebar ("+ Nouvelle conversation",
 > reopen). Checked in a headless browser against `sensai-web` **without** a model, not with the real agent.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): a conversation was listed, reloaded and continued (the agent remembered the function discussed), and reopened from the sidebar in the browser.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): a conversation was listed, reloaded and continued (the agent remembered the function discussed), and reopened from the sidebar in the browser.
 
 ### US-WEB-6 — Find my sessions and my preferences
 **As** Camille, the developer coming back to a project,
@@ -155,9 +155,9 @@ behaviour comes from:
 > (not `DELETE /api/profile`), because the server only allows `GET` and `POST` (CORS). `POST /api/profile/preferences`
 > (`{"text"}`, 500 characters at most) returns the profile; `400 TOO_MANY_PREFERENCES` above 50. The Memory page uses
 > them, and shows the real profile and facts. The VACUUM limit is fixed: `SessionStore.delete` now runs `VACUUM`
-> (`test_supprimer_une_session_efface_aussi_son_texte_du_fichier`). Checked by tests, not with the real agent.
+> (`test_deleting_a_session_also_erases_its_text_from_the_file`). Checked by tests, not with the real agent.
 
-> **Update on 2026-11-01:** ◐ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): a preference "always answer in English" added through the API was followed, but on the first attempt a French few-shot example won (finding 3); deleting a conversation returned 204 and removed its text from `sessions.db`, and "Tout oublier" worked in the browser.
+> **Update on 2026-11-01:** ◐ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): a preference "always answer in English" added through the API was followed, but on the first attempt a French few-shot example won (finding 3); deleting a conversation returned 204 and removed its text from `sessions.db`, and "Tout oublier" worked in the browser.
 
 ## Conversation control
 
@@ -168,13 +168,13 @@ behaviour comes from:
 
 **Acceptance criteria:**
 - `POST /api/sessions/{id}/interrupt` stops the current turn: no further model call or tool starts, and the stream ends with `done`.
-- The stop reason can be told apart from a complete answer: **extension requested from Lot A**: `done.reason = "interrupted"`.
+- The stop reason can be told apart from a complete answer: **extension requested from Workstream A**: `done.reason = "interrupted"`.
 - Interrupting with no turn in progress answers `204` and has no effect.
 - The partial answer already sent is not saved as a complete answer in the history.
 - Sending a new message during a turn is refused with `409`, unless the interface interrupts first: one turn at a time per session.
 - *If the extension is refused*: the interface closes its connection; the server detects the disconnection (US-WEB-4) and abandons the turn.
 
-> **Status on 2026-10-29:** ◐ Partly. Besides the "■ Arrêter" button, pressing Escape in the message field now
+> **Status on 2026-10-29:** ◐ Partly. Besides the "■ Stop" button, pressing Escape in the message field now
 > stops the answer too (#103). Checked by frontend tests, not with the real agent.
 
 ### US-WEB-8 — Explore another direction without losing the first
@@ -191,7 +191,7 @@ behaviour comes from:
 > **Status on 2026-10-29:** ◐ Partly. Editing a message of a conversation reopened from the Memory page forks at
 > the right index (#44). Checked in a headless browser without a model, not with the real agent.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): a fork at 2 messages gave a conversation with 2 messages.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): a fork at 2 messages gave a conversation with 2 messages.
 
 ### US-WEB-9 — Answer the agent in a form
 **As** Camille, the developer whose agent is missing a piece of information,
@@ -215,7 +215,7 @@ behaviour comes from:
 > terminal), not in `sensai-schedule`, and not to the `team_task` roles. Checked by tests with a scripted model,
 > not with the real model.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): the `question` event was answered through the API and in the page, and an unanswered form expired after 100 s with the agent saying what was missing.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): the `question` event was answered through the API and in the page, and an unanswered form expired after 100 s with the agent saying what was missing.
 
 ## Leaving the session
 
@@ -249,12 +249,12 @@ behaviour comes from:
 > stored under the SHA-256 of a random token, expiring after 7 days. `GET /share/<token>` needs no token, serves
 > escaped static HTML with no script (CSP `default-src 'none'`, `noindex`, `no-referrer`, `no-store`); unknown,
 > revoked or expired links all give the same 404 page. Differences with the criteria: there is no server setting
-> that disables sharing — a link exists only when the user clicks "Créer un lien de partage", and it is reachable
+> that disables sharing — a link exists only when the user clicks "Create a share link", and it is reachable
 > only by whoever can reach `sensai-web` (127.0.0.1 by default); revocation is
 > `POST /api/shares/<token>/revoke` (→ `204` / `404` `SHARE_NOT_FOUND`) instead of `DELETE /api/sessions/{id}/share`,
 > and the interface has no revoke button yet. Checked by tests, not with the real agent.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): the public page was read without a token, and returned 404 after revocation.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): the public page was read without a token, and returned 404 after revocation.
 
 ## Observability
 
@@ -264,7 +264,7 @@ behaviour comes from:
 **so that** I can spot drift without rereading every line.
 
 **Acceptance criteria:**
-- A `usage` event (`prompt_tokens`, `completion_tokens`, `duration_ms`) may accompany the end of a turn. **Extension requested from Lot A**: the current contract left the question open.
+- A `usage` event (`prompt_tokens`, `completion_tokens`, `duration_ms`) may accompany the end of a turn. **Extension requested from Workstream A**: the current contract left the question open.
 - A tool's duration is measured between its `tool_call` and its `tool_return`; the interface can compute it itself, the server has nothing to add.
 - *If the extension is refused*: the context gauge stays an estimate made by the interface, labelled as such; it is not presented as a measurement.
 - The displayed log contains only what actually went through the stream: no invented data.
@@ -282,7 +282,7 @@ behaviour comes from:
 - The server listens **only on the local machine** by default; opening it to the network requires an explicit option and a warning.
 - Allowed origins (CORS) are a closed list; no origin is accepted by default apart from the interface itself.
 - A wrong, missing or malformed token gives the same `401` response, without saying which case it is.
-- The remote Ollama pod is not publicly reachable (rule from ADR-0004, taken over by Lot A).
+- The remote Ollama pod is not publicly reachable (rule from ADR-0004, taken over by Workstream A).
 
 ### US-WEB-14 — No secret leaves through the stream
 **As** Camille, the developer whose project contains keys,
@@ -290,9 +290,9 @@ behaviour comes from:
 **so that** they are not exposed in a shared tab, a screenshot or an export.
 
 **Acceptance criteria:**
-- A tool's result goes through Lot B's output filters (secrets, personal data) before being sent as `tool_return`.
+- A tool's result goes through Workstream B's output filters (secrets, personal data) before being sent as `tool_return`.
 - Export and sharing use the same filters.
-- **Known limit not to hide**: the text written by the model (`token`, `thought`) is not filtered by the gateway, which only sees tools. If the model copies a secret into its answer, it appears. Whether to filter streamed text is to be decided with Lot B; until then, it is documented as a residual risk.
+- **Known limit not to hide**: the text written by the model (`token`, `thought`) is not filtered by the gateway, which only sees tools. If the model copies a secret into its answer, it appears. Whether to filter streamed text is to be decided with Workstream B; until then, it is documented as a residual risk.
 
 ### US-WEB-15 — Errors I can understand
 **As** Camille, the developer whose model is sometimes unreachable,
@@ -325,19 +325,19 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| US-WEB-1 | ✅ | `web/server.py`, `web/runtime.py` | `tests/web/test_web_facade_spike.py` (`test_reponse_en_flux_et_done_en_dernier`, `test_message_vide_ou_trop_long_est_refuse_avant_le_flux`) | The limit is no longer a fixed 6: 6 by default, set by `max_iterations` (ADR-0057). Tokens now arrive line by line (answer filter, ADR-0058) |
-| US-WEB-2 | ✅ | `web/runtime.py` | `tests/web/test_web_facade_spike.py::test_appel_et_retour_d_outil_partagent_le_meme_id`, `tests/web/test_handoffs.py` |  |
-| US-WEB-3 | ✅ | `execution/web_confirmation.py`, `web/server.py` | `tests/execution/test_web_confirmation.py`, `tests/web/test_web_facade_spike.py::test_l_outil_a_risque_ne_s_execute_qu_apres_accord` |  |
-| US-WEB-4 | ✅ | `execution/web_confirmation.py` | `tests/web/test_web_facade_spike.py::test_fermer_l_onglet_pendant_la_confirmation_n_execute_rien` |  |
-| US-WEB-5 | ✅ | `web/server.py`, `knowledge/memory.py` | `tests/web/test_web_facade_spike.py` (`test_un_tour_reussi_entre_dans_l_historique`, `test_modele_injoignable_donne_error_puis_done_et_rien_n_est_enregistre`, `test_session_inconnue_donne_404_avec_un_corps_d_erreur`) |  |
+| US-WEB-1 | ✅ | `web/server.py`, `web/runtime.py` | `tests/web/test_web_facade_spike.py` (`test_streamed_answer_and_done_last`, `test_empty_or_too_long_message_is_rejected_before_the_stream`) | The limit is no longer a fixed 6: 6 by default, set by `max_iterations` (ADR-0057). Tokens now arrive line by line (answer filter, ADR-0058) |
+| US-WEB-2 | ✅ | `web/runtime.py` | `tests/web/test_web_facade_spike.py::test_tool_call_and_return_share_the_same_id`, `tests/web/test_handoffs.py` |  |
+| US-WEB-3 | ✅ | `execution/web_confirmation.py`, `web/server.py` | `tests/execution/test_web_confirmation.py`, `tests/web/test_web_facade_spike.py::test_the_risky_tool_runs_only_after_approval` |  |
+| US-WEB-4 | ✅ | `execution/web_confirmation.py` | `tests/web/test_web_facade_spike.py::test_closing_the_tab_during_confirmation_runs_nothing` |  |
+| US-WEB-5 | ✅ | `web/server.py`, `knowledge/memory.py` | `tests/web/test_web_facade_spike.py` (`test_a_successful_turn_enters_the_history`, `test_unreachable_model_gives_error_then_done_and_nothing_is_saved`, `test_unknown_session_gives_404_with_an_error_body`) |  |
 | US-WEB-6 | ◐ | `web/server.py` (`/api/profile`) | `tests/web/test_server.py` | Clearing is `POST /api/profile/forget`, not `DELETE /api/profile` (written above) |
-| US-WEB-7 | ◐ | `web/server.py` (`/interrupt`) | `tests/web/test_web_facade_spike.py::test_interrompre_termine_par_done_interrupted_sans_enregistrer_le_tour`, `tests/web/test_journal_quality.py::test_un_second_passage_pendant_le_premier_repond_409` | Stop works; sending during a turn is refused (`409`), the interface does not interrupt first |
+| US-WEB-7 | ◐ | `web/server.py` (`/interrupt`) | `tests/web/test_web_facade_spike.py::test_interrupt_ends_with_done_interrupted_without_saving_the_turn`, `tests/web/test_journal_quality.py::test_a_second_run_during_the_first_returns_409` | Stop works; sending during a turn is refused (`409`), the interface does not interrupt first |
 | US-WEB-8 | ✅ | `web/server.py` (`/fork`) | `tests/web/test_server.py` (fork test) |  |
 | US-WEB-9 | ✅ | `web/questions.py`, `tools/ask_user_tool.py` | `tests/web/test_questions.py` |  |
-| US-WEB-10 | ◐ | `web/server.py` (`/export`) | `tests/web/test_server.py::test_export_filtre_les_secrets` | See X3 US-X3-1 |
+| US-WEB-10 | ◐ | `web/server.py` (`/export`) | `tests/web/test_server.py::test_export_filters_secrets` | See X3 US-X3-1 |
 | US-WEB-11 | ✅ | `web/shares.py` | `tests/web/test_shares.py` |  |
 | US-WEB-12 | ◐ | `web/runtime.py` (`usage`), `observability/journal.py` | `tests/web/test_real_features.py`, `tests/web/test_journal_quality.py` | `usage` carries estimated `used`/`budget`/`num_ctx`, not Ollama's `prompt_tokens`/`completion_tokens`; labelled as an estimate |
-| US-WEB-13 | ✅ | `web/server.py`, `web/cli.py` | `tests/web/test_web_facade_spike.py::test_jeton_obligatoire_partout_sauf_la_sante`, `tests/web/test_server.py::test_cors_ferme` |  |
-| US-WEB-14 | ✅ | `execution/gateway.py`, `execution/guardrails.py` (`StreamRedactor`) | `tests/core/test_agent.py::test_un_secret_ecrit_par_le_modele_est_masque_meme_coupe_en_morceaux`, `tests/web/test_server.py::test_export_filtre_les_secrets`, `tests/web/test_shares.py` | The "known limit" above is fixed on 2026-11-01: `token` text is filtered line by line (ADR-0058) and `thought` text as one block (`tests/core/test_agent.py::test_le_raisonnement_affiche_est_filtre_lui_aussi`) |
-| US-WEB-15 | ✅ | `web/server.py` | `tests/web/test_web_facade_spike.py` (`test_modele_injoignable_donne_error_puis_done_et_rien_n_est_enregistre`, `test_un_seul_tour_a_la_fois_par_session`, `test_deux_sessions_en_parallele_ne_melangent_pas_leurs_confirmations`) |  |
+| US-WEB-13 | ✅ | `web/server.py`, `web/cli.py` | `tests/web/test_web_facade_spike.py::test_token_required_everywhere_except_health`, `tests/web/test_server.py::test_cors_closed` |  |
+| US-WEB-14 | ✅ | `execution/gateway.py`, `execution/guardrails.py` (`StreamRedactor`) | `tests/core/test_agent.py::test_a_secret_written_by_the_model_is_masked_even_split_into_chunks`, `tests/web/test_server.py::test_export_filters_secrets`, `tests/web/test_shares.py` | The "known limit" above is fixed on 2026-11-01: `token` text is filtered line by line (ADR-0058) and `thought` text as one block (`tests/core/test_agent.py::test_the_displayed_reasoning_is_filtered_too`) |
+| US-WEB-15 | ✅ | `web/server.py` | `tests/web/test_web_facade_spike.py` (`test_unreachable_model_gives_error_then_done_and_nothing_is_saved`, `test_one_turn_at_a_time_per_session`, `test_two_parallel_sessions_do_not_mix_their_confirmations`) |  |
 | US-WEB-16 | ✅ | `web/server.py` (`/api/health`, `/api/config`) | `tests/web/test_server.py` |  |

@@ -1,85 +1,80 @@
-# Issue #64 — Lire et indexer les documents : essais réels
+# Issue #64 — Reading and indexing documents: real trials
 
-Décision : [ADR-0034](../decisions/0034-lire-tous-les-formats-de-fichier.md).
+Decision: [ADR-0034](../decisions/0034-read-all-file-formats.md).
 
-**Méthode** (2026-10-18). Client sur un portable Intel i7-1355U, Docker
-29.9.1, image `sensai-docs` (MarkItDown 0.1.8, 659 Mo) construite
-localement. Embeddings et modèle de chat sur le pod RunPod (Ollama 0.40.6,
-`bge-m3`, `qwen3-coder:30b`).
+**Method** (2026-10-18). Client on an Intel i7-1355U laptop, Docker
+29.9.1, `sensai-docs` image (MarkItDown 0.1.8, 659 MB) built locally.
+Embeddings and chat model on the RunPod pod (Ollama 0.40.6, `bge-m3`,
+`qwen3-coder:30b`).
 
-Fichiers d'essai, dans un dossier temporaire hors du dépôt :
-- `sujet.pdf` : un vrai sujet the school de 3,3 Mo, celui du projet Dashboard ;
-- `cahier.docx`, `budget.xlsx`, `pitch.pptx` : générés avec les
-  bibliothèques de l'image ;
-- `plan.dwg` : un en-tête AutoCAD.
+Trial files, in a temporary folder outside the repository:
+- `requirements.pdf`: a real 3.3 MB project specification (the Dashboard project);
+- `cahier.docx`, `budget.xlsx`, `pitch.pptx`: generated with the image's
+  libraries;
+- `plan.dwg`: an AutoCAD header.
 
-## 1. Conversion par `read_file`
+## 1. Conversion by `read_file`
 
-| Fichier | Résultat | Temps |
+| File | Result | Time |
 | --- | --- | --- |
-| `sujet.pdf` | 217 lignes de Markdown | 8,2 s |
-| `cahier.docx` | « Exigence 1 : au moins deux user stories par feature. » | 3,0 s |
-| `budget.xlsx` | Tableau Markdown (Poste, Coût mensuel) | 3,1 s |
-| `pitch.pptx` | Titre et texte de la diapositive | 4,0 s |
-| `plan.dwg` | « Generic AutoCAD drawing (306 bytes) », pas de lecteur, marche à suivre | 0,00 s |
-| Page suivante de `sujet.pdf` | Réutilisée, sans nouvelle conversion | 0,000 s |
+| `requirements.pdf` | 217 lines of Markdown | 8.2 s |
+| `cahier.docx` | "Requirement 1: at least two user stories per feature." | 3.0 s |
+| `budget.xlsx` | Markdown table (Item, Monthly cost) | 3.1 s |
+| `pitch.pptx` | Slide title and text | 4.0 s |
+| `plan.dwg` | "Generic AutoCAD drawing (306 bytes)", no reader, steps to follow | 0.00 s |
+| Next page of `requirements.pdf` | Reused, no new conversion | 0.000 s |
 
-Le temps comprend le démarrage du conteneur et le chargement de MarkItDown.
+The time includes starting the container and loading MarkItDown.
 
-## 2. L'agent sur le pod
+## 2. The agent on the pod
 
-Avec `sensai --no-rag`, donc sans l'aide du RAG :
-- **« D'après sujet.pdf, quels langages et frameworks sont imposés ? »**
-  L'agent appelle `read_file` (218 lignes) et répond : aucun n'est imposé
-  (« free to use the languages and frameworks of your choice »), puis donne
-  les recommandations, le port 8080, `/about.json` et docker-compose. Chaque
-  affirmation a été retrouvée dans le texte converti.
-- **« Que contient plan.dwg ? »** L'agent reçoit le type et la marche à
-  suivre ; il explique comment ouvrir ou convertir le fichier, sans inventer
-  de contenu.
+With `sensai --no-rag`, so without help from RAG:
+- **"According to requirements.pdf, which languages and frameworks are mandatory?"**
+  The agent calls `read_file` (218 lines) and answers: none is mandatory
+  ("free to use the languages and frameworks of your choice"), then gives
+  the recommendations, port 8080, `/about.json` and docker-compose. Every
+  claim was found in the converted text.
+- **"What does plan.dwg contain?"** The agent receives the type and the steps
+  to follow; it explains how to open or convert the file, without inventing
+  content.
 
-## 3. Indexation par le RAG
+## 3. Indexing by RAG
 
-Le même dossier, indexé avec la vraie conversion et `bge-m3`, interrogé avec
-le RAG hybride et le reclassement de R2. **Aucune question ne nomme le
-fichier.**
+The same folder, indexed with the real conversion and `bge-m3`, queried with
+hybrid RAG and the R2 reranking. **No question names the file.**
 
-| Question | Premier passage | Bon ? |
+| Question | First passage | Correct? |
 | --- | --- | --- |
-| Quels langages et frameworks sont imposés pour le projet ? | `sujet.pdf`, lignes 91-130 | ✅ contient « free to use the languages and frameworks » et la liste recommandée |
-| Sur quel port doit tourner le serveur ? | `sujet.pdf`, ligne 121 | ✅ « MUST run on port 8080 » |
-| Combien coûte le GPU par mois ? | `budget.xlsx` | ✅ le tableau (GPU RunPod : 17) |
-| Combien de user stories faut-il par feature ? | `cahier.docx` | ✅ « au moins deux user stories par feature » |
+| Which languages and frameworks are mandatory for the project? | `requirements.pdf`, lines 91-130 | ✅ contains "free to use the languages and frameworks" and the recommended list |
+| Which port must the server run on? | `requirements.pdf`, line 121 | ✅ "MUST run on port 8080" |
+| How much does the GPU cost per month? | `budget.xlsx` | ✅ the table (RunPod GPU: 17) |
+| How many user stories are needed per feature? | `cahier.docx` | ✅ "at least two user stories per feature" |
 
-- Première indexation : 4 documents, 11 passages, **29,5 s** (`plan.dwg`
-  n'est pas indexé).
-- Indexation suivante sans changement : **0,01 s**, aucun document reconverti.
+- First indexing: 4 documents, 11 passages, **29.5 s** (`plan.dwg` is not
+  indexed).
+- Next indexing with no change: **0.01 s**, no document reconverted.
 
-## 4. Défauts trouvés par ces essais, corrigés
+## 4. Defects found by these trials, fixed
 
-- Un fichier binaire qui contient des octets nuls se décode en UTF-8 :
-  `read_file` le renvoyait comme du texte, avant ce changement. Il est
-  désormais traité comme binaire (critère de Git : un octet nul dans les
-  8 premiers Ko).
-- `puremagic` donne au DWG le type `image/x-dwg` : l'agent recevait un
-  conseil OCR absurde. Seules les images matricielles sont classées
-  « image ».
-- Sur un PDF abîmé, MarkItDown renvoie le fichier brut comme texte : le RAG
-  l'aurait indexé. Ce cas est rejeté dans l'image (code de sortie 3) et côté
-  agent.
-- Les tests du CLI lançaient le vrai Docker : ils utilisent désormais un faux
-  convertisseur.
+- A binary file containing null bytes decodes as UTF-8: before this change,
+  `read_file` returned it as text. It is now treated as binary (Git's
+  criterion: a null byte in the first 8 KB).
+- `puremagic` gives DWG the type `image/x-dwg`: the agent received absurd
+  OCR advice. Only raster images are classified as "image".
+- On a damaged PDF, MarkItDown returns the raw file as text: RAG would have
+  indexed it. This case is rejected in the image (exit code 3) and on the
+  agent side.
+- The CLI tests launched the real Docker: they now use a fake converter.
 
-## 5. Limites
+## 5. Limits
 
-- **Le temps :** de 3 à 8 s par conversion. Un projet avec beaucoup de
-  documents allonge la première indexation.
-- **La qualité de certains PDF :** sur ce sujet, des mots sont collés
-  (« highlycustomizabledashboard »), un défaut connu de pdfminer. Le modèle
-  a quand même compris, et la recherche a trouvé les bons passages.
-- **Les numéros de ligne cités** pour un document sont ceux du Markdown
-  converti, pas ceux des pages du PDF.
-- **Pas d'OCR**, pas de description d'images, pas de transcription audio.
-- **Un échantillon petit :** 4 questions sur 4 fichiers. C'est une
-  vérification de fonctionnement, pas une mesure de qualité comme celles de
-  R1 et R2.
+- **Time:** 3 to 8 s per conversion. A project with many documents makes the
+  first indexing longer.
+- **Quality of some PDFs:** in this specification, words are stuck together
+  ("highlycustomizabledashboard"), a known pdfminer defect. The model still
+  understood, and search found the right passages.
+- **Cited line numbers** for a document are those of the converted Markdown,
+  not the PDF pages.
+- **No OCR**, no image description, no audio transcription.
+- **A small sample:** 4 questions on 4 files. This is a functional check, not
+  a quality measurement like those of R1 and R2.

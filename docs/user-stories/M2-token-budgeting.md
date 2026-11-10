@@ -6,10 +6,10 @@ itself, never touching the saved session). The session-persistence half of
 M2's old scope (resuming a conversation across runs) is delivered by M1 —
 see [M1-session-persistence.md](M1-session-persistence.md).
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/context`: ✅ with both set-ups (< 1 s).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/context`: ✅ with both set-ups (< 1 s).
 
 ## US-M2-1 — A long session keeps working instead of hitting a wall (was User Story 1 of M2-token-budgeting.md)
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer in a long debugging session**, I want **the agent to keep
 answering correctly even once our conversation has grown very long**, so
@@ -36,7 +36,7 @@ cross some invisible limit**.
   summarized the way a long CLI session is.
 
 ## US-M2-2 — Resuming later still finds the whole conversation (was User Story 2 of M2-token-budgeting.md)
-> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who closes the CLI and comes back the next day**
 (`--session <id>`, feature M1), I want **my resumed conversation to still
@@ -54,7 +54,7 @@ condensed away for an earlier question is still there if I need it later**.
   compression again, independently, from the full history.
 
 ## US-M2-3 — Ollama never cuts the conversation without anyone noticing (was User Story 3 of M2-token-budgeting.md)
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose conversation (or whose project passages) is larger than the
 model's context window**, I want **the agent to size its requests to that
@@ -78,7 +78,7 @@ built on a context that Ollama silently truncated**.
 
 > **Update on 2026-10-29:** ◐ Web interface ([ADR-0050](../decisions/0050-real-web-features-on-demand-evaluation.md), proposed): every turn sends a `usage` event (`used`, `budget`, `num_ctx`, `estimated: true`) before the answer, shown as the token bar with the context %; counts are **estimated** (characters / 4), not the model's own. When the sliding summary ran, a `compression` event (`saved_tokens`) shows the notice. Tested (`tests/web/test_real_features.py`, `frontend/tests/realFeatures.test.tsx`), not yet with the real model.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): `usage` events were sent (token bar 867 / 6 192 after the first answer), and compression ran at the 10th long message (`used` 5 699 → 3 093) with the agent still knowing what it had received.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): `usage` events were sent (token bar 867 / 6 192 after the first answer), and compression ran at the 10th long message (`used` 5 699 → 3 093) with the agent still knowing what it had received.
 
 ---
 
@@ -92,10 +92,10 @@ built on a context that Ollama silently truncated**.
 > [ADR-0045](../decisions/0045-token-budget-sliding-summary.md).
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ## US-M2-4 — The conversation history persists between sessions (was User Story 1 of M2-context-management.md)
-> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer in the middle of a long debugging session**, I want **my conversation to be saved and to be able to resume it later**, so that **I can continue a 2-hour debugging session without losing the context**.
 
@@ -107,7 +107,7 @@ As **Camille, the developer in the middle of a long debugging session**, I want 
 - The agent has access to the whole past history (no arbitrary limit)
 
 ## US-M2-5 — The model's context stays readable and consistent (was User Story 2 of M2-context-management.md)
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who relies on the agent's answers**, I want **the system prompt and the messages to be well organised** before they are sent to the model, so that **the model receives a clear instruction and a structured history**.
 
@@ -128,6 +128,6 @@ Each story checked against the code and the automated tests (not against earlier
 | --- | --- | --- | --- | --- |
 | US-M2-1 Long session | ✅ | `knowledge/compression.py`, `cli.py`, `web/runtime.py` | `tests/knowledge/test_compression.py`, `tests/test_cli_compression.py`, `tests/web/test_runtime_budget.py` | Token counts are estimates (characters / 4) |
 | US-M2-2 Resume keeps everything | ✅ | `knowledge/compression.py` (does not touch `SessionStore`) | `tests/test_cli_compression.py` |  |
-| US-M2-3 `num_ctx` always sent | ✅ | `core/ollama_client.py`, `core/agent.py`, `config.py` | `tests/core/test_ollama_client.py::test_stream_chat_transmet_num_ctx`, `tests/web/test_runtime_budget.py::test_les_sous_agents_du_web_recoivent_num_ctx`, `tests/scheduling/test_schedule_cli.py::test_num_ctx_de_la_config_part_avec_l_agent_planifie`, `tests/core/test_structured.py::test_num_ctx_part_dans_les_options_de_l_appel`, `tests/knowledge/test_retrieval.py::test_le_reclassement_envoie_num_ctx_quand_il_est_donne` |  |
-| US-M2-4 History persists | ✅ | `knowledge/memory.py` (SQLite) | `tests/knowledge/test_memory.py::test_une_session_survit_a_la_fermeture`, `tests/test_cli_persistence.py` | Delivered by M1 |
-| US-M2-5 Readable context | ✅ | `core/history.py`, `core/context_view.py` (`/context`), `knowledge/compression.py` | `tests/test_cli_compression.py::test_describe_context_montre_le_prompt_exact_et_les_reglages`, `tests/web/test_server.py::test_context_montre_le_prompt_exact_sans_appeler_le_modele`, `tests/web/test_runtime_budget.py::test_un_contexte_trop_gros_pour_etre_reduit_avertit` | `/context` (ADR-0058) shows the exact messages sent, `num_ctx`, the budget and the generation settings |
+| US-M2-3 `num_ctx` always sent | ✅ | `core/ollama_client.py`, `core/agent.py`, `config.py` | `tests/core/test_ollama_client.py::test_stream_chat_forwards_num_ctx`, `tests/web/test_runtime_budget.py::test_web_subagents_receive_num_ctx`, `tests/scheduling/test_schedule_cli.py::test_num_ctx_from_config_reaches_the_scheduled_agent`, `tests/core/test_structured.py::test_num_ctx_is_sent_in_the_call_options`, `tests/knowledge/test_retrieval.py::test_reranking_sends_num_ctx_when_given` |  |
+| US-M2-4 History persists | ✅ | `knowledge/memory.py` (SQLite) | `tests/knowledge/test_memory.py::test_a_session_survives_closing`, `tests/test_cli_persistence.py` | Delivered by M1 |
+| US-M2-5 Readable context | ✅ | `core/history.py`, `core/context_view.py` (`/context`), `knowledge/compression.py` | `tests/test_cli_compression.py::test_describe_context_shows_exact_prompt_and_settings`, `tests/web/test_server.py::test_context_shows_the_exact_prompt_without_calling_the_model`, `tests/web/test_runtime_budget.py::test_a_context_too_large_to_reduce_warns` | `/context` (ADR-0058) shows the exact messages sent, `num_ctx`, the budget and the generation settings |

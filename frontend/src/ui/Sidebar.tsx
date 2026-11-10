@@ -6,17 +6,17 @@ import { NAV } from './nav'
 import { SimBadge } from './SimBadge'
 import { ThemeToggle } from './ThemeToggle'
 
-/** Contenu de la barre latérale : logo, conversations (serveur réel), pages, état du moteur et thème. */
+/** Sidebar content: logo, conversations (real server), pages, engine status and theme. */
 function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   const navigate = useNavigate()
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
       <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5 px-2 text-lg font-semibold tracking-tight text-ink">
         <BrandMark className="h-7 w-7 text-accent" />
-        CodeSensei
+        CodeSensai
       </Link>
       <ConversationList onOpen={() => { navigate('/chat'); onNavigate() }} />
-      <nav aria-label="Navigation principale" className="flex flex-col gap-0.5">
+      <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
         {NAV.map((n) => (
           <NavLink
             key={n.to}
@@ -42,15 +42,15 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
 }
 
 /**
- * Barre latérale à la claude.ai : fixe à gauche sur grand écran, tiroir ouvert par le bouton
- * « hamburger » en dessous de `lg` (fond cliquable, Échap et clic sur un lien la ferment).
+ * claude.ai-style sidebar: fixed on the left on large screens, a drawer opened by the
+ * "hamburger" button below `lg` (clicking the backdrop, Escape or a link closes it).
  */
 export function Sidebar() {
   const [open, setOpen] = useState(false)
   const drawerId = useId()
   const { pathname } = useLocation()
 
-  // un changement de page ferme le tiroir
+  // a page change closes the drawer
   useEffect(() => setOpen(false), [pathname])
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function Sidebar() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={drawerId}
-        aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+        aria-label={open ? 'Close the menu' : 'Open the menu'}
         className="glass fixed left-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-full lg:hidden"
       >
         <span className="relative block h-3.5 w-5" aria-hidden="true">

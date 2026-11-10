@@ -23,97 +23,97 @@ function renderChat() {
 const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms) })
 const type = (text: string) => {
   fireEvent.change(screen.getByRole('textbox', { name: /message/i }), { target: { value: text } })
-  fireEvent.click(screen.getByRole('button', { name: /envoyer/i }))
+  fireEvent.click(screen.getByRole('button', { name: /send/i }))
 }
 
-test("l'accueil salue et montre tout de suite le champ de saisie", () => {
+test("the welcome greets and shows the input right away", () => {
   renderChat()
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/CodeSensei/)
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/CodeSensai/)
   expect(screen.getByRole('textbox', { name: /message/i })).toBeInTheDocument()
 })
 
-test("l'envoi est désactivé tant que la saisie est vide", () => {
+test("sending is disabled while the input is empty", () => {
   renderChat()
-  expect(screen.getByRole('button', { name: /envoyer/i })).toBeDisabled()
+  expect(screen.getByRole('button', { name: /send/i })).toBeDisabled()
   fireEvent.change(screen.getByRole('textbox', { name: /message/i }), { target: { value: '   ' } })
-  expect(screen.getByRole('button', { name: /envoyer/i })).toBeDisabled()
+  expect(screen.getByRole('button', { name: /send/i })).toBeDisabled()
 })
 
-test("un message envoyé s'affiche puis la réponse arrive en streaming", () => {
+test("a sent message shows, then the answer streams in", () => {
   renderChat()
-  type('Reprends où on en était')
-  expect(screen.getByText('Reprends où on en était')).toBeInTheDocument()
+  type('Resume where we left off')
+  expect(screen.getByText('Resume where we left off')).toBeInTheDocument()
   advance(300)
-  expect(screen.queryByText(/Re-bonjour/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument()
   advance(20000)
-  expect(screen.getByText(/Re-bonjour/)).toBeInTheDocument()
+  expect(screen.getByText(/Welcome back/)).toBeInTheDocument()
 })
 
-test('cliquer une suggestion envoie son texte', () => {
+test('clicking a suggestion sends its text', () => {
   renderChat()
-  fireEvent.click(screen.getByRole('button', { name: /chercher dans le code/i }))
-  expect(screen.getByText(/session inconnue ne plante pas/i, { selector: 'p' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /search the code/i }))
+  expect(screen.getByText(/unknown session does not crash/i, { selector: 'p' })).toBeInTheDocument()
 })
 
-test('Arrêter coupe la génération et le signale', () => {
+test('Stop cuts the generation and says so', () => {
   renderChat()
-  type('Reprends où on en était')
+  type('Resume where we left off')
   advance(400)
-  fireEvent.click(screen.getByRole('button', { name: /arrêter/i }))
+  fireEvent.click(screen.getByRole('button', { name: /stop the answer/i }))
   advance(20000)
-  expect(screen.queryByRole('button', { name: /arrêter/i })).not.toBeInTheDocument()
-  expect(screen.getByText(/interrompu/i)).toBeInTheDocument()
-  expect(screen.queryByText(/Re-bonjour/)).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /stop the answer/i })).not.toBeInTheDocument()
+  expect(screen.getByText(/interrupted/i)).toBeInTheDocument()
+  expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument()
 })
 
-test('Échap dans le champ de saisie arrête aussi la génération', () => {
+test('Escape in the input also stops the generation', () => {
   renderChat()
-  type('Reprends où on en était')
+  type('Resume where we left off')
   advance(400)
   fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Escape' })
   advance(20000)
-  expect(screen.getByText(/interrompu/i)).toBeInTheDocument()
-  expect(screen.queryByText(/Re-bonjour/)).not.toBeInTheDocument()
+  expect(screen.getByText(/interrupted/i)).toBeInTheDocument()
+  expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument()
 })
 
-test("modifier un message crée une branche et l'original reste consultable", () => {
+test("editing a message creates a branch and the original stays viewable", () => {
   renderChat()
-  type('Reprends où on en était')
+  type('Resume where we left off')
   advance(20000)
-  fireEvent.click(screen.getByRole('button', { name: /modifier le message/i }))
-  fireEvent.change(screen.getByRole('textbox', { name: /nouveau texte/i }), { target: { value: 'Fais le bilan de la séance' } })
-  fireEvent.click(screen.getByRole('button', { name: /envoyer la variante/i }))
+  fireEvent.click(screen.getByRole('button', { name: /edit the message/i }))
+  fireEvent.change(screen.getByRole('textbox', { name: /new message text/i }), { target: { value: 'Give me a recap of the session' } })
+  fireEvent.click(screen.getByRole('button', { name: /send the variant/i }))
   advance(20000)
-  expect(screen.getByText('Fais le bilan de la séance')).toBeInTheDocument()
-  expect(screen.queryByText('Reprends où on en était')).not.toBeInTheDocument()
+  expect(screen.getByText('Give me a recap of the session')).toBeInTheDocument()
+  expect(screen.queryByText('Resume where we left off')).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: /branche principale/i }))
-  expect(screen.getByText('Reprends où on en était')).toBeInTheDocument()
-  expect(screen.queryByText('Fais le bilan de la séance')).not.toBeInTheDocument()
+  expect(screen.getByText('Resume where we left off')).toBeInTheDocument()
+  expect(screen.queryByText('Give me a recap of the session')).not.toBeInTheDocument()
 })
 
-test('renderInline met en forme le gras et le code', () => {
-  const { container } = render(<p>{renderInline('un **mot** et `code`')}</p>)
-  expect(container.querySelector('strong')?.textContent).toBe('mot')
+test('renderInline formats bold and code', () => {
+  const { container } = render(<p>{renderInline('a **word** and `code`')}</p>)
+  expect(container.querySelector('strong')?.textContent).toBe('word')
   expect(container.querySelector('code')?.textContent).toBe('code')
 })
 
-test('renderRich affiche les blocs de code du modèle, même pas encore fermés', () => {
+test('renderRich shows model code blocks, even unclosed ones', () => {
   const { container } = render(<div>{renderRich('Voici :\n```python\ndef add(a, b):\n    return a + b\n```\nFin `x`.')}</div>)
   expect(container.querySelector('pre code')?.textContent).toBe('def add(a, b):\n    return a + b')
   expect(container.querySelector('pre code')?.getAttribute('data-lang')).toBe('python')
   expect(container.textContent).not.toContain('```')
   expect(container.querySelectorAll('pre')).toHaveLength(1)
   expect(container.querySelector('p code, div > code')?.textContent).toBe('x')
-  const streaming = render(<div>{renderRich('Début\n```js\nconst a = 1')}</div>)
+  const streaming = render(<div>{renderRich('Start\n```js\nconst a = 1')}</div>)
   expect(streaming.container.querySelector('pre code')?.textContent).toBe('const a = 1')
   const plain = render(<div>{renderRich('aucun code')}</div>)
   expect(plain.container.querySelector('pre')).toBeNull()
 })
 
-test("les appels d'outil écrits en texte par le modèle ne sont pas affichés", () => {
-  const raw = '<function=write_file>\n<parameter=path>\na.txt\n</parameter>\n</function>\n</tool_call>\n\nPuis-je créer a.txt ?'
-  expect(visibleAnswer(raw)).toBe('Puis-je créer a.txt ?')
+test("tool calls written as text by the model are hidden", () => {
+  const raw = '<function=write_file>\n<parameter=path>\na.txt\n</parameter>\n</function>\n</tool_call>\n\nMay I create a.txt?'
+  expect(visibleAnswer(raw)).toBe('May I create a.txt?')
   expect(visibleAnswer('Je lis.\n<function=read_file>\n<parameter=path>')).toBe('Je lis.\n')
-  expect(visibleAnswer('Rien à masquer.')).toBe('Rien à masquer.')
+  expect(visibleAnswer('Nothing to hide.')).toBe('Nothing to hide.')
   expect(visibleAnswer('<tool_call>\n<function=x>\n</function>\n</tool_call>')).toBe('')
 })

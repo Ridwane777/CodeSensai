@@ -1,18 +1,18 @@
 """
-Sortie structurée garantie par schéma JSON — feature [T5] Structured Output.
+Output guaranteed by a JSON schema — feature [T5] Structured Output.
 
-Ollama contraint le décodage du modèle au schéma donné (champ `format` de
-l'API `/api/chat`, ADR-0036) : la réponse est du JSON qui respecte la forme
-demandée, pas un texte dont on espère extraire l'information.
+Ollama constrains the model's decoding to the given schema (`format` field of
+the `/api/chat` API, ADR-0036): the reply is JSON matching the requested
+shape, not text we hope to extract information from.
 
-Appel séparé de la boucle ReAct (core/agent.py) : `format` contraint et
-`tools` ne se mélangent pas dans le même appel (voir ADR-0036).
+A call separate from the ReAct loop (core/agent.py): constrained `format` and
+`tools` do not mix in the same call (see ADR-0036).
 
-En deux temps quand le CLI fournit `gather` (ADR-0039) : l'agent cherche
-d'abord la réponse avec ses outils (lecture de fichiers, recherche dans le
-projet…), puis l'appel contraint met en forme CE QU'IL A TROUVÉ. Sans cela,
-le modèle répondait de mémoire et inventait (essai réel du 2026-10-24 : cinq
-fonctions inventées pour un fichier qui n'en a qu'une).
+Two steps when the CLI provides `gather` (ADR-0039): the agent first looks for
+the answer with its tools (reading files, searching the project…), then the
+constrained call formats WHAT IT FOUND. Without this, the model answered from
+memory and made things up (real trial run on 2026-10-24: five invented
+functions for a file that has only one).
 """
 from __future__ import annotations
 
@@ -25,36 +25,36 @@ from typing import Any
 from .ollama_client import OllamaError, stream_chat_messages
 
 COMMAND = "/structured"
-USAGE = f'Usage : {COMMAND} <schéma.json> <demande>'
+USAGE = f'Usage: {COMMAND} <schema.json> <request>'
 
 
 class StructuredOutputError(Exception):
-    """Le modèle n'a pas produit de JSON valide malgré la contrainte de schéma."""
+    """The model did not produce valid JSON despite the schema constraint."""
 
 
 def grounded_prompt(prompt: str, findings: str) -> str:
-    """La demande, accompagnée de ce que l'agent a trouvé : seule source autorisée."""
+    """The request, together with what the agent found: the only allowed source."""
     return (
-        f"Demande : {prompt}\n\n"
-        "Informations trouvées dans le projet par l'agent (seule source autorisée) :\n"
-        f"{findings.strip() or '(rien trouvé)'}\n\n"
-        "Remplis le schéma à partir de ces informations : recopie les éléments qu'elles "
-        "donnent (noms, valeurs), sans en oublier et sans rien inventer. Ne laisse un "
-        "champ vide que si l'information n'y figure vraiment pas."
+        f"Request: {prompt}\n\n"
+        "Information found in the project by the agent (the only allowed source):\n"
+        f"{findings.strip() or '(nothing found)'}\n\n"
+        "Fill in the schema from this information: copy the items it gives "
+        "(names, values), without leaving any out and without inventing anything. Leave a "
+        "field empty only if the information is really not there."
     )
 
 
 def run_structured_query(
     host: str, model: str, prompt: str, schema: dict[str, Any], num_ctx: int | None = None,
 ) -> dict[str, Any]:
-    """Envoie `prompt` au modèle en exigeant une réponse conforme à `schema`.
+    """Send `prompt` to the model, requiring a reply that matches `schema`.
 
-    Un seul aller-retour, sans outils. Lève StructuredOutputError si la
-    réponse n'est malgré tout pas du JSON valide (modèle indiscipliné, ou
-    version d'Ollama trop ancienne pour comprendre `format`).
+    A single round trip, no tools. Raises StructuredOutputError if the reply
+    is still not valid JSON (undisciplined model, or an Ollama version too old
+    to understand `format`).
 
-    `num_ctx` (M2, ADR-0045) : sans lui, Ollama tronque en silence un prompt
-    long (le `/structured` appuyé sur le projet en colle des extraits).
+    `num_ctx` (M2, ADR-0045): without it, Ollama silently truncates a long
+    prompt (the project-grounded `/structured` pastes excerpts into it).
     """
     messages = [{"role": "user", "content": prompt}]
     chunks: list[str] = []
@@ -71,7 +71,7 @@ def run_structured_query(
         return json.loads(raw)
     except json.JSONDecodeError as e:
         raise StructuredOutputError(
-            f"Réponse non conforme au schéma (JSON invalide) : {raw[:200]!r}"
+            f"Reply does not match the schema (invalid JSON): {raw[:200]!r}"
         ) from e
 
 
@@ -89,10 +89,10 @@ def handle_structured_command(
     gather: Callable[[str], str] | None = None,
     num_ctx: int | None = None,
 ) -> str | None:
-    """`/structured <schéma.json> <demande>` ; None si `line` n'en est pas une.
+    """`/structured <schema.json> <request>`; None if `line` is not one.
 
-    `query` remplace l'appel réel (tests) ; sans lui, c'est `run_structured_query`
-    avec `num_ctx` (M2, ADR-0045).
+    `query` replaces the real call (tests); without it, `run_structured_query`
+    is used with `num_ctx` (M2, ADR-0045).
     """
     if not is_structured_command(line):
         return None
@@ -100,7 +100,7 @@ def handle_structured_command(
     try:
         words = shlex.split(line)[1:]
     except ValueError as e:
-        return f"[Erreur] Commande illisible : {e}"
+        return f"[Error] Unreadable command: {e}"
     if len(words) < 2:
         return USAGE
 
@@ -108,17 +108,17 @@ def handle_structured_command(
     try:
         schema_text = Path(schema_path).read_text(encoding="utf-8")
     except OSError as e:
-        return f"[Erreur] Schéma illisible ({schema_path}) : {e}"
+        return f"[Error] Unreadable schema ({schema_path}): {e}"
     try:
         schema = json.loads(schema_text)
     except json.JSONDecodeError as e:
-        return f"[Erreur] Schéma invalide ({schema_path}) : {e}"
+        return f"[Error] Invalid schema ({schema_path}): {e}"
 
     try:
         if gather is not None:
             prompt = grounded_prompt(prompt, gather(prompt))
         result = run(host, model, prompt, schema)
     except StructuredOutputError as e:
-        return f"[Erreur] {e}"
+        return f"[Error] {e}"
 
     return json.dumps(result, ensure_ascii=False, indent=2)

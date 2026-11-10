@@ -1,17 +1,17 @@
 """
-Tests de la persistance de session & profils — feature [M1].
+Tests for session & profile persistence — feature [M1].
 
-Chaque test renvoie à un critère d'acceptation de
-docs/user-stories/M1-session-persistence.md, et les choix testés viennent de
-docs/decisions/0007-persistance-des-sessions.md.
+Each test refers to an acceptance criterion in
+docs/user-stories/M1-session-persistence.md, and the tested choices come from
+docs/decisions/0007-session-persistence.md.
 
-Les tests qui comptent le plus :
-- `test_une_session_survit_a_la_fermeture` : c'est la Definition of Done de M1.
-- `test_reprise_ne_melange_pas_les_projets` : échoue si quelqu'un retire le
-  filtre par projet, et « reprendre la dernière » rouvrirait la conversation
-  d'un autre projet.
-- `test_profil_illisible_leve_valueerror` : le CLI s'appuie sur cette erreur
-  précise pour démarrer quand même avec un profil vide.
+The tests that matter most:
+- `test_a_session_survives_closing`: this is the M1 Definition of Done.
+- `test_resume_does_not_mix_projects`: fails if someone removes the per-project
+  filter, in which case "resume the last one" would reopen another project's
+  conversation.
+- `test_unreadable_profile_raises_valueerror`: the CLI relies on this exact
+  error to start anyway with an empty profile.
 """
 import os
 import sqlite3
@@ -28,8 +28,8 @@ from sensai.knowledge.memory import (
     open_session,
 )
 
-PROJET = "/home/dev/mon-projet"
-AUTRE_PROJET = "/home/dev/autre-projet"
+PROJET = "/home/dev/my-project"
+AUTRE_PROJET = "/home/dev/other-project"
 
 
 @pytest.fixture
@@ -44,23 +44,23 @@ def echange(question: str, reponse: str) -> list[dict]:
     ]
 
 
-# --- US-M1-1 : reprendre là où je m'étais arrêté ---------------------------
+# --- US-M1-1: pick up where I left off ------------------------------------
 
 
-def test_une_session_survit_a_la_fermeture(tmp_path):
-    """Deux SessionStore sur le même fichier = deux lancements du CLI."""
+def test_a_session_survives_closing(tmp_path):
+    """Two SessionStores on the same file = two CLI launches."""
     db = tmp_path / "sessions.db"
     premier = SessionStore(db)
     session_id = premier.create(PROJET)
-    premier.save(session_id, echange("Le test de login échoue", "Montre-moi la trace."))
+    premier.save(session_id, echange("The login test fails", "Show me the traceback."))
 
     second = SessionStore(db)
 
-    assert second.load(session_id) == echange("Le test de login échoue", "Montre-moi la trace.")
+    assert second.load(session_id) == echange("The login test fails", "Show me the traceback.")
 
 
-def test_sauvegarde_remplace_au_lieu_d_ajouter(store):
-    """History.drop_last() retire un tour : la base ne doit pas le garder."""
+def test_save_replaces_instead_of_appending(store):
+    """History.drop_last() removes a turn: the database must not keep it."""
     session_id = store.create(PROJET)
     store.save(session_id, [*echange("q1", "r1"), {"role": "user", "content": "q2"}])
 
@@ -69,8 +69,9 @@ def test_sauvegarde_remplace_au_lieu_d_ajouter(store):
     assert store.load(session_id) == echange("q1", "r1")
 
 
-def test_les_champs_d_un_message_sont_conserves(store):
-    """Les appels d'outils (ReAct, Lot A) ajoutent des champs aux messages."""
+def test_message_fields_are_kept(store):
+    """Tool calls (ReAct, Workstream A) add fields to messages. The "é" query
+    checks that non-ASCII content round-trips."""
     message = {
         "role": "assistant",
         "content": "",
@@ -82,22 +83,22 @@ def test_les_champs_d_un_message_sont_conserves(store):
     assert store.load(session_id) == [message]
 
 
-def test_session_inconnue_leve_keyerror(store):
+def test_unknown_session_raises_keyerror(store):
     with pytest.raises(KeyError):
         store.load("nexiste-pas")
     with pytest.raises(KeyError):
         store.save("nexiste-pas", echange("q", "r"))
 
 
-def test_le_dossier_de_donnees_est_cree(tmp_path):
-    SessionStore(tmp_path / "pas" / "encore" / "la" / "sessions.db")
+def test_the_data_folder_is_created(tmp_path):
+    SessionStore(tmp_path / "not" / "there" / "yet" / "sessions.db")
 
-    assert (tmp_path / "pas" / "encore" / "la" / "sessions.db").is_file()
+    assert (tmp_path / "not" / "there" / "yet" / "sessions.db").is_file()
 
 
-# --- Droits d'accès : l'historique n'est lisible que par son propriétaire ---
+# --- Permissions: the history is readable by its owner only --------------
 
-posix_seulement = pytest.mark.skipif(os.name != "posix", reason="droits POSIX")
+posix_seulement = pytest.mark.skipif(os.name != "posix", reason="POSIX permissions")
 
 
 def droits(chemin) -> int:
@@ -105,7 +106,7 @@ def droits(chemin) -> int:
 
 
 @posix_seulement
-def test_dossier_cree_en_700_et_base_en_600(tmp_path):
+def test_folder_created_700_and_database_600(tmp_path):
     dossier = tmp_path / ".sensai"
     SessionStore(dossier / "sessions.db")
 
@@ -114,19 +115,19 @@ def test_dossier_cree_en_700_et_base_en_600(tmp_path):
 
 
 @posix_seulement
-def test_profil_ecrit_en_600(tmp_path):
+def test_profile_written_600(tmp_path):
     chemin = tmp_path / ".sensai" / "profile.json"
-    Profile(preferences=["utilise pytest"]).save(chemin)
+    Profile(preferences=["use pytest"]).save(chemin)
 
     assert droits(chemin.parent) == 0o700
     assert droits(chemin) == 0o600
 
 
 @posix_seulement
-def test_un_dossier_existant_n_est_pas_modifie(tmp_path):
-    """--data-dir peut pointer vers un dossier de l'utilisateur (son $HOME) :
-    Sensai ne doit pas en changer les droits."""
-    existant = tmp_path / "a-moi"
+def test_an_existing_folder_is_not_modified(tmp_path):
+    """--data-dir may point to a user folder (their $HOME): CodeSensai must
+    not change its permissions."""
+    existant = tmp_path / "mine"
     existant.mkdir(mode=0o755)
     existant.chmod(0o755)
 
@@ -135,32 +136,32 @@ def test_un_dossier_existant_n_est_pas_modifie(tmp_path):
     assert droits(existant) == 0o755
 
 
-# --- Purge automatique : durée de conservation (ADR-0007) -------------------
+# --- Automatic purge: retention period (ADR-0007) --------------------------
 
 
 def vieillir(store, session_id, jours):
-    """Fait comme si le dernier message de la session datait de `jours` jours."""
+    """Pretend the last message of the session is `jours` days old."""
     date = (datetime.now(UTC) - timedelta(days=jours)).isoformat()
     with sqlite3.connect(store.db_path) as conn:
         conn.execute("UPDATE sessions SET updated_at = ? WHERE id = ?", (date, session_id))
 
 
-def test_purge_supprime_les_sessions_inactives(store):
+def test_purge_deletes_inactive_sessions(store):
     vieille = store.create(PROJET)
-    store.save(vieille, echange("vieux bug", "r"))
+    store.save(vieille, echange("old bug", "r"))
     vieillir(store, vieille, 31)
     recente = store.create(PROJET)
-    store.save(recente, echange("bug du jour", "r"))
+    store.save(recente, echange("today's bug", "r"))
 
     supprimees = store.purge(30)
 
     assert supprimees == 1
     assert not store.exists(vieille)
-    assert store.load(recente) == echange("bug du jour", "r")
+    assert store.load(recente) == echange("today's bug", "r")
 
 
-def test_purge_se_fonde_sur_le_dernier_message_pas_sur_la_creation(store):
-    """Une conversation commencée il y a longtemps mais toujours active reste."""
+def test_purge_uses_last_message_not_creation(store):
+    """A conversation started long ago but still active is kept."""
     session_id = store.create(PROJET)
     store.save(session_id, echange("q", "r"))
     with sqlite3.connect(store.db_path) as conn:
@@ -173,9 +174,9 @@ def test_purge_se_fonde_sur_le_dernier_message_pas_sur_la_creation(store):
     assert store.exists(session_id)
 
 
-def test_purge_epargne_la_session_demandee(store):
-    """`sensai --session <id>` sur une vieille session : on ne l'efface pas
-    au moment même où l'utilisateur la redemande."""
+def test_purge_spares_the_requested_session(store):
+    """`sensai --session <id>` on an old session: do not delete it at the very
+    moment the user asks for it again."""
     demandee = store.create(PROJET)
     store.save(demandee, echange("q", "r"))
     vieillir(store, demandee, 90)
@@ -184,7 +185,7 @@ def test_purge_epargne_la_session_demandee(store):
     assert store.exists(demandee)
 
 
-def test_retention_zero_ne_purge_jamais(store):
+def test_zero_retention_never_purges(store):
     session_id = store.create(PROJET)
     store.save(session_id, echange("q", "r"))
     vieillir(store, session_id, 3650)
@@ -193,9 +194,9 @@ def test_retention_zero_ne_purge_jamais(store):
     assert store.exists(session_id)
 
 
-def test_purge_supprime_aussi_les_messages(store):
+def test_purge_also_deletes_messages(store):
     session_id = store.create(PROJET)
-    store.save(session_id, echange("secret collé par erreur", "r"))
+    store.save(session_id, echange("secret pasted by mistake", "r"))
     vieillir(store, session_id, 31)
 
     store.purge(30)
@@ -205,34 +206,34 @@ def test_purge_supprime_aussi_les_messages(store):
     assert restants == 0
 
 
-# --- Reprise au démarrage (ADR-0007) ----------------------------------------
+# --- Resume at startup (ADR-0007) ------------------------------------------
 
 
-def test_reprend_la_derniere_session_du_projet(store):
+def test_resumes_the_last_project_session(store):
     ancienne = store.create(PROJET)
-    store.save(ancienne, echange("ancienne", "r"))
+    store.save(ancienne, echange("older", "r"))
     recente = store.create(PROJET)
-    store.save(recente, echange("récente", "r"))
+    store.save(recente, echange("recent", "r"))
 
     session_id, turns = open_session(store, PROJET)
 
     assert session_id == recente
-    assert turns == echange("récente", "r")
+    assert turns == echange("recent", "r")
 
 
-def test_reprise_ne_melange_pas_les_projets(store):
+def test_resume_does_not_mix_projects(store):
     a_moi = store.create(PROJET)
-    store.save(a_moi, echange("mon projet", "r"))
+    store.save(a_moi, echange("my project", "r"))
     autre = store.create(AUTRE_PROJET)
-    store.save(autre, echange("autre projet", "r"))
+    store.save(autre, echange("other project", "r"))
 
     session_id, _ = open_session(store, PROJET)
 
     assert session_id == a_moi
 
 
-def test_une_session_vide_n_est_pas_reprise(store):
-    """Lancer puis quitter sans rien dire ne doit pas masquer la vraie dernière session."""
+def test_an_empty_session_is_not_resumed(store):
+    """Launching then quitting without a word must not hide the real last session."""
     pleine = store.create(PROJET)
     store.save(pleine, echange("q", "r"))
     store.create(PROJET)
@@ -242,17 +243,17 @@ def test_une_session_vide_n_est_pas_reprise(store):
     assert session_id == pleine
 
 
-def test_premier_lancement_cree_une_session_vide(store):
+def test_first_launch_creates_an_empty_session(store):
     session_id, turns = open_session(store, PROJET)
 
     assert turns == []
     assert store.load(session_id) == []
 
 
-# --- US-M1-3 : choisir quelle conversation reprendre ------------------------
+# --- US-M1-3: choose which conversation to resume -------------------------
 
 
-def test_nouvelle_session_ignore_l_historique(store):
+def test_new_session_ignores_history(store):
     ancienne = store.create(PROJET)
     store.save(ancienne, echange("q", "r"))
 
@@ -262,11 +263,11 @@ def test_nouvelle_session_ignore_l_historique(store):
     assert turns == []
 
 
-def test_reprendre_une_session_precise(store):
+def test_resume_a_specific_session(store):
     voulue = store.create(PROJET)
     store.save(voulue, echange("bug auth", "r"))
     recente = store.create(PROJET)
-    store.save(recente, echange("refonte API", "r"))
+    store.save(recente, echange("API redesign", "r"))
 
     session_id, turns = open_session(store, PROJET, session_id=voulue)
 
@@ -274,107 +275,107 @@ def test_reprendre_une_session_precise(store):
     assert turns == echange("bug auth", "r")
 
 
-def test_reprendre_une_session_inconnue_leve_keyerror(store):
+def test_resume_unknown_session_raises_keyerror(store):
     with pytest.raises(KeyError):
         open_session(store, PROJET, session_id="nexiste-pas")
 
 
-def test_liste_des_sessions_du_projet(store):
+def test_list_project_sessions(store):
     session_id = store.create(PROJET)
-    store.save(session_id, echange("Pourquoi le   test\nde login échoue ?", "r"))
-    store.save(store.create(AUTRE_PROJET), echange("autre", "r"))
+    store.save(session_id, echange("Why does the   login\ntest fail?", "r"))
+    store.save(store.create(AUTRE_PROJET), echange("other", "r"))
 
     sessions = store.list(PROJET)
 
     assert [s.id for s in sessions] == [session_id]
-    assert sessions[0].title == "Pourquoi le test de login échoue ?"
+    assert sessions[0].title == "Why does the login test fail?"
     assert sessions[0].message_count == 2
     assert sessions[0].updated_at
 
 
-def test_liste_la_plus_recente_en_premier(store):
+def test_list_newest_first(store):
     ancienne = store.create(PROJET)
-    store.save(ancienne, echange("ancienne", "r"))
+    store.save(ancienne, echange("older", "r"))
     recente = store.create(PROJET)
-    store.save(recente, echange("récente", "r"))
+    store.save(recente, echange("recent", "r"))
 
     assert [s.id for s in store.list(PROJET)] == [recente, ancienne]
 
 
-# --- US-M1-2 : ne pas répéter mes préférences -------------------------------
+# --- US-M1-2: do not repeat my preferences --------------------------------
 
 
-def test_profil_survit_a_la_fermeture(tmp_path):
+def test_profile_survives_closing(tmp_path):
     chemin = tmp_path / "profile.json"
     profil = Profile.load(chemin)
-    profil.remember("utilise pytest, pas unittest")
+    profil.remember("use pytest, not unittest")
     profil.save(chemin)
 
-    assert Profile.load(chemin).preferences == ["utilise pytest, pas unittest"]
+    assert Profile.load(chemin).preferences == ["use pytest, not unittest"]
 
 
-def test_profil_absent_donne_un_profil_vide(tmp_path):
+def test_missing_profile_gives_empty_profile(tmp_path):
     assert Profile.load(tmp_path / "absent.json").is_empty()
 
 
-def test_profil_illisible_leve_valueerror(tmp_path):
+def test_unreadable_profile_raises_valueerror(tmp_path):
     chemin = tmp_path / "profile.json"
-    chemin.write_text("{ pas du json", encoding="utf-8")
+    chemin.write_text("{ not json", encoding="utf-8")
 
     with pytest.raises(ValueError):
         Profile.load(chemin)
 
 
-def test_profil_injecte_dans_le_prompt_systeme():
-    profil = Profile(name="Ridwane", preferences=["réponds en français", "utilise pytest"])
+def test_profile_injected_into_system_prompt():
+    profil = Profile(name="Ridwane", preferences=["answer in English", "use pytest"])
 
-    prompt = build_system_prompt("Tu es CodeSensei.", profil)
+    prompt = build_system_prompt("You are CodeSensai.", profil)
 
-    assert prompt.startswith("Tu es CodeSensei.")
+    assert prompt.startswith("You are CodeSensai.")
     assert "Ridwane" in prompt
-    assert "- réponds en français" in prompt
-    assert "- utilise pytest" in prompt
+    assert "- answer in English" in prompt
+    assert "- use pytest" in prompt
 
 
-def test_consigne_de_reprise_ajoutee_au_prompt():
-    prompt = build_system_prompt("Tu es CodeSensei.", Profile(preferences=["utilise pytest"]),
-                                 resumed_note="Tu as accès à l'historique.")
+def test_resume_instruction_added_to_prompt():
+    prompt = build_system_prompt("You are CodeSensai.", Profile(preferences=["use pytest"]),
+                                 resumed_note="You have access to the history.")
 
-    assert prompt.startswith("Tu es CodeSensei.")
-    assert "Tu as accès à l'historique." in prompt
-    assert "- utilise pytest" in prompt
+    assert prompt.startswith("You are CodeSensai.")
+    assert "You have access to the history." in prompt
+    assert "- use pytest" in prompt
 
 
-def test_profil_vide_ne_change_pas_le_prompt(monkeypatch):
+def test_empty_profile_does_not_change_prompt(monkeypatch):
     from datetime import datetime, timedelta, timezone
 
     from sensai.knowledge import memory
     from sensai.knowledge.memory import date_block
 
-    # Heure figée : deux appels à cheval sur une minute donneraient deux textes.
+    # Frozen time: two calls straddling a minute would give two texts.
     fixed = datetime(2026, 11, 1, 9, 5, tzinfo=timezone(timedelta(hours=1)))
     monkeypatch.setattr(memory, "local_datetime", lambda: fixed)
 
-    assert build_system_prompt("Tu es CodeSensei.", Profile()) == \
-        "Tu es CodeSensei.\n\n" + date_block()
+    assert build_system_prompt("You are CodeSensai.", Profile()) == \
+        "You are CodeSensai.\n\n" + date_block()
 
 
-def test_le_prompt_donne_la_date_du_jour():
-    """Essai réel du 2026-11-01 : sans date, le modèle se croyait en 2024 et jugeait
-    « erronés » les résultats web de 2026."""
+def test_prompt_gives_today_date():
+    """Real trial run on 2026-11-01: without a date, the model thought it was 2024
+    and judged the 2026 web results "wrong"."""
     from datetime import date
 
     from sensai.knowledge.memory import date_block
 
     block = date_block(date(2026, 11, 1))
-    assert "1 novembre 2026" in block and "2026-11-01" in block
+    assert "November 1, 2026" in block and "2026-11-01" in block
     assert "web_search" in block and "untrusted" in block
-    assert "heure" not in block  # une date seule ne donne pas d'heure
+    assert "local time" not in block  # a date alone gives no time
 
 
-def test_le_prompt_donne_l_heure_du_debut_de_session(monkeypatch):
-    """Essai réel du 2026-11-01 : sans heure, le modèle cherchait l'heure sur le web
-    et répondait avec un extrait figé."""
+def test_prompt_gives_session_start_time(monkeypatch):
+    """Real trial run on 2026-11-01: without a time, the model searched the web for
+    the time and answered with a stale snippet."""
     from datetime import datetime, timedelta, timezone
 
     from sensai.knowledge import memory
@@ -382,24 +383,24 @@ def test_le_prompt_donne_l_heure_du_debut_de_session(monkeypatch):
     fixed = datetime(2026, 11, 1, 9, 5, tzinfo=timezone(timedelta(hours=1)))
     monkeypatch.setattr(memory, "local_datetime", lambda: fixed)
     block = memory.date_block()
-    assert "1 novembre 2026" in block and "09:05 (UTC+0100)" in block
-    assert block in build_system_prompt("Tu es CodeSensei.", Profile())
+    assert "November 1, 2026" in block and "09:05 (UTC+0100)" in block
+    assert block in build_system_prompt("You are CodeSensai.", Profile())
 
 
-# --- Commandes du CLI : /remember, /profile, /forget, /sessions -------------
+# --- CLI commands: /remember, /profile, /forget, /sessions ----------------
 
 
-def test_remember_enregistre_sur_le_disque(tmp_path, store):
+def test_remember_saves_to_disk(tmp_path, store):
     chemin = tmp_path / "profile.json"
     profil = Profile()
 
-    reponse = handle_command("/remember utilise pytest", profil, chemin, store, PROJET)
+    reponse = handle_command("/remember use pytest", profil, chemin, store, PROJET)
 
     assert reponse
-    assert Profile.load(chemin).preferences == ["utilise pytest"]
+    assert Profile.load(chemin).preferences == ["use pytest"]
 
 
-def test_remember_sans_texte_n_ajoute_rien(tmp_path, store):
+def test_remember_without_text_adds_nothing(tmp_path, store):
     profil = Profile()
 
     reponse = handle_command("/remember   ", profil, tmp_path / "profile.json", store, PROJET)
@@ -408,17 +409,17 @@ def test_remember_sans_texte_n_ajoute_rien(tmp_path, store):
     assert profil.preferences == []
 
 
-def test_profile_affiche_les_preferences(tmp_path, store):
-    profil = Profile(preferences=["utilise pytest"])
+def test_profile_shows_preferences(tmp_path, store):
+    profil = Profile(preferences=["use pytest"])
 
     reponse = handle_command("/profile", profil, tmp_path / "profile.json", store, PROJET)
 
-    assert "utilise pytest" in reponse
+    assert "use pytest" in reponse
 
 
-def test_forget_efface_les_preferences(tmp_path, store):
+def test_forget_clears_preferences(tmp_path, store):
     chemin = tmp_path / "profile.json"
-    profil = Profile(preferences=["utilise pytest"])
+    profil = Profile(preferences=["use pytest"])
     profil.save(chemin)
 
     handle_command("/forget", profil, chemin, store, PROJET)
@@ -426,7 +427,7 @@ def test_forget_efface_les_preferences(tmp_path, store):
     assert Profile.load(chemin).preferences == []
 
 
-def test_sessions_liste_le_projet(tmp_path, store):
+def test_sessions_lists_the_project(tmp_path, store):
     session_id = store.create(PROJET)
     store.save(session_id, echange("bug auth", "r"))
 
@@ -436,19 +437,19 @@ def test_sessions_liste_le_projet(tmp_path, store):
     assert "bug auth" in reponse
 
 
-def test_un_message_normal_n_est_pas_une_commande(tmp_path, store):
-    """Sinon la question de l'utilisateur ne partirait jamais au modèle."""
+def test_a_normal_message_is_not_a_command(tmp_path, store):
+    """Otherwise the user question would never reach the model."""
     reponse = handle_command(
-        "Pourquoi /profile renvoie 404 ?", Profile(), tmp_path / "p.json", store, PROJET
+        "Why does /profile return 404?", Profile(), tmp_path / "p.json", store, PROJET
     )
 
     assert reponse is None
 
 
-def test_supprimer_une_session_efface_aussi_son_texte_du_fichier(store):
-    """Sans VACUUM, le texte supprimé restait dans les pages libres de SQLite (L11)."""
-    sid = store.create("/projet")
-    store.save(sid, [{"role": "user", "content": "phrase-tres-reconnaissable-1234"}])
+def test_deleting_a_session_also_erases_its_text_from_the_file(store):
+    """Without VACUUM, deleted text stayed in SQLite free pages (L11)."""
+    sid = store.create("/project")
+    store.save(sid, [{"role": "user", "content": "very-recognizable-phrase-1234"}])
     store.delete(sid)
     assert not store.exists(sid)
-    assert b"phrase-tres-reconnaissable-1234" not in store.db_path.read_bytes()
+    assert b"very-recognizable-phrase-1234" not in store.db_path.read_bytes()

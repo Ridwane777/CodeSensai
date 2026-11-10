@@ -32,14 +32,14 @@ def perms(tmp_path):
 
 @pytest.fixture
 def pdf(tmp_path):
-    path = tmp_path / "sujet.pdf"
+    path = tmp_path / "requirements.pdf"
     path.write_bytes(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n" + bytes(range(256)))
     return path
 
 
 def test_a_pdf_is_converted_and_read(perms, pdf):
-    converter = FakeConverter(ConversionResult(ok=True, text="# Sujet\nDeux user stories."))
-    result = ReadFileTool(perms, converter=converter).run(path="sujet.pdf")
+    converter = FakeConverter(ConversionResult(ok=True, text="# Requirements\nDeux user stories."))
+    result = ReadFileTool(perms, converter=converter).run(path="requirements.pdf")
     assert result.ok
     assert "Deux user stories." in result.content
     assert "converted from PDF" in result.content
@@ -49,7 +49,7 @@ def test_a_pdf_is_converted_and_read(perms, pdf):
 def test_converted_text_is_paged_like_a_text_file(perms, pdf):
     text = "\n".join(f"ligne {i}" for i in range(1, 11))
     converter = FakeConverter(ConversionResult(ok=True, text=text))
-    result = ReadFileTool(perms, converter=converter).run(path="sujet.pdf", offset=4, limit=2)
+    result = ReadFileTool(perms, converter=converter).run(path="requirements.pdf", offset=4, limit=2)
     assert "ligne 4\nligne 5" in result.content
     assert "offset=6" in result.content
 
@@ -57,8 +57,8 @@ def test_converted_text_is_paged_like_a_text_file(perms, pdf):
 def test_a_conversion_is_reused_while_the_file_is_unchanged(perms, pdf):
     converter = FakeConverter(ConversionResult(ok=True, text="a\nb\nc"))
     tool = ReadFileTool(perms, converter=converter)
-    tool.run(path="sujet.pdf", limit=1)
-    tool.run(path="sujet.pdf", offset=2, limit=1)
+    tool.run(path="requirements.pdf", limit=1)
+    tool.run(path="requirements.pdf", offset=2, limit=1)
     assert len(converter.calls) == 1
 
 
@@ -70,10 +70,10 @@ def test_a_conversion_is_reused_while_the_file_is_unchanged(perms, pdf):
 ])
 def test_failed_conversion_never_returns_content(perms, pdf, error, expected):
     converter = FakeConverter(ConversionResult(ok=False, error=error, message="x"))
-    result = ReadFileTool(perms, converter=converter).run(path="sujet.pdf")
+    result = ReadFileTool(perms, converter=converter).run(path="requirements.pdf")
     assert not result.ok
     assert expected in result.content
-    assert "sujet.pdf" in result.content
+    assert "requirements.pdf" in result.content
 
 
 def test_an_unknown_binary_is_named(perms, tmp_path):

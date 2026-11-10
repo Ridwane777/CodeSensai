@@ -1,10 +1,10 @@
 """
-Le vrai serveur web (`sensai.web`), démarré sur un port libre avec un faux modèle.
+The real web server (`sensai.web`), started on a free port with a fake model.
 
-Le faux modèle (`Script`) est un `run_turn` : il reçoit la vraie passerelle et
-peut appeler les vrais outils (`write_file` déclenche donc la vraie
-confirmation web). Les embeddings sont simulés (`FauxEmbedder`) : ni Ollama ni
-Docker ne sont nécessaires.
+The fake model (`Script`) is a `run_turn`: it receives the real gateway and
+can call the real tools (so `write_file` triggers the real web
+confirmation). Embeddings are simulated (`FauxEmbedder`): neither Ollama nor
+Docker is needed.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from sensai.web.runtime import WebRuntime
 from sensai.web.server import create_app
 from tests.knowledge.test_rag import FauxEmbedder
 
-TOKEN = "jeton-de-test"
+TOKEN = "test-token"
 
 
 def free_port() -> int:
@@ -40,14 +40,14 @@ def free_port() -> int:
 
 
 class Script:
-    """Faux modèle : rejoue `steps` et note ce qu'il a reçu.
+    """Fake model: replays `steps` and records what it received.
 
-    Chaque étape est un événement, ou ("call", outil, arguments) pour appeler
-    un outil à travers la passerelle (comme la vraie boucle).
+    Each step is an event, or ("call", tool, arguments) to call
+    a tool through the gateway (like the real loop).
     """
 
     def __init__(self) -> None:
-        self.steps: list[Any] = [Token("Bonjour."), Done("final_answer")]
+        self.steps: list[Any] = [Token("Hello."), Done("final_answer")]
         self.calls: list[list[dict]] = []
         self.pause = 0.0
         self.raise_error = False
@@ -55,7 +55,7 @@ class Script:
     def __call__(self, host: str, model: str, messages: list[dict], tools: Any) -> Iterator[Event]:
         self.calls.append(messages)
         if self.raise_error:
-            raise RuntimeError("bug du cœur")
+            raise RuntimeError("core bug")
         for step in self.steps:
             if self.pause:
                 time.sleep(self.pause)
@@ -75,17 +75,17 @@ class Env:
                  prompt_store: Any = None,
                  adversarial_runner: Callable[[], dict] | None = None,
                  share_links: bool = True) -> None:
-        self.project = root / "projet"
+        self.project = root / "project"
         self.project.mkdir(parents=True)
         (self.project / "notes.md").write_text(
-            "# Tests\nLancer les tests avec pytest -q.\n", encoding="utf-8")
+            "# Tests\nRun the tests with pytest -q.\n", encoding="utf-8")
         self.script = Script()
         self.settings = {
-            "model": "faux-modele",
+            "model": "fake-model",
             "host": "http://127.0.0.1:1",
-            "system_prompt": "Tu es CodeSensei.",
-            "memory_prompt": "Conversation reprise.",
-            "data_dir": str(root / "donnees"),
+            "system_prompt": "You are CodeSensai.",
+            "memory_prompt": "Conversation resumed.",
+            "data_dir": str(root / "data"),
             "retention_days": 30,
             "rag": rag,
             "rag_model": "bge-m3",
@@ -120,9 +120,9 @@ class Env:
             except requests.RequestException:
                 time.sleep(0.05)
         else:
-            raise RuntimeError("le serveur n'a pas démarré")
+            raise RuntimeError("the server did not start")
 
-    # --- appels -------------------------------------------------------------------
+    # --- calls ---------------------------------------------------------------------
 
     def headers(self, token: str | None = TOKEN) -> dict[str, str]:
         return {"Authorization": f"Bearer {token}"} if token else {}
@@ -139,10 +139,10 @@ class Env:
     def stream(self, session_id: str, content: str,
                on_event: Callable[[dict], None] | None = None, *, keep_usage: bool = False,
                **extra: Any) -> list[dict]:
-        """Envoie un message et lit tout le flux ; `on_event` peut répondre en cours de route.
+        """Send a message and read the whole stream; `on_event` can answer along the way.
 
-        `usage` (M2) arrive à chaque tour avant la réponse : écarté par défaut pour
-        que les tests vérifient l'ordre des autres événements ; `keep_usage=True` le garde.
+        `usage` (M2) arrives on every turn before the answer: dropped by default so
+        tests check the order of the other events; `keep_usage=True` keeps it.
         """
         events = []
         with requests.post(f"{self.base}/api/sessions/{session_id}/messages",

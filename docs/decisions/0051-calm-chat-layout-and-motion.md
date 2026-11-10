@@ -2,12 +2,12 @@
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-31
-- **Deciders**: Valentino (Lot D), pending the team's agreement
-- **Lot**: D (web interface); no impact on Lots A, B, C: no API route, event or Python code changes
+- **Deciders**: Christopher (Workstream D), pending the team's agreement
+- **Workstream**: D (web interface); no impact on Workstreams A, B, C: no API route, event or Python code changes
 
 ## Context
 
-Valentino tried the web interface on his own computer on 2026-10-31 and wrote
+Christopher tried the web interface on his own computer on 2026-10-31 and wrote
 down the frictions he felt, compared with the chat interfaces he uses every
 day:
 
@@ -22,7 +22,7 @@ day:
 3. **Not fluid.** At each streamed token the page started a new *smooth* scroll
    to the bottom, so the page jerked during an answer, and it pulled the reader
    down even when they had scrolled up to read.
-4. **Unclear when the agent works.** The only signal was "· réfléchit" in small
+4. **Unclear when the agent works.** The only signal was "· thinking" in small
    grey text and a "● en direct" label: there was no clear indicator showing
    that the agent was busy and for how long.
 5. **Too narrow in the centre.** The conversation sat in a 48rem column next to
@@ -55,27 +55,27 @@ The chat page follows the third option:
   the avatar no longer shakes; the sweeping light and the chat's code rain
   are removed. `prefers-reduced-motion` still turns every animation off.
 - **"Working" indicator** (`ThinkingIndicator`): a slowly rotating star, a
-  shimmering label saying what the agent does ("Réflexion", "Utilise
-  read_file", "Rédaction") and the seconds elapsed. The reasoning block stays
+  shimmering label saying what the agent does ("Thinking", "Using
+  read_file", "Writing") and the seconds elapsed. The reasoning block stays
   open during the turn, then folds with a slide animation and shows its
-  duration ("Raisonnement · 2 étapes · 9 s").
+  duration ("Reasoning · 2 steps · 9 s").
 - **Scrolling**: the page follows the answer only while the reader is at the
   bottom; a "↓ Revenir en bas" button appears when they scroll up. A new
   message scrolls smoothly; text growing inside a message follows instantly,
   without jerks.
 
-**Home page** (second pass the same day, after Valentino found it "too
+**Home page** (second pass the same day, after Christopher found it "too
 scattered": with the left sidebar, the full-screen poster cut the title and
 the cards overlapped): a two-column hero that stays inside the content area —
 tagline, a "first question" field that opens the chat, three starters and the
-"Lancer la démo" / "Ouvrir le chat" button on the left; the AI portrait in a
+"Start the demo" / "Open the chat" button on the left; the AI portrait in a
 frame with one still terminal card on the right. No giant name, no code rain,
 no parallax.
 
 **Home page, third pass** (same evening: still "too complicated", "give it more
 room", with a reference screenshot of a chat product's landing page and the
 request "no AI"): the two-column hero is replaced by a single dark stage that
-fills the screen — the name "CodeSensei" very large and translucent, one
+fills the screen — the name "CodeSensai" very large and translucent, one
 rounded question field over it, a warm halo of light on the right that
 breathes slowly, a short sentence and two buttons at the bottom. The AI
 portrait, the terminal card and the starters are removed from the home page
@@ -96,7 +96,7 @@ a 409 on an immediate follow-up.
 
 The same branch also connects the last two server routes that the interface
 did not use: **revoking a share link** (`POST /api/shares/{token}/revoke`,
-"Révoquer le lien" button) and the **server export** with secrets masked
+"Revoke the link" button) and the **server export** with secrets masked
 (`GET /api/sessions/{id}/export`, "Conversation du serveur" buttons on the
 Export page).
 

@@ -1,7 +1,7 @@
 """
-Teste le contrat Tool + le ToolRegistry — indépendamment de l'agent, du
-sandbox ou du RAG. Sert de modèle pour les tests que Méric et Ridwane
-écriront pour leurs propres outils.
+Tests the Tool contract + the ToolRegistry — independently of the agent, the
+sandbox or the RAG. Serves as a template for the tests teammates write for
+their own tools.
 """
 from sensai.core.tools import ToolRegistry
 from sensai.tools.echo_tool import EchoTool
@@ -11,19 +11,19 @@ def test_register_and_call():
     registry = ToolRegistry()
     registry.register(EchoTool())
 
-    result = registry.call("echo", text="bonjour")
+    result = registry.call("echo", text="hello")
 
     assert result.ok is True
-    assert result.content == "bonjour"
+    assert result.content == "hello"
 
 
 def test_unknown_tool_does_not_crash():
     registry = ToolRegistry()
 
-    result = registry.call("outil_qui_n_existe_pas", text="peu importe")
+    result = registry.call("tool_that_does_not_exist", text="whatever")
 
     assert result.ok is False
-    assert "inconnu" in result.content.lower()
+    assert "unknown" in result.content.lower()
 
 
 def test_describe_all_lists_registered_tools():
@@ -36,12 +36,12 @@ def test_describe_all_lists_registered_tools():
     assert descriptions[0]["name"] == "echo"
 
 
-def test_un_parametre_nomme_name_ne_casse_pas_l_appel():
-    """Le registre prend déjà un argument `name` (le nom de l'outil) : il ne
-    doit pas entrer en conflit avec un paramètre d'outil du même nom."""
+def test_a_parameter_named_name_does_not_break_the_call():
+    """The registry already takes a `name` argument (the tool name): it must
+    not clash with a tool parameter of the same name."""
     registry = ToolRegistry()
     registry.register(EchoTool())
 
-    result = registry.call("echo", text="x", name="conflit")
+    result = registry.call("echo", text="x", name="clash")
 
     assert result.ok is True

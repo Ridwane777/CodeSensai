@@ -1,9 +1,9 @@
 """
-[Lot C — Ridwane] Outils de la mémoire structurée — feature [M3], ADR-0030.
+[Workstream C — Ridwane] Structured memory tools — feature [M3], ADR-0030.
 
-`save_fact` (risque `write`) : retenir un fait, après confirmation.
-`recall_facts` (risque `read`) : retrouver des faits, sans confirmation.
-L'agent n'a aucun outil pour effacer : c'est réservé à la commande `/facts`.
+`save_fact` (risk `write`): remember a fact, after confirmation.
+`recall_facts` (risk `read`): retrieve facts, without confirmation.
+The agent has no tool to delete: that is reserved for the `/facts` command.
 """
 from __future__ import annotations
 
@@ -15,18 +15,18 @@ from sensai.knowledge.facts import MODES, FactError, FactStore
 
 
 def _fail(message: str) -> ToolResult:
-    # Contrat Tool : jamais d'exception, l'agent doit pouvoir corriger son appel.
+    # Tool contract: never raise, the agent must be able to fix its call.
     return ToolResult(ok=False, content=message, data={"error": "invalid_fact"})
 
 
 class RememberFactTool:
     name = "save_fact"
     risk = "write"
-    # Une phrase courte et le nom save_fact : avec une description longue ou le
-    # nom remember_fact, qwen3-coder écrivait l'appel en texte au lieu de
-    # l'appeler (4/12 contre 8/12 appels structurés, mesuré le 2026-10-17).
-    # La façon de s'en servir est dans le prompt système (facts.py).
-    description = "Enregistre un fait durable sur le projet : entité, attribut, valeur."
+    # One short sentence and the name save_fact: with a long description or the
+    # name remember_fact, qwen3-coder wrote the call as text instead of making
+    # it (4/12 vs 8/12 structured calls, measured on 2026-10-17).
+    # How to use it is in the system prompt (facts.py).
+    description = "Saves a lasting fact about the project: entity, attribute, value."
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
@@ -46,7 +46,7 @@ class RememberFactTool:
             return self.store.preview(args.get("entity"), args.get("attribute"),
                                       args.get("value"), args.get("mode", "replace"))
         except FactError as e:
-            return f"Retenir un fait — sera refusé : {e}"
+            return f"Remember a fact — will be rejected: {e}"
 
     def run(self, **kwargs: Any) -> ToolResult:
         try:
@@ -55,22 +55,22 @@ class RememberFactTool:
         except FactError as e:
             return _fail(str(e))
         except (sqlite3.Error, OSError) as e:
-            return ToolResult(ok=False, content=f"Mémoire indisponible : {e}",
+            return ToolResult(ok=False, content=f"Memory unavailable: {e}",
                               data={"error": "storage"})
         messages = {
-            "created": "Fait retenu.",
-            "added": "Valeur ajoutée.",
-            "updated": f"Fait mis à jour (ancienne valeur : {', '.join(result['old_values'])}).",
-            "unchanged": "Ce fait était déjà connu : rien n'a changé.",
+            "created": "Fact saved.",
+            "added": "Value added.",
+            "updated": f"Fact updated (old value: {', '.join(result['old_values'])}).",
+            "unchanged": "This fact was already known: nothing changed.",
         }
         content = messages[result["change"]]
         if result["others"]:
-            # Pour que le modèle repère un doublon (« version redis » à côté de
-            # « utilise_redis ») et reprenne le bon nom la fois suivante.
+            # So the model spots a duplicate ("redis version" next to
+            # "uses_redis") and reuses the right name next time.
             content += (
-                f" Autres attributs connus de {kwargs.get('entity')} : "
+                f" Other known attributes of {kwargs.get('entity')}: "
                 + ", ".join(f"{n} ({', '.join(v)})" for n, v in result["others"])
-                + ". Si l'un désigne la même chose, utilise son nom avec mode replace."
+                + ". If one means the same thing, use its name with mode replace."
             )
         return ToolResult(ok=True, content=content, data=result)
 
@@ -78,7 +78,7 @@ class RememberFactTool:
 class RecallFactsTool:
     name = "recall_facts"
     risk = "read"
-    description = "Cherche des faits enregistrés sur le projet, par entité, attribut ou valeur."
+    description = "Searches saved facts about the project, by entity, attribute or value."
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
@@ -99,24 +99,24 @@ class RecallFactsTool:
         except FactError as e:
             return _fail(str(e))
         except (sqlite3.Error, OSError) as e:
-            return ToolResult(ok=False, content=f"Mémoire indisponible : {e}",
+            return ToolResult(ok=False, content=f"Memory unavailable: {e}",
                               data={"error": "storage"})
         note = ""
         if not facts and kwargs.get("entity") and (kwargs.get("attribute") or kwargs.get("value")):
-            # Le modèle devine souvent un autre nom d'attribut que celui enregistré
-            # (essai réel du 2026-10-17) : on lui montre tout ce qu'on sait de l'entité.
+            # The model often guesses an attribute name other than the saved one
+            # (real trial run of 2026-10-17): show it everything known about the entity.
             try:
                 facts = self.store.recall(kwargs.get("entity"))
             except (FactError, sqlite3.Error, OSError):
                 facts = []
             if facts:
                 wanted = kwargs.get("attribute") or kwargs.get("value")
-                note = (f"Rien d'enregistré exactement pour « {wanted} » ; "
-                        "voici tout ce qui est connu. ")
+                note = (f"Nothing saved exactly for \"{wanted}\"; "
+                        "here is everything known. ")
         if not facts:
-            return ToolResult(ok=True, content="Aucun fait enregistré pour cette recherche.",
+            return ToolResult(ok=True, content="No fact saved for this search.",
                               data={"facts": []})
-        lines = [f"- {f['entity']} — {f['attribute']} : {f['value']} (au {f['updated_at'][:10]})"
+        lines = [f"- {f['entity']} — {f['attribute']}: {f['value']} (as of {f['updated_at'][:10]})"
                  for f in facts]
-        return ToolResult(ok=True, content=note + "Faits trouvés :\n" + "\n".join(lines),
+        return ToolResult(ok=True, content=note + "Facts found:\n" + "\n".join(lines),
                           data={"facts": facts})

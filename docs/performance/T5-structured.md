@@ -1,42 +1,41 @@
-# T5 — Sortie structurée : la réponse est-elle fondée sur le projet ?
+# T5 — Structured output: is the answer grounded in the project?
 
-> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/structured` on the project: qwen3-coder:30b on GPU ✅ 3 of 3 with RAG on after the index fix, ✅ 3 of 3 with RAG off after `list_files` (10–24 s); qwen3:8b on CPU ❌ (calls no tool, names one of its own MCP tools). Earlier measurements below.
+> **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/structured` on the project: qwen3-coder:30b on GPU ✅ 3 of 3 with RAG on after the index fix, ✅ 3 of 3 with RAG off after `list_files` (10–24 s); qwen3:8b on CPU ❌ (calls no tool, names one of its own MCP tools). Earlier measurements below.
 
-Mesures du 2026-10-24 sur le pod RunPod (GPU, Ollama), modèle
-`qwen3-coder:30b`, client Linux (Python 3.12). Décisions :
-[ADR-0036](../decisions/0036-sortie-structuree-format-json-schema.md) et
-[ADR-0039](../decisions/0039-sortie-structuree-fondee-sur-le-projet.md).
-Tous les chiffres sont mesurés ; l'échantillon est petit (5 essais par
-question).
+Measurements of 2026-10-24 on the RunPod pod (GPU, Ollama), model
+`qwen3-coder:30b`, Linux client (Python 3.12). Decisions:
+[ADR-0036](../decisions/0036-structured-output-json-schema-format.md) and
+[ADR-0039](../decisions/0039-project-grounded-structured-output.md).
+All figures are measured; the sample is small (5 runs per question).
 
-## Reproduire
+## Reproduce
 
-    python scripts/bench_t5.py <hôte Ollama> [essais]
+    python scripts/bench_t5.py <Ollama host> [runs]
 
-Le script crée un projet jetable (`stats.py`, `texte.py`, `reglages.py`) et
-pose trois questions dont la bonne réponse est connue. « Juste » : les noms de
-fonctions attendus (signature ignorée) ou la bonne valeur du port.
+The script creates a throwaway project (`stats.py`, `texte.py`, `reglages.py`)
+and asks three questions with known answers. "Correct": the expected function
+names (signature ignored) or the right port value.
 
-## Résultats (5 essais par question)
+## Results (5 runs per question)
 
-| Question | Appel direct (ADR-0036) | Deux temps (ADR-0039) |
+| Question | Direct call (ADR-0036) | Two-step (ADR-0039) |
 | --- | --- | --- |
-| Fonctions de `stats.py` (une seule : `maximum`) | 0/5 — inventées (`mean`, `median`, `mode`…) | 5/5 |
-| Fonctions de `texte.py` (`compter_mots`, `inverser`) | 0/5 — inventées | 5/5 |
-| Port de `reglages.py` (8042) | 0/5 — 5000, 8080… | 5/5 |
-| **Total** | **0/15**, 0,9 à 3,9 s | **15/15**, 3,7 à 15,8 s |
+| Functions in `stats.py` (only one: `maximum`) | 0/5 — invented (`mean`, `median`, `mode`…) | 5/5 |
+| Functions in `texte.py` (`compter_mots`, `inverser`) | 0/5 — invented | 5/5 |
+| Port in `reglages.py` (8042) | 0/5 — 5000, 8080… | 5/5 |
+| **Total** | **0/15**, 0.9 to 3.9 s | **15/15**, 3.7 to 15.8 s |
 
-## Réglage trouvé en route
+## Tuning found along the way
 
-Premier passage en deux temps : 5 sur 9, puis 8 sur 9 une fois le contrôle
-corrigé (il refusait `inverser(phrase)` au lieu de `inverser`). Le dernier
-échec venait de la mise en forme : l'agent avait trouvé les deux fonctions,
-mais le JSON rendait une liste vide. La consigne « ne laisse un champ vide que
-si l'information n'y figure vraiment pas » l'a corrigé : 15 sur 15 ensuite.
+First two-step pass: 5 out of 9, then 8 out of 9 once the check was fixed (it
+rejected `inverser(phrase)` instead of `inverser`). The last failure came from
+the formatting step: the agent had found both functions, but the JSON
+returned an empty list. The instruction "leave a field empty only if the
+information really isn't there" fixed it: 15 out of 15 afterwards.
 
-## Limites
+## Limits
 
-- Trois questions simples sur un petit projet ; un seul modèle.
-- La mise en forme recopie la réponse de l'agent : une erreur de l'agent
-  passe dans le JSON.
-- Les noms gardent la forme écrite par l'agent (avec ou sans signature).
+- Three simple questions on a small project; a single model.
+- The formatting step copies the agent's answer: an agent error ends up in
+  the JSON.
+- Names keep the form the agent wrote (with or without signature).

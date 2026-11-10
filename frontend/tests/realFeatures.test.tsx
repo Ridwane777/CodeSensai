@@ -12,47 +12,47 @@ const base = () => ({
   switchPersona: vi.fn(), subscribe: vi.fn(() => () => {}),
 })
 
-test('wire : usage, compression, artefact et étape de sous-agent viennent du serveur', () => {
+test('wire: usage, compression, artifact and sub-agent step come from the server', () => {
   const a = new WireAdapter('t1', 'sensei')
   expect(a.push({ type: 'usage', used: 2048, budget: 6192, num_ctx: 8192, estimated: true })).toEqual([
     { type: 'usage', used: 2048, budget: 6192, contextPct: 25 },
   ])
   expect(a.push({ type: 'compression', saved_tokens: 900 })).toEqual([{ type: 'compression', savedTokens: 900 }])
-  expect(a.push({ type: 'artifact_patch', section: 'Décisions', markdown: '- SQLite' })).toEqual([
-    { type: 'artifact_patch', section: 'Décisions', markdown: '- SQLite' },
+  expect(a.push({ type: 'artifact_patch', section: 'Decisions', markdown: '- SQLite' })).toEqual([
+    { type: 'artifact_patch', section: 'Decisions', markdown: '- SQLite' },
   ])
   const step = a.push({ type: 'subagent_step', agent: 'explorateur', tool: 'read_file', arguments: { path: 'a.py' }, ok: true, content: 'x', duration_ms: 37 })
   expect(step.map((e) => e.type)).toEqual(['action', 'observation'])
   expect(step[0]).toMatchObject({ tool: 'explorateur › read_file', args: { path: 'a.py' } })
   expect(step[1]).toMatchObject({ ms: 37, ok: true })
-  expect(a.push({ type: 'usage', used: 1 })).toEqual([]) // incomplet : ignoré
+  expect(a.push({ type: 'usage', used: 1 })).toEqual([]) // incomplete: ignored
 })
 
-test('le vrai document d’état remplit le panneau Artefact au chargement', async () => {
-  const e = { ...base(), getState: vi.fn(async () => ({ Décisions: '- SQLite', Vide: '' })) }
+test('the real state document fills the Artifact panel on load', async () => {
+  const e = { ...base(), getState: vi.fn(async () => ({ Decisions: '- SQLite', Empty: '' })) }
   let seen: Record<string, string> = {}
   function Probe() {
     seen = useEngine().state.artifact
     return null
   }
   render(<EngineProvider engine={e as unknown as Engine}><Probe /></EngineProvider>)
-  await vi.waitFor(() => expect(seen).toEqual({ Décisions: '- SQLite' }))
+  await vi.waitFor(() => expect(seen).toEqual({ Decisions: '- SQLite' }))
 })
 
-test('Qualité : « Évaluer la dernière réponse » ajoute la vraie note, sans les exemples fixes', async () => {
+test('Quality: "Evaluate the latest answer" adds the real score, without the fixed examples', async () => {
   const e = { ...base(), evaluate: vi.fn(async () => ({ relevance: 4, coherence: 5, faithfulness: 0.5, passages: 2 })) }
   render(
     <MemoryRouter><EngineProvider engine={e as unknown as Engine}><Quality /></EngineProvider></MemoryRouter>,
   )
-  expect(screen.getByText(/Aucune réponse évaluée/)).toBeInTheDocument()
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Évaluer la dernière réponse' })) })
+  expect(screen.getByText(/No evaluated answer/)).toBeInTheDocument()
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Evaluate the latest answer' })) })
   expect(e.evaluate).toHaveBeenCalled()
-  expect(screen.getByText('Réponse évaluée n°1')).toBeInTheDocument()
+  expect(screen.getByText('Evaluated answer #1')).toBeInTheDocument()
 })
 
-test('Planification : les vraies tâches, ajout, pause et retrait', async () => {
+test('Scheduling: the real tasks, add, pause and remove', async () => {
   let tasks: ScheduledTask[] = [
-    { id: 'veille', prompt: 'Résume les TODO', intervalS: 86400, enabled: true, lastRunAt: null, lastStatus: null, nextDue: null },
+    { id: 'veille', prompt: 'Summarize the TODOs', intervalS: 86400, enabled: true, lastRunAt: null, lastStatus: null, nextDue: null },
   ]
   const e = {
     ...base(),
@@ -68,45 +68,45 @@ test('Planification : les vraies tâches, ajout, pause et retrait', async () => 
   render(
     <MemoryRouter><EngineProvider engine={e as unknown as Engine}><DemoDataProvider><Planning /></DemoDataProvider></EngineProvider></MemoryRouter>,
   )
-  expect(await screen.findByText('Résume les TODO')).toBeInTheDocument()
-  expect(screen.getByText(/chaque jour · jamais exécutée/)).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText(/Ce que l'agent doit faire/), { target: { value: 'Bilan des tests échoués' } })
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Planifier' })) })
-  expect(e.addTask).toHaveBeenCalledWith('bilan-des-tests-echoues', 'Bilan des tests échoués', '1d')
-  expect(await screen.findByText('Bilan des tests échoués')).toBeInTheDocument()
-  await act(async () => { fireEvent.click(screen.getByRole('switch', { name: 'Activer veille' })) })
+  expect(await screen.findByText('Summarize the TODOs')).toBeInTheDocument()
+  expect(screen.getByText(/every day · never run/)).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText(/What the agent should do/), { target: { value: 'Failed tests recap' } })
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Schedule' })) })
+  expect(e.addTask).toHaveBeenCalledWith('failed-tests-recap', 'Failed tests recap', '1d')
+  expect(await screen.findByText('Failed tests recap')).toBeInTheDocument()
+  await act(async () => { fireEvent.click(screen.getByRole('switch', { name: 'Enable veille' })) })
   expect(e.setTaskEnabled).toHaveBeenCalledWith('veille', false)
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Retirer veille' })) })
-  expect(screen.queryByText('Résume les TODO')).not.toBeInTheDocument()
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Remove veille' })) })
+  expect(screen.queryByText('Summarize the TODOs')).not.toBeInTheDocument()
 })
 
-test("l'identifiant d'une tâche respecte le format de sensai-schedule", () => {
+test('a task id follows the sensai-schedule format', () => {
   expect(taskIdFrom('  Bilan : tests échoués !! ')).toBe('bilan-tests-echoues')
-  expect(taskIdFrom('???')).toBe('tache')
+  expect(taskIdFrom('???')).toBe('task')
   expect(taskIdFrom('a'.repeat(60))).toHaveLength(40)
 })
 
-test('A7 : la page Prompts montre les vrais exemples few-shot', async () => {
+test('A7: the Prompts page shows the real few-shot examples', async () => {
   const { default: Prompts } = await import('../src/pages/Prompts')
   const e = {
     ...base(),
-    getFewshot: vi.fn(async () => ({ configured: true, file: 'exemples.jsonl', minScore: 0.6, questions: ['Comment lancer les tests ?'], error: null })),
+    getFewshot: vi.fn(async () => ({ configured: true, file: 'examples.jsonl', minScore: 0.6, questions: ['How do I run the tests?'], error: null })),
   }
   render(<MemoryRouter><EngineProvider engine={e as unknown as Engine}><DemoDataProvider><Prompts /></DemoDataProvider></EngineProvider></MemoryRouter>)
-  expect(await screen.findByText('Comment lancer les tests ?')).toBeInTheDocument()
-  expect(screen.getByText(/seuil 0.6/)).toBeInTheDocument()
-  expect(screen.queryByText(/variante est notée/)).not.toBeInTheDocument()
+  expect(await screen.findByText('How do I run the tests?')).toBeInTheDocument()
+  expect(screen.getByText(/threshold 0.6/)).toBeInTheDocument()
+  expect(screen.queryByText(/variant is scored/)).not.toBeInTheDocument()
 })
 
 const RUN = {
   cases: [
-    { id: 'EV4-INJ-01', category: 'INJ', attempt: 'injection coupée par des espaces', expected: 'SIGNALÉ', observed: 'SIGNALÉ', verdict: 'OK', detail: '' },
-    { id: 'EV4-INJ-05', category: 'INJ', attempt: 'o cyrillique', expected: 'ÉCART CONNU (sûr : SIGNALÉ)', observed: 'PASSE', verdict: 'ÉCART CONNU', detail: '' },
+    { id: 'EV4-INJ-01', category: 'INJ', attempt: 'injection split by spaces', expected: 'FLAGGED', observed: 'FLAGGED', verdict: 'OK', detail: '' },
+    { id: 'EV4-INJ-05', category: 'INJ', attempt: 'Cyrillic o', expected: 'KNOWN GAP (safe: FLAGGED)', observed: 'PASSED', verdict: 'KNOWN GAP', detail: '' },
   ],
   summary: { total: 2, ok: 1, knownGaps: 1, regressions: 0, fixed: 0, skipped: 0 },
 }
 
-test('Qualité (EV4) : les vrais résultats du corpus, et « Relancer les attaques » appelle le moteur', async () => {
+test('Quality (EV4): the real corpus results, and "Rerun the attacks" calls the engine', async () => {
   const e = {
     ...base(),
     adversarialResults: vi.fn(async () => ({ ...RUN, ranAt: null, source: 'committed' as const })),
@@ -116,16 +116,16 @@ test('Qualité (EV4) : les vrais résultats du corpus, et « Relancer les attaqu
     <MemoryRouter><EngineProvider engine={e as unknown as Engine}><Quality /></EngineProvider></MemoryRouter>,
   )
   expect(await screen.findByText('EV4-INJ-05')).toBeInTheDocument()
-  expect(screen.getByText('o cyrillique')).toBeInTheDocument()
-  expect(screen.queryByText(/Exemple simulé/)).not.toBeInTheDocument()
-  expect(screen.getByTestId('attack-summary')).toHaveTextContent('2 cas · 1 OK · 1 écarts connus · 0 régressions')
-  expect(screen.getByTestId('attack-date')).toHaveTextContent(/pas encore relancés/)
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Relancer les attaques' })) })
+  expect(screen.getByText('Cyrillic o')).toBeInTheDocument()
+  expect(screen.queryByText(/Simulated example/)).not.toBeInTheDocument()
+  expect(screen.getByTestId('attack-summary')).toHaveTextContent('2 cases · 1 OK · 1 known gaps · 0 regressions')
+  expect(screen.getByTestId('attack-date')).toHaveTextContent(/not rerun here yet/)
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Rerun the attacks' })) })
   expect(e.runAdversarial).toHaveBeenCalledTimes(1)
-  expect(screen.getByTestId('attack-date')).toHaveTextContent(/Passage du/)
+  expect(screen.getByTestId('attack-date')).toHaveTextContent(/Run of/)
 })
 
-test('Journal (EV3) : le journal enregistré de la conversation ouverte, puis les métriques de tous les outils', async () => {
+test('Log (EV3): the recorded log of the open conversation, then the metrics of all tools', async () => {
   const { default: Journal } = await import('../src/pages/Journal')
   const e = {
     ...base(),
@@ -151,10 +151,10 @@ test('Journal (EV3) : le journal enregistré de la conversation ouverte, puis le
   expect(await screen.findByText('{"path": "a.py"}')).toBeInTheDocument()
   expect(e.journal).toHaveBeenCalledWith('s1')
   expect(screen.getByText('explorateur › search_codebase')).toBeInTheDocument()
-  expect(screen.getByText(/modèle : 1 200 ms/)).toBeInTheDocument()
+  expect(screen.getByText(/model: 1 200 ms/)).toBeInTheDocument()
   expect(screen.getByTestId('metric-calls')).toHaveTextContent('2')
   expect(screen.getByTestId('metric-errors')).toHaveTextContent('1')
-  fireEvent.click(screen.getByRole('tab', { name: 'Tous les outils' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'All tools' }))
   expect(screen.getByTestId('metric-model-mean')).toHaveTextContent('1 500 ms')
   expect(screen.getByText('55 ms')).toBeInTheDocument()
   expect(e.journalMetrics).toHaveBeenCalledWith(7)

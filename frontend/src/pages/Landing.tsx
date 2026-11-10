@@ -16,20 +16,20 @@ function CountUp({ to }: { to: number }) {
 }
 
 const STATS = [
-  { value: 28, label: 'Fonctionnalités du catalogue' },
-  { value: 4, label: "Lots d'équipe" },
-  { value: SUGGESTIONS.length, label: 'Scénarios de démo' },
+  { value: 28, label: 'Catalog features' },
+  { value: 4, label: 'Team workstreams' },
+  { value: SUGGESTIONS.length, label: 'Demo scenarios' },
   { value: 0, label: 'Framework LLM' },
 ]
 
 const GROUPS = [
-  { name: 'Base', icon: '›_', items: ['CLI avec streaming'] },
-  { name: 'Mémoire et contexte', icon: '◔', items: ['Sessions et profil', 'Budget de tokens', 'Mémoire structurée', "Document d'état"] },
-  { name: 'Outils', icon: '⚙', items: ['MCP', 'Bac à sable', 'Recherche web', 'Accès fichiers', 'Sortie structurée'] },
-  { name: 'RAG', icon: '⌕', items: ['RAG de base', 'RAG avancé'] },
-  { name: 'Orchestration', icon: '⟲', items: ['Raisonnement ReAct', 'Multi-agents', 'Confirmation humaine', 'Versions de prompts', 'Persona', 'Cache sémantique', 'Optimisation de prompts'] },
-  { name: 'Évaluation', icon: '✓', items: ['Évaluation automatique', 'Garde-fous', 'Journal et métriques', 'Tests adverses'] },
-  { name: 'Interface', icon: '◧', items: ['Interface web', 'Branches', 'Export et partage', 'Questions et formulaires', 'Planification'] },
+  { name: 'Base', icon: '›_', items: ['CLI with streaming'] },
+  { name: 'Memory and context', icon: '◔', items: ['Sessions and profile', 'Token budget', 'Structured memory', 'State document'] },
+  { name: 'Tools', icon: '⚙', items: ['MCP', 'Sandbox', 'Web search', 'File access', 'Structured output'] },
+  { name: 'RAG', icon: '⌕', items: ['Basic RAG', 'Advanced RAG'] },
+  { name: 'Orchestration', icon: '⟲', items: ['ReAct reasoning', 'Multi-agent', 'Human confirmation', 'Prompt versions', 'Persona', 'Semantic cache', 'Prompt optimization'] },
+  { name: 'Evaluation', icon: '✓', items: ['Automatic evaluation', 'Guardrails', 'Log and metrics', 'Adversarial tests'] },
+  { name: 'Interface', icon: '◧', items: ['Web interface', 'Branches', 'Export and sharing', 'Questions and forms', 'Scheduling'] },
 ]
 
 export default function Landing() {
@@ -38,7 +38,7 @@ export default function Landing() {
       <LandingHero />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
-        <section aria-label="Le projet en chiffres" className="mt-10 grid grid-cols-2 gap-y-8 rounded-3xl border border-line bg-surface/60 py-7 sm:grid-cols-4">
+        <section aria-label="The project in numbers" className="mt-10 grid grid-cols-2 gap-y-8 rounded-3xl border border-line bg-surface/60 py-7 sm:grid-cols-4">
           {STATS.map((s, i) => (
             <motion.div
               key={s.label}
@@ -56,9 +56,9 @@ export default function Landing() {
         <section id="parcours" className="scroll-mt-6 pb-16 pt-16" aria-labelledby="parcours-titre">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={undefined} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h2 id="parcours-titre" className="max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-              Tout le parcours, en <span className="text-accent">28 fonctionnalités</span>
+              The whole journey, in <span className="text-accent">28 features</span>
             </h2>
-            <p className="mt-3 max-w-xl text-muted">Les sept familles du catalogue Sensai, chacune mise en scène dans la démo.</p>
+            <p className="mt-3 max-w-xl text-muted">The seven families of the CodeSensai catalog, each one showcased in the demo.</p>
           </motion.div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {GROUPS.map((g, i) => (

@@ -1,13 +1,13 @@
 """
-Passages de référence que le juge compare à la réponse — feature [EV1], ADR-0019.
+Reference passages the judge compares with the answer — feature [EV1], ADR-0019.
 
-Le juge ne connaît rien du monde : il ne dit « soutenu » que si un passage
-fourni le dit. D'où viennent ces passages est une affaire de fournisseur
-(`SourceProvider`), pour que les tests n'aient besoin ni d'Ollama ni d'index :
+The judge knows nothing about the world: it says "supported" only if a supplied
+passage says so. Where these passages come from is a provider concern
+(`SourceProvider`), so the tests need neither Ollama nor an index:
 
-- `static_sources` : textes écrits dans le jeu de données (déterministe) ;
-- `rag_sources`    : n'importe quel objet qui a `.search(query, top_k, min_score)`,
-                     en pratique le `RagIndex` de R1.
+- `static_sources`: texts written in the dataset (deterministic);
+- `rag_sources`:    any object with `.search(query, top_k, min_score)`,
+                    in practice the R1 `RagIndex`.
 """
 from __future__ import annotations
 
@@ -16,12 +16,12 @@ from dataclasses import dataclass
 from typing import Any
 
 DEFAULT_SOURCE_LABEL = "dataset"
-NO_PASSAGES = "(aucun passage fourni)"
+NO_PASSAGES = "(no passage supplied)"
 
 
 @dataclass(frozen=True)
 class Passage:
-    """Un passage numéroté ; `id` ("S1", "S2"…) est ce que le juge doit citer."""
+    """A numbered passage; `id` ("S1", "S2"…) is what the judge must cite."""
 
     id: str
     source: str
@@ -42,7 +42,7 @@ SourceProvider = Callable[[str], list[Passage]]
 
 
 def static_sources(items: Iterable[str | dict[str, Any]]) -> list[Passage]:
-    """Passages écrits à la main : une chaîne, ou `{"source": ..., "text": ...}`."""
+    """Hand-written passages: a string, or `{"source": ..., "text": ...}`."""
     passages = []
     for n, item in enumerate(items, start=1):
         if isinstance(item, str):
@@ -54,11 +54,11 @@ def static_sources(items: Iterable[str | dict[str, Any]]) -> list[Passage]:
 
 
 def rag_sources(index: Any, top_k: int, min_score: float) -> SourceProvider:
-    """Fournisseur qui interroge un index de recherche (R1) avec la question.
+    """Provider that queries a search index (R1) with the question.
 
-    `index.search(query, top_k=, min_score=)` renvoie des dicts
-    `{source, start, end, text, score}`. Un index qui ne trouve rien sous le
-    seuil renvoie une liste vide : le juge verra « aucun passage ».
+    `index.search(query, top_k=, min_score=)` returns dicts
+    `{source, start, end, text, score}`. An index that finds nothing above the
+    threshold returns an empty list: the judge will see "no passage".
     """
 
     def provider(question: str) -> list[Passage]:
@@ -78,7 +78,7 @@ def rag_sources(index: Any, top_k: int, min_score: float) -> SourceProvider:
 
 
 def format_passages(passages: list[Passage]) -> str:
-    """`[S1] fichier:début-fin` puis le texte, un bloc par passage."""
+    """`[S1] file:start-end` then the text, one block per passage."""
     if not passages:
         return NO_PASSAGES
     return "\n\n".join(f"[{p.id}] {p.location()}\n{p.text}" for p in passages)

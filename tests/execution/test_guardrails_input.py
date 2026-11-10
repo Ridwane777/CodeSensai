@@ -23,7 +23,7 @@ from sensai.execution.guardrails import InputRules, filter_input
 def test_clearly_unsafe_prompts_are_refused(prompt):
     allowed, reason = filter_input(prompt)
     assert not allowed
-    assert "règle" in reason
+    assert "rule" in reason
 
 
 def test_the_refusal_never_repeats_the_prompt():
@@ -55,23 +55,23 @@ def test_hidden_characters_do_not_hide_an_attack():
 
 
 def test_a_credential_in_the_prompt_is_masked_not_refused():
-    allowed, text = filter_input("Pourquoi sk-abcdefghijklmnop1234 est refusée par l'API ?")
+    allowed, text = filter_input("Why is sk-abcdefghijklmnop1234 rejected by the API?")
     assert allowed
     assert "sk-abcdefghijklmnop1234" not in text
     assert "[REDACTED:api_key]" in text
-    assert text.startswith("Pourquoi ")
+    assert text.startswith("Why is ")
 
 
 def test_a_credential_split_by_invisible_characters_is_still_masked():
-    allowed, text = filter_input("clé sk-abcd\u200befghijklmnop1234")
+    allowed, text = filter_input("key sk-abcd\u200befghijklmnop1234")
     assert allowed and "efghijklmnop1234" not in text
 
 
 def test_emails_typed_by_the_user_are_kept():
     # Masked in tool output (filter_output), but not here: the user wrote it on purpose.
-    assert filter_input("Valide foo@bar.com avec une regex") == (
+    assert filter_input("Validate foo@bar.com with a regex") == (
         True,
-        "Valide foo@bar.com avec une regex",
+        "Validate foo@bar.com with a regex",
     )
 
 
@@ -87,15 +87,15 @@ def test_ansi_sequences_are_removed():
 class TestConfiguredRules:
     def test_an_extra_rule_blocks_its_topic(self):
         rules = InputRules.from_config(
-            [{"name": "salaires", "pattern": r"salaire de \w+", "why": "RH confidentiel"}]
+            [{"name": "salaries", "pattern": r"salary of \w+", "why": "HR confidential"}]
         )
-        allowed, reason = filter_input("Quel est le salaire de Marie ?", rules)
+        allowed, reason = filter_input("What is the salary of Marie?", rules)
         assert not allowed
-        assert "salaires" in reason and "RH confidentiel" in reason
+        assert "salaries" in reason and "HR confidential" in reason
 
     def test_an_extra_rule_does_not_affect_other_prompts(self):
-        rules = InputRules.from_config([{"pattern": r"salaire de \w+"}])
-        assert filter_input("Corrige ce test", rules)[0]
+        rules = InputRules.from_config([{"pattern": r"salary of \w+"}])
+        assert filter_input("Fix this test", rules)[0]
 
     def test_the_default_rules_stay_active_with_extra_rules(self):
         rules = InputRules.from_config([{"pattern": "zzz"}])
@@ -104,11 +104,11 @@ class TestConfiguredRules:
     @pytest.mark.parametrize(
         "raw",
         [
-            "salaire",
+            "salary",
             [{"name": "x"}],
             [{"pattern": "("}],
             [{"pattern": "a", "typo": 1}],
-            ["salaire"],
+            ["salary"],
         ],
     )
     def test_a_bad_rule_is_an_error_not_silently_ignored(self, raw):

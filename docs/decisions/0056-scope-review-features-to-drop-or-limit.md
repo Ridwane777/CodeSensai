@@ -3,7 +3,7 @@
 - **Status**: Accepted (2026-11-02, decided by Ridwane, Lot C): all five items applied
 - **Date**: 2026-11-01
 - **Deciders**: Ridwane (Lot C)
-- **Lot concerned**: All. Completes [ADR-0008](0008-perimetre-toutes-les-features.md)
+- **Lot concerned**: All. Completes [ADR-0008](0008-scope-all-features.md)
   (which stays accepted as the record of the decision taken on 2026-10-11)
 
 ## Context
@@ -16,7 +16,7 @@ X3 Export and A7 Prompt optimisation. Until this decision, **no feature had
 been dropped on purpose**.
 
 Since then we have a precise persona and scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)): Camille,
+([persona-and-scenario.md](../design/persona-and-scenario.md)): Camille,
 who takes over a Python code base she may not send to a cloud API, and Marc,
 the lead who sets the tool up. We also have measurements, trials and a list of
 known defects ([backlog.md](../backlog.md),
@@ -27,17 +27,17 @@ Evidence used:
 
 | Feature | What it gives Camille or Marc | What it cost or showed | Source |
 | --- | --- | --- | --- |
-| X1, decorative layer (3D scene, animated "code universe", poster hero) | Nothing in the scenario: Camille opens the chat to work | Three ADRs, a WebGL fallback, a simulated engine kept alongside the real server; a reconciliation document was needed to keep both in line | [ADR-0021](0021-visuel-3d-et-animations.md), [0025](0025-hero-de-l-accueil-en-affiche.md), [0026](0026-univers-code-anime.md), retrospective section 8 |
+| X1, decorative layer (3D scene, animated "code universe", poster hero) | Nothing in the scenario: Camille opens the chat to work | Three ADRs, a WebGL fallback, a simulated engine kept alongside the real server; a reconciliation document was needed to keep both in line | [ADR-0021](0021-3d-visual-and-animations.md), [0025](0025-poster-style-home-hero.md), [0026](0026-animated-code-universe.md), retrospective section 8 |
 | X3, public share links | Showing the session to Marc | A snapshot readable **without the token** for 7 days, revocable only through the API: in tension with Camille's confidentiality clause. Plain export covers the need | [ADR-0048](0048-share-links.md), [demo pitfalls](../demo/README.md#known-pitfalls) |
 | A6 Semantic cache | Instant answer to a repeated question | 7 rephrasings out of 39 served (0 of 48 traps): for one developer, few questions repeat; one more store to invalidate | [A6-cache.md](../performance/A6-cache.md), README |
-| A2 team chain (explorer → developer → reviewer) | Wider changes | Reviewer validated wrong work 6 times out of 6 until it received the written content; 38–65 s instead of 13–23 s; in the 2026-11-01 trial the developer wrote a new file and the reviewer validated it | retrospective section 9, [trial 2026-11-01](../performance/essais/essai-2026-11-01.md) |
+| A2 team chain (explorer → developer → reviewer) | Wider changes | Reviewer validated wrong work 6 times out of 6 until it received the written content; 38–65 s instead of 13–23 s; in the 2026-11-01 trial the developer wrote a new file and the reviewer validated it | retrospective section 9, [trial 2026-11-01](../performance/trials/trial-2026-11-01.md) |
 | A5 keyword routing and session personas | A tutoring or support platform, not Camille's day | Persona name not always followed after a switch | [ADR-0043](0043-persona-enhancements.md), backlog #10 |
 | A7 automatic few-shot | Answers styled on Marc's examples | A French example once won over an explicit "answer in English" preference | trial 2026-11-01, finding 3 |
-| X5 Scheduling | A morning summary | Unattended runs need their own policy; marginal in the scenario | [ADR-0016](0016-planification-des-taches.md), ADR-0008 threshold |
+| X5 Scheduling | A morning summary | Unattended runs need their own policy; marginal in the scenario | [ADR-0016](0016-task-scheduling.md), ADR-0008 threshold |
 
 The rest (B1, A1, A3, A4, M1–M4, R1, R2, T1–T5, EV1–EV4, X2, X4, the chat of
 X1) is used at a step of the scenario and has measurements or trials behind
-it: kept as is ([traceability.md](../conception/traceability.md)).
+it: kept as is ([traceability.md](../design/traceability.md)).
 
 ## Options considered
 

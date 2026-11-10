@@ -1,6 +1,6 @@
 """
-Page Qualité (EV4, lot B — Méric) et journal des tours (EV3, lot D — Valentino)
-côté serveur : routes, et écriture du journal par la boucle du tour web.
+Quality page (EV4, Workstream B) and turn log (EV3, Workstream D), server side:
+routes, and log writing by the web turn loop.
 """
 import threading
 import time
@@ -12,13 +12,13 @@ from sensai.core.tools import ToolResult
 from sensai.web.runtime import Handoffs, _AnnouncedDelegate
 
 
-def test_les_routes_demandent_le_jeton(env):
+def test_routes_require_the_token(env):
     for path in ("/api/quality/adversarial", "/api/journal?session=x", "/api/journal/metrics"):
         assert requests.get(env.base + path, timeout=5).status_code == 401
     assert requests.post(env.base + "/api/quality/adversarial/run", timeout=5).status_code == 401
 
 
-def test_sans_passage_ce_sont_les_resultats_versionnes(env):
+def test_without_a_run_the_committed_results_are_served(env):
     body = env.get("/api/quality/adversarial").json()
     assert body["source"] == "committed" and body["ran_at"] is None
     assert body["summary"]["total"] == 85 and body["summary"]["regressions"] == 0
@@ -26,7 +26,7 @@ def test_sans_passage_ce_sont_les_resultats_versionnes(env):
     assert set(case) == {"id", "category", "attempt", "expected", "observed", "verdict", "detail"}
 
 
-def test_relancer_rejoue_le_vrai_corpus(env):
+def test_rerun_replays_the_real_corpus(env):
     body = env.post("/api/quality/adversarial/run").json()
     assert body["source"] == "run" and body["ran_at"]
     assert body["summary"]["total"] == 85
@@ -34,14 +34,14 @@ def test_relancer_rejoue_le_vrai_corpus(env):
     assert env.get("/api/quality/adversarial").json()["ran_at"] == body["ran_at"]
 
 
-def test_un_second_passage_pendant_le_premier_repond_409(make_env):
+def test_a_second_run_during_the_first_returns_409(make_env):
     release = threading.Event()
 
-    def lent():
+    def slow():
         release.wait(5)
         return {"cases": [], "summary": {"total": 0}, "ran_at": "t", "source": "run"}
 
-    env = make_env(adversarial_runner=lent)
+    env = make_env(adversarial_runner=slow)
     first = {}
     t = threading.Thread(target=lambda: first.update(r=env.post("/api/quality/adversarial/run")))
     t.start()
@@ -53,11 +53,11 @@ def test_un_second_passage_pendant_le_premier_repond_409(make_env):
     assert first["r"].status_code == 200 and first["r"].json()["ran_at"] == "t"
 
 
-def test_un_tour_web_ecrit_le_journal(env):
-    env.script.steps = [("call", "read_file", {"path": "notes.md"}), Token("Lu."),
+def test_a_web_turn_writes_the_log(env):
+    env.script.steps = [("call", "read_file", {"path": "notes.md"}), Token("Read."),
                         Done("final_answer")]
     session_id = env.session()
-    env.stream(session_id, "Lis notes.md")
+    env.stream(session_id, "Read notes.md")
     body = env.get(f"/api/journal?session={session_id}").json()
     [turn] = body["turns"]
     assert turn["interface"] == "web" and turn["outcome"] == "final_answer"
@@ -71,28 +71,28 @@ def test_un_tour_web_ecrit_le_journal(env):
     assert metrics["model"]["turns"] == 1
 
 
-def test_supprimer_la_conversation_supprime_son_journal(env):
+def test_deleting_the_conversation_deletes_its_log(env):
     session_id = env.session()
-    env.stream(session_id, "Bonjour")
+    env.stream(session_id, "Hello")
     assert env.get(f"/api/journal?session={session_id}").json()["turns"]
     assert env.post(f"/api/sessions/{session_id}/delete").status_code == 204
     assert env.get(f"/api/journal?session={session_id}").json()["turns"] == []
 
 
-def test_les_outils_d_un_sous_agent_sont_chronometres_et_journalises():
-    class Outils:
+def test_subagent_tools_are_timed_and_logged():
+    class Tools:
         def call(self, name, **args):
             time.sleep(0.02)
-            return ToolResult(ok=True, content="contenu")
+            return ToolResult(ok=True, content="content")
 
         def describe_all(self):
             return []
 
-    def sous_agent(host, model, messages, tools):
+    def subagent(host, model, messages, tools):
         yield ToolCall(id="s1", name="read_file", arguments={"path": "notes.md"})
         result = tools.call("read_file", path="notes.md")
         yield ToolReturn(id="s1", name="read_file", ok=result.ok, content=result.content)
-        yield Token("Lu.")
+        yield Token("Read.")
         yield Done("final_answer")
 
     sent, noted = [], []
@@ -102,8 +102,8 @@ def test_les_outils_d_un_sous_agent_sont_chronometres_et_journalises():
             noted.append(args)
 
     handoffs = Handoffs(sent.append, Recorder())
-    delegate = _AnnouncedDelegate("h", "m", Outils(), run_turn=sous_agent, handoffs=handoffs)
-    assert delegate.run(task="Lis notes.md", role="explorateur").ok
+    delegate = _AnnouncedDelegate("h", "m", Tools(), run_turn=subagent, handoffs=handoffs)
+    assert delegate.run(task="Read notes.md", role="explorateur").ok
     step = next(e for e in sent if e["type"] == "subagent_step")
     assert step["duration_ms"] >= 15
     [(tool, _args, ok, ms, agent)] = noted

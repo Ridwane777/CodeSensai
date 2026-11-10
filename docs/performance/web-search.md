@@ -1,53 +1,53 @@
-# T3 — Recherche web : essais réels du moteur
+# T3 — Web search: real engine trials
 
-> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: isolated web search: ✅ `python.org` with both models, qwen3:8b on CPU 11 min 16, qwen3-coder:30b on GPU 10 s. Earlier measurements below.
+> **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: isolated web search: ✅ `python.org` with both models, qwen3:8b on CPU 11 min 16, qwen3-coder:30b on GPU 10 s. Earlier measurements below.
 
-Mesures du 2026-10-24, poste Linux (Docker local, image `sensai-browser`),
-agent sur le pod RunPod (`qwen3-coder:30b`). Décision :
-[ADR-0040](../decisions/0040-recherche-web-duckduckgo-et-repli-bing.md).
-Chaque requête est mesurée une fois : ce sont des ordres de grandeur.
+Measurements of 2026-10-24, Linux machine (local Docker, `sensai-browser`
+image), agent on the RunPod pod (`qwen3-coder:30b`). Decision:
+[ADR-0040](../decisions/0040-duckduckgo-web-search-with-bing-fallback.md).
+Each query is measured once: these are orders of magnitude.
 
-## Pourquoi changer : Bing ne répondait plus que sur le premier mot
+## Why change: Bing only answered on the first word
 
-Outil `web_search` appelé directement, image d'origine (Bing seul) :
+`web_search` tool called directly, original image (Bing only):
 
-| Requête | Trois premiers résultats |
+| Query | Top three results |
 | --- | --- |
 | `python asyncio gather example` | python.org, python.org/downloads, online-python.com |
 | `ollama tool calling activation` | ollama.com, ollama.com/download/windows, github.com/ollama/ollama |
-| `Ollama tool calling official documentation` | identiques à la ligne précédente (les 10) |
-| `tool calling ollama docs` | aucun résultat |
+| `Ollama tool calling official documentation` | identical to the previous row (all 10) |
+| `tool calling ollama docs` | no results |
 
-La page renvoyée contient bien la requête entière (titre de la page, champ de
-recherche) : Bing la reçoit, mais sert une page dégradée au navigateur
-automatisé. Dans l'essai complet du même jour, l'agent répondait « je n'ai pas
-trouvé de documentation officielle » trois fois sur trois.
+The returned page does contain the full query (page title, search field):
+Bing receives it, but serves a degraded page to the automated browser. In the
+full trial the same day, the agent answered "I found no official
+documentation" three times out of three.
 
-## Après : DuckDuckGo HTML, Bing en repli
+## After: DuckDuckGo HTML, Bing as fallback
 
-Image reconstruite (`docker build -t sensai-browser:latest docker/browser`),
-outil appelé directement :
+Image rebuilt (`docker build -t sensai-browser:latest docker/browser`), tool
+called directly:
 
-| Requête | Durée | Trois premiers résultats |
+| Query | Duration | Top three results |
 | --- | --- | --- |
-| `ollama tool calling activation` | 5,1 s | docs.ollama.com/capabilities/tool-calling, deepwiki.com/…/tool-calling, ollama.com/blog/tool-support |
-| `Ollama tool calling official documentation` | 4,5 s | docs.ollama.com/capabilities/tool-calling, docs.ollama.com/index, lzw.me/…/tool-calling |
-| `python asyncio gather example` | 4,7 s | pythontutorial.net/…/python-asyncio-gather, superfastpython.com/asyncio-gather, slingacademy.com/…/gather |
-| `fastapi streaming response sse` | 5,1 s | fastapi.tiangolo.com/tutorial/server-sent-events, fastapi.tiangolo.com/reference/sse, devdojo.com/…/sse-with-fastapi |
-| `comment configurer pytest pour un projet python` | 5,3 s | adamcours.fr/…/pytest, fr.w3docs.com/…/python-pytest, pasclairpython.fr/…/pytest |
+| `ollama tool calling activation` | 5.1 s | docs.ollama.com/capabilities/tool-calling, deepwiki.com/…/tool-calling, ollama.com/blog/tool-support |
+| `Ollama tool calling official documentation` | 4.5 s | docs.ollama.com/capabilities/tool-calling, docs.ollama.com/index, lzw.me/…/tool-calling |
+| `python asyncio gather example` | 4.7 s | pythontutorial.net/…/python-asyncio-gather, superfastpython.com/asyncio-gather, slingacademy.com/…/gather |
+| `fastapi streaming response sse` | 5.1 s | fastapi.tiangolo.com/tutorial/server-sent-events, fastapi.tiangolo.com/reference/sse, devdojo.com/…/sse-with-fastapi |
+| `comment configurer pytest pour un projet python` (French query) | 5.3 s | adamcours.fr/…/pytest, fr.w3docs.com/…/python-pytest, pasclairpython.fr/…/pytest |
 
-Par l'agent (vrai CLI, pod) : « Cherche sur le web la documentation officielle
-d'Ollama sur le tool calling » → un appel à `web_search`, 10 résultats, et la
-réponse cite `docs.ollama.com/capabilities/tool-calling` (21,5 s pour le tour).
+Through the agent (real CLI, pod): "Search the web for Ollama's official
+documentation on tool calling" → one `web_search` call, 10 results, and the
+answer cites `docs.ollama.com/capabilities/tool-calling` (21.5 s for the
+turn).
 
-Le repli sur Bing est vérifié par les tests (page bloquée, page vide, aucun
-résultat, budget de temps partagé), pas sur le site réel : DuckDuckGo n'a pas
-bloqué depuis ce réseau pendant l'essai.
+The Bing fallback is checked by the tests (blocked page, empty page, no
+results, shared time budget), not on the real site: DuckDuckGo did not block
+from this network during the trial.
 
-## Limites
+## Limits
 
-- Une mesure par requête, un seul réseau.
-- Le repli sur Bing donne aujourd'hui des résultats médiocres (premier mot
-  seulement).
-- Les deux moteurs sont lus en HTML : un changement de balisage peut vider
-  les résultats sans erreur (tests sur des pages enregistrées).
+- One measurement per query, a single network.
+- The Bing fallback currently gives poor results (first word only).
+- Both engines are parsed as HTML: a markup change can empty the results
+  without an error (tests on saved pages).

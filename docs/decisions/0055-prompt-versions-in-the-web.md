@@ -3,13 +3,13 @@
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-11-01
 - **Deciders**: Ridwane (Lot C), on behalf of Lot A (Fresnel) — to be confirmed by the team
-- **Lot concerned**: A/A4 (feature presented by Lot A; registry `knowledge/prompt_versions.py` from [ADR-0010](0010-versionnement-des-prompts.md)), D (`web/runtime.py`, `web/server.py`, `frontend/`)
+- **Lot concerned**: A/A4 (feature presented by Lot A; registry `knowledge/prompt_versions.py` from [ADR-0010](0010-prompt-versioning.md)), D (`web/runtime.py`, `web/server.py`, `frontend/`)
 
 ## Context
 
 Prompt versions (A4) live in `prompts/versions.json` with immutable files per
 version; `sensai-prompt` lists, compares, saves and moves the "active"
-bookmark ([ADR-0010](0010-versionnement-des-prompts.md)). The web Prompts page
+bookmark ([ADR-0010](0010-prompt-versioning.md)). The web Prompts page
 showed demo data: v2 was a fake draft and "Mettre en service" changed nothing.
 The registry is a file of the repository, committed and checked by CI
 (`sensai-prompt check`); moving the bookmark changes the prompt for every user

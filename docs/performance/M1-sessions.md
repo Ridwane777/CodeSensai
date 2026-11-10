@@ -1,57 +1,55 @@
-# Essais réels — [M1] Persistance de session & profils
+# Real-model trials — [M1] Session persistence & profiles
 
-> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: resume a session and recall a word: ✅ with both models, qwen3:8b on CPU 20 min 33 (2 turns), qwen3-coder:30b on GPU 16 s. Earlier measurements below.
+> **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: resume a session and recall a word: ✅ with both models, qwen3:8b on CPU 20 min 33 (2 turns), qwen3-coder:30b on GPU 16 s. Earlier measurements below.
 
-Ce document garde la trace des vérifications de M1 faites avec de vrais
-modèles, en plus des tests automatiques (`tests/knowledge/test_memory.py`,
-`tests/test_cli_persistence.py`). Choix : [ADR-0007](../decisions/0007-persistance-des-sessions.md).
+This document records the M1 checks run with real models, on top of the
+automated tests (`tests/knowledge/test_memory.py`,
+`tests/test_cli_persistence.py`). Decision: [ADR-0007](../decisions/0007-session-persistence.md).
 
-## Scénario
+## Scenario
 
 ```
-1. sensai                          /remember réponds en français et utilise pytest
-                                   Je travaille sur un bug de login : test_login échoue
-                                   avec une KeyError sur "token".
+1. sensai                          /remember answer in French and use pytest
+                                   I'm working on a login bug: test_login fails
+                                   with a KeyError on "token".
                                    exit
-2. sensai                          (reprise attendue)  Tu te souviens de mon bug ?
-                                   Quel test échouait, et avec quelle erreur ?
-3. sensai --new-session            Écris un test pour une fonction add(a, b).
+2. sensai                          (resume expected)  Do you remember my bug?
+                                   Which test was failing, and with which error?
+3. sensai --new-session            Write a test for a function add(a, b).
 ```
 
-Ce qui est vérifié : la reprise de la session, l'usage réel de l'historique par
-le modèle, l'application du profil dans une session vierge.
+What is checked: the session is resumed, the model actually uses the history,
+and the profile applies in a fresh session.
 
-## Résultats
+## Results
 
-| Date | Modèle (machine) | Reprise | « Tu te souviens de mon bug ? » | « Quel test, quelle erreur ? » | Profil dans une nouvelle session |
+| Date | Model (machine) | Resume | "Do you remember my bug?" | "Which test, which error?" | Profile in a new session |
 |---|---|---|---|---|---|
-| 2026-10-11 | `llama3` (poste de dev, CPU) | ✅ « reprise (2 messages) » | ❌ « Je n'ai pas de mémoire » | — | ✅ pytest, en français |
-| 2026-10-11 | `granite3.1-moe` (poste de dev, CPU) | ✅ | ✅ cite le test et la KeyError | ⚠️ répond par un plan d'action | ✅ pytest, en français |
-| 2026-10-12 | `qwen3-coder:30b` (pod RunPod, GPU), M1 au commit `9a9724e`, RAG désactivé | ✅ | ⚠️ « Je ne peux pas me souvenir des détails… mais je peux t'aider avec le `KeyError` sur "token" » | ✅ « `test_login` échouait avec une `KeyError` sur "token" » | ✅ test au format pytest |
-| 2026-10-12 | `qwen3-coder:30b` (pod RunPod, GPU), avec la consigne de reprise | ✅ | ✅ « Oui, tu avais un bug de login où le test échouait avec une erreur `KeyError` sur "token"… » | ✅ même réponse exacte | — (dans une nouvelle session, à la même question : demande les détails, n'invente pas) |
+| 2026-10-11 | `llama3` (dev machine, CPU) | ✅ "resumed (2 messages)" | ❌ "I have no memory" | — | ✅ pytest, in French |
+| 2026-10-11 | `granite3.1-moe` (dev machine, CPU) | ✅ | ✅ cites the test and the KeyError | ⚠️ answers with an action plan | ✅ pytest, in French |
+| 2026-10-12 | `qwen3-coder:30b` (RunPod pod, GPU), M1 at commit `9a9724e`, RAG disabled | ✅ | ⚠️ "I can't remember the details… but I can help you with the `KeyError` on "token"" | ✅ "`test_login` was failing with a `KeyError` on "token"" | ✅ pytest-style test |
+| 2026-10-12 | `qwen3-coder:30b` (RunPod pod, GPU), with the resume instruction | ✅ | ✅ "Yes, you had a login bug where the test failed with a `KeyError` on "token"…" | ✅ same exact answer | — (in a new session, same question: asks for details, does not invent) |
 
-Lors de l'essai du 2026-10-12, `/sessions` a listé les deux sessions du projet
-avec titre, date et nombre de messages, et `sessions.db` comme `profile.json`
-ont été créés en `600`.
+During the 2026-10-12 trial, `/sessions` listed both project sessions with
+title, date and message count, and both `sessions.db` and `profile.json` were
+created with mode `600`.
 
-## Ce que les essais ont changé
+## What the trials changed
 
-**Le réflexe « je n'ai pas de mémoire ».** Il existe sur `llama3` et aussi sur
-le modèle de démonstration : `qwen3-coder:30b` niait se souvenir dans la phrase
-même où il citait le bug de la session précédente. L'historique était pourtant
-bien envoyé (le test `test_historique_conserve_apres_relance` vérifie ce que le
-modèle reçoit). Correction : quand une session est reprise, une consigne lue
-dans `prompts/memory_prompt.txt` (depuis A4 : `prompts/memory/v1.txt`) est ajoutée au prompt système (« les messages
-qui suivent ont réellement eu lieu […] ne dis pas que tu n'as pas de
-mémoire »). Elle n'est pas envoyée dans une session vierge, où elle serait
-fausse ; le test `test_consigne_de_reprise_seulement_si_session_reprise` le
-vérifie.
+**The "I have no memory" reflex.** It shows up on `llama3` and also on the
+demo model: `qwen3-coder:30b` denied remembering in the very sentence where it
+quoted the bug from the previous session. Yet the history was sent (the test
+`test_history_kept_after_restart` checks what the model receives). Fix:
+when a session is resumed, an instruction read from
+`prompts/memory_prompt.txt` (since A4: `prompts/memory/v1.txt`) is appended to
+the system prompt ("the following messages really happened […] do not say you
+have no memory"). It is not sent in a fresh session, where it would be false;
+the test `test_resume_instruction_only_for_resumed_session` checks this.
 
-## Limites
+## Limits
 
-- Un scénario, une exécution par modèle : ces essais montrent que le
-  mécanisme fonctionne, pas un taux de réussite.
-- Les cas d'erreur (base corrompue, disque plein, tour en échec non
-  sauvegardé), les droits d'accès et la purge à 30 jours ne sont vérifiés que
-  par les tests automatiques.
-- `/sessions` affiche les dates en UTC, pas en heure locale.
+- One scenario, one run per model: these trials show the mechanism works, not
+  a success rate.
+- Error cases (corrupted database, full disk, failed turn not saved), file
+  permissions and the 30-day purge are only checked by the automated tests.
+- `/sessions` shows dates in UTC, not local time.

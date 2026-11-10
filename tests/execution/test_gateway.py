@@ -1,6 +1,6 @@
 """
-Teste la passerelle d'outils : chaque garantie du pipeline a son test, pour
-qu'on ne puisse pas en retirer une sans casser la CI.
+Tests the tool gateway: every pipeline guarantee has its own test, so that
+none can be removed without breaking CI.
 """
 import socket
 import time
@@ -16,7 +16,7 @@ from sensai.execution.tool_policy import Mode, ToolPreferences
 
 
 class FakeTool:
-    """Outil configurable qui compte ses exécutions."""
+    """Configurable tool that counts its executions."""
 
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -51,7 +51,7 @@ def code_of(result: ToolResult) -> str | None:
 
 
 def test_a_tool_parameter_called_name_does_not_break_the_call():
-    """Le premier argument de call() s'appelle déjà `name`."""
+    """The first argument of call() is already named `name`."""
 
     class NamedTool(FakeTool):
         parameters: ClassVar[dict[str, Any]] = {
@@ -66,7 +66,7 @@ def test_a_tool_parameter_called_name_does_not_break_the_call():
     assert result.ok is True
     assert tool.calls == [{"text": "x", "name": "conflit"}]
 
-# -- étapes de refus avant toute exécution ---------------------------------
+# -- refusal steps before any execution ------------------------------------
 
 
 def test_unknown_tool():
@@ -113,7 +113,7 @@ def test_read_tool_runs_without_asking():
 
 
 def test_execute_tool_does_not_run_without_confirmation():
-    # Le critère A3 : le défaut doit être « refuser », pas « laisser passer ».
+    # Criterion A3: the default must be "refuse", not "let through".
     tool = FakeTool(risk="execute")
     result = make(tool).call("fake", text="x")
 
@@ -151,22 +151,22 @@ def test_confirmed_execute_runs_and_request_describes_the_action():
 def test_tool_can_provide_its_own_plan_summary():
     seen = []
     tool = FakeTool(risk="write")
-    tool.describe_call = lambda text: f"Écrire « {text} » dans un fichier"
+    tool.describe_call = lambda text: f"Write '{text}' to a file"
     make(tool, confirm=lambda req: seen.append(req) or True).call("fake", text="abc")
 
-    assert seen[0].summary == "Écrire « abc » dans un fichier"
+    assert seen[0].summary == "Write 'abc' to a file"
 
 
 def test_refusal_is_a_result_the_agent_can_read():
     result = make(FakeTool(risk="execute"), confirm=lambda req: False).call("fake", text="x")
 
     assert result.ok is False
-    assert "refusé" in result.content
+    assert "refused" in result.content
 
 
 def test_confirmer_crash_or_timeout_counts_as_refusal():
     def broken(request):
-        raise TimeoutError("pas de réponse")
+        raise TimeoutError("no response")
 
     tool = FakeTool(risk="execute")
     result = make(tool, confirm=broken).call("fake", text="x")
@@ -176,8 +176,8 @@ def test_confirmer_crash_or_timeout_counts_as_refusal():
 
 
 def test_confirmer_must_return_exactly_true():
-    # Un confirmeur qui renvoie un objet « truthy » par accident (ex. une
-    # chaîne non vide) ne doit pas valoir autorisation.
+    # A confirmer that returns a truthy object by accident (e.g. a non-empty
+    # string) must not count as authorization.
     tool = FakeTool(risk="execute")
     result = make(tool, confirm=lambda req: "non").call("fake", text="x")
 
@@ -193,16 +193,16 @@ def test_preferences_cannot_switch_off_confirmation_for_execute():
     assert tool.calls == []
 
 
-# -- garde-fous d'entrée (EV2) ----------------------------------------------
+# -- input guardrails (EV2) ------------------------------------------------
 
 
 def test_input_guard_can_block():
     tool = FakeTool()
-    guard = lambda name, args: Decision(False, "secret détecté")  # noqa: E731
+    guard = lambda name, args: Decision(False, "secret detected")  # noqa: E731
     result = make(tool, input_guards=[guard]).call("fake", text="x")
 
     assert code_of(result) == gw.BLOCKED
-    assert "secret détecté" in result.content
+    assert "secret detected" in result.content
     assert tool.calls == []
 
 
@@ -239,7 +239,7 @@ def test_crashing_input_guard_blocks():
     assert tool.calls == []
 
 
-# -- validation et filtrage du résultat -------------------------------------
+# -- result validation and filtering ---------------------------------------
 
 
 def test_tool_exception_becomes_a_failed_result():
@@ -264,18 +264,18 @@ def test_output_schema_is_enforced():
 def test_output_filters_mask_content_and_nested_data():
     secret = ToolResult(
         ok=True,
-        content="clé sk-ABC",
+        content="key sk-ABC",
         data={"lines": ["a sk-ABC", {"deep": "sk-ABC"}], "n": 3},
     )
     mask = lambda text: text.replace("sk-ABC", "***")  # noqa: E731
     result = make(FakeTool(result=secret), output_filters=[mask]).call("fake", text="x")
 
-    assert result.content == "clé ***"
+    assert result.content == "key ***"
     assert result.data == {"lines": ["a ***", {"deep": "***"}], "n": 3}
 
 
 def test_crashing_output_filter_does_not_leak_raw_output():
-    secret = ToolResult(ok=True, content="clé sk-ABC")
+    secret = ToolResult(ok=True, content="key sk-ABC")
 
     def boom(text):
         raise RuntimeError("panne")
@@ -292,16 +292,16 @@ def test_output_is_capped_after_filtering():
     result = make(FakeTool(result=long), preferences=prefs).call("fake", text="x")
 
     assert result.content.startswith("a" * 20)
-    assert "tronquée" in result.content
+    assert "truncated" in result.content
     assert result.data == {"truncated": True}
 
 
 def test_gateway_does_not_mutate_the_tool_result():
-    original = ToolResult(ok=True, content="clé sk-ABC")
+    original = ToolResult(ok=True, content="key sk-ABC")
     mask = lambda text: text.replace("sk-ABC", "***")  # noqa: E731
     make(FakeTool(result=original), output_filters=[mask]).call("fake", text="x")
 
-    assert original.content == "clé sk-ABC"
+    assert original.content == "key sk-ABC"
 
 
 def test_describe_all_lists_only_usable_tools():
@@ -317,7 +317,7 @@ def test_default_confirmer_denies():
     assert gw.deny_all(None) is False  # type: ignore[arg-type]
 
 
-# -- garde-fous défaillants -------------------------------------------------
+# -- failing guardrails ----------------------------------------------------
 
 
 def test_guard_returning_wrong_type_blocks_instead_of_crashing():
@@ -338,7 +338,7 @@ def test_rewritten_arguments_are_revalidated():
     assert tool.calls == []
 
 
-# -- délais, pannes d'outils et réseau --------------------------------------
+# -- timeouts, tool and network failures -----------------------------------
 
 
 def _slow(seconds):
@@ -357,7 +357,7 @@ def test_hanging_tool_times_out_instead_of_blocking_the_agent():
 
     assert code_of(result) == gw.TIMEOUT
     assert time.monotonic() - started < 1
-    assert "inconnu" in result.content  # le modèle sait que l'action a pu aboutir
+    assert "unknown" in result.content  # the model knows the action may have succeeded
 
 
 def test_tool_can_declare_a_shorter_timeout_but_not_a_longer_one():
@@ -369,7 +369,7 @@ def test_tool_can_declare_a_shorter_timeout_but_not_a_longer_one():
 
     long = FakeTool(risk="read")
     long.run = _slow(2)
-    long.timeout_s = 999  # plus long que la préférence : la préférence gagne
+    long.timeout_s = 999  # longer than the preference: the preference wins
     prefs = ToolPreferences(tool_timeout_s=0.1)
     assert code_of(make(long, preferences=prefs).call("fake", text="x")) == gw.TIMEOUT
 
@@ -385,7 +385,7 @@ def test_unanswered_confirmation_is_a_refusal_after_the_timeout():
     result = gateway.call("fake", text="x")
 
     assert code_of(result) == gw.REFUSED
-    assert tool.calls == []  # le « oui » tardif ne déclenche rien
+    assert tool.calls == []  # the late "yes" triggers nothing
     assert time.monotonic() - started < 1
 
 
@@ -414,7 +414,7 @@ def test_network_failures_get_their_own_code(error):
 
     assert result.ok is False
     assert code_of(result) == gw.NETWORK_ERROR
-    assert "plus tard" in result.content
+    assert "later" in result.content
 
 
 def test_other_tool_exceptions_are_tool_errors_not_network_errors():
@@ -428,7 +428,7 @@ def test_file_errors_are_not_mistaken_for_network_errors():
     tool = FakeTool()
 
     def run(**kwargs):
-        raise FileNotFoundError("absent")  # OSError, mais pas une panne réseau
+        raise FileNotFoundError("missing")  # OSError, but not a network failure
 
     tool.run = run
 
@@ -439,7 +439,7 @@ def test_error_text_from_a_failing_tool_goes_through_output_filters():
     tool = FakeTool()
 
     def run(**kwargs):
-        raise RuntimeError("échec avec sk-ABC dans le message")
+        raise RuntimeError("failure with sk-ABC in the message")
 
     tool.run = run
     mask = lambda text: text.replace("sk-ABC", "***")  # noqa: E731

@@ -1,4 +1,4 @@
-"""Gestion de l'historique de conversation (contexte envoyé au modèle)."""
+"""Conversation history management (context sent to the model)."""
 from dataclasses import dataclass, field
 
 
@@ -8,7 +8,7 @@ class History:
     turns: list[dict] = field(default_factory=list)
 
     def as_messages(self) -> list[dict]:
-        """Liste de messages à envoyer à Ollama, prompt système en tête."""
+        """List of messages to send to Ollama, system prompt first."""
         messages = []
         if self.system_prompt:
             messages.append({"role": "system", "content": self.system_prompt})
@@ -22,6 +22,6 @@ class History:
         self.turns.append({"role": "assistant", "content": content})
 
     def drop_last(self) -> None:
-        """Retire le dernier tour (utilisé quand un appel échoue en cours de route)."""
+        """Remove the last turn (used when a call fails midway)."""
         if self.turns:
             self.turns.pop()

@@ -1,23 +1,23 @@
 """
-Mesures de R2 (ADR-0032) : comment reclasser les passages trouvés par le RAG.
+R2 measurements (ADR-0032): how to rerank the passages found by RAG.
 
-Compare, sur le vrai index de R1 (bge-m3, découpage par structure) :
-- `dense`   : R1 tel quel (similarité des embeddings) ;
-- `bm25`    : recherche par mots (BM25), sans embeddings ;
-- `hybrid`  : les deux classements fusionnés par Reciprocal Rank Fusion ;
-- `llm`     : `hybrid`, puis le modèle de chat reclasse les 10 premiers.
+Compares, on the real R1 index (bge-m3, structure-based chunking):
+- `dense`   : R1 as is (embedding similarity);
+- `bm25`    : keyword search (BM25), no embeddings;
+- `hybrid`  : both rankings merged with Reciprocal Rank Fusion;
+- `llm`     : `hybrid`, then the chat model reranks the top 10.
 
-Deux jeux de questions : celui de R1 (15 questions, `bench_rag.py`) et un jeu
-« tenu à part » de 10 questions sur le code arrivé depuis, écrit avant toute
-mesure, pour vérifier que le choix ne vaut pas seulement sur le jeu de R1.
+Two question sets: the R1 set (15 questions, `bench_rag.py`) and a "held-out"
+set of 10 questions about code added since, written before any measurement,
+to check that the choice does not only hold on the R1 set.
 
-    python scripts/bench_rerank.py --host http://<hôte-ollama>:11434 --out r2.json
-    python scripts/bench_rerank.py --host http://<hôte-ollama>:11434 --production
+    python scripts/bench_rerank.py --host http://<ollama-host>:11434 --out r2.json
+    python scripts/bench_rerank.py --host http://<ollama-host>:11434 --production
 
-`--production` mesure le code livré à la place des variantes : `RagIndex.search`
-avec `LlmReranker`, le seuil et le nombre de passages par défaut du CLI.
+`--production` measures the shipped code instead of the variants:
+`RagIndex.search` with `LlmReranker`, the CLI default threshold and passage count.
 
-Résultats et choix : docs/performance/R2-rag.md.
+Results and choices: docs/performance/R2-rag.md.
 """
 from __future__ import annotations
 
@@ -45,40 +45,40 @@ from sensai.knowledge.retrieval import (  # noqa: E402
     reciprocal_rank_fusion,
 )
 
-# Écrit le 2026-10-17, avant toute mesure de R2 : le code arrivé après R1.
+# Written on 2026-10-17, before any R2 measurement: the code added after R1.
 HELD_OUT: list[tuple[str, list[str]]] = [
-    ("Comment l'agent met-il à jour une seule section du document d'état ?",
+    ("How does the agent update a single section of the state document?",
      ["src/sensai/knowledge/state_document.py", "src/sensai/tools/state_tool.py"]),
-    ("Où sont stockés les faits que l'agent retient sur le projet ?",
+    ("Where are the facts the agent remembers about the project stored?",
      ["src/sensai/knowledge/facts.py"]),
-    ("Que fait l'agent quand le modèle écrit un appel d'outil dans le texte ?",
-     ["src/sensai/core/agent.py", "docs/decisions/0031-appels-d-outils-ecrits-en-texte.md"]),
-    ("Quels fichiers l'outil de lecture refuse-t-il de lire ?",
+    ("What does the agent do when the model writes a tool call in the text?",
+     ["src/sensai/core/agent.py", "docs/decisions/0031-text-written-tool-calls.md"]),
+    ("Which files does the read tool refuse to read?",
      ["src/sensai/execution/file_permissions.py"]),
-    ("Comment les secrets sont-ils masqués dans la sortie des outils ?",
+    ("How are secrets masked in tool output?",
      ["src/sensai/execution/guardrails.py"]),
-    ("Comment une tâche planifiée décide-t-elle qu'elle doit être relancée ?",
+    ("How does a scheduled task decide that it must run again?",
      ["src/sensai/scheduling/runner.py", "src/sensai/scheduling/tasks.py",
       "docs/architecture/scheduling.md"]),
-    ("Pourquoi la recherche web passe-t-elle par Bing ?",
-     ["docs/decisions/0014-moteur-de-recherche-bing.md"]),
-    ("Combien de mémoire et de CPU a le conteneur qui exécute le code ?",
+    ("Why does web search go through Bing?",
+     ["docs/decisions/0014-bing-search-engine.md"]),
+    ("How much memory and CPU does the code execution container get?",
      ["src/sensai/execution/sandbox/config.py", "docs/architecture/sandbox.md"]),
-    ("Comment le juge LLM note-t-il la fidélité d'une réponse ?",
-     ["src/sensai/eval/judge.py", "docs/decisions/0019-evaluation-par-juge-llm.md"]),
-    ("Comment l'agent annule-t-il la dernière modification d'une section ?",
+    ("How does the LLM judge score the faithfulness of an answer?",
+     ["src/sensai/eval/judge.py", "docs/decisions/0019-llm-judge-evaluation.md"]),
+    ("How does the agent undo the last change to a section?",
      ["src/sensai/knowledge/state_document.py"]),
 ]
 
-# Fichiers qui contiennent les questions (ou leurs réponses attendues) : les
-# indexer ferait trouver la question au lieu de la réponse.
+# Files that contain the questions (or their expected answers): indexing them
+# would find the question instead of the answer.
 EXCLUDED = ("docs/performance/", "scripts/bench_rag.py", "scripts/bench_rerank.py",
             "docs/user-stories/R2-advanced-rag.md")
 
 LLM_PROMPT = (
-    "Question : {question}\n\nPassages numérotés :\n{passages}\n\n"
-    "Classe les numéros des passages du plus utile au moins utile pour répondre à la "
-    "question. Réponds seulement en JSON : {{\"ordre\": [numéros]}}."
+    "Question: {question}\n\nNumbered passages:\n{passages}\n\n"
+    "Rank the passage numbers from most to least useful for answering the "
+    "question. Answer only in JSON: {{\"order\": [numbers]}}."
 )
 
 
@@ -88,7 +88,7 @@ def build_index(host: str, db: Path) -> RagIndex:
     with sqlite3.connect(db) as conn:
         for prefix in EXCLUDED:
             conn.execute("DELETE FROM rag_chunks WHERE path LIKE ?", (prefix + "%",))
-    index._matrix = None  # recharge l'index sans les fichiers exclus
+    index._matrix = None  # reload the index without the excluded files
     index._load()
     return index
 
@@ -122,7 +122,7 @@ def llm_order(host: str, model: str, question: str, hits: list[dict]) -> list[in
             question=question, passages=passages)}],
     }, timeout=300).json()
     try:
-        order = [int(n) for n in json.loads(response["message"]["content"])["ordre"]]
+        order = [int(n) for n in json.loads(response["message"]["content"])["order"]]
     except (KeyError, ValueError, TypeError, json.JSONDecodeError):
         return list(range(len(hits)))
     seen = [n for i, n in enumerate(order) if 0 <= n < len(hits) and n not in order[:i]]
@@ -149,7 +149,7 @@ def score(questions, rank_fn) -> dict:
 
 
 def production(index: RagIndex, host: str, model: str) -> dict:
-    """Le chemin du CLI : fusion, reclassement, seuil et top 5 par défaut."""
+    """The CLI path: fusion, reranking, default threshold and top 5."""
     index.reranker = LlmReranker(host, model)
     results = {
         name: score(qs, lambda q: index.search(q))
@@ -160,12 +160,12 @@ def production(index: RagIndex, host: str, model: str) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Mesures de reclassement pour R2")
+    parser = argparse.ArgumentParser(description="Reranking measurements for R2")
     parser.add_argument("--host", required=True)
     parser.add_argument("--model", default="qwen3-coder:30b")
     parser.add_argument("--out", type=Path)
     parser.add_argument("--production", action="store_true",
-                        help="Mesurer le code livré au lieu de comparer les variantes")
+                        help="Measure the shipped code instead of comparing the variants")
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -185,13 +185,13 @@ def main() -> None:
                 for name, qs in (("r1", QUESTIONS), ("held_out", HELD_OUT))
             }
             print(variant, results[variant], flush=True)
-        # Scores denses des questions sans réponse : le seuil doit les écarter.
+        # Dense scores of unanswerable questions: the threshold must filter them out.
         results["negatives_best_dense"] = [
             index.search(q, top_k=1, min_score=-1.0)[0]["score"] for q in NEGATIVES]
         results["positives_best_dense"] = sorted(
             index.search(q, top_k=1, min_score=-1.0)[0]["score"] for q, _ in QUESTIONS + HELD_OUT)
-        print("négatives :", results["negatives_best_dense"])
-        print("positives (min) :", results["positives_best_dense"][:3])
+        print("negatives:", results["negatives_best_dense"])
+        print("positives (min):", results["positives_best_dense"][:3])
     if args.out:
         args.out.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
 

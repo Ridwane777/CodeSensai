@@ -126,9 +126,9 @@ def test_check_input_reaches_nested_values_but_not_keys():
     assert decision.replacement["n"] == 3
 
 
-# --- Réponse du modèle filtrée pendant le streaming (EV2, ADR-0058) ---------------
+# --- Model response filtered during streaming (EV2, ADR-0058) --------------------
 
-def test_stream_redactor_masque_par_ligne_et_garde_le_reste():
+def test_stream_redactor_masks_per_line_and_keeps_the_rest():
     from sensai.execution.guardrails import StreamRedactor
 
     r = StreamRedactor()
@@ -137,11 +137,11 @@ def test_stream_redactor_masque_par_ligne_et_garde_le_reste():
     assert out.startswith("[REDACTED:bearer_token] ok\n")
 
 
-def test_stream_redactor_cache_tout_le_corps_d_une_cle_privee():
+def test_stream_redactor_hides_the_whole_private_key_body():
     from sensai.execution.guardrails import StreamRedactor
 
     r = StreamRedactor()
-    out = r.feed("avant\n-----BEGIN RSA PRIVATE KEY-----\nMIIEow\nAAAA\n")
-    out += r.feed("-----END RSA PRIVATE KEY-----\napres\n") + r.flush()
+    out = r.feed("before\n-----BEGIN RSA PRIVATE KEY-----\nMIIEow\nAAAA\n")
+    out += r.feed("-----END RSA PRIVATE KEY-----\nafter\n") + r.flush()
     assert "MIIEow" not in out and "AAAA" not in out
-    assert out == "avant\n[REDACTED:private_key]\napres\n"
+    assert out == "before\n[REDACTED:private_key]\nafter\n"

@@ -8,7 +8,7 @@ import { renderRich, visibleAnswer } from './inline'
 
 export function TurnView({ turn }: { turn: Turn }) {
   const started = useRef(Date.now())
-  // Durée du tour, gardée quand il se termine (un tour rouvert depuis l'historique n'en a pas).
+  // Turn duration, kept when the turn ends (a turn reopened from history has none).
   const [took, setTook] = useState<number | null>(null)
   const wasLive = useRef(!turn.done)
   useEffect(() => {
@@ -19,7 +19,7 @@ export function TurnView({ turn }: { turn: Turn }) {
   }, [turn.done])
   const answer = visibleAnswer(turn.text)
   return (
-    <article className="rise-in flex gap-4" aria-label={`Réponse de ${personaLabel(turn.agent)}`}>
+    <article className="rise-in flex gap-4" aria-label={`Answer from ${personaLabel(turn.agent)}`}>
       <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-accent" aria-hidden="true">
         <BrandMark className="h-4 w-4" />
       </span>
@@ -38,11 +38,11 @@ export function TurnView({ turn }: { turn: Turn }) {
           </div>
         )}
         {turn.fewshot && (
-          <p className="mt-1 text-xs text-muted" title="Exemple few-shot (A7) joint à la question, choisi parce qu'il ressemble le plus à la demande">
-            Inspirée de l&apos;exemple : « {turn.fewshot} »
+          <p className="mt-1 text-xs text-muted" title="Few-shot example (A7) attached to the question, chosen because it is the closest match to the request">
+            Inspired by the example: “{turn.fewshot}”
           </p>
         )}
-        {turn.interrupted && <p className="mt-1 text-xs font-semibold text-warn">Génération interrompue</p>}
+        {turn.interrupted && <p className="mt-1 text-xs font-semibold text-warn">Generation interrupted</p>}
       </div>
     </article>
   )

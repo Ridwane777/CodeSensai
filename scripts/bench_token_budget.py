@@ -1,21 +1,21 @@
 """
-Mesures de M2 (budget de tokens) : le ratio `CHARS_PER_TOKEN = 4` est-il
-le bon pour qwen3 ?
+M2 measurements (token budget): is the `CHARS_PER_TOKEN = 4` ratio right
+for qwen3?
 
-Contrairement à `bench_cache.py` (A6) et `bench_fewshot.py` (A7), qui
-mesurent une similarité d'embeddings, ici on compare l'estimation grossière
-(`len(texte) // 4`) au compte réel que l'API Ollama renvoie elle-même dans
-`prompt_eval_count` pour un échange envoyé pour de vrai — c'est la mesure
-suggérée par la revue de PR #97.
+Unlike `bench_cache.py` (A6) and `bench_fewshot.py` (A7), which measure
+embedding similarity, this compares the rough estimate (`len(text) // 4`)
+with the actual count the Ollama API itself returns in `prompt_eval_count`
+for an exchange that is really sent — the measurement suggested by the
+PR #97 review.
 
-Pas encore exécuté (pas d'Ollama avec un modèle de chat disponible au
-moment d'écrire ce script) : `CHARS_PER_TOKEN`, `DEFAULT_NUM_CTX`, la marge de
-réponse (`RESPONSE_MARGIN_TOKENS`, dont dérive le budget par défaut) et
-`DEFAULT_KEEP_RECENT` restent des **estimations**, pas des mesures (ADR-0045).
-Faire tourner ce script avec le vrai modèle et reporter le résultat dans
+Not run yet (no Ollama with a chat model was available when this script was
+written): `CHARS_PER_TOKEN`, `DEFAULT_NUM_CTX`, the response margin
+(`RESPONSE_MARGIN_TOKENS`, from which the default budget derives) and
+`DEFAULT_KEEP_RECENT` are still **estimates**, not measurements (ADR-0045).
+Run this script with the real model and report the result in
 docs/performance/M2-token-budget.md.
 
-    python scripts/bench_token_budget.py --host http://<hôte-ollama>:11434 --model qwen3:8b
+    python scripts/bench_token_budget.py --host http://<ollama-host>:11434 --model qwen3:8b
 """
 from __future__ import annotations
 
@@ -30,9 +30,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from sensai.knowledge.compression import CHARS_PER_TOKEN, count_tokens  # noqa: E402
 
-# Quelques échanges de longueurs et de natures différentes (code, prose,
-# français, anglais) : le ratio caractères/token varie avec la langue et la
-# densité du texte, pas seulement sa longueur.
+# A few exchanges of different lengths and kinds (code, prose, French,
+# English): the characters/token ratio varies with the language and density
+# of the text, not only its length. The French samples are intentional.
 SAMPLES: list[str] = [
     "Explique-moi la fonction verifier_token du fichier auth.py.",
     "def verifier_token(token, secret):\n    return hmac.compare_digest(token, secret)\n",
@@ -45,7 +45,7 @@ SAMPLES: list[str] = [
 
 
 def measure(host: str, model: str, text: str) -> tuple[int, int]:
-    """(estimation, compte réel) pour `text` seul, comme message utilisateur."""
+    """(estimate, actual count) for `text` alone, as a user message."""
     response = requests.post(
         f"{host}/api/chat",
         json={"model": model, "messages": [{"role": "user", "content": text}],
@@ -58,22 +58,22 @@ def measure(host: str, model: str, text: str) -> tuple[int, int]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Calibrage du ratio caractères/token (M2)")
+    parser = argparse.ArgumentParser(description="Characters/token ratio calibration (M2)")
     parser.add_argument("--host", required=True)
     parser.add_argument("--model", required=True)
     args = parser.parse_args()
 
-    print(f"Ratio actuel : {CHARS_PER_TOKEN} caractères/token\n")
+    print(f"Current ratio: {CHARS_PER_TOKEN} characters/token\n")
     ratios = []
     for text in SAMPLES:
-        estime, reel = measure(args.host, args.model, text)
-        ratio_reel = len(text) / reel if reel > 0 else float("nan")
-        ratios.append(ratio_reel)
-        print(f"{len(text):5} car. | estimé {estime:4} tokens | réel {reel:4} tokens "
-              f"| ratio réel {ratio_reel:.2f} car./token")
-    moyenne = sum(ratios) / len(ratios)
-    print(f"\nRatio réel moyen sur cet échantillon : {moyenne:.2f} caractères/token "
-          f"(actuel : {CHARS_PER_TOKEN})")
+        estimate, actual = measure(args.host, args.model, text)
+        actual_ratio = len(text) / actual if actual > 0 else float("nan")
+        ratios.append(actual_ratio)
+        print(f"{len(text):5} chars | estimated {estimate:4} tokens | actual {actual:4} tokens "
+              f"| actual ratio {actual_ratio:.2f} chars/token")
+    mean = sum(ratios) / len(ratios)
+    print(f"\nMean actual ratio on this sample: {mean:.2f} characters/token "
+          f"(current: {CHARS_PER_TOKEN})")
 
 
 if __name__ == "__main__":

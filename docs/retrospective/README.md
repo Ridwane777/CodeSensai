@@ -1,11 +1,11 @@
-# CodeSensei — global retrospective
+# CodeSensai — global retrospective
 
 Written on 2026-10-25, with what we know at the end of the project. It looks
 at the **whole application**, component by component: what we chose, what
 the measurements showed, which concrete alternative would have been better,
 from which point it becomes preferable, and what it costs. Figures come from
 the repository (`docs/performance/`, ADRs) and from the
-[full trial of 2026-10-24](../performance/essais/essai-2026-10-24.md); none is
+[full trial of 2026-10-24](../performance/trials/trial-2026-10-24.md); none is
 invented. Where something was not measured, it says so.
 
 ## The project in numbers (measured)
@@ -23,7 +23,7 @@ update it.
 | Decisions | 41 ADRs |
 | Catalogue features | 28 targeted (ADR-0008); not delivered: A5 Persona, A7 Prompt optimisation, M2 Token budgeting |
 | Update 2026-11-01 | 1,652 tests passing and 20 expected failures (`pytest -q`); 58 ADRs; A5, A7 and M2 have since been delivered ([user-stories audit](../user-stories/README.md)); scope decision proposed in ADR-0056 |
-| Update 2026-11-06 | 1,661 tests passing and 19 expected failures (`pytest -q`); 59 ADRs (ADR-0059 proposed); every feature run on both set-ups ([trial](../performance/essais/essai-2026-11-06.md)): `qwen3:8b` on the laptop CPU 26 of 28 scenarios at 7–11 min a turn, `qwen3-coder:30b` on a GPU all 28 after reruns and fixes (A3 in the web 2 of 4) at 4–20 s a turn; four bugs found and fixed that day (Ollama timeout, `/structured` without index, no `list_files`, team "validé" with nothing written) |
+| Update 2026-11-06 | 1,661 tests passing and 19 expected failures (`pytest -q`); 59 ADRs (ADR-0059 proposed); every feature run on both set-ups ([trial](../performance/trials/trial-2026-11-06.md)): `qwen3:8b` on the laptop CPU 26 of 28 scenarios at 7–11 min a turn, `qwen3-coder:30b` on a GPU all 28 after reruns and fixes (A3 in the web 2 of 4) at 4–20 s a turn; four bugs found and fixed that day (Ollama timeout, `/structured` without index, no `list_files`, team "approved" with nothing written) |
 | Update 2026-11-02 | 1,645 tests passing and 19 expected failures (`pytest -q`); 58 ADRs, ADR-0056 to ADR-0058 accepted; 533 commits, 76 merged PRs; 16,609 lines of Python in `src/`, 15,153 lines of tests, 76 TypeScript files in `frontend/src/`; generation speed measured: 115–119 tok/s for `qwen3-coder:30b` on the pod's GPU, 4.5–4.8 tok/s for `qwen3:8b` on a team laptop without GPU ([generation-parameters.md](../performance/generation-parameters.md)) |
 
 ## What we would build differently
@@ -82,7 +82,7 @@ parser (ADR-0031) and triggers EV2 warnings (`forged_tool_markup`).
 tools are offered, which is the case. Constrained decoding: if malformed calls
 keep appearing with the chosen model.
 **Cost.** Routing can hide the right tool; `llama.cpp`/vLLM replace Ollama,
-which the subject imposes (ADR-0001) and which is the simplest local install.
+which the project requirements impose (ADR-0001) and which is the simplest local install.
 
 ### 4. Structured output: one call would need another serving stack
 
@@ -96,7 +96,7 @@ two calls: 3.7 to 15.8 s instead of 0.9 to 3.9 s
 request (vLLM guided decoding, or the `llama.cpp` server with a grammar), so
 the final step of the agent loop is itself constrained.
 **When it is preferable.** If structured answers become a frequent path
-(scripts calling CodeSensei), where latency counts.
+(scripts calling CodeSensai), where latency counts.
 **Cost.** Same as 3: leaves Ollama; vLLM needs a Linux GPU server, which goes
 against "runs on the developer's machine".
 
@@ -159,7 +159,7 @@ engine, then plugged into the real FastAPI server (ADR-0020, ADR-0035). The
 contract lives in hand-written documents and TypeScript types.
 **What happened.** Keeping both sides in line took a dedicated document
 reconciling the specification, the user stories and the interface
-(`architecture/web/web-api-alignement.md`), which found errors the
+(`architecture/web/web-api-alignment.md`), which found errors the
 specification did not show; two features were still simulated in the
 interface at the time (agent hand-offs, MCP tools). Since then hand-offs are
 real (ADR-0047, checked with the real model on 2026-11-01); the MCP badge has
@@ -184,7 +184,7 @@ instead of 13 to 23 s for a single agent.
 tests in the sandbox** on the modified code, and send the developer the
 failing output. A test result cannot be talked into "VALIDÉ".
 **When it is preferable.** Whenever the project has tests, which is the usual
-case for the code CodeSensei edits.
+case for the code CodeSensai edits.
 **Cost.** The project's dependencies must be installable in the sandbox
 (network, time); no help on projects without tests.
 
@@ -261,13 +261,13 @@ which pushes towards smaller pull requests and a fixed review slot each day.
 ### 13. Hardware: no machine of the team runs the validated model
 
 **What we had.** The team's reference machine has 4 GB of VRAM and 16 GB of
-RAM ([ADR-0004](../decisions/0004-modele-et-infrastructure.md)). The
+RAM ([ADR-0004](../decisions/0004-model-and-infrastructure.md)). The
 validated model, `qwen3-coder:30b`, needs a 24 GB GPU (21.7 GB of VRAM
 measured). `qwen3:8b` on a laptop without GPU generates 4.5–4.8 tokens/s
 ([generation-parameters.md](../performance/generation-parameters.md)): too
 slow for the agent loop. Measured on 2026-11-06 with every feature: one
 ordinary question takes 7 to 11 minutes on the laptop CPU, against 4 to 20 s
-on the GPU pod ([trial](../performance/essais/essai-2026-11-06.md)); until
+on the GPU pod ([trial](../performance/trials/trial-2026-11-06.md)); until
 that trial, a 60 s client timeout made every turn fail on CPU. The sandbox and the web search need Docker
 (a 1.1 GB image).
 **What happened.** Every trial with the real model, every recording and the
@@ -283,7 +283,7 @@ changes the agent's behaviour.
 **When it is preferable.** As soon as the validated model does not fit on
 the team's machines, which ADR-0004 measured in the first week.
 **Cost.** A second-hand RTX 3090 workstation, or 0.22–0.44 $/h of rented GPU
-(estimated, [couts.md](../business/couts.md)), plus the time of each trial.
+(estimated, [costs.md](../business/costs.md)), plus the time of each trial.
 
 ### 14. Schedule: planned dates against real ones
 
@@ -359,7 +359,7 @@ cannot be closed without their pull request.
 | Hardware | One shared 24 GB GPU workstation, or a persistent pod from week one | Time: the real model tried in each PR, not days later | When the model does not fit the team's machines | Hardware or rented GPU hours |
 | Schedule | One status source, weekly plan review, scope cut on the planned date | Time: no feature built then removed; fewer late features (up to 14 days late) | From the first milestone | About 15 min a week |
 
-There is no load-test section on purpose: CodeSensei runs locally for one
+There is no load-test section on purpose: CodeSensai runs locally for one
 developer, so what matters is latency and GPU memory on a developer machine,
 not concurrent users.
 
@@ -386,7 +386,7 @@ not concurrent users.
    2026-11-02 (ADR-0056, item 3), on the machine rather than in the sandbox
    (its image has neither the project nor its dependencies); seen with the
    real model on 2026-11-03, passing and failing
-   ([trial](../performance/essais/essai-2026-11-03.md)).
+   ([trial](../performance/trials/trial-2026-11-03.md)).
 4. ~~Deliver M2, A5 and A7, or remove them from the scope~~: delivered
    (ADR-0045, ADR-0042/0043, ADR-0044); the scope decision is ADR-0056.
 5. ~~Plug agent hand-offs and MCP tools into the web interface~~: done

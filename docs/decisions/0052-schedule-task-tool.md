@@ -8,11 +8,11 @@
 ## Context
 
 Tasks could only be scheduled with an explicit command (`sensai-schedule add`,
-or `/schedule add` in the chat, [ADR-0028](0028-commandes-schedule-et-eval-dans-le-chat.md)).
+or `/schedule add` in the chat, [ADR-0028](0028-schedule-and-eval-commands-in-chat.md)).
 Asking in plain language ("summarise the TODOs every morning") did nothing: the
 agent had no tool for it, on purpose — what the model writes is never run as a
 command. A scheduled task replays its prompt with nobody watching
-([ADR-0016](0016-planification-des-taches.md)), so an instruction hidden in a
+([ADR-0016](0016-task-scheduling.md)), so an instruction hidden in a
 web page or a file the agent read could, through such a tool, plant an action that
 runs every day: the worst case of prompt injection, because it persists.
 

@@ -19,9 +19,9 @@ export type EngineEvent =
   | { type: 'guardrail'; kind: 'secret' | 'pii' | 'unsafe'; message: string }
   | { type: 'eval_score'; relevance: number; faithfulness: number }
   | { type: 'cache_hit'; similarity: number }
-  /** `subAgent` : relais temporaire vers un sous-agent (A2) ; la persona choisie ne change pas. */
+  /** `subAgent`: temporary handoff to a sub-agent (A2); the selected persona does not change. */
   | { type: 'agent_handoff'; from: string; to: string; subAgent?: boolean }
-  /** A7 : l'exemple few-shot joint à la question de ce tour. */
+  /** A7: the few-shot example attached to this turn's question. */
   | { type: 'fewshot'; turnId: string; question: string }
   | { type: 'error'; message: string }
   | { type: 'done'; turnId: string; interrupted: boolean }

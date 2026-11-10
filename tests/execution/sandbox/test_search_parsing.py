@@ -237,7 +237,7 @@ def test_real_bing_page_fixture():
 
 def test_results_page_is_recognised_even_without_results():
     assert sp.looks_like_results_page(page()) is True
-    assert sp.looks_like_results_page('<ol><li class="b_no">Aucun résultat</li></ol>') is True
+    assert sp.looks_like_results_page('<ol><li class="b_no">No results</li></ol>') is True
     assert sp.looks_like_results_page(FIXTURE.read_text()) is True
 
 
@@ -283,7 +283,7 @@ def test_duckduckgo_url_uses_the_html_endpoint():
 
 
 def test_recorded_duckduckgo_page_is_parsed():
-    """Page enregistrée le 2026-10-24 depuis l'image du projet."""
+    """Page recorded on 2026-10-24 from the project image."""
     html = DDG_FIXTURE.read_text(encoding="utf-8")
     results = sp.parse_results(html)
     assert sp.looks_like_results_page(html) and not sp.looks_blocked(html)
@@ -291,7 +291,7 @@ def test_recorded_duckduckgo_page_is_parsed():
     assert results[0].url == "https://docs.python.org/3/library/asyncio.html"
     assert results[0].title.startswith("asyncio")
     assert results[0].snippet
-    assert not any("duckduckgo.com" in r.url for r in results), "liens de redirection décodés"
+    assert not any("duckduckgo.com" in r.url for r in results), "redirect links decoded"
 
 
 def test_duckduckgo_ads_and_internal_links_are_dropped():

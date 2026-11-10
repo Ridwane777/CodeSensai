@@ -8,7 +8,7 @@ const scenario: Scenario = {
   id: 's',
   steps: [
     { delay: 10, event: { type: 'turn_start', turnId: 't1', agent: 'sensei' } },
-    { delay: 10, event: { type: 'token', turnId: 't1', text: 'Salut' } },
+    { delay: 10, event: { type: 'token', turnId: 't1', text: 'Hi' } },
     { delay: 10, event: { type: 'done', turnId: 't1', interrupted: false } },
   ],
 }
@@ -17,15 +17,15 @@ const gated: Scenario = {
   id: 'g',
   steps: [
     { delay: 5, event: { type: 'turn_start', turnId: 't1', agent: 'sensei' } },
-    { delay: 5, event: { type: 'confirm_request', requestId: 'c1', title: 'Supprimer ?', detail: 'build/', risk: 'high' } },
+    { delay: 5, event: { type: 'confirm_request', requestId: 'c1', title: 'Delete?', detail: 'build/', risk: 'high' } },
     { delay: 5, waitFor: 'confirm', requestId: 'c1' },
-    { delay: 5, event: { type: 'token', turnId: 't1', text: 'fait' } },
+    { delay: 5, event: { type: 'token', turnId: 't1', text: 'done' } },
     { delay: 5, event: { type: 'done', turnId: 't1', interrupted: false } },
   ],
 }
 
 const rid = (got: EngineEvent[]) =>
-  [...got].reverse().map((x) => ('requestId' in x ? x.requestId : null)).find((x): x is string => x !== null) ?? 'aucun'
+  [...got].reverse().map((x) => ('requestId' in x ? x.requestId : null)).find((x): x is string => x !== null) ?? 'none'
 
 beforeEach(() => vi.useFakeTimers())
 afterEach(() => vi.useRealTimers())
@@ -37,12 +37,12 @@ function setup(s: Scenario = scenario) {
   return { e, got }
 }
 
-test('MockEngine respecte le contrat Engine', () => {
+test('MockEngine honors the Engine contract', () => {
   const e: Engine = new MockEngine({ route: () => scenario })
   expect(typeof e.subscribe).toBe('function')
 })
 
-test('interrupt coupe le flux et émet done interrupted', () => {
+test('interrupt cuts the stream and emits done interrupted', () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'bonjour' })
   vi.advanceTimersByTime(15)
@@ -52,13 +52,13 @@ test('interrupt coupe le flux et émet done interrupted', () => {
   expect(got.filter((x) => x.type === 'token')).toHaveLength(0)
 })
 
-test('interrupt sans génération : sans effet', () => {
+test('interrupt without generation: no effect', () => {
   const { e, got } = setup()
   expect(() => e.interrupt()).not.toThrow()
   expect(got).toHaveLength(0)
 })
 
-test("éditer un message inconnu : error et historique intact", () => {
+test("editing an unknown message: error and history intact", () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'a' })
   expect(e.editMessage('zzz', 'b')).toBeNull()
@@ -66,7 +66,7 @@ test("éditer un message inconnu : error et historique intact", () => {
   expect(e.history()).toHaveLength(1)
 })
 
-test("éditer un message crée une branche et garde l'original", () => {
+test("editing a message creates a branch and keeps the original", () => {
   const { e } = setup()
   e.send({ id: 'm1', text: 'a' })
   expect(e.editMessage('m1', 'a2')).toBe('b1')
@@ -74,14 +74,14 @@ test("éditer un message crée une branche et garde l'original", () => {
   expect(e.history().map((m) => m.branch)).toEqual(['main', 'b1'])
 })
 
-test('réponse à une carte inconnue : ignorée', () => {
+test('answer to an unknown card: ignored', () => {
   const { e, got } = setup()
   e.confirm('inconnu', true)
   vi.advanceTimersByTime(100)
   expect(got).toHaveLength(0)
 })
 
-test('la lecture attend la confirmation puis reprend', () => {
+test('playback waits for confirmation then resumes', () => {
   const { e, got } = setup(gated)
   e.send({ id: 'm1', text: 'supprime' })
   vi.advanceTimersByTime(100)
@@ -91,7 +91,7 @@ test('la lecture attend la confirmation puis reprend', () => {
   expect(got.map((x) => x.type)).toEqual(['turn_start', 'confirm_request', 'token', 'done'])
 })
 
-test('une confirmation déjà résolue est ignorée', () => {
+test('an already resolved confirmation is ignored', () => {
   const { e, got } = setup(gated)
   e.send({ id: 'm1', text: 'supprime' })
   vi.advanceTimersByTime(100)
@@ -103,7 +103,7 @@ test('une confirmation déjà résolue est ignorée', () => {
   expect(got).toHaveLength(n)
 })
 
-test('un nouvel envoi pendant une génération interrompt la précédente', () => {
+test('a new send during a generation interrupts the previous one', () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'a' })
   vi.advanceTimersByTime(15)
@@ -113,7 +113,7 @@ test('un nouvel envoi pendant une génération interrompt la précédente', () =
   expect(dones.map((d) => d.interrupted)).toEqual([true, false])
 })
 
-test("changer d'agent émet un passage de relais sans toucher à l'historique", () => {
+test("switching agents emits a handoff without touching history", () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'a' })
   e.switchPersona('reviewer')
@@ -121,7 +121,7 @@ test("changer d'agent émet un passage de relais sans toucher à l'historique", 
   expect(e.history()).toHaveLength(1)
 })
 
-test('interrompre avant le premier événement annule la lecture sans bruit', () => {
+test('interrupting before the first event cancels playback quietly', () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'a' })
   e.interrupt()
@@ -133,76 +133,76 @@ const branching: Scenario = {
   id: 'b',
   steps: [
     { delay: 5, event: { type: 'turn_start', turnId: 't1', agent: 'sensei' } },
-    { delay: 5, event: { type: 'confirm_request', requestId: 'c1', title: 'Supprimer ?', detail: 'build/', risk: 'high' } },
+    { delay: 5, event: { type: 'confirm_request', requestId: 'c1', title: 'Delete?', detail: 'build/', risk: 'high' } },
     {
       delay: 5,
       waitFor: 'confirm',
       requestId: 'c1',
       deny: [
-        { delay: 5, event: { type: 'token', turnId: 't1', text: 'refusé' } },
+        { delay: 5, event: { type: 'token', turnId: 't1', text: 'denied' } },
         { delay: 5, event: { type: 'done', turnId: 't1', interrupted: false } },
       ],
     },
-    { delay: 5, event: { type: 'token', turnId: 't1', text: 'supprimé' } },
+    { delay: 5, event: { type: 'token', turnId: 't1', text: 'deleted' } },
     { delay: 5, event: { type: 'done', turnId: 't1', interrupted: false } },
   ],
 }
 
-test('un refus suit la branche deny du scénario', () => {
+test('a denial follows the scenario deny branch', () => {
   const { e, got } = setup(branching)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)
   e.confirm(rid(got), false)
   vi.advanceTimersByTime(100)
   const tokens = got.filter((x) => x.type === 'token').map((x) => (x as { text: string }).text)
-  expect(tokens).toEqual(['refusé'])
+  expect(tokens).toEqual(['denied'])
   expect(got.at(-1)).toMatchObject({ type: 'done', interrupted: false })
 })
 
-test('une approbation suit la suite normale', () => {
+test('an approval follows the normal path', () => {
   const { e, got } = setup(branching)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)
   e.confirm(rid(got), true)
   vi.advanceTimersByTime(100)
   const tokens = got.filter((x) => x.type === 'token').map((x) => (x as { text: string }).text)
-  expect(tokens).toEqual(['supprimé'])
+  expect(tokens).toEqual(['deleted'])
 })
 
 const asking: Scenario = {
   id: 'a',
   steps: [
     { delay: 5, event: { type: 'turn_start', turnId: 't1', agent: 'sensei' } },
-    { delay: 5, event: { type: 'question', requestId: 'q1', title: 'Cible', fields: [{ id: 'env', kind: 'text', label: 'Env' }] } },
+    { delay: 5, event: { type: 'question', requestId: 'q1', title: 'Target', fields: [{ id: 'env', kind: 'text', label: 'Env' }] } },
     { delay: 5, waitFor: 'answer', requestId: 'q1' },
-    { delay: 5, event: { type: 'token', turnId: 't1', text: 'Cible : {{env}} / {{inconnu}}' } },
+    { delay: 5, event: { type: 'token', turnId: 't1', text: 'Target: {{env}} / {{unknown}}' } },
     { delay: 5, event: { type: 'done', turnId: 't1', interrupted: false } },
   ],
 }
 
-test('les réponses du formulaire sont reprises dans le texte, les clés inconnues restent lisibles', () => {
+test('form answers are injected into the text, unknown keys stay readable', () => {
   const { e, got } = setup(asking)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)
   e.answer(rid(got), { env: 'staging' })
   vi.advanceTimersByTime(100)
   const tok = got.find((x) => x.type === 'token') as { text: string }
-  expect(tok.text).toBe('Cible : staging / —')
+  expect(tok.text).toBe('Target: staging / —')
 })
 
 const askingArgs: Scenario = {
   id: 'aa',
   steps: [
     { delay: 5, event: { type: 'turn_start', turnId: 't1', agent: 'sensei' } },
-    { delay: 5, event: { type: 'question', requestId: 'q1', title: 'Cible', fields: [{ id: 'env', kind: 'text', label: 'Env' }] } },
+    { delay: 5, event: { type: 'question', requestId: 'q1', title: 'Target', fields: [{ id: 'env', kind: 'text', label: 'Env' }] } },
     { delay: 5, waitFor: 'answer', requestId: 'q1' },
     { delay: 5, event: { type: 'action', turnId: 't1', stepId: 's1', tool: 'deploy.plan', args: { env: '{{env}}', tests: '{{tests}}', n: 3 } } },
-    { delay: 5, event: { type: 'observation', turnId: 't1', stepId: 's1', text: 'cible {{env}}', ms: 1, ok: true } },
+    { delay: 5, event: { type: 'observation', turnId: 't1', stepId: 's1', text: 'target {{env}}', ms: 1, ok: true } },
     { delay: 5, event: { type: 'done', turnId: 't1', interrupted: false } },
   ],
 }
 
-test("les réponses du formulaire sont aussi reprises dans les arguments d'action et les observations", () => {
+test("form answers are also injected into action arguments and observations", () => {
   const { e, got } = setup(askingArgs)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)
@@ -211,11 +211,11 @@ test("les réponses du formulaire sont aussi reprises dans les arguments d'actio
   const action = got.find((x) => x.type === 'action') as { args: Record<string, unknown> }
   expect(action.args).toEqual({ env: 'staging', tests: 'true', n: 3 })
   const o = got.find((x) => x.type === 'observation') as { text: string }
-  expect(o.text).toBe('cible staging')
+  expect(o.text).toBe('target staging')
 })
 
 
-test("deux exécutions du même scénario produisent des identifiants de requête distincts", () => {
+test("two runs of the same scenario produce distinct request ids", () => {
   const { e, got } = setup(gated)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)
@@ -226,7 +226,7 @@ test("deux exécutions du même scénario produisent des identifiants de requêt
   expect(new Set(ids).size).toBe(2)
 })
 
-test("une confirmation de la première exécution ne débloque pas la seconde", () => {
+test("a confirmation from the first run does not unblock the second", () => {
   const { e, got } = setup(gated)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)
@@ -246,7 +246,7 @@ const plain = (agent = 'sensei'): Scenario => ({
   ],
 })
 
-test("après un changement d'agent, les tours suivants sont attribués au nouvel agent", () => {
+test("after an agent switch, later turns are attributed to the new agent", () => {
   const { e, got } = setup(plain())
   e.switchPersona('reviewer')
   e.send({ id: 'm1', text: 'x' })
@@ -263,7 +263,7 @@ const handoff: Scenario = {
   ],
 }
 
-test("un relais scénarisé vers l'agent déjà actif n'est pas répété", () => {
+test("a scripted handoff to the already active agent is not repeated", () => {
   const { e, got } = setup(handoff)
   e.switchPersona('reviewer')
   e.send({ id: 'm1', text: 'x' })
@@ -271,7 +271,7 @@ test("un relais scénarisé vers l'agent déjà actif n'est pas répété", () =
   expect(got.filter((x) => x.type === 'agent_handoff')).toHaveLength(1)
 })
 
-test("un relais scénarisé met à jour l'agent actif du moteur", () => {
+test("a scripted handoff updates the engine's active agent", () => {
   const { e, got } = setup(handoff)
   e.send({ id: 'm1', text: 'x' })
   vi.advanceTimersByTime(100)

@@ -12,15 +12,15 @@ from .fakes import FakeClient, FakeContainer, broken_client
 
 
 def convert(tmp_path, container=None, client=None):
-    document = tmp_path / "sujet.pdf"
+    document = tmp_path / "requirements.pdf"
     document.write_bytes(b"%PDF-1.7\n")
-    client = client or FakeClient(container or FakeContainer(stdout=b"# Sujet\nTexte"))
+    client = client or FakeClient(container or FakeContainer(stdout=b"# Requirements\nTexte"))
     return DocumentSandbox(client=client).convert(document), client
 
 
 def test_conversion_returns_the_markdown(tmp_path):
     result, client = convert(tmp_path)
-    assert result.ok and result.text == "# Sujet\nTexte"
+    assert result.ok and result.text == "# Requirements\nTexte"
     assert client.container.removed
 
 
@@ -32,7 +32,7 @@ def test_container_is_locked_down(tmp_path):
     assert kwargs["read_only"] is True
     assert kwargs["cap_drop"] == ["ALL"]
     [(source, mount)] = kwargs["volumes"].items()
-    assert Path(source) == tmp_path / "sujet.pdf"
+    assert Path(source) == tmp_path / "requirements.pdf"
     assert mount == {"bind": "/input/document.pdf", "mode": "ro"}
     assert kwargs["command"][-1] == "/input/document.pdf"
 

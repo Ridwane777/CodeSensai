@@ -7,12 +7,12 @@ export function SourcesPanel({
   sources: { path: string; lines: string; score: number }[]
   web: { title: string; url: string }[]
 }) {
-  if (sources.length === 0 && web.length === 0) return <p className="text-sm text-muted">Aucune source pour l&apos;instant.</p>
+  if (sources.length === 0 && web.length === 0) return <p className="text-sm text-muted">No sources yet.</p>
   return (
     <div className="space-y-4 text-sm">
       {sources.length > 0 && (
-        <section aria-label="Passages du projet">
-          <h3 className="mb-2 font-extrabold">Dans le projet</h3>
+        <section aria-label="Project passages">
+          <h3 className="mb-2 font-extrabold">In the project</h3>
           <ul className="space-y-2">
             {sources.map((s) => (
               <li key={`${s.path}:${s.lines}`} className="flex items-center justify-between gap-2 rounded-xl border border-line px-3 py-2">
@@ -24,8 +24,8 @@ export function SourcesPanel({
         </section>
       )}
       {web.length > 0 && (
-        <section aria-label="Résultats web">
-          <h3 className="mb-2 font-extrabold">Sur le web</h3>
+        <section aria-label="Web results">
+          <h3 className="mb-2 font-extrabold">On the web</h3>
           <ul className="space-y-2">
             {web.map((w) => (
               <li key={w.url}>

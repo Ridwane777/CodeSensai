@@ -1,5 +1,5 @@
 """
-[Lot B] Web search through a disposable Chromium container — feature [T2].
+[Workstream B] Web search through a disposable Chromium container — feature [T2].
 
 The search runs in `BrowserSandbox`, away from the agent's process and from the
 machine's files and network. The tool only formats what comes back. What it

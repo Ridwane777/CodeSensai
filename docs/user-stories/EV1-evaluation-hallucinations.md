@@ -2,7 +2,7 @@
 
 Issue #53. Code: `src/sensai/eval/`, command
 `sensai-eval`. Choice and trade-offs:
-[ADR-0019](../decisions/0019-evaluation-par-juge-llm.md). Method, report
+[ADR-0019](../decisions/0019-llm-judge-evaluation.md). Method, report
 format and limits: [docs/performance/EV1-evaluation.md](../performance/EV1-evaluation.md).
 Translated from French on 2026-10-29.
 
@@ -14,10 +14,10 @@ right.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-eval run` on 5 cases: qwen3:8b ✅ (25 min); qwen3-coder:30b ✅ (19 s; relevance 3.40/5, coherence 5.00/5, faithfulness 0.42).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-eval run` on 5 cases: qwen3:8b ✅ (25 min); qwen3-coder:30b ✅ (19 s; relevance 3.40/5, coherence 5.00/5, faithfulness 0.42).
 
 ## US-EV1-1 — Know whether a new prompt improves or degrades the answers
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who changes the system prompt (A4),
 **I want** to run the same set of questions before and after the change and compare both results,
@@ -30,7 +30,7 @@ right.
 - Cases present in only one of the two reports are listed, not silently ignored.
 
 ## US-EV1-2 — See which claims are doubtful, and which passage to look at
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who receives a report,
 **I want** to see, for each answer, the contradicted or unverifiable claims with the cited passage,
@@ -44,7 +44,7 @@ right.
 - A case's faithfulness is the share of `SUPPORTED` claims; it is empty (`null`) when the answer has no claim to check, and never counted as 0 or 1.
 
 ## US-EV1-3 — A judge failure must not pass for a bad answer
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who runs the evaluation on a small local model,
 **I want** unusable judge outputs to be retried, then counted separately,
@@ -57,7 +57,7 @@ right.
 - A case with no answer (and without `--generate`) is `skipped`, also counted separately.
 
 ## US-EV1-4 — Do not compare two reports that do not measure the same thing
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead comparing two reports made at different times,
 **I want** to be warned when the judge, its prompt, the data or the origin of the passages changed,
@@ -76,7 +76,7 @@ the evaluation document). The `--sources rag` mode was only tested with a
 simulated index in the tests.
 
 ## US-EV1-5 — Run an evaluation from the chat
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead presenting the agent to the team,
 **I want** to type `/eval run --dataset … --out …` in the conversation,
@@ -88,9 +88,9 @@ simulated index in the tests.
 - The report is identical to the one from `sensai-eval` (same code, ADR-0028); a malformed command shows the error and the chat goes on.
 - Written limit: the evaluation blocks the chat until it ends (Ctrl+C to interrupt it).
 
-> **Update on 2026-10-29:** ◐ Web interface ([ADR-0050](../decisions/0050-real-web-features-on-demand-evaluation.md), proposed): the Quality page button "Évaluer la dernière réponse" calls `POST /api/sessions/{id}/evaluate`, which judges the last answer with the `sensai-eval` judge (relevance and coherence 1-5, faithfulness 0-1 or `null` without project passages, flagged claims). One extra model call, on demand only, never at every turn. With the real server the demo rows are hidden. Tested (`tests/web/test_real_features.py`, `frontend/tests/realFeatures.test.tsx`), not yet with the real model.
+> **Update on 2026-10-29:** ◐ Web interface ([ADR-0050](../decisions/0050-real-web-features-on-demand-evaluation.md), proposed): the Quality page button "Evaluate the latest answer" calls `POST /api/sessions/{id}/evaluate`, which judges the last answer with the `sensai-eval` judge (relevance and coherence 1-5, faithfulness 0-1 or `null` without project passages, flagged claims). One extra model call, on demand only, never at every turn. With the real server the demo rows are hidden. Tested (`tests/web/test_real_features.py`, `frontend/tests/realFeatures.test.tsx`), not yet with the real model.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): "Évaluer la dernière réponse" added a "Réponse évaluée n°1" row (API: relevance 5, coherence 5, faithfulness 1.0 on 4 passages).
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): "Evaluate the latest answer" added a "Evaluated answer #1" row (API: relevance 5, coherence 5, faithfulness 1.0 on 4 passages).
 
 
 ---
@@ -103,6 +103,6 @@ Each story checked against the code and the automated tests (not against earlier
 | --- | --- | --- | --- | --- |
 | US-EV1-1 | ✅ | `eval/cli.py`, `eval/report.py` | `tests/eval/test_report.py`, `tests/eval/test_cli.py` |  |
 | US-EV1-2 | ✅ | `eval/judge.py` | `tests/eval/test_judge.py` |  |
-| US-EV1-3 | ✅ | `eval/judge.py` | `tests/eval/test_judge.py`, `tests/eval/test_report.py::test_echec_de_generation_ne_plante_pas` |  |
+| US-EV1-3 | ✅ | `eval/judge.py` | `tests/eval/test_judge.py`, `tests/eval/test_report.py::test_generation_failure_does_not_crash` |  |
 | US-EV1-4 | ✅ | `eval/report.py`, `eval/dataset.py` | `tests/eval/test_report.py`, `tests/eval/test_dataset.py` |  |
 | US-EV1-5 | ✅ | `chat_commands.py` (`/eval`) | `tests/test_chat_commands.py` | The judge's reliability against a human review is still not measured (written above) |

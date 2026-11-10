@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-/** Orbe de marque : sphère graphite, ruban orange qui coule plus vite quand l'agent réfléchit. */
+/** Brand orb: a graphite sphere with an orange ribbon that flows faster when the agent is thinking. */
 export function Orb({ thinking = false, size = 320 }: { thinking?: boolean; size?: number }) {
   const uid = useId().replace(/:/g, '')
   return (

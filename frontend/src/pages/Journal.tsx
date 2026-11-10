@@ -6,10 +6,10 @@ import { GlassCard } from '../ui/GlassCard'
 import { PageHeader } from '../ui/PageHeader'
 
 const OUTCOME: Record<string, string> = {
-  final_answer: 'Réponse',
-  error: 'Échec',
-  interrupted: 'Interrompu',
-  max_iterations: 'Trop d’étapes',
+  final_answer: 'Answer',
+  error: 'Failure',
+  interrupted: 'Interrupted',
+  max_iterations: 'Too many steps',
 }
 
 function Metric({ id, label, value }: { id: string; label: string; value: string }) {
@@ -20,7 +20,7 @@ function Metric({ id, label, value }: { id: string; label: string; value: string
 
 const ms = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${fmt(v)} ms`)
 
-/** Serveur réel (EV3) : le journal enregistré côté serveur, qui survit au rechargement. */
+/** Real server (EV3): the log stored server-side, which survives a reload. */
 function ServerJournal() {
   const { state, journal, journalMetrics, currentSession } = useEngine()
   const [view, setView] = useState<'session' | 'tools'>('session')
@@ -28,7 +28,7 @@ function ServerJournal() {
   const [metrics, setMetrics] = useState<JournalMetrics | null>(null)
   const session = currentSession?.() ?? null
 
-  // Rechargé à l'ouverture, au changement de conversation et à la fin de chaque tour.
+  // Reloaded on open, on conversation change and at the end of each turn.
   useEffect(() => {
     if (state.thinking) return
     let alive = true
@@ -54,25 +54,25 @@ function ServerJournal() {
   const calls = (turns ?? []).flatMap((t) => t.tools)
   return (
     <>
-      <PageHeader title="Journal" intro="Ce que l'agent a fait, enregistré par le serveur (web et terminal) : chaque tour, le temps passé à attendre le modèle, chaque outil avec ses arguments (secrets masqués), sa durée et son issue." />
+      <PageHeader title="Log" intro="What the agent did, recorded by the server (web and terminal): each turn, the time spent waiting for the model, each tool with its arguments (secrets masked), its duration and its outcome." />
       <div role="tablist" className="mb-4 flex gap-2">
-        {tab('session', 'Cette conversation')}
-        {tab('tools', 'Tous les outils')}
+        {tab('session', 'This conversation')}
+        {tab('tools', 'All tools')}
       </div>
       {view === 'session' ? (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-4">
-            <Metric id="metric-turns" label="Tours" value={String(turns?.length ?? 0)} />
-            <Metric id="metric-calls" label="Appels d'outils" value={String(calls.length)} />
-            <Metric id="metric-errors" label="Échecs d'outils" value={String(calls.filter((c) => !c.ok).length)} />
-            {/* Somme des tours enregistrés : le compteur de l'onglet repart de zéro quand on rouvre la conversation. */}
-            <Metric id="metric-tokens" label="Tokens envoyés (estimés)" value={fmt((turns ?? []).reduce((n, t) => n + (t.tokensSent ?? 0), 0))} />
+            <Metric id="metric-turns" label="Turns" value={String(turns?.length ?? 0)} />
+            <Metric id="metric-calls" label="Tool calls" value={String(calls.length)} />
+            <Metric id="metric-errors" label="Tool failures" value={String(calls.filter((c) => !c.ok).length)} />
+            {/* Sum of recorded turns: the tab counter restarts from zero when the conversation is reopened. */}
+            <Metric id="metric-tokens" label="Tokens sent (estimated)" value={fmt((turns ?? []).reduce((n, t) => n + (t.tokensSent ?? 0), 0))} />
           </div>
           <GlassCard className="p-5">
             {!session ? (
-              <p className="text-sm text-muted">Aucune conversation ouverte : envoie un message dans le chat, ou rouvre une conversation.</p>
+              <p className="text-sm text-muted">No open conversation: send a message in the chat, or reopen a conversation.</p>
             ) : !turns || turns.length === 0 ? (
-              <p className="text-sm text-muted">Aucun tour enregistré pour cette conversation.</p>
+              <p className="text-sm text-muted">No recorded turn for this conversation.</p>
             ) : (
               <ol className="space-y-4">
                 {turns.map((t) => (
@@ -81,8 +81,8 @@ function ServerJournal() {
                       <span>{new Date(t.startedAt).toLocaleString('fr-FR')}</span>
                       <span>{t.interface === 'cli' ? 'terminal' : 'web'}</span>
                       <span className={t.outcome === 'final_answer' ? 'text-ok' : 'text-danger'}>{OUTCOME[t.outcome] ?? t.outcome}</span>
-                      <span>modèle : {ms(t.modelMs)}</span>
-                      {t.tokensSent !== null && <span>~{fmt(t.tokensSent)} tokens envoyés (estimés)</span>}
+                      <span>model: {ms(t.modelMs)}</span>
+                      {t.tokensSent !== null && <span>~{fmt(t.tokensSent)} tokens sent (estimated)</span>}
                     </p>
                     {t.tools.length > 0 && (
                       <table className="w-full text-sm">
@@ -92,7 +92,7 @@ function ServerJournal() {
                               <td className="py-1 pr-3 font-mono text-xs font-bold">{c.agent === 'main' ? c.tool : `${c.agent} › ${c.tool}`}</td>
                               <td className="max-w-xs break-all pr-3 font-mono text-xs text-muted">{c.arguments}</td>
                               <td className="pr-3 text-xs">{ms(c.durationMs)}</td>
-                              <td className={`text-xs font-bold ${c.ok ? 'text-ok' : 'text-danger'}`}>{c.ok ? 'Succès' : 'Échec'}</td>
+                              <td className={`text-xs font-bold ${c.ok ? 'text-ok' : 'text-danger'}`}>{c.ok ? 'Success' : 'Failure'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -107,16 +107,16 @@ function ServerJournal() {
       ) : (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-3">
-            <Metric id="metric-model-turns" label="Tours (7 jours)" value={String(metrics?.model.turns ?? 0)} />
-            <Metric id="metric-model-mean" label="Temps modèle moyen" value={ms(metrics?.model.meanMs)} />
-            <Metric id="metric-model-max" label="Temps modèle max" value={ms(metrics?.model.maxMs)} />
+            <Metric id="metric-model-turns" label="Turns (7 days)" value={String(metrics?.model.turns ?? 0)} />
+            <Metric id="metric-model-mean" label="Mean model time" value={ms(metrics?.model.meanMs)} />
+            <Metric id="metric-model-max" label="Max model time" value={ms(metrics?.model.maxMs)} />
           </div>
           <GlassCard className="p-5">
             {!metrics || metrics.tools.length === 0 ? (
-              <p className="text-sm text-muted">Aucun appel d&apos;outil sur les 7 derniers jours.</p>
+              <p className="text-sm text-muted">No tool call in the last 7 days.</p>
             ) : (
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-muted"><th className="py-1">Outil</th><th>Appels</th><th>Échecs</th><th>Durée moyenne</th><th>Durée max</th></tr></thead>
+                <thead><tr className="text-left text-muted"><th className="py-1">Tool</th><th>Calls</th><th>Failures</th><th>Mean duration</th><th>Max duration</th></tr></thead>
                 <tbody>
                   {metrics.tools.map((t) => (
                     <tr key={t.tool} className="border-t border-line">
@@ -130,7 +130,7 @@ function ServerJournal() {
                 </tbody>
               </table>
             )}
-            <p className="mt-3 text-xs text-muted">Toutes conversations et interfaces confondues. Durées murales mesurées par le serveur : celle d&apos;un outil inclut l&apos;attente de ta confirmation.</p>
+            <p className="mt-3 text-xs text-muted">All conversations and interfaces combined. Wall-clock durations measured by the server: a tool duration includes waiting for your confirmation.</p>
           </GlassCard>
         </>
       )}
@@ -138,7 +138,7 @@ function ServerJournal() {
   )
 }
 
-/** Moteur simulé : les appels de l'onglet, calculés dans le navigateur (rien n'est gardé). */
+/** Simulated engine: the calls of this tab, computed in the browser (nothing is kept). */
 function LiveJournal() {
   const { state } = useEngine()
   const logs = state.logs
@@ -149,19 +149,19 @@ function LiveJournal() {
   const max = Math.max(1, ...timed.map((l) => l.ms ?? 0))
   return (
     <>
-      <PageHeader title="Journal" intro="Chaque outil appelé par l'agent pendant la séance : arguments, durée, succès ou échec. Démonstration : calculé dans le navigateur, rien n'est enregistré." />
+      <PageHeader title="Log" intro="Each tool called by the agent during the session: arguments, duration, success or failure. Demo: computed in the browser, nothing is saved." />
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        <Metric id="metric-calls" label="Appels d'outils" value={String(logs.length)} />
-        <Metric id="metric-latency" label="Latence moyenne" value={mean === null ? '—' : `${mean} ms`} />
-        <Metric id="metric-errors" label="Taux d'échec" value={rate === null ? '—' : `${rate} %`} />
-        <Metric id="metric-tokens" label="Tokens utilisés" value={fmt(state.usage.used)} />
+        <Metric id="metric-calls" label="Tool calls" value={String(logs.length)} />
+        <Metric id="metric-latency" label="Mean latency" value={mean === null ? '—' : `${mean} ms`} />
+        <Metric id="metric-errors" label="Failure rate" value={rate === null ? '—' : `${rate} %`} />
+        <Metric id="metric-tokens" label="Tokens used" value={fmt(state.usage.used)} />
       </div>
       <GlassCard className="p-5">
         {logs.length === 0 ? (
-          <p className="text-sm text-muted">Aucun appel pour l&apos;instant. Lance un scénario dans le chat : les appels apparaissent ici.</p>
+          <p className="text-sm text-muted">No call yet. Start a scenario in the chat: the calls show up here.</p>
         ) : (
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-muted"><th className="py-1">Outil</th><th>Arguments</th><th>Durée</th><th>État</th></tr></thead>
+            <thead><tr className="text-left text-muted"><th className="py-1">Tool</th><th>Arguments</th><th>Duration</th><th>Status</th></tr></thead>
             <tbody>
               {logs.map((l) => (
                 <tr key={l.id} className="border-t border-line align-top">
@@ -174,7 +174,7 @@ function LiveJournal() {
                       </span>
                     )}
                   </td>
-                  <td className={l.ok === false ? 'font-bold text-danger' : 'font-bold text-ok'}>{l.ok === undefined ? 'en cours' : l.ok ? 'Succès' : 'Échec'}</td>
+                  <td className={l.ok === false ? 'font-bold text-danger' : 'font-bold text-ok'}>{l.ok === undefined ? 'running' : l.ok ? 'Success' : 'Failure'}</td>
                 </tr>
               ))}
             </tbody>

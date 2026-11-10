@@ -1,23 +1,23 @@
 # User stories — index
 
 Every story is written for one of the two personas of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)):
+([persona-and-scenario.md](../design/persona-and-scenario.md)):
 
 - **Camille**, the developer who takes over an unfamiliar Python code base and
   may not send it to a cloud API (primary persona);
-- **Marc**, the tech lead who sets CodeSensei up for the team: prompts,
+- **Marc**, the tech lead who sets CodeSensai up for the team: prompts,
   evaluation, adversarial tests, permissions, scheduled tasks (secondary
   persona).
 
 Roles were rewritten on 2026-11-01 to name these personas (they used to say
 "developer", "user", "team member", "reviewer"); acceptance criteria and
 dated statuses were not changed. Feature → story → ADR → code → tests →
-scenario step: [traceability.md](../conception/traceability.md). Features
+scenario step: [traceability.md](../design/traceability.md). Features
 dropped or changed along the way, with the stories withdrawn, replaced or
-modified: [traceability.md](../conception/traceability.md#features-dropped-or-changed-along-the-way).
+modified: [traceability.md](../design/traceability.md#features-dropped-or-changed-along-the-way).
 
 Format: "As … I want … so that …" plus observable acceptance criteria, at
-least two stories per feature (subject requirement).
+least two stories per feature (project requirement).
 
 **Code audit of 2026-11-01.** Every story was checked against the code and
 the automated tests, not against the earlier statuses. Each story file ends

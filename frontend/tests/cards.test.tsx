@@ -15,101 +15,101 @@ function fakeEngine() {
 }
 
 const confirm = (status: ConfirmItem['status']): ConfirmItem => ({
-  kind: 'confirm', requestId: 'c1', title: 'Supprimer build/ ?', detail: '12 fichiers', risk: 'high', status, branch: 'main',
+  kind: 'confirm', requestId: 'c1', title: 'Delete build/?', detail: '12 files', risk: 'high', status, branch: 'main',
 })
-test("une confirmation périmée n'a plus de boutons et dit pourquoi", () => {
+test("an expired confirmation has no buttons and says why", () => {
   const { engine } = fakeEngine()
   render(<EngineProvider engine={engine}><ConfirmCard item={confirm('expired')} /></EngineProvider>)
-  expect(screen.getByText(/expirée/i)).toBeInTheDocument()
+  expect(screen.getByText(/expired/i)).toBeInTheDocument()
   expect(screen.queryByRole('button')).not.toBeInTheDocument()
 })
 
 const question = (status: QuestionItem['status'], values?: Record<string, unknown>): QuestionItem => ({
-  kind: 'question', requestId: 'q1', title: 'Préparer le déploiement', status, values, branch: 'main',
+  kind: 'question', requestId: 'q1', title: 'Prepare the deployment', status, values, branch: 'main',
   fields: [
-    { id: 'env', kind: 'choice', label: 'Environnement', options: ['staging', 'production'] },
+    { id: 'env', kind: 'choice', label: 'Environment', options: ['staging', 'production'] },
     { id: 'tag', kind: 'text', label: 'Version' },
-    { id: 'tests', kind: 'toggle', label: 'Lancer les tests' },
+    { id: 'tests', kind: 'toggle', label: 'Run the tests' },
   ],
 })
 
-test('Autoriser et Refuser appellent le moteur avec la bonne décision', () => {
+test('Allow and Deny call the engine with the right decision', () => {
   const { e, engine } = fakeEngine()
   render(<EngineProvider engine={engine}><ConfirmCard item={confirm('pending')} /></EngineProvider>)
-  fireEvent.click(screen.getByRole('button', { name: /autoriser/i }))
+  fireEvent.click(screen.getByRole('button', { name: /allow/i }))
   expect(e.confirm).toHaveBeenCalledWith('c1', true)
 })
 
-test('refuser envoie false', () => {
+test('deny sends false', () => {
   const { e, engine } = fakeEngine()
   render(<EngineProvider engine={engine}><ConfirmCard item={confirm('pending')} /></EngineProvider>)
-  fireEvent.click(screen.getByRole('button', { name: /refuser/i }))
+  fireEvent.click(screen.getByRole('button', { name: /deny/i }))
   expect(e.confirm).toHaveBeenCalledWith('c1', false)
 })
 
-test('une confirmation résolue affiche la décision, sans boutons', () => {
+test('a resolved confirmation shows the decision, without buttons', () => {
   const { engine } = fakeEngine()
   render(<EngineProvider engine={engine}><ConfirmCard item={confirm('denied')} /></EngineProvider>)
-  expect(screen.getByText(/refusé/i)).toBeInTheDocument()
+  expect(screen.getByText(/denied/i)).toBeInTheDocument()
   expect(screen.queryByRole('button')).not.toBeInTheDocument()
 })
 
-test("le formulaire bloque l'envoi tant qu'un champ texte est vide, puis envoie les valeurs", () => {
+test("the form blocks sending while a text field is empty, then sends the values", () => {
   const { e, engine } = fakeEngine()
   render(<EngineProvider engine={engine}><QuestionCard item={question('pending')} /></EngineProvider>)
-  const submit = screen.getByRole('button', { name: /envoyer mes réponses/i })
+  const submit = screen.getByRole('button', { name: /send my answers/i })
   expect(submit).toBeDisabled()
   fireEvent.change(screen.getByLabelText('Version'), { target: { value: 'v0.3.0' } })
-  fireEvent.click(screen.getByLabelText('Lancer les tests'))
+  fireEvent.click(screen.getByLabelText('Run the tests'))
   expect(submit).toBeEnabled()
   fireEvent.click(submit)
   expect(e.answer).toHaveBeenCalledWith('q1', { env: 'staging', tag: 'v0.3.0', tests: true })
 })
 
-test('un formulaire répondu affiche un récapitulatif', () => {
+test('an answered form shows a summary', () => {
   const { engine } = fakeEngine()
   render(<EngineProvider engine={engine}><QuestionCard item={question('answered', { env: 'staging', tag: 'v1', tests: false })} /></EngineProvider>)
   expect(screen.getByText(/staging/)).toBeInTheDocument()
   expect(screen.queryByRole('button')).not.toBeInTheDocument()
 })
 
-test('le garde-fou nomme la nature du blocage', () => {
-  const item: GuardrailItem = { kind: 'guardrail', gKind: 'secret', message: 'valeur masquée', branch: 'main' }
+test('the guardrail names the kind of block', () => {
+  const item: GuardrailItem = { kind: 'guardrail', gKind: 'secret', message: 'masked value', branch: 'main' }
   render(<GuardrailCard item={item} />)
-  expect(screen.getByText(/secret masqué/i)).toBeInTheDocument()
-  expect(screen.getByText('valeur masquée')).toBeInTheDocument()
+  expect(screen.getByText(/secret masked/i)).toBeInTheDocument()
+  expect(screen.getByText('masked value')).toBeInTheDocument()
 })
 
-test('les pastilles résument compression, cache et évaluation', () => {
+test('the chips summarize compression, cache and evaluation', () => {
   render(<>
     <NoticeChip item={{ kind: 'compression', savedTokens: 1840, branch: 'main' }} />
     <NoticeChip item={{ kind: 'cache', similarity: 0.94, branch: 'main' }} />
     <NoticeChip item={{ kind: 'eval', relevance: 0.91, faithfulness: 0.88, branch: 'main' }} />
     <NoticeChip item={{ kind: 'handoff', from: 'sensei', to: 'reviewer', branch: 'main' }} />
   </>)
-  expect(screen.getByText(/1 840 tokens libérés/)).toBeInTheDocument()
+  expect(screen.getByText(/1 840 tokens freed/)).toBeInTheDocument()
   expect(screen.getByText(/94 %/)).toBeInTheDocument()
-  expect(screen.getByText(/pertinence 91 %/i)).toBeInTheDocument()
-  expect(screen.getByText(/CodeSensei → Relecteur/)).toBeInTheDocument()
+  expect(screen.getByText(/relevance 91 %/i)).toBeInTheDocument()
+  expect(screen.getByText(/CodeSensai → Reviewer/)).toBeInTheDocument()
 })
 
 const steps = [
-  { id: 's1', thought: 'Je cherche', tool: 'rag.search', args: { q: 'x' }, observation: '5 passages', ms: 340, ok: true },
-  { id: 's2', thought: 'Je lance', tool: 'sandbox.run', args: {}, observation: 'ZeroDivisionError', ms: 410, ok: false },
+  { id: 's1', thought: 'I search', tool: 'rag.search', args: { q: 'x' }, observation: '5 passages', ms: 340, ok: true },
+  { id: 's2', thought: 'I run', tool: 'sandbox.run', args: {}, observation: 'ZeroDivisionError', ms: 410, ok: false },
 ]
 
-test('le raisonnement affiche étapes, durées et échecs dans l\'ordre', () => {
+test('the reasoning shows steps, durations and failures in order', () => {
   render(<ReasoningRibbon steps={steps} active={false} />)
   const items = screen.getAllByRole('listitem')
   expect(items).toHaveLength(2)
-  expect(items[0]).toHaveTextContent('Je cherche')
+  expect(items[0]).toHaveTextContent('I search')
   expect(items[0]).toHaveTextContent('340 ms')
-  expect(items[1]).toHaveTextContent(/échec/i)
+  expect(items[1]).toHaveTextContent(/failed/i)
 })
 
-test('le raisonnement se replie et se déplie', () => {
+test('the reasoning collapses and expands', () => {
   render(<ReasoningRibbon steps={steps} active={false} />)
-  const toggle = screen.getByRole('button', { name: /raisonnement/i })
+  const toggle = screen.getByRole('button', { name: /reasoning/i })
   fireEvent.click(toggle)
   expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
   expect(toggle).toHaveAttribute('aria-expanded', 'false')
@@ -117,12 +117,12 @@ test('le raisonnement se replie et se déplie', () => {
   expect(screen.getAllByRole('listitem')).toHaveLength(2)
 })
 
-test("sans étape, le raisonnement n'affiche rien", () => {
+test("with no step, the reasoning renders nothing", () => {
   const { container } = render(<ReasoningRibbon steps={[]} active={false} />)
   expect(container).toBeEmptyDOMElement()
 })
 
-test("la demande d'accord de write_file montre le diff en couleur", () => {
+test("the write_file approval request shows the colored diff", () => {
   render(<ConfirmDetail text={'REPLACE /p/a.py (20 bytes). Changes:\n\n--- before\n+++ after\n@@ -1 +1 @@\n-x = 1\n+x = 2\n y = 3'} />)
   expect(screen.getByText(/REPLACE \/p\/a\.py/)).toBeInTheDocument()
   expect(screen.getByText('-x = 1').className).toContain('text-danger')
@@ -131,13 +131,13 @@ test("la demande d'accord de write_file montre le diff en couleur", () => {
   expect(screen.getByText('+++ after').className).toContain('text-muted')
 })
 
-test('un détail sans diff reste un texte simple', () => {
-  render(<ConfirmDetail text={'Supprimer build/ (12 fichiers)'} />)
-  expect(screen.queryByLabelText('Modifications proposées')).not.toBeInTheDocument()
-  expect(screen.getByText('Supprimer build/ (12 fichiers)')).toBeInTheDocument()
+test('a detail without a diff stays plain text', () => {
+  render(<ConfirmDetail text={'Delete build/ (12 files)'} />)
+  expect(screen.queryByLabelText('Proposed changes')).not.toBeInTheDocument()
+  expect(screen.getByText('Delete build/ (12 files)')).toBeInTheDocument()
 })
 
-test('un outil MCP porte un badge, un outil interne non', () => {
+test('an MCP tool has a badge, an internal tool does not', () => {
   render(
     <ReasoningRibbon
       steps={[
@@ -152,24 +152,24 @@ test('un outil MCP porte un badge, un outil interne non', () => {
   expect(items[1]).not.toHaveTextContent('MCP')
 })
 
-test('un relais vers un sous-agent du serveur affiche son rôle', () => {
+test('a handoff to a server sub-agent shows its role', () => {
   render(<NoticeChip item={{ kind: 'handoff', from: 'sensei', to: 'explorateur', branch: 'main' }} />)
-  expect(screen.getByText(/CodeSensei → Explorateur/)).toBeInTheDocument()
+  expect(screen.getByText(/CodeSensai → Explorer/)).toBeInTheDocument()
 })
 
-test('le raisonnement reste ouvert pendant le tour puis se replie à la fin', () => {
+test('the reasoning stays open during the turn, then collapses at the end', () => {
   const { rerender } = render(<ReasoningRibbon steps={steps} active />)
   expect(screen.getAllByRole('listitem')).toHaveLength(2)
   rerender(<ReasoningRibbon steps={steps} active={false} took={12} />)
   expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /raisonnement · 2 étapes · 12 s/i })).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.getByRole('button', { name: /reasoning · 2 steps · 12 s/i })).toHaveAttribute('aria-expanded', 'false')
 })
 
-test("l'indicateur dit ce que fait l'agent : réflexion, outil, rédaction", () => {
+test("the indicator says what the agent is doing: thinking, tool, writing", () => {
   const turn = { id: 't', agent: 'sensei', text: '', steps: [], done: false, interrupted: false }
-  expect(activity(turn)).toBe('Réflexion')
-  expect(activity({ ...turn, steps: [{ id: 's', tool: 'read_file' }] })).toBe('Utilise read_file')
-  expect(activity({ ...turn, text: 'Voici' })).toBe('Rédaction')
-  render(<ThinkingIndicator label="Réflexion" since={Date.now()} />)
-  expect(screen.getByRole('status', { name: /réflexion en cours/i })).toBeInTheDocument()
+  expect(activity(turn)).toBe('Thinking')
+  expect(activity({ ...turn, steps: [{ id: 's', tool: 'read_file' }] })).toBe('Using read_file')
+  expect(activity({ ...turn, text: 'Here' })).toBe('Writing')
+  render(<ThinkingIndicator label="Thinking" since={Date.now()} />)
+  expect(screen.getByRole('status', { name: /thinking in progress/i })).toBeInTheDocument()
 })

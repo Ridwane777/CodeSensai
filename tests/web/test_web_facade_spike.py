@@ -1,8 +1,8 @@
 """
-Vérifie, de bout en bout, le comportement décrit par docs/architecture/web-api.md sur le prototype
-docs/conception/web_facade_spike.py : vraie boucle d'agent, vraie passerelle d'outils, faux Ollama.
+Checks, end to end, the behavior described in docs/architecture/web-api.md on the prototype
+docs/design/web_facade_spike.py: real agent loop, real tool gateway, fake Ollama.
 
-Ignoré quand fastapi, uvicorn ou httpx manquent (ils ne sont pas dans les dépendances du projet).
+Skipped when fastapi, uvicorn or httpx are missing (they are not project dependencies).
 """
 from __future__ import annotations
 
@@ -30,13 +30,13 @@ from sensai.execution.gateway import ToolGateway
 from sensai.execution.tool_policy import ToolPreferences
 from sensai.tools.echo_tool import EchoTool
 
-SPIKE = Path(__file__).resolve().parents[2] / "docs" / "conception" / "web_facade_spike.py"
+SPIKE = Path(__file__).resolve().parents[2] / "docs" / "design" / "web_facade_spike.py"
 spec = importlib.util.spec_from_file_location("web_facade_spike", SPIKE)
 spike = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = spike  # requis avant exec_module : @dataclass relit le module par son nom
+sys.modules[spec.name] = spike  # required before exec_module: @dataclass looks the module up by name
 spec.loader.exec_module(spike)
 
-TOKEN = "jeton-de-test"
+TOKEN = "test-token"
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
 
 
@@ -47,10 +47,10 @@ def free_port() -> int:
 
 
 class WriteTool:
-    """Outil à risque « write » : la passerelle doit demander confirmation avant de l'exécuter."""
+    """Tool with "write" risk: the gateway must ask for confirmation before running it."""
 
     name = "demo_write"
-    description = "Écrit un fichier (démonstration)."
+    description = "Writes a file (demo)."
     risk = "write"
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -62,15 +62,15 @@ class WriteTool:
         self.runs = 0
 
     def describe_call(self, **args: Any) -> str:
-        return f"Écrire {args.get('path')}"
+        return f"Write {args.get('path')}"
 
     def run(self, **kwargs: Any) -> ToolResult:
         self.runs += 1
-        return ToolResult(ok=True, content="écrit")
+        return ToolResult(ok=True, content="written")
 
 
 class FakeOllama(BaseHTTPRequestHandler):
-    """Rejoue des réponses scénarisées au format NDJSON d'Ollama, selon le dernier message."""
+    """Replays scripted answers in Ollama NDJSON format, depending on the last message."""
 
     def log_message(self, *args: Any) -> None:  # silence
         pass
@@ -92,21 +92,21 @@ class FakeOllama(BaseHTTPRequestHandler):
         last = payload["messages"][-1]
         done = {"message": {}, "done": True}
         if last["role"] == "tool":
-            self._send([{"message": {"content": "Terminé."}, "done": False}, done])
+            self._send([{"message": {"content": "Finished."}, "done": False}, done])
             return
         text = last["content"]
         if "echo" in text:
-            call = {"function": {"name": "echo", "arguments": {"text": "salut"}}}
+            call = {"function": {"name": "echo", "arguments": {"text": "hi"}}}
             self._send([{"message": {"tool_calls": [call]}, "done": True}])
-        elif "ecris" in text:
+        elif "write" in text:
             call = {"function": {"name": "demo_write", "arguments": {"path": "a.txt"}}}
             self._send([{"message": {"tool_calls": [call]}, "done": True}])
-        elif "lent" in text:
-            words = [{"message": {"content": f"mot{i} "}, "done": False} for i in range(40)]
+        elif "slow" in text:
+            words = [{"message": {"content": f"word{i} "}, "done": False} for i in range(40)]
             self._send([*words, done], pause=0.1)
         else:
-            self._send([{"message": {"content": "Bon"}, "done": False},
-                        {"message": {"content": "jour"}, "done": False}, done])
+            self._send([{"message": {"content": "Hel"}, "done": False},
+                        {"message": {"content": "lo"}, "done": False}, done])
 
 
 class Env:
@@ -177,7 +177,7 @@ def env() -> Iterator[Env]:
 
 
 def run_with_answer(env: Env, session: str, text: str, approve: bool | None) -> list[dict]:
-    """Joue un tour ; répond à la confirmation (True/False) ou ne répond pas (None)."""
+    """Plays a turn; answers the confirmation (True/False) or does not answer (None)."""
     seen: list[dict] = []
     for event in events(env.stream(session, text)):
         seen.append(event)
@@ -186,26 +186,26 @@ def run_with_answer(env: Env, session: str, text: str, approve: bool | None) -> 
     return seen
 
 
-def test_reponse_en_flux_et_done_en_dernier(env: Env) -> None:
+def test_streamed_answer_and_done_last(env: Env) -> None:
     session = env.new_session()
-    seen = list(events(env.stream(session, "bonjour")))
-    assert "".join(e["text"] for e in seen if e["type"] == "token") == "Bonjour"
+    seen = list(events(env.stream(session, "hello")))
+    assert "".join(e["text"] for e in seen if e["type"] == "token") == "Hello"
     assert seen[-1] == {"type": "done", "reason": "final_answer"}
     assert [e["type"] for e in seen].count("done") == 1
 
 
-def test_appel_et_retour_d_outil_partagent_le_meme_id(env: Env) -> None:
+def test_tool_call_and_return_share_the_same_id(env: Env) -> None:
     session = env.new_session()
     seen = list(events(env.stream(session, "echo")))
     call = next(e for e in seen if e["type"] == "tool_call")
     ret = next(e for e in seen if e["type"] == "tool_return")
-    assert call["id"] == ret["id"] and ret["ok"] is True and ret["content"] == "salut"
+    assert call["id"] == ret["id"] and ret["ok"] is True and ret["content"] == "hi"
     assert seen[-1]["type"] == "done"
 
 
-def test_l_outil_a_risque_ne_s_execute_qu_apres_accord(env: Env) -> None:
+def test_the_risky_tool_runs_only_after_approval(env: Env) -> None:
     session = env.new_session()
-    seen = run_with_answer(env, session, "ecris", approve=True)
+    seen = run_with_answer(env, session, "write", approve=True)
     request = next(e for e in seen if e["type"] == "confirm_request")
     assert request["risk"] == "write" and request["tool"] == "demo_write"
     assert request["arguments"] == {"path": "a.txt"} and request["timeout_s"] == 5.0
@@ -213,19 +213,19 @@ def test_l_outil_a_risque_ne_s_execute_qu_apres_accord(env: Env) -> None:
     assert env.write_tool.runs == 1
 
 
-def test_refus_n_execute_rien_et_le_tour_continue(env: Env) -> None:
+def test_refusal_runs_nothing_and_the_turn_continues(env: Env) -> None:
     session = env.new_session()
-    seen = run_with_answer(env, session, "ecris", approve=False)
+    seen = run_with_answer(env, session, "write", approve=False)
     assert next(e for e in seen if e["type"] == "tool_return")["ok"] is False
     assert env.write_tool.runs == 0
     assert seen[-1] == {"type": "done", "reason": "final_answer"}
 
 
-def test_pas_de_reponse_avant_le_delai_vaut_refus_et_une_reponse_tardive_est_ignoree() -> None:
+def test_no_answer_before_timeout_is_refusal_and_late_answer_is_ignored() -> None:
     env = Env(confirm_timeout_s=0.6)
     try:
         session = env.new_session()
-        seen = run_with_answer(env, session, "ecris", approve=None)
+        seen = run_with_answer(env, session, "write", approve=None)
         assert next(e for e in seen if e["type"] == "tool_return")["ok"] is False
         asked = next(e for e in seen if e["type"] == "confirm_request")
         assert env.confirm(session, asked["confirm_id"], True).status_code == 404
@@ -234,31 +234,31 @@ def test_pas_de_reponse_avant_le_delai_vaut_refus_et_une_reponse_tardive_est_ign
         env.close()
 
 
-def test_une_confirmation_inconnue_est_sans_effet(env: Env) -> None:
+def test_an_unknown_confirmation_has_no_effect(env: Env) -> None:
     session = env.new_session()
-    assert env.confirm(session, "inconnue", True).status_code == 404
+    assert env.confirm(session, "unknown", True).status_code == 404
     assert env.write_tool.runs == 0
 
 
-def test_fermer_l_onglet_pendant_la_confirmation_n_execute_rien() -> None:
+def test_closing_the_tab_during_confirmation_runs_nothing() -> None:
     env = Env(confirm_timeout_s=3.0)
     try:
         session = env.new_session()
-        response = env.stream(session, "ecris")
+        response = env.stream(session, "write")
         for event in events(response):
             if event["type"] == "confirm_request":
                 break
-        response.close()  # le navigateur disparaît sans répondre
+        response.close()  # the browser goes away without answering
         time.sleep(0.8)
         assert env.write_tool.runs == 0
     finally:
         env.close()
 
 
-def test_interrompre_termine_par_done_interrupted_sans_enregistrer_le_tour(env: Env) -> None:
+def test_interrupt_ends_with_done_interrupted_without_saving_the_turn(env: Env) -> None:
     session = env.new_session()
     seen: list[dict] = []
-    for event in events(env.stream(session, "lent")):
+    for event in events(env.stream(session, "slow")):
         seen.append(event)
         if len(seen) == 3:
             requests.post(f"{env.base}/sessions/{session}/interrupt", headers=AUTH, timeout=5)
@@ -268,21 +268,21 @@ def test_interrompre_termine_par_done_interrupted_sans_enregistrer_le_tour(env: 
     assert history["messages"] == []
 
 
-def test_un_tour_reussi_entre_dans_l_historique(env: Env) -> None:
+def test_a_successful_turn_enters_the_history(env: Env) -> None:
     session = env.new_session()
-    list(events(env.stream(session, "bonjour")))
+    list(events(env.stream(session, "hello")))
     saved = requests.get(f"{env.base}/sessions/{session}", headers=AUTH, timeout=5).json()
     assert saved["messages"] == [
-        {"role": "user", "content": "bonjour"},
-        {"role": "assistant", "content": "Bonjour"},
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "Hello"},
     ]
 
 
-def test_modele_injoignable_donne_error_puis_done_et_rien_n_est_enregistre() -> None:
+def test_unreachable_model_gives_error_then_done_and_nothing_is_saved() -> None:
     env = Env(ollama_up=False)
     try:
         session = env.new_session()
-        seen = list(events(env.stream(session, "bonjour")))
+        seen = list(events(env.stream(session, "hello")))
         assert seen[-2]["type"] == "error" and seen[-1] == {"type": "done", "reason": "error"}
         history = requests.get(f"{env.base}/sessions/{session}", headers=AUTH, timeout=5).json()
         assert history["messages"] == []
@@ -290,30 +290,30 @@ def test_modele_injoignable_donne_error_puis_done_et_rien_n_est_enregistre() -> 
         env.close()
 
 
-def test_un_seul_tour_a_la_fois_par_session(env: Env) -> None:
+def test_one_turn_at_a_time_per_session(env: Env) -> None:
     session = env.new_session()
-    first = env.stream(session, "lent")
-    next(events(first))  # le tour est bien lancé
-    second = env.stream(session, "bonjour")
+    first = env.stream(session, "slow")
+    next(events(first))  # the turn has started
+    second = env.stream(session, "hello")
     assert second.status_code == 409
     first.close()
 
 
-def test_message_vide_ou_trop_long_est_refuse_avant_le_flux(env: Env) -> None:
+def test_empty_or_too_long_message_is_rejected_before_the_stream(env: Env) -> None:
     session = env.new_session()
     assert env.stream(session, "   ").status_code == 400
     assert env.stream(session, "x" * (spike.MAX_MESSAGE_CHARS + 1)).status_code == 413
 
 
-def test_session_inconnue_donne_404_avec_un_corps_d_erreur(env: Env) -> None:
+def test_unknown_session_gives_404_with_an_error_body(env: Env) -> None:
     r = requests.get(f"{env.base}/sessions/nope", headers=AUTH, timeout=5)
     assert r.status_code == 404
     assert r.json()["detail"]["code"] == "SESSION_NOT_FOUND"
 
 
-def test_jeton_obligatoire_partout_sauf_la_sante(env: Env) -> None:
+def test_token_required_everywhere_except_health(env: Env) -> None:
     session = env.new_session()
-    for headers in ({}, {"Authorization": "Bearer faux"}, {"Authorization": "Basic abc"}):
+    for headers in ({}, {"Authorization": "Bearer fake"}, {"Authorization": "Basic abc"}):
         url = f"{env.base}/sessions/{session}/messages"
         r = requests.post(url, json={"content": "x"}, headers=headers, timeout=5)
         assert r.status_code == 401
@@ -321,12 +321,12 @@ def test_jeton_obligatoire_partout_sauf_la_sante(env: Env) -> None:
     assert requests.get(f"{env.base}/health", timeout=5).json() == {"status": "ok"}
 
 
-def test_deux_sessions_en_parallele_ne_melangent_pas_leurs_confirmations(env: Env) -> None:
+def test_two_parallel_sessions_do_not_mix_their_confirmations(env: Env) -> None:
     sessions = [env.new_session(), env.new_session()]
     results: dict[str, list[dict]] = {}
 
     def play(session: str, approve: bool) -> None:
-        results[session] = run_with_answer(env, session, "ecris", approve=approve)
+        results[session] = run_with_answer(env, session, "write", approve=approve)
 
     threads = [
         threading.Thread(target=play, args=(sessions[0], True)),

@@ -1,12 +1,12 @@
 """
-[Lot C — Ridwane] Cache sémantique des réponses — feature [A6].
+[Workstream C — Ridwane] Semantic answer cache — feature [A6].
 
-Les embeddings captent le thème d'une question, pas le mot qui en change le
-sens : avec bge-m3, « taille maximale » et « taille minimale d'un fichier
-indexé » ont une similarité de 0,92, plus que la plupart des vraies
-reformulations (docs/performance/A6-cache.md). Une similarité seule ne suffit
-donc pas : `conflict` refuse deux questions qui ne portent pas sur les mêmes
-noms (identifiants du code, langages, outils) ou pas sur la même action.
+Embeddings capture the topic of a question, not the word that changes its
+meaning: with bge-m3, "maximum size" and "minimum size of an indexed file"
+have a similarity of 0.92, higher than most genuine rephrasings
+(docs/performance/A6-cache.md). Similarity alone is therefore not enough:
+`conflict` rejects two questions that do not refer to the same names (code
+identifiers, languages, tools) or the same action.
 """
 from __future__ import annotations
 
@@ -25,11 +25,11 @@ import numpy as np
 
 from sensai.knowledge.memory import ensure_private_dir, restrict_file
 
-# Familles d'actions courantes dans les questions de développeurs. Deux
-# questions dont les actions diffèrent n'appellent pas la même réponse
-# (« ajouter » et « supprimer un utilisateur »). Racines sans accents ; une
-# racine de 4 lettres ou plus couvre ses dérivés (« supprim » : supprimer,
-# suppression), une racine plus courte doit être le mot entier.
+# Common action families in developer questions (French and English roots).
+# Two questions with different actions do not call for the same answer
+# ("add" vs "delete a user"). Roots are accent-free; a root of 4 letters or
+# more covers its derivatives ("supprim": supprimer, suppression), a shorter
+# root must match the whole word.
 ACTIONS: dict[str, tuple[str, ...]] = {
     "create": ("ajout", "ajoute", "creer", "creat", "cree", "nouveau", "nouvel", "nouvelle",
                "add", "create", "new"),
@@ -63,7 +63,7 @@ def _plain(text: str) -> str:
 
 
 def actions(question: str) -> set[str]:
-    """Familles d'actions présentes dans la question."""
+    """Action families present in the question."""
     found = set()
     for word in re.findall(r"[a-z]+", _plain(question)):
         for family, roots in ACTIONS.items():
@@ -73,10 +73,10 @@ def actions(question: str) -> set[str]:
 
 
 def names(question: str) -> set[str]:
-    """Noms propres et identifiants : `purge_sessions`, `KeyError`, Python, CI, 3.12.
+    """Proper names and identifiers: `purge_sessions`, `KeyError`, Python, CI, 3.12.
 
-    Un mot compte s'il contient `_`, un chiffre ou une majuscule ailleurs qu'en
-    première lettre de la question.
+    A word counts if it contains `_`, a digit, or an uppercase letter anywhere
+    except the first letter of the question.
     """
     found = set()
     for position, word in enumerate(_WORD.findall(question)):
@@ -91,18 +91,19 @@ def names(question: str) -> set[str]:
 
 
 def conflict(cached: str, asked: str) -> str | None:
-    """Raison pour laquelle `asked` ne doit pas recevoir la réponse de `cached`, ou None."""
+    """Why `asked` must not receive the answer to `cached`, or None."""
     if names(cached) != names(asked):
-        return "noms différents"
+        return "different names"
     if actions(cached) != actions(asked):
-        return "actions différentes"
+        return "different actions"
     return None
 
 
-# --- Questions qui dépendent de la conversation -------------------------------
+# --- Questions that depend on the conversation --------------------------------
 
-# Mots qui renvoient à ce qui précède : la même phrase n'a pas le même sens
-# d'une conversation à l'autre, elle n'est donc ni servie ni enregistrée.
+# Words referring back to earlier turns (French and English): the same sentence
+# means something different from one conversation to another, so it is neither
+# served nor stored.
 _DEICTIC_WORDS = frozenset({
     "ca", "cela", "ceci", "cette", "ces", "ci", "dessus", "precedent", "precedente",
     "ensuite", "encore", "pareil", "idem", "this", "that", "it", "above", "previous",
@@ -113,7 +114,7 @@ MIN_WORDS = 3
 
 
 def standalone(question: str) -> bool:
-    """La question se comprend-elle seule, hors de la conversation en cours ?"""
+    """Can the question be understood on its own, outside the current conversation?"""
     plain = _plain(question)
     words = re.findall(r"[a-z0-9_]+", plain)
     if len(words) < MIN_WORDS:
@@ -124,10 +125,10 @@ def standalone(question: str) -> bool:
     return not any(f" {phrase} " in padded for phrase in _DEICTIC_PHRASES)
 
 
-# --- Le cache -----------------------------------------------------------------
+# --- The cache -----------------------------------------------------------------
 
 CACHE_FILE = "cache.db"
-DEFAULT_THRESHOLD = 0.90  # mesuré (ADR-0033) : piège le plus fort à 0,876
+DEFAULT_THRESHOLD = 0.90  # measured (ADR-0033): strongest trap at 0.876
 DEFAULT_TTL_DAYS = 30
 
 SCHEMA = """
@@ -156,7 +157,7 @@ class CachedAnswer:
 
 
 def _digest(path: Path) -> str:
-    """Empreinte du contenu, ou "" si le fichier n'existe pas."""
+    """Content hash, or "" if the file does not exist."""
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
@@ -164,12 +165,12 @@ def _digest(path: Path) -> str:
 
 
 class AnswerCache:
-    """Réponses déjà données, servies à une question de même sens (A6, ADR-0033).
+    """Previous answers, served to a question with the same meaning (A6, ADR-0033).
 
-    Une entrée est propre à un projet et au modèle de chat qui a répondu. Elle
-    n'est servie que si la similarité atteint `threshold`, que `conflict` ne
-    trouve aucun mot décisif différent, qu'elle a moins de `ttl_days` jours et
-    que les fichiers du projet dont la réponse s'est servie n'ont pas changé.
+    An entry belongs to one project and to the chat model that answered. It is
+    served only if the similarity reaches `threshold`, `conflict` finds no
+    differing decisive word, it is less than `ttl_days` days old, and the
+    project files the answer relied on have not changed.
     """
 
     def __init__(self, db_path: str | Path, project: str, embed: Callable[[list[str]], list],
@@ -209,7 +210,7 @@ class AnswerCache:
         return all(_digest(root / path) == digest for path, digest in sources.items())
 
     def lookup(self, question: str) -> CachedAnswer | None:
-        """La réponse en cache pour `question`, ou None s'il y a le moindre doute."""
+        """The cached answer for `question`, or None at the slightest doubt."""
         if not standalone(question):
             return None
         with self._connect() as conn:
@@ -242,7 +243,7 @@ class AnswerCache:
         return None
 
     def store(self, question: str, answer: str, sources: list[str], seconds: float) -> bool:
-        """Enregistre une réponse ; False si la question dépend de la conversation."""
+        """Store an answer; False if the question depends on the conversation."""
         if not standalone(question) or not answer.strip():
             return False
         root = Path(self.project)
@@ -256,7 +257,7 @@ class AnswerCache:
         return True
 
     def forget(self, question: str) -> int:
-        """Retire les réponses à cette question exacte (/again en redemande une)."""
+        """Remove the answers to this exact question (/again asks for a new one)."""
         with self._connect() as conn:
             return conn.execute(
                 "DELETE FROM answer_cache WHERE project = ? AND model = ? AND question = ?",
@@ -276,15 +277,15 @@ class AnswerCache:
 
 
 def handle_cache_command(text: str, cache: AnswerCache | None) -> str | None:
-    """/cache (bilan) et /cache clear ; None si `text` n'est pas une de ces commandes."""
+    """/cache (summary) and /cache clear; None if `text` is neither command."""
     command = text.strip().lower()
     if command not in ("/cache", "/cache clear"):
         return None
     if cache is None:
-        return "Cache des réponses désactivé (--no-cache, ou embeddings indisponibles)."
+        return "Answer cache disabled (--no-cache, or embeddings unavailable)."
     if command == "/cache clear":
-        return f"Cache vidé : {cache.clear()} réponse(s) retirée(s)."
+        return f"Cache cleared: {cache.clear()} answer(s) removed."
     stats = cache.stats()
-    return (f"Cache des réponses : {stats['entries']} réponse(s) en mémoire, servie(s) "
-            f"{stats['served']} fois, environ {stats['seconds_saved']:.0f} s gagnées. "
-            "/cache clear pour le vider, /again pour redemander au modèle.")
+    return (f"Answer cache: {stats['entries']} answer(s) stored, served "
+            f"{stats['served']} time(s), about {stats['seconds_saved']:.0f} s saved. "
+            "/cache clear to empty it, /again to ask the model again.")

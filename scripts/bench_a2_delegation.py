@@ -1,9 +1,10 @@
-"""Essais A2 (PR #87), avec le vrai modèle : redélégation, délégation à bon escient,
-confirmations tardives.
+"""A2 trial runs (PR #87) with the real model: re-delegation, appropriate delegation,
+late confirmations.
 
-    python scripts/bench_a2_delegation.py <hôte Ollama> redelegation|escient|tardive
+    python scripts/bench_a2_delegation.py <Ollama host> redelegation|appropriate|late
+    (the former mode names "escient" and "tardive" are still accepted)
 """
-# ruff: noqa: E402, E501  (chemin d'import ajouté avant les imports)
+# ruff: noqa: E402, E501  (import path added before the imports)
 import sys as _sys
 from pathlib import Path as _Path
 
@@ -26,7 +27,7 @@ from sensai.tools.delegate_tool import DelegateTool
 from sensai.tools.read_file_tool import ReadFileTool
 from sensai.tools.write_file_tool import WriteFileTool
 
-HOST, MODE = sys.argv[1], sys.argv[2]
+HOST, MODE = sys.argv[1], {"escient": "appropriate", "tardive": "late"}.get(sys.argv[2], sys.argv[2])
 MODEL = "qwen3-coder:30b"
 PROJECT = ROOT
 SYSTEM = (PROJECT / "prompts" / "system" / "v1.txt").read_text(encoding="utf-8") + os.environ.get("EXTRA", "")
@@ -61,12 +62,12 @@ def tools(timeout_s=120, confirm=lambda request: True, write=False):
     return counting
 
 
-# 1. Redéléguer aide-t-il parfois ? Tâches qui se découpent, profondeur 2 puis 1.
+# 1. Does re-delegating ever help? Tasks that split up, depth 2 then 1.
 SPLIT = [
-    ("Analyse src/sensai/knowledge/cache.py, src/sensai/knowledge/facts.py et "
-     "src/sensai/knowledge/state_document.py, puis compare leur façon de stocker les données.",
-     [r"sqlite|\.db\b", r"jsonl|journal", r"SENSAI\.md|markdown"]),
-    ("Pour chacun de ces fichiers, dis en une phrase à quoi il sert : src/sensai/web/server.py, "
+    ("Analyze src/sensai/knowledge/cache.py, src/sensai/knowledge/facts.py and "
+     "src/sensai/knowledge/state_document.py, then compare how they store data.",
+     [r"sqlite|\.db\b", r"jsonl|journal|log", r"SENSAI\.md|markdown"]),
+    ("For each of these files, say in one sentence what it does: src/sensai/web/server.py, "
      "src/sensai/web/runtime.py, src/sensai/web/cli.py, src/sensai/core/structured.py.",
      [r"server\.py", r"runtime\.py", r"cli\.py", r"structured\.py"]),
 ]
@@ -80,34 +81,34 @@ if MODE == "redelegation":
                 result = t.call("delegate_task", task=task)
                 took = time.monotonic() - start
                 score = sum(bool(re.search(c, result.content, re.I)) for c in checks)
-                print(f"profondeur {depth}  {took:5.1f} s  qualité {score}/{len(checks)}  "
-                      f"délégations internes {t.calls.count('delegate_task') - 1}  "
-                      f"lectures {t.calls.count('read_file')}", flush=True)
+                print(f"depth {depth}  {took:5.1f} s  quality {score}/{len(checks)}  "
+                      f"nested delegations {t.calls.count('delegate_task') - 1}  "
+                      f"reads {t.calls.count('read_file')}", flush=True)
 
-# 2. L'agent principal délègue-t-il à bon escient ?
+# 2. Does the main agent delegate when it should?
 SIMPLE = [
-    "Que fait la fonction conflict dans src/sensai/knowledge/cache.py ?",
-    "Quelle est la valeur de MAX_MESSAGE_CHARS dans src/sensai/web/server.py ?",
-    "Lis README.md et dis-moi comment lancer les tests.",
-    "Combien vaut DEFAULT_THRESHOLD dans src/sensai/knowledge/cache.py ?",
-    "Que renvoie la route /api/health ?",
+    "What does the conflict function in src/sensai/knowledge/cache.py do?",
+    "What is the value of MAX_MESSAGE_CHARS in src/sensai/web/server.py?",
+    "Read README.md and tell me how to run the tests.",
+    "What is DEFAULT_THRESHOLD in src/sensai/knowledge/cache.py?",
+    "What does the /api/health route return?",
 ]
 SPLITTABLE = [t for t, _ in SPLIT] + [
-    "Lis les cinq fichiers de src/sensai/web/ et src/sensai/tools/delegate_tool.py, puis fais un "
-    "résumé de l'architecture du serveur web et de la délégation.",
-    "Compare src/sensai/knowledge/rag.py et src/sensai/knowledge/retrieval.py : rôle, entrées, sorties.",
-    "Vérifie dans src/sensai/execution/gateway.py, src/sensai/execution/tool_policy.py et "
-    "src/sensai/execution/web_confirmation.py comment une action risquée est confirmée.",
+    "Read the five files in src/sensai/web/ and src/sensai/tools/delegate_tool.py, then "
+    "summarize the architecture of the web server and of delegation.",
+    "Compare src/sensai/knowledge/rag.py and src/sensai/knowledge/retrieval.py: role, inputs, outputs.",
+    "Check in src/sensai/execution/gateway.py, src/sensai/execution/tool_policy.py and "
+    "src/sensai/execution/web_confirmation.py how a risky action is confirmed.",
 ]
 EXPLICIT = [
-    "Délègue à un sous-agent l'analyse de src/sensai/knowledge/cache.py et résume sa réponse.",
-    "Utilise des sous-agents : un pour src/sensai/web/server.py, un pour src/sensai/web/runtime.py, "
-    "puis compare.",
-    "Fais faire par un sous-agent la liste des routes de src/sensai/web/server.py.",
+    "Delegate the analysis of src/sensai/knowledge/cache.py to a sub-agent and summarize its answer.",
+    "Use sub-agents: one for src/sensai/web/server.py, one for src/sensai/web/runtime.py, "
+    "then compare.",
+    "Have a sub-agent list the routes in src/sensai/web/server.py.",
 ]
 
-if MODE == "escient":
-    for kind, prompts in [k for k in (("simple", SIMPLE), ("découpable", SPLITTABLE), ("explicite", EXPLICIT)) if k[0] in os.environ.get("KINDS", "simple découpable explicite")]:
+if MODE == "appropriate":
+    for kind, prompts in [k for k in (("simple", SIMPLE), ("splittable", SPLITTABLE), ("explicit", EXPLICIT)) if k[0] in os.environ.get("KINDS", "simple splittable explicit")]:
         delegated = 0
         for prompt in prompts:
             t = tools()
@@ -118,24 +119,24 @@ if MODE == "escient":
             took = time.monotonic() - start
             d = names.count("delegate_task")
             delegated += d > 0
-            print(f"{kind:10} {took:5.1f} s  délègue={d}  outils={names}  | {prompt[:60]}", flush=True)
-        print(f"==> {kind} : délégation dans {delegated}/{len(prompts)} demandes", flush=True)
+            print(f"{kind:10} {took:5.1f} s  delegates={d}  tools={names}  | {prompt[:60]}", flush=True)
+        print(f"==> {kind}: delegated in {delegated}/{len(prompts)} requests", flush=True)
 
-# 3. Une confirmation peut-elle arriver après l'abandon du sous-agent ?
-if MODE == "tardive":
+# 3. Can a confirmation arrive after the sub-agent gave up?
+if MODE == "late":
     asked = []
 
     def confirm(request):
         asked.append((now(), request.tool))
-        return request.tool == "delegate_task"  # oui pour déléguer, non pour écrire
+        return request.tool == "delegate_task"  # yes to delegate, no to write
 
-    DelegateTool.timeout_s = 40  # échéance du sous-agent : 40 - 30 = 10 s
+    DelegateTool.timeout_s = 40  # sub-agent deadline: 40 - 30 = 10 s
     t = tools(timeout_s=120, confirm=confirm, write=True)
-    task = ("Lis src/sensai/knowledge/cache.py, src/sensai/knowledge/facts.py et "
-            "src/sensai/web/server.py, puis écris un résumé de chacun dans notes_tmp.md avec write_file.")
+    task = ("Read src/sensai/knowledge/cache.py, src/sensai/knowledge/facts.py and "
+            "src/sensai/web/server.py, then write a summary of each to notes_tmp.md with write_file.")
     result = t.call("delegate_task", task=task)
-    print(f"délégation rendue à {now()} s : ok={result.ok}", flush=True)
+    print(f"delegation returned at {now()} s : ok={result.ok}", flush=True)
     time.sleep(150)
-    print(f"confirmations demandées (instant, outil) : {asked}", flush=True)
-    print(f"dont après l'abandon : {[a for a in asked if a[0] > 10.5]}", flush=True)
-    print(f"notes_tmp.md créé : {(PROJECT / 'notes_tmp.md').exists()}", flush=True)
+    print(f"confirmations requested (time, tool): {asked}", flush=True)
+    print(f"of which after giving up: {[a for a in asked if a[0] > 10.5]}", flush=True)
+    print(f"notes_tmp.md created: {(PROJECT / 'notes_tmp.md').exists()}", flush=True)

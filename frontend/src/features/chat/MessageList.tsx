@@ -22,22 +22,22 @@ function UserBubble({ id, text }: { id: string; text: string }) {
           }}
         >
           <textarea
-            aria-label="Nouveau texte du message"
+            aria-label="New message text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             className="w-full resize-none rounded-2xl bg-transparent p-2 outline-none"
             rows={2}
           />
           <div className="flex justify-end gap-2">
-            <PillButton variant="outline" onClick={() => setEditing(false)}>Annuler</PillButton>
-            <PillButton type="submit" disabled={!draft.trim()}>Envoyer la variante</PillButton>
+            <PillButton variant="outline" onClick={() => setEditing(false)}>Cancel</PillButton>
+            <PillButton type="submit" disabled={!draft.trim()}>Send the variant</PillButton>
           </div>
         </form>
       ) : (
         <div className="group flex items-end justify-end gap-2">
           <button
             type="button"
-            aria-label="Modifier le message"
+            aria-label="Edit the message"
             onClick={() => { setDraft(text); setEditing(true) }}
             className="rounded-full px-2 py-1 text-xs text-muted opacity-0 transition-opacity hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
           >
@@ -50,7 +50,7 @@ function UserBubble({ id, text }: { id: string; text: string }) {
   )
 }
 
-/** Vrai si la page est (presque) en bas : on ne fait suivre le texte que dans ce cas. */
+/** True if the page is (almost) at the bottom: only then does the view follow the text. */
 function nearBottom(): boolean {
   if (typeof window === 'undefined') return true
   const doc = document.documentElement
@@ -61,10 +61,10 @@ export function MessageList({ items }: { items: TimelineItem[] }) {
   const { regenerate, state } = useEngine()
   const end = useRef<HTMLDivElement>(null)
   const lastTurn = items.reduce((n, item, i) => (item.kind === 'turn' ? i : n), -1)
-  // On suit la réponse tant que l'utilisateur est en bas ; s'il remonte lire, on ne le tire plus vers le bas.
+  // Follow the answer while the user is at the bottom; if they scroll up to read, stop pulling them down.
   const [following, setFollowing] = useState(true)
   const count = useRef(items.length)
-  // Pendant un défilement doux lancé par nous, la page n'est pas encore en bas : on ignore ces événements.
+  // During a smooth scroll we started, the page is not at the bottom yet: ignore these events.
   const settling = useRef(0)
   useEffect(() => {
     const onScroll = () => {
@@ -78,7 +78,7 @@ export function MessageList({ items }: { items: TimelineItem[] }) {
     const added = items.length !== count.current
     count.current = items.length
     if (!following && !added) return
-    // Nouvel élément : glissement doux. Texte qui s'allonge : on suit sans animation, sinon ça saccade.
+    // New item: smooth scroll. Growing text: follow without animation, otherwise it stutters.
     if (added) settling.current = Date.now() + 800
     end.current?.scrollIntoView?.({ behavior: added ? 'smooth' : 'auto', block: 'end' })
   }, [items, following])
@@ -97,7 +97,7 @@ export function MessageList({ items }: { items: TimelineItem[] }) {
                   onClick={regenerate}
                   className="ml-12 mt-2 rounded-full px-2 py-1 text-xs text-muted hover:bg-accent-soft hover:text-ink"
                 >
-                  ↻ Régénérer
+                  ↻ Regenerate
                 </button>
               )}
             </div>

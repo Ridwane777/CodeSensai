@@ -1,12 +1,12 @@
 """
-Lancer une évaluation, en tirer un rapport JSON, comparer deux rapports —
+Run an evaluation, produce a JSON report from it, compare two reports —
 feature [EV1], ADR-0019.
 
-Un rapport garde tout ce qui peut changer un score : le juge (modèle, prompt et
-son empreinte, température, graine), le jeu de données (empreinte), l'origine
-des passages, et le modèle qui a généré les réponses. `compare_reports` refuse
-de présenter une comparaison comme valable quand ces réglages diffèrent : elle
-calcule quand même les écarts, mais avec `comparable: false` et la raison.
+A report keeps everything that can change a score: the judge (model, prompt and
+its fingerprint, temperature, seed), the dataset (fingerprint), the origin of
+the passages, and the model that generated the answers. `compare_reports`
+refuses to present a comparison as valid when these settings differ: it still
+computes the deltas, but with `comparable: false` and the reason.
 """
 from __future__ import annotations
 
@@ -44,14 +44,14 @@ SOURCES_MODES = ("dataset", "rag")
 
 
 class ReportError(ValueError):
-    """Rapport illisible ou qui n'a pas la forme attendue."""
+    """Unreadable report, or one without the expected shape."""
 
 
 def sensai_version() -> str:
     try:
         return metadata.version("sensai")
     except metadata.PackageNotFoundError:
-        return "inconnue"
+        return "unknown"
 
 
 def _passage_record(passage: Passage) -> dict:
@@ -75,10 +75,10 @@ def _evaluate_case(
     if case.notes:
         record["notes"] = case.notes
 
-    # Sans réponse ni générateur, inutile d'interroger l'index : le cas est ignoré.
+    # Without an answer or a generator, no point querying the index: the case is skipped.
     if case.answer is None and answer_fn is None:
         return {**record, "answer": None, "status": STATUS_SKIPPED,
-                "error": "pas de réponse dans le jeu de données et pas de --generate"}
+                "error": "no answer in the dataset and no --generate"}
 
     try:
         if sources_mode == "rag":
@@ -87,7 +87,7 @@ def _evaluate_case(
             passages = static_sources(case.sources)
     except (EmbeddingError, OllamaError) as e:
         return {**record, "answer": case.answer, "status": STATUS_SOURCE_ERROR,
-                "error": f"recherche des passages impossible : {e}"}
+                "error": f"passage search failed: {e}"}
     record["passages"] = [_passage_record(p) for p in passages]
 
     answer, origin = case.answer, "dataset"
@@ -97,10 +97,10 @@ def _evaluate_case(
             answer = answer_fn(case.question, passages)  # type: ignore[misc]
         except OllamaError as e:
             return {**record, "answer": None, "answer_origin": origin,
-                    "status": STATUS_GENERATION_ERROR, "error": f"génération impossible : {e}"}
+                    "status": STATUS_GENERATION_ERROR, "error": f"generation failed: {e}"}
         if not answer.strip():
             return {**record, "answer": answer, "answer_origin": origin,
-                    "status": STATUS_GENERATION_ERROR, "error": "réponse générée vide"}
+                    "status": STATUS_GENERATION_ERROR, "error": "empty generated answer"}
     record.update(answer=answer, answer_origin=origin)
 
     return {**record, **judge_case(case.question, answer, passages, judge_fn,
@@ -112,10 +112,10 @@ def _mean(values: list[float]) -> float | None:
 
 
 def summarize(cases: list[dict]) -> dict:
-    """Agrégats sur les seuls cas jugés (`status == "ok"`).
+    """Aggregates over judged cases only (`status == "ok"`).
 
-    Un cas en erreur n'est ni noté 0 ni compté dans une moyenne : il est
-    dénombré à part, pour qu'on voie qu'il manque.
+    A failed case is neither scored 0 nor counted in an average: it is
+    counted separately, so its absence shows.
     """
     scored = [c for c in cases if c["status"] == STATUS_OK]
     faithful = [c["scores"]["faithfulness"] for c in scored
@@ -154,13 +154,13 @@ def run_eval(
     max_retries: int = DEFAULT_MAX_RETRIES,
     now: Callable[[], datetime] | None = None,
 ) -> dict:
-    """Juge tous les cas et renvoie le rapport (dict prêt pour `write_json`).
+    """Judges every case and returns the report (dict ready for `write_json`).
 
-    `judge_info` : `model`, `host`, `temperature`, `seed` du juge. Le reste des
-    métadonnées (prompt, jeu de données, version) se déduit des arguments.
+    `judge_info`: the judge's `model`, `host`, `temperature`, `seed`. The rest
+    of the metadata (prompt, dataset, version) is derived from the arguments.
     """
     if sources_mode not in SOURCES_MODES:
-        raise ValueError(f"sources_mode inconnu : {sources_mode} (attendu : dataset ou rag)")
+        raise ValueError(f"unknown sources_mode: {sources_mode} (expected: dataset or rag)")
     created = (now or (lambda: datetime.now(UTC)))()
     cases = [
         _evaluate_case(
@@ -200,11 +200,11 @@ def run_eval(
     }
 
 
-# --- fichiers ------------------------------------------------------------------
+# --- files ---------------------------------------------------------------------
 
 
 def write_json(path: str | Path, data: dict) -> None:
-    """Écrit le JSON en une fois (fichier temporaire puis renommage)."""
+    """Writes the JSON in one go (temporary file then rename)."""
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     tmp = target.with_name(target.name + ".tmp")
@@ -216,19 +216,19 @@ def load_report(path: str | Path) -> dict:
     try:
         report = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError) as e:
-        raise ReportError(f"rapport illisible : {e}") from e
+        raise ReportError(f"unreadable report: {e}") from e
     except json.JSONDecodeError as e:
-        raise ReportError(f"{path} n'est pas du JSON valide : {e.msg}") from e
+        raise ReportError(f"{path} is not valid JSON: {e.msg}") from e
     if (
         not isinstance(report, dict)
         or not isinstance(report.get("summary"), dict)
         or not isinstance(report.get("cases"), list)
     ):
-        raise ReportError(f"{path} n'est pas un rapport sensai-eval (summary ou cases manquant)")
+        raise ReportError(f"{path} is not a sensai-eval report (summary or cases missing)")
     return report
 
 
-# --- comparaison ---------------------------------------------------------------
+# --- comparison ----------------------------------------------------------------
 
 
 def _delta(a: float | None, b: float | None) -> dict:
@@ -242,13 +242,13 @@ def _dig(report: dict, *keys: str) -> Any:
     return value
 
 
-# (clé, libellé) : ce qui rend deux rapports incomparables.
+# (key, label): what makes two reports incomparable.
 _COMPARABILITY_CHECKS = (
-    (("schema_version",), "version du format de rapport"),
-    (("judge", "model"), "modèle du juge"),
-    (("judge", "prompt_sha256"), "prompt du juge (empreinte sha256)"),
-    (("dataset", "sha256"), "jeu de données (empreinte sha256)"),
-    (("sources_mode",), "origine des passages"),
+    (("schema_version",), "report format version"),
+    (("judge", "model"), "judge model"),
+    (("judge", "prompt_sha256"), "judge prompt (sha256 fingerprint)"),
+    (("dataset", "sha256"), "dataset (sha256 fingerprint)"),
+    (("sources_mode",), "passage origin"),
 )
 
 _SUMMARY_METRICS = (
@@ -275,17 +275,17 @@ def _case_delta(case_a: dict, case_b: dict) -> dict:
 
 
 def compare_reports(a: dict, b: dict) -> dict:
-    """Écarts `b - a` ; `comparable: false` et `warnings` si les réglages diffèrent.
+    """Deltas `b - a`; `comparable: false` and `warnings` if the settings differ.
 
-    Les écarts sont toujours calculés (on peut vouloir les voir), mais un
-    `comparable: false` veut dire qu'ils ne mesurent pas qu'un changement de
-    l'agent. Le générateur n'est pas dans la liste : c'est ce qu'on compare.
+    The deltas are always computed (one may want to see them), but
+    `comparable: false` means they do not measure only a change in the agent.
+    The generator is not in the list: it is what is being compared.
     """
     warnings = []
     for keys, label in _COMPARABILITY_CHECKS:
         va, vb = _dig(a, *keys), _dig(b, *keys)
         if va != vb:
-            warnings.append(f"{label} différent : A = {va}, B = {vb}")
+            warnings.append(f"{label} differs: A = {va}, B = {vb}")
 
     by_id_a = {c["id"]: c for c in a["cases"]}
     by_id_b = {c["id"]: c for c in b["cases"]}

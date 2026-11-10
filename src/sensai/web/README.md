@@ -1,9 +1,9 @@
-[Lot D — Valentino] Interface Web (feature [X1]).
+[Workstream D — Christopher] Web interface (feature [X1]).
 
-Façade au-dessus du cœur CLI : le web appelle `sensai.core`, il ne
-réimplémente pas la boucle de l'agent (ADR-0005). FastAPI est autorisé,
-ce n'est pas un framework LLM.
+A facade over the CLI core: the web layer calls `sensai.core`, it does not
+reimplement the agent loop (ADR-0005). FastAPI is allowed, it is not an LLM
+framework.
 
-Deux choses à afficher, pas une : la conversation, et le déroulé du
-raisonnement (Thought / Action / Observation) tour par tour — c'est
-l'exigence de transparence, et c'est ce qui se voit en démo.
+Two things to show, not one: the conversation, and the reasoning trace
+(Thought / Action / Observation) turn by turn — that is the transparency
+requirement, and it is what shows in a demo.

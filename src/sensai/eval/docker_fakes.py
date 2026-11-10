@@ -1,4 +1,4 @@
-"""Doubles du client Docker : rejouent les sandbox sans démon (tests et corpus EV4)."""
+"""Docker client doubles: replay the sandboxes without a daemon (tests and EV4 corpus)."""
 from __future__ import annotations
 
 from typing import Any

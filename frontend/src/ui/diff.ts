@@ -3,7 +3,7 @@ export interface DiffLine {
   text: string
 }
 
-/** Diff ligne à ligne (plus longue sous-suite commune). */
+/** Line-by-line diff (longest common subsequence). */
 export function diffLines(a: string, b: string): DiffLine[] {
   const x = a.split('\n')
   const y = b.split('\n')

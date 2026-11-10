@@ -2,17 +2,17 @@
 
 Interface: `frontend/`.
 
-CodeSensei scenario: Camille takes over a Python project and wants to follow,
+CodeSensai scenario: Camille takes over a Python project and wants to follow,
 correct and keep track of what the agent does, without reading the code.
 
 **Validation status**: these criteria were first checked **on the simulated
-engine** (tests in `frontend/tests/`, [ADR-0020](../decisions/0020-interface-web-simulee.md)).
+engine** (tests in `frontend/tests/`, [ADR-0020](../decisions/0020-simulated-web-interface.md)).
 On 2026-10-18, the interface was wired to the real agent through `sensai-web`
-([ADR-0035](../decisions/0035-serveur-web-reel.md)) and tried in a browser
-with `qwen3-coder:30b` ([web-reel.md](../performance/web-reel.md)). Each story
+([ADR-0035](../decisions/0035-real-web-server.md)) and tried in a browser
+with `qwen3-coder:30b` ([real-web.md](../performance/real-web.md)). Each story
 carries its status:
 ✅ checked with the real agent · ◐ partly · 🎭 still simulated · ⏳ not checked yet.
-Detail per function: [simule-vs-reel.md](../architecture/web/simule-vs-reel.md).
+Detail per function: [simulated-vs-real.md](../architecture/web/simulated-vs-real.md).
 
 The other features staged in the demo (A1, A3, M2, T2…) have their own
 story files.
@@ -21,10 +21,10 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: MCP tool `calc`: ✅ `42` with both models (7 min 33 on CPU, 4 s on GPU).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: MCP tool `calc`: ✅ `42` with both models (7 min 33 on CPU, 4 s on GPU).
 
 ## US-T1-1 — See when the agent uses an external tool
-> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. Every real tool is shown with the same card (checked with `read_file` and `write_file`). However, the server registers no MCP tool: the `mcp.fetch` call is still simulated.
 >
 > **Status on 2026-10-29:** ◐ Partly. Tools named `mcp_<server>_<tool>` now get an "MCP" badge in the reasoning ribbon ([ADR-0047](../decisions/0047-real-agent-handoffs-in-the-web.md), proposed). Checked by frontend tests only: still not tried with a published MCP server in the web interface.
@@ -38,7 +38,7 @@ Other user stories of the interface: [README.md](README.md).
 - The external tool is presented like any other tool (same card).
 
 ## US-T1-2 — Find the external calls in the log
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The Log page lists the real calls (checked with `read_file`), but no real MCP call exists yet.
 
 **As** Camille, the developer auditing a session,
@@ -55,13 +55,13 @@ Other user stories of the interface: [README.md](README.md).
 
 > Filed as A2 when it was created; it is the "structured tool calling" part
 > of [T1] MCP in the catalogue (A2 is Multi-Agent Orchestration there).
-> Choice: [ADR-0003](../decisions/0003-tool-calling-natif-ollama.md).
+> Choice: [ADR-0003](../decisions/0003-native-ollama-tool-calling.md).
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ## US-T1-3 — The agent decides to call a tool without ambiguity (was User Story 1 of T1-native-tool-calling.md)
-> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who lets the agent act on her code**, I want **the model to call tools through a structured format** (no text parsing), so that **every tool call is truly intended and executed without a parsing error**.
 
@@ -73,7 +73,7 @@ As **Camille, the developer who lets the agent act on her code**, I want **the m
 - Parsing errors do not exist (the model cannot generate text that breaks the interpretation)
 
 ## US-T1-4 — The agent drops the tool call if the arguments are invalid (was User Story 2 of T1-native-tool-calling.md)
-> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose local model sometimes gets the arguments wrong**, I want **the tools to refuse invalid arguments before execution and return a clear error message**, so that **a model bug does not break the system**.
 
@@ -89,13 +89,13 @@ As **Camille, the developer whose local model sometimes gets the arguments wrong
 ## Part merged from `T1-mcp-integration.md` on 2026-11-02: T1 — MCP integration (Model Context Protocol)
 
 > Filed as A5 when it was created; MCP is [T1] in the catalogue (A5 is
-> Persona there). Decision: [ADR-0041](../decisions/0041-client-mcp-maison.md).
+> Persona there). Decision: [ADR-0041](../decisions/0041-in-house-mcp-client.md).
 
 Personas: Marc, the lead who configures the tool for the team, and Camille,
-the developer of the scenario ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+the developer of the scenario ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ## US-T1-5 — The agent uses an external MCP tool with no hard-coded dependency (was User Story 1 of T1-mcp-integration.md)
-> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Marc, the lead who plugs the company's own tools into the agent**, I want **the agent to call tools through MCP without changing the agent's core code**, so that **new tools (databases, third-party APIs, etc.) can be plugged in easily, without recompiling**.
 
@@ -107,7 +107,7 @@ As **Marc, the lead who plugs the company's own tools into the agent**, I want *
 - Adding a new MCP tool does not change the agent's core code
 
 ## US-T1-6 — A broken MCP tool does not block the agent (was User Story 2 of T1-mcp-integration.md)
-> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose work must not stop when an MCP server is down**, I want **the agent to continue with the available tools if an MCP server does not answer**, so that **an external dependency does not paralyse the whole application**.
 
@@ -136,7 +136,7 @@ Each story checked against the code and the automated tests (not against earlier
 | --- | --- | --- | --- | --- |
 | US-T1-1 | ◐ | `frontend/src/features/chat/ReasoningRibbon.tsx` (MCP badge) | frontend tests only | Never tried with a real MCP server in the web interface |
 | US-T1-2 | ◐ | `observability/journal.py` | `tests/observability/test_journal.py` | Every tool call is logged; no test with a real MCP call in the web |
-| US-T1-3 Structured format | ◐ | `core/ollama_client.py`, `core/agent.py` | `tests/core/test_agent.py::test_les_outils_partent_au_format_ollama` | "Parsing errors do not exist" is not true: the model sometimes writes calls as text, which `core/agent.py` parses as a fallback (ADR-0031, A1 US-A1-4) |
-| US-T1-4 Invalid arguments refused | ✅ | `execution/tool_validation.py`, `execution/gateway.py` | `tests/execution/test_tool_validation.py` (`wrong_type`, `missing_required_field`), `tests/core/test_agent.py::test_des_arguments_invalides_ne_sont_pas_executes` |  |
+| US-T1-3 Structured format | ◐ | `core/ollama_client.py`, `core/agent.py` | `tests/core/test_agent.py::test_tools_are_sent_in_ollama_format` | "Parsing errors do not exist" is not true: the model sometimes writes calls as text, which `core/agent.py` parses as a fallback (ADR-0031, A1 US-A1-4) |
+| US-T1-4 Invalid arguments refused | ✅ | `execution/tool_validation.py`, `execution/gateway.py` | `tests/execution/test_tool_validation.py` (`wrong_type`, `missing_required_field`), `tests/core/test_agent.py::test_invalid_arguments_are_not_executed` |  |
 | US-T1-5 External MCP tool | ✅ | `tools/mcp_tool.py` | `tests/tools/test_mcp_tool.py` (`les_outils_du_serveur_deviennent_des_outils_de_l_agent`, `appel_d_un_outil_mcp`), `tests/test_cli_rag.py::test_les_outils_mcp_de_la_config_sont_proposes` |  |
 | US-T1-6 Broken MCP tool | ✅ | `tools/mcp_tool.py` | `tests/tools/test_mcp_tool.py` (`serveur_introuvable_n_empeche_pas_le_demarrage`, `serveur_qui_plante_pendant_un_appel_rend_une_erreur_sans_lever`) |  |

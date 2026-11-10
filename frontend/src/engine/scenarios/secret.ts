@@ -7,13 +7,13 @@ export const secret: Scenario = {
   id: 'secret',
   steps: [
     start(T),
-    think(T, 's1', "Le fichier `.env` peut contenir des secrets : je lis, puis je laisse la règle de sortie décider ce qui peut s'afficher."),
+    think(T, 's1', 'The `.env` file may contain secrets: I read it, then let the output rule decide what can be shown.'),
     act(T, 's1', 'files.read', { path: '.env' }),
     obs(T, 's1', '3 lignes lues.', 9),
-    { delay: 180, event: { type: 'guardrail', kind: 'secret', message: 'Secret détecté (clé API) : valeur masquée avant affichage.' } },
+    { delay: 180, event: { type: 'guardrail', kind: 'secret', message: 'Secret detected (API key): value masked before display.' } },
     ...say(
       T,
-      "J'ai bien lu `.env`, mais je ne peux pas afficher la clé API : elle est masquée par la règle de confidentialité (`••••••••`). Je peux en revanche te confirmer qu'elle est définie.",
+      'I did read `.env`, but I cannot show the API key: it is masked by the privacy rule (`••••••••`). I can confirm, however, that it is set.',
     ),
     end(T),
   ],

@@ -1,18 +1,17 @@
 """
-[Lot D] L'agent du serveur web : les mêmes pièces que le CLI (ADR-0035).
+[Workstream D] The web server's agent: the same parts as the CLI (ADR-0035).
 
-Un `WebRuntime` par serveur, pour le projet d'où `sensai-web` est lancé. Il
-assemble ce que `cli.main` assemble : registre partagé, recherche dans le
-projet (R1, R2), document d'état (M4), mémoire de faits (M3), passerelle avec
-garde-fous (EV2), filtre d'entrée, cache sémantique (A6) et sessions (M1).
-Le CLI n'est pas modifié ; `tests/web/test_runtime.py` vérifie que les deux
-proposent les mêmes outils.
+One `WebRuntime` per server, for the project `sensai-web` is launched from. It
+assembles what `cli.main` assembles: shared registry, project search (R1, R2),
+state document (M4), fact memory (M3), gateway with guardrails (EV2), input
+filter, semantic cache (A6) and sessions (M1). The CLI is unchanged;
+`tests/web/test_runtime.py` checks that both offer the same tools.
 
-`run_turn` joue un tour et publie des dictionnaires prêts pour le flux SSE :
-le flux du lot A (`to_wire`) et les extensions de l'ADR-0024 que le serveur
-produit seul (`rag_sources`, `cache_hit`, `guardrail`,
-`done.reason = "interrupted"`). Il tourne dans un thread de travail : la
-confirmation web bloque ce thread (ADR-0015, ADR-0022).
+`run_turn` plays a turn and publishes dictionaries ready for the SSE stream:
+the Workstream A stream (`to_wire`) and the ADR-0024 extensions that only the
+server produces (`rag_sources`, `cache_hit`, `guardrail`,
+`done.reason = "interrupted"`). It runs in a worker thread: web confirmation
+blocks that thread (ADR-0015, ADR-0022).
 """
 from __future__ import annotations
 
@@ -94,39 +93,39 @@ Emit = Callable[[dict[str, Any]], None]
 Confirmer = Callable[[ConfirmationRequest], bool]
 TurnRunner = Callable[[str, str, list[dict], Any], Iterator[Event]]
 
-# Comme le CLI (A6, ADR-0033) : seule une réponse appuyée sur ces outils de
-# lecture du projet peut être mise en cache.
-# list_files (ADR-0059) ne fait que lire : sans lui, une réponse qui avait
-# listé les fichiers n'entrait jamais en cache (répétition du 2026-11-06).
+# Like the CLI (A6, ADR-0033): only an answer based on these project-reading
+# tools can be cached.
+# list_files (ADR-0059) only reads: without it, an answer that had listed
+# files never entered the cache (rehearsal of 2026-11-06).
 CACHEABLE_TOOLS = {"read_file", "list_files", "search_codebase"}
 _PASSAGE_SOURCE = re.compile(r"^--- (.+?):\d+-\d+$", re.MULTILINE)
-# Résultats de web_search (« 1. titre » puis l'URL, voir web_search_tool._format) :
-# l'onglet Sources de l'interface les liste (US-T3-1). Liens http(s) seulement.
+# web_search results ("1. title" then the URL, see web_search_tool._format):
+# the UI's Sources tab lists them (US-T3-1). http(s) links only.
 _WEB_RESULT = re.compile(r"^\d+\. (.+)\n {3}(https?://\S+)$", re.MULTILINE)
-# /schedule et /eval affichent dans le terminal (ADR-0028) : pas dans le web.
+# /schedule and /eval print to the terminal (ADR-0028): not available on the web.
 TERMINAL_ONLY = ("/schedule", "/eval")
-# L'agent principal dans les événements `agent_handoff` (X1, A2) ; l'interface
-# le remplace par le nom de la persona affichée.
+# The main agent in `agent_handoff` events (X1, A2); the UI replaces it with
+# the name of the displayed persona.
 MAIN_AGENT = "main"
 DELEGATION_TOOLS = {"delegate_task", "team_task"}
-# Ce qu'on montre d'un résultat d'outil d'un sous-agent : un aperçu, pas tout le fichier lu.
+# What is shown of a sub-agent's tool result: a preview, not the whole file read.
 SUBAGENT_STEP_CHARS = 600
 
 
 class Handoffs:
-    """Suit l'agent qui a la main pendant un tour et publie chaque passage de relais.
+    """Tracks which agent has control during a turn and publishes each handoff.
 
-    Annoncé quand le sous-agent démarre vraiment (après la confirmation), jamais
-    sur la seule demande du modèle : une délégation refusée n'affiche aucun relais.
-    Délégation simple : un aller (vers le rôle, ou « sous-agent ») et un retour.
-    Équipe : un relais par rôle (explorateur → développeur → relecteur…), puis le
-    retour à l'agent principal à la fin de l'outil.
+    Announced when the sub-agent really starts (after confirmation), never on
+    the model's request alone: a refused delegation shows no handoff.
+    Simple delegation: one handoff out (to the role, or "sous-agent") and one back.
+    Team: one handoff per role (explorer → developer → reviewer…), then back to
+    the main agent when the tool ends.
     """
 
     def __init__(self, emit: Emit, recorder: TurnRecorder | None = None) -> None:
         self.emit = emit
         self.current = MAIN_AGENT
-        # Journal EV3 : chaque outil d'un sous-agent y est noté avec sa durée.
+        # EV3 log: every sub-agent tool is recorded there with its duration.
         self.recorder = recorder
 
     def to(self, agent: str) -> None:
@@ -140,9 +139,9 @@ class Handoffs:
 
     def step(self, tool: str, arguments: dict, ok: bool, content: str,
              duration_ms: int | None = None) -> None:
-        """Un outil exécuté par le sous-agent qui a la main (A2) : l'interface le montre
-        dans le raisonnement du tour. Le contenu est déjà filtré par la passerelle (EV2).
-        `duration_ms` : mesurée côté serveur autour de l'appel (EV3)."""
+        """A tool run by the sub-agent in control (A2): the UI shows it in the turn's
+        reasoning. The content is already filtered by the gateway (EV2).
+        `duration_ms`: measured server-side around the call (EV3)."""
         event = {"type": "subagent_step", "agent": self.current, "tool": tool,
                  "arguments": arguments, "ok": ok, "content": content[:SUBAGENT_STEP_CHARS]}
         if duration_ms is not None:
@@ -153,8 +152,8 @@ class Handoffs:
 
 
 class _Timed:
-    """Enveloppe la passerelle vue par les sous-agents pour chronométrer chaque appel
-    (EV3) ; le sous-agent appelle les outils dans le thread du tour, un à la fois."""
+    """Wraps the gateway seen by sub-agents to time each call (EV3); the
+    sub-agent calls tools in the turn's thread, one at a time."""
 
     def __init__(self, inner: Any) -> None:
         self.inner = inner
@@ -182,7 +181,7 @@ def _relative(path: str, project: str) -> str:
 
 
 class _AnnouncedDelegate(DelegateTool):
-    """`delegate_task` qui annonce le relais au moment où le sous-agent démarre."""
+    """`delegate_task` that announces the handoff when the sub-agent starts."""
 
     def __init__(self, *args: Any, handoffs: Handoffs | None = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -195,8 +194,8 @@ class _AnnouncedDelegate(DelegateTool):
         return super().run(**kwargs)
 
     def delegate(self, task: str, *, on_call=None, **kwargs: Any):
-        """Chaque outil du sous-agent est aussi publié (A2), y compris pour l'équipe
-        (`team_task` appelle cette méthode pour chaque rôle)."""
+        """Every sub-agent tool is also published (A2), including for the team
+        (`team_task` calls this method for each role)."""
         handoffs = self.handoffs
         if handoffs is None:
             return super().delegate(task, on_call=on_call, **kwargs)
@@ -211,7 +210,7 @@ class _AnnouncedDelegate(DelegateTool):
 
 
 class WebRuntime:
-    """L'agent et ses mémoires pour un projet, partagés par toutes les sessions web."""
+    """The agent and its memories for one project, shared by all web sessions."""
 
     def __init__(
         self,
@@ -229,8 +228,8 @@ class WebRuntime:
         self.project = str(Path(project).resolve())
         self.model = settings["model"]
         self.host = settings["host"]
-        # M2 (ADR-0045) : comme le CLI, la fenêtre de contexte part avec chaque appel
-        # au modèle ; sans elle, Ollama tronque en silence à sa valeur par défaut.
+        # M2 (ADR-0045): like the CLI, the context window is sent with every model
+        # call; without it, Ollama silently truncates to its default value.
         self.num_ctx = settings.get("num_ctx")
         self._run_turn = run_turn or functools.partial(
             run_agent_turn, num_ctx=self.num_ctx, max_iterations=settings.get("max_iterations"))
@@ -242,19 +241,19 @@ class WebRuntime:
         data_dir = settings.get("data_dir")
         self.data_dir = Path(data_dir).expanduser() if data_dir else default_data_dir()
         self.store = SessionStore(self.data_dir / SESSIONS_FILE)
-        # Liens de partage (X3, ADR-0048), à côté des sessions.
+        # Share links (X3, ADR-0048), next to the sessions.
         self.shares = ShareStore(self.data_dir / SHARES_FILE)
-        # Tâches planifiées (X5) : le même fichier que `sensai-schedule`, qui les exécute.
+        # Scheduled tasks (X5): the same file as `sensai-schedule`, which runs them.
         self.tasks = TaskStore(self.data_dir / "schedule" / TASKS_FILE)
-        # Journal des tours (EV3, ADR-0053) : None s'il ne s'ouvre pas, le chat continue.
+        # Turn log (EV3, ADR-0053): None if it cannot be opened, the chat goes on.
         self.journal = open_journal(self.data_dir)
         self.profile_path = self.data_dir / PROFILE_FILE
         try:
             self.profile = Profile.load(self.profile_path)
         except ValueError as e:
-            log.warning("profil illisible, démarrage avec un profil vide : %s", e)
+            log.warning("unreadable profile, starting with an empty profile: %s", e)
             self.profile = Profile()
-        # Une règle mal écrite arrête le démarrage (comme le CLI, ADR-0027).
+        # A malformed rule stops startup (like the CLI, ADR-0027).
         self.input_rules = InputRules.from_config(settings.get("input_blocklist"))
         key = hashlib.sha256(self.project.encode("utf-8")).hexdigest()[:16]
         self.state = StateDocument(self.project, self.data_dir / "state" / f"{key}.jsonl")
@@ -262,9 +261,9 @@ class WebRuntime:
         self.rag_tool = RagTool(min_score=settings["rag_min_score"])
         self.rag_on = bool(settings["rag"])
         self.rag_index: RagIndex | None = None
-        self.notices: list[str] = []  # avertissements à montrer dans l'interface
-        # Serveurs MCP (T1, ADR-0041) : lancés une fois pour tout le serveur web,
-        # leurs outils ajoutés à chaque passerelle ; une panne devient un avertissement.
+        self.notices: list[str] = []  # warnings to show in the UI
+        # MCP servers (T1, ADR-0041): started once for the whole web server, their
+        # tools added to every gateway; a failure becomes a warning.
         self.mcp_tools, mcp_warnings, self.close_mcp = load_mcp_tools(
             settings.get("mcp_servers") or {})
         atexit.register(self.close_mcp)
@@ -274,21 +273,21 @@ class WebRuntime:
         self.cache = self._open_cache()
         self._fewshot: FewShotIndex | None = None
         self._fewshot_off = False
-        # Personas (A5, ADR-0042/0043 ; web : ADR-0054). Comme le CLI : la persona
-        # active n'est qu'une étiquette en mémoire, ici une par conversation ; rien
-        # n'est enregistré, une conversation rouverte repart de la persona par défaut.
+        # Personas (A5, ADR-0042/0043; web: ADR-0054). Like the CLI: the active
+        # persona is only an in-memory label, here one per conversation; nothing is
+        # saved, a reopened conversation starts again from the default persona.
         self.personas: PersonaStore = settings.get("personas") or PersonaStore.from_config(None)
-        # Registre des prompts (A4, ADR-0010 ; web : ADR-0055) : lu, jamais écrit par
-        # le serveur. Un essai de version ne vaut que pour une conversation, en mémoire.
+        # Prompt registry (A4, ADR-0010; web: ADR-0055): read, never written by the
+        # server. A version trial applies to one conversation only, in memory.
         self.prompt_store = prompt_store or PromptStore(prompts_dir())
         self._session_persona: dict[str, str] = {}
         self._session_prompt_trial: dict[str, str] = {}
-        # Heure du premier tour de chaque conversation : figée dans le prompt système,
-        # sinon il changerait à chaque tour et Ollama relirait toute la conversation.
+        # Time of each conversation's first turn: frozen in the system prompt,
+        # otherwise it would change every turn and Ollama would reread the whole conversation.
         self._session_started: dict[str, datetime] = {}
         self._session_lock = threading.Lock()
 
-    # --- Démarrage ---------------------------------------------------------------
+    # --- Startup -----------------------------------------------------------------
 
     def _open_cache(self) -> AnswerCache | None:
         if not self.settings.get("cache", False):
@@ -298,44 +297,44 @@ class WebRuntime:
                                self._embedder_factory(self.host, self.settings["rag_model"]),
                                model=self.model)
         except (sqlite3.Error, OSError) as e:
-            self.notices.append(f"Cache des réponses désactivé : {e}")
+            self.notices.append(f"Answer cache disabled: {e}")
             return None
 
     def purge(self) -> int:
-        """Sessions et journal d'état trop anciens (M1, M4) ; issue #65."""
+        """Sessions and state log that are too old (M1, M4); issue #65."""
         days = self.settings["retention_days"]
         try:
             self.state.purge(days)
         except (OSError, ValueError) as e:
-            log.warning("purge du journal d'état impossible : %s", e)
+            log.warning("could not purge the state log: %s", e)
         if self.journal is not None:
             try:
                 self.journal.purge(days)
             except (OSError, ValueError, sqlite3.Error) as e:
-                log.warning("purge du journal EV3 impossible : %s", e)
+                log.warning("could not purge the EV3 log: %s", e)
         try:
             self.shares.purge()
         except (OSError, ValueError) as e:
-            log.warning("purge des liens de partage impossible : %s", e)
+            log.warning("could not purge share links: %s", e)
         try:
             return self.store.purge(days)
         except sqlite3.Error as e:
-            log.warning("purge des sessions impossible : %s", e)
+            log.warning("could not purge sessions: %s", e)
             return 0
 
     def ensure_index(self) -> RagIndex | None:
-        """Ouvre et met à jour l'index du projet à la première question, puis le tient
-        à jour au fil des questions (comme le CLI)."""
+        """Opens and updates the project index on the first question, then keeps it
+        up to date as questions come (like the CLI)."""
         if not self.rag_on:
             return None
         with self._rag_lock:
             if self.rag_index is not None:
-                # Les fichiers créés ou modifiés depuis (souvent par l'agent) entrent
-                # dans la recherche ; au plus une mise à jour toutes les 30 s.
+                # Files created or modified since (often by the agent) enter the
+                # search; at most one update every 30 s.
                 try:
                     self.rag_index.refresh_if_stale(Path(self.project))
                 except (EmbeddingError, sqlite3.Error, OSError) as e:
-                    self._notice(f"Index du projet pas mis à jour : {e}")
+                    self._notice(f"Project index not updated: {e}")
                 return self.rag_index
             rag_model = self.settings["rag_model"]
             try:
@@ -348,15 +347,15 @@ class WebRuntime:
                 report = index.update(Path(self.project))
             except (EmbeddingError, sqlite3.Error, OSError) as e:
                 self.rag_on = False
-                self.notices.append(f"Recherche dans le projet désactivée : {e}")
+                self.notices.append(f"Project search disabled: {e}")
                 return None
             for path, advice in report.unsupported:
-                self.notices.append(f"Non indexé : {_relative(str(path), self.project)} — {advice}")
+                self.notices.append(f"Not indexed: {_relative(str(path), self.project)} — {advice}")
             self.rag_index = index
             self.rag_tool.index = index
             return index
 
-    # --- Persona et essai de prompt, par conversation (ADR-0054, ADR-0055) -------
+    # --- Persona and prompt trial, per conversation (ADR-0054, ADR-0055) --------
 
     def persona_of(self, session_id: str | None) -> Persona:
         with self._session_lock:
@@ -364,7 +363,7 @@ class WebRuntime:
         return self.personas.get(persona_id)
 
     def set_persona(self, session_id: str, persona_id: str) -> Persona:
-        """PersonaError si la persona est inconnue (le serveur en fait un 404)."""
+        """PersonaError if the persona is unknown (the server turns it into a 404)."""
         persona = self.personas.get(persona_id)
         with self._session_lock:
             self._session_persona[session_id] = persona.id
@@ -375,9 +374,9 @@ class WebRuntime:
             return self._session_prompt_trial.get(session_id or "")
 
     def set_prompt_trial(self, session_id: str, version: str | None) -> str | None:
-        """Essaie une version du prompt système dans cette conversation (None : revient
-        à la version active). KeyError si la version n'existe pas. Le registre n'est
-        que lu : `PromptStore.use` reste réservé à `sensai-prompt use`."""
+        """Trials a system prompt version in this conversation (None: back to the
+        active version). KeyError if the version does not exist. The registry is
+        only read: `PromptStore.use` stays reserved to `sensai-prompt use`."""
         with self._session_lock:
             if version is None:
                 self._session_prompt_trial.pop(session_id, None)
@@ -388,7 +387,7 @@ class WebRuntime:
         return version_id
 
     def started_at(self, session_id: str | None) -> datetime:
-        """L'heure du premier tour de la conversation, retenue en mémoire du serveur."""
+        """The time of the conversation's first turn, kept in server memory."""
         with self._session_lock:
             key = session_id or ""
             if key not in self._session_started:
@@ -406,15 +405,15 @@ class WebRuntime:
     def system_prompt(self, resumed: bool, persona: Persona | None = None,
                       prompt_version: str | None = None,
                       started: datetime | None = None) -> str:
-        """Comme le CLI : prompt, consigne de reprise, profil, persona, SENSAI.md, faits.
+        """Like the CLI: prompt, resume instruction, profile, persona, SENSAI.md, facts.
 
-        `prompt_version` : une version du registre essayée dans cette conversation
-        (ADR-0055) à la place du prompt système chargé au démarrage.
+        `prompt_version`: a registry version trialed in this conversation
+        (ADR-0055) instead of the system prompt loaded at startup.
         """
         try:
             known = self.facts.as_prompt()
         except (OSError, sqlite3.Error) as e:
-            log.warning("mémoire de faits illisible : %s", e)
+            log.warning("unreadable fact memory: %s", e)
             known = ""
         note = self.settings.get("memory_prompt", "") if resumed else ""
         base_prompt = self.settings.get("system_prompt", "")
@@ -430,10 +429,10 @@ class WebRuntime:
                      prompt_version: str | None = None,
                      started: datetime | None = None) -> ToolGateway:
         registry = build_registry(self.settings.get("file_permissions"))
-        # X4 (ADR-0046) : sans navigateur pour répondre (`asker` absent), l'outil
-        # existe quand même et répond « personne ne peut répondre ».
+        # X4 (ADR-0046): without a browser to answer (`asker` missing), the tool
+        # still exists and replies "nobody can answer".
         registry.register(AskUserTool(asker))
-        # Planifier en langage naturel (X5, ADR-0052) : toujours sur accord explicite.
+        # Natural-language scheduling (X5, ADR-0052): always with explicit consent.
         registry.register(ScheduleTaskTool(self.data_dir))
         for tool in self.mcp_tools:
             registry.register(tool)
@@ -444,14 +443,14 @@ class WebRuntime:
         registry.register(RecallFactsTool(self.facts))
         gateway = ToolGateway(registry, self.settings.get("tool_preferences"), confirm=confirmer,
                               input_guards=[check_input], output_filters=[filter_output])
-        # Comme le CLI (A5, ADR-0043) : une persona ne peut qu'AJOUTER des outils
-        # désactivés à ceux de config.json, jamais en réautoriser un.
+        # Like the CLI (A5, ADR-0043): a persona can only ADD disabled tools to
+        # those of config.json, never re-enable one.
         persona = persona or self.personas.default()
         if persona.tools_disabled:
             base = gateway.preferences
             gateway.preferences = replace(base, disabled=base.disabled | persona.tools_disabled)
-        # Comme le CLI (A2, ADR-0037) : le sous-agent passe par cette même passerelle
-        # (donc les mêmes outils refusés) et reçoit le même prompt (persona comprise).
+        # Like the CLI (A2, ADR-0037): the sub-agent goes through this same gateway
+        # (so the same tools are refused) and gets the same prompt (persona included).
         delegate = _AnnouncedDelegate(self.host, self.model, gateway,
                                       system_prompt=lambda: self.system_prompt(
                                           resumed=False, persona=persona,
@@ -466,9 +465,9 @@ class WebRuntime:
         return gateway
 
     def command(self, text: str) -> str | None:
-        """Les commandes du chat (`/state`, `/facts`, `/cache`, `/remember`…), comme le CLI."""
+        """Chat commands (`/state`, `/facts`, `/cache`, `/remember`…), like the CLI."""
         if text.split()[0] in TERMINAL_ONLY:
-            return "Cette commande s'utilise dans le terminal (sensai)."
+            return "This command is only available in the terminal (sensai)."
         for handler in (lambda t: handle_state_command(t, self.state),
                         lambda t: handle_facts_command(t, self.facts),
                         lambda t: handle_cache_command(t, self.cache)):
@@ -490,28 +489,27 @@ class WebRuntime:
         asker: Asker | None = None,
         session_id: str | None = None,
     ) -> list[dict] | None:
-        """Joue un tour et renvoie l'historique à enregistrer, ou None s'il ne change pas.
+        """Plays a turn and returns the history to save, or None if it does not change.
 
-        Toujours terminé par un `done`. Un tour interrompu, en échec, bloqué ou
-        une commande n'entre pas dans l'historique (comme le CLI).
+        Always ends with a `done`. An interrupted, failed or blocked turn, or a
+        command, does not enter the history (like the CLI).
         """
         try:
             return self._turn(turns, text, emit, cancel, confirmer, skip_cache, asker,
                               session_id)
-        except Exception:  # un bug ne doit ni laisser le flux ouvert ni fuiter une trace
-            log.exception("tour d'agent en échec")
-            emit({"type": "error", "message": "Erreur interne du serveur."})
+        except Exception:  # a bug must neither leave the stream open nor leak a traceback
+            log.exception("agent turn failed")
+            emit({"type": "error", "message": "Internal server error."})
             emit({"type": "done", "reason": "error"})
             return None
 
     def _within_budget(self, messages: list[dict], emit: Emit | None = None) -> list[dict]:
-        """Budget de tokens et résumé glissant (M2, ADR-0045), comme le CLI.
+        """Token budget and rolling summary (M2, ADR-0045), like the CLI.
 
-        Appelé APRÈS avoir ajouté le RAG à la question, et seule la copie envoyée
-        au modèle est compactée : les tours enregistrés dans la session (M1) ne
-        sont jamais touchés. Un échec du résumé, ou un contexte trop gros pour
-        être réduit, devient un avertissement de l'interface, jamais une perte
-        d'historique.
+        Called AFTER adding the RAG to the question, and only the copy sent to
+        the model is compacted: the turns saved in the session (M1) are never
+        touched. A summary failure, or a context too large to reduce, becomes a
+        UI warning, never a loss of history.
         """
         max_tokens = self.settings.get("token_budget_max")
         if not self.settings.get("token_budget", True):
@@ -523,12 +521,12 @@ class WebRuntime:
                 keep_recent=self.settings.get("token_budget_keep_recent", DEFAULT_KEEP_RECENT),
                 num_ctx=self.num_ctx)
         except CompressionError as e:
-            self._notice(f"Résumé automatique de l'historique impossible pour ce tour : {e}")
+            self._notice(f"Automatic history summary failed for this turn: {e}")
             self._emit_usage(messages, max_tokens, emit)
             return messages
         if not compressed and exceeds_budget(messages, max_tokens, self.num_ctx):
-            self._notice("Le contexte d'un tour dépasse le budget de tokens et ne peut pas être "
-                         "résumé : Ollama risque de le tronquer.")
+            self._notice("A turn's context exceeds the token budget and cannot be "
+                         "summarized: Ollama may truncate it.")
         if compressed and emit is not None:
             saved = count_message_tokens(messages) - count_message_tokens(compacted)
             emit({"type": "compression", "saved_tokens": max(saved, 0)})
@@ -536,8 +534,8 @@ class WebRuntime:
         return compacted
 
     def _emit_usage(self, messages: list[dict], max_tokens: int | None, emit: Emit | None) -> None:
-        """M2 : ce qui part au modèle à ce tour, en tokens ESTIMÉS (caractères / 4,
-        ADR-0045), face au budget et à la fenêtre `num_ctx`."""
+        """M2: what is sent to the model this turn, in ESTIMATED tokens (characters / 4,
+        ADR-0045), against the budget and the `num_ctx` window."""
         if emit is None:
             return
         used = count_message_tokens(messages)
@@ -546,17 +544,17 @@ class WebRuntime:
               "num_ctx": window, "estimated": True})
 
     def evaluate(self, turns: list[dict]) -> dict[str, Any]:
-        """EV1 à la demande : fait juger la dernière réponse (pertinence, cohérence,
-        fidélité aux passages du projet), avec le juge de `sensai-eval`.
+        """On-demand EV1: has the last answer judged (relevance, coherence,
+        faithfulness to project passages), with the `sensai-eval` judge.
 
-        Un appel au modèle de plus : c'est pour ça que ce n'est pas fait à chaque
-        tour. Sans recherche dans le projet, la fidélité n'a pas de passages et vaut
-        None. Lève ValueError s'il n'y a pas de réponse à juger.
+        One extra model call: that is why it is not done on every turn. Without
+        project search, faithfulness has no passages and is None. Raises
+        ValueError if there is no answer to judge.
         """
         pairs = [(turns[i]["content"], turns[i + 1]["content"]) for i in range(len(turns) - 1)
                  if turns[i].get("role") == "user" and turns[i + 1].get("role") == "assistant"]
         if not pairs:
-            raise ValueError("aucune réponse à évaluer dans cette conversation")
+            raise ValueError("no answer to evaluate in this conversation")
         question, answer = pairs[-1]
         passages = []
         index = self.ensure_index()
@@ -575,11 +573,11 @@ class WebRuntime:
         try:
             return self.state.bodies()
         except (OSError, UnicodeDecodeError) as e:
-            log.warning("document d'état illisible : %s", e)
+            log.warning("unreadable state document: %s", e)
             return {}
 
     def ensure_fewshot(self) -> FewShotIndex | None:
-        """Exemples few-shot (A7), chargés à la première question ; None si non configurés."""
+        """Few-shot examples (A7), loaded on the first question; None if not configured."""
         configured = self.settings.get("fewshot_examples")
         if not configured or self._fewshot_off:
             return None
@@ -601,8 +599,8 @@ class WebRuntime:
             return index
 
     def fewshot_info(self) -> dict[str, Any]:
-        """Ce que l'interface montre de l'A7 : fichier, seuil, questions des exemples.
-        Charge les exemples s'ils ne l'ont pas encore été (même chemin qu'un tour)."""
+        """What the UI shows of A7: file, threshold, example questions.
+        Loads the examples if not loaded yet (same path as a turn)."""
         configured = self.settings.get("fewshot_examples")
         info: dict[str, Any] = {"configured": bool(configured), "file": configured or None,
                                 "min_score": self.settings.get("fewshot_min_score", 0.75),
@@ -612,7 +610,7 @@ class WebRuntime:
         index = self.ensure_fewshot()
         if index is None:
             info["error"] = next((n for n in reversed(self.notices) if "few-shot" in n),
-                                 "exemples few-shot désactivés")
+                                 "few-shot examples disabled")
             return info
         info["questions"] = index.questions()
         return info
@@ -620,10 +618,10 @@ class WebRuntime:
     def _fewshot_failed(self, reason: object) -> None:
         self._fewshot_off = True
         self._fewshot = None
-        self._notice(f"Exemples few-shot désactivés : {reason}")
+        self._notice(f"few-shot examples disabled: {reason}")
 
     def _notice(self, text: str) -> None:
-        """Un avertissement de l'interface, une seule fois même si le cas se répète."""
+        """A UI warning, shown once even if the case repeats."""
         if text not in self.notices:
             self.notices.append(text)
 
@@ -636,8 +634,8 @@ class WebRuntime:
             return None
 
         if text.strip() == CONTEXT_COMMAND:
-            # Ce qui partirait au modèle dans cette conversation (ADR-0058) : même
-            # prompt système que le tour (persona, essai de prompt, heure), même historique.
+            # What would be sent to the model in this conversation (ADR-0058): same
+            # system prompt as the turn (persona, prompt trial, time), same history.
             system = self.system_prompt(
                 resumed=bool(turns), persona=self.persona_of(session_id),
                 prompt_version=self.prompt_trial_of(session_id),
@@ -658,12 +656,12 @@ class WebRuntime:
                 emit({"type": "done", "reason": "command"})
                 return None
 
-        # Fixées pour tout le tour : le serveur refuse de les changer pendant un tour (409).
+        # Fixed for the whole turn: the server refuses to change them during a turn (409).
         persona = self.persona_of(session_id)
         prompt_version = self.prompt_trial_of(session_id)
-        # Comme le CLI (ADR-0043) : une persona qui restreint les outils ne lit ni
-        # n'alimente le cache ; un essai de prompt non plus (ADR-0055) — une réponse
-        # rangée sous une autre version du prompt ne dit rien de celle qu'on essaie.
+        # Like the CLI (ADR-0043): a persona that restricts tools neither reads nor
+        # feeds the cache; nor does a prompt trial (ADR-0055) — an answer stored
+        # under another prompt version says nothing about the one being trialed.
         cache_usable = (self.cache is not None and not persona.tools_disabled
                         and prompt_version is None)
 
@@ -671,7 +669,7 @@ class WebRuntime:
             try:
                 hit = self.cache.lookup(text)
             except (EmbeddingError, sqlite3.Error, OSError, ValueError) as e:
-                self.notices.append(f"Cache des réponses désactivé : {e}")
+                self.notices.append(f"Answer cache disabled: {e}")
                 self.cache = None
                 hit = None
             if hit is not None:
@@ -690,19 +688,19 @@ class WebRuntime:
                                     min_score=self.settings["rag_min_score"])
             except (EmbeddingError, sqlite3.Error, OSError) as e:
                 self.rag_on = False
-                self.notices.append(f"Recherche dans le projet désactivée : {e}")
+                self.notices.append(f"Project search disabled: {e}")
                 hits = None
             if hits is not None:
-                # Mêmes garde-fous que les sorties d'outils (EV2) : sans eux, une clé
-                # lue dans le projet partait en clair au modèle (essai du 2026-10-24).
+                # Same guardrails as tool outputs (EV2): without them, a key read in
+                # the project went to the model in clear text (trial run of 2026-10-24).
                 context = filter_output(format_context(hits))
                 sources = [h["source"] for h in hits]
                 emit({"type": "rag_sources", "sources": [
                     {"path": h["source"], "lines": f"{h['start']}-{h['end']}", "score": h["score"]}
                     for h in hits]})
 
-        # Few-shot automatique (A7, ADR-0044), comme le CLI : rien si aucun exemple
-        # n'est assez proche ; filtré par les garde-fous EV2 comme le RAG.
+        # Automatic few-shot (A7, ADR-0044), like the CLI: nothing if no example is
+        # close enough; filtered by the EV2 guardrails like the RAG.
         fewshot_block = None
         fewshot = self.ensure_fewshot()
         if fewshot is not None:
@@ -732,7 +730,7 @@ class WebRuntime:
         reason = "error"
         cacheable = True
         started = time.monotonic()
-        # Journal EV3 : chronomètre lancé juste avant le modèle (RAG et résumé exclus).
+        # EV3 log: timer started right before the model (RAG and summary excluded).
         recorder = TurnRecorder(self.journal, session_id=session_id, project=self.project,
                                 interface="web", tokens_sent=count_message_tokens(messages))
         handoffs = Handoffs(emit, recorder)
@@ -746,8 +744,8 @@ class WebRuntime:
                     emit({"type": "done", "reason": "interrupted"})
                     return None
                 recorder.on_event(event)
-                # Le retour à l'agent principal passe avant le `tool_return` qui le
-                # provoque : l'interface montre le relais, puis le résultat.
+                # The handoff back to the main agent goes before the `tool_return` that
+                # causes it: the UI shows the handoff, then the result.
                 if isinstance(event, ToolReturn):
                     handoffs.on_return(event)
                 if isinstance(event, Token):
@@ -768,8 +766,8 @@ class WebRuntime:
                     if found:
                         emit({"type": "web_results",
                               "results": [{"title": t, "url": u} for t, u in found]})
-                # M4 : une section du document d'état modifiée par l'agent est
-                # envoyée à l'interface (panneau Artefact), seulement si elle a changé.
+                # M4: a state document section modified by the agent is sent to the
+                # UI (Artifact panel), only if it changed.
                 if isinstance(event, ToolReturn) and event.name == "update_state" and event.ok:
                     state_after = self._state_bodies()
                     for name, body in state_after.items():
@@ -785,8 +783,8 @@ class WebRuntime:
         reply = answer.text()
         if cache_usable and self.cache is not None and cacheable:
             try:
-                # SENSAI.md entre dans le prompt système : le modifier invalide aussi.
+                # SENSAI.md goes into the system prompt: modifying it also invalidates.
                 self.cache.store(text, reply, [*sources, STATE_FILE], time.monotonic() - started)
             except (EmbeddingError, sqlite3.Error, OSError) as e:
-                log.warning("réponse non mise en cache : %s", e)
+                log.warning("answer not cached: %s", e)
         return [*turns, {"role": "user", "content": text}, {"role": "assistant", "content": reply}]

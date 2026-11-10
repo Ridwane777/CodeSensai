@@ -8,7 +8,7 @@ type Listener = (e: EngineEvent) => void
 export interface MockEngineOptions {
   route: (text: string) => Scenario
   clock?: Clock
-  /** Facteur de vitesse : 2 = deux fois plus vite (répétitions). */
+  /** Speed factor: 2 = twice as fast (rehearsals). */
   speed?: number
 }
 
@@ -60,7 +60,7 @@ export class MockEngine implements Engine {
   editMessage(id: string, text: string): BranchId | null {
     const clean = text.trim()
     if (!this.log.some((m) => m.id === id) || !clean) {
-      this.emit({ type: 'error', message: `Message introuvable ou vide : ${id}` })
+      this.emit({ type: 'error', message: `Message not found or empty: ${id}` })
       return null
     }
     this.branchCount += 1
@@ -163,7 +163,7 @@ export class MockEngine implements Engine {
         return
       }
       if (step.event.type === 'agent_handoff') {
-        // Le relais scénarisé suit l'agent réellement actif : pas de doublon, et le moteur en garde la trace.
+        // The scripted handoff follows the actually active agent: no duplicate, and the engine keeps track of it.
         if (step.event.to === this.persona) {
           this.index += 1
           this.play()

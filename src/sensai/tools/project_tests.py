@@ -1,15 +1,15 @@
 """
-Les tests du projet comme verdict de la chaîne d'équipe (ADR-0056, point 3).
+The project's tests as the verdict of the team pipeline (ADR-0056, point 3).
 
-Mesuré avec le vrai modèle : un relecteur qui est un modèle validait un travail faux
-6 fois sur 6 tant qu'il ne recevait pas le contenu écrit (retrospective,
-section 9). Quand le projet a des tests, c'est eux qui décident : ils ne se
-laissent pas convaincre par le compte rendu du développeur.
+Measured with the real model: a model reviewer approved wrong work 6 times
+out of 6 as long as it did not receive the written content (retrospective,
+section 9). When the project has tests, they decide: they cannot be talked
+into it by the developer's report.
 
-Les tests tournent sur la machine, dans le dossier du projet, pas dans la
-sandbox : l'image de la sandbox n'a ni le projet ni ses dépendances. C'est
-pourquoi `team_task` est une action à risque « execute » que l'utilisateur
-autorise avant tout (ToolGateway).
+Tests run on the host, in the project directory, not in the sandbox: the
+sandbox image has neither the project nor its dependencies. That is why
+`team_task` is an "execute" risk action the user approves first
+(ToolGateway).
 """
 from __future__ import annotations
 
@@ -20,24 +20,24 @@ from collections.abc import Callable
 from pathlib import Path
 
 TIMEOUT_S = 120
-# La fin de la sortie suffit au développeur : le résumé et les premiers échecs.
+# The tail of the output is enough for the developer: the summary and first failures.
 OUTPUT_TAIL = 3000
 
 TestRunner = Callable[[], tuple[bool, str]]
 
-# Posée pour le pytest lancé ici : si les tests du projet lancent eux-mêmes une
-# équipe CodeSensei (c'est le cas de la suite de ce dépôt), celle-ci ne relance pas
-# les tests, sinon chaque niveau en relancerait un autre, sans fin (vu le 2026-11-02).
+# Set for the pytest launched here: if the project's tests themselves launch a
+# CodeSensai team (this repo's suite does), that team does not rerun the tests,
+# otherwise each level would launch another, endlessly (seen on 2026-11-02).
 NO_PROJECT_TESTS = "SENSAI_NO_PROJECT_TESTS"
 
 
 def has_tests(project: Path) -> bool:
-    """Un dossier `tests/` ou des fichiers `test_*.py` à la racine du projet."""
+    """A `tests/` directory or `test_*.py` files at the project root."""
     return (project / "tests").is_dir() or any(project.glob("test_*.py"))
 
 
 def project_test_runner(project: str | Path, timeout_s: float = TIMEOUT_S) -> TestRunner | None:
-    """Une fonction qui lance `pytest -q -x` dans le projet, ou None sans tests."""
+    """A function that runs `pytest -q -x` in the project, or None without tests."""
     root = Path(project)
     if os.environ.get(NO_PROJECT_TESTS) or not has_tests(root):
         return None
@@ -50,9 +50,9 @@ def project_test_runner(project: str | Path, timeout_s: float = TIMEOUT_S) -> Te
                 env={**os.environ, NO_PROJECT_TESTS: "1"},
             )
         except subprocess.TimeoutExpired:
-            return False, f"les tests n'ont pas fini en {timeout_s:.0f} s"
+            return False, f"tests did not finish within {timeout_s:.0f} s"
         except OSError as e:
-            return False, f"impossible de lancer les tests : {e}"
+            return False, f"could not run the tests: {e}"
         output = (done.stdout + done.stderr).strip()
         return done.returncode == 0, output[-OUTPUT_TAIL:]
 

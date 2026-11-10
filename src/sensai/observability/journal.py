@@ -1,21 +1,21 @@
 """
-[Lot D — Valentino] Journal des tours [EV3] : ce que l'agent a fait, mesuré côté
-serveur et gardé entre les séances (ADR-0053).
+[Workstream D — Christopher] Turn log [EV3]: what the agent did, measured on the
+server side and kept across sessions (ADR-0053).
 
-Un fichier SQLite `<data_dir>/journal.db` (600, dossier 700, comme les sessions) :
+A SQLite file `<data_dir>/journal.db` (600, directory 700, like sessions):
 
-- une ligne par TOUR : session, projet, date de début (ISO, UTC), temps passé
-  à attendre le modèle (ms), tokens estimés envoyés, issue, interface (web/cli) ;
-- une ligne par APPEL D'OUTIL : outil, arguments (filtrés par les garde-fous
-  EV2 puis tronqués), durée (ms), succès, agent (« main » ou le rôle du
-  sous-agent).
+- one row per TURN: session, project, start date (ISO, UTC), time spent
+  waiting for the model (ms), estimated tokens sent, outcome, interface (web/cli);
+- one row per TOOL CALL: tool, arguments (filtered by the EV2 guardrails
+  then truncated), duration (ms), success, agent ("main" or the subagent's
+  role).
 
-Les durées sont des durées murales (time.monotonic) : celle d'un outil inclut
-l'attente de la confirmation de l'utilisateur ; le temps « modèle » est la durée
-du tour moins celle des outils de l'agent principal.
+Durations are wall-clock (time.monotonic): a tool's includes waiting for the
+user's confirmation; the "model" time is the turn's duration minus that of
+the main agent's tools.
 
-Règle : le journal ne casse jamais un tour. `TurnRecorder` rattrape toute
-erreur et la journalise en avertissement.
+Rule: the log never breaks a turn. `TurnRecorder` catches every error and
+logs it as a warning.
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ from sensai.knowledge.memory import ensure_private_dir, restrict_file
 log = logging.getLogger(__name__)
 
 JOURNAL_FILE = "journal.db"
-# Assez pour reconnaître l'appel ; un fichier entier passé en argument n'a rien à faire ici.
+# Enough to recognize the call; a whole file passed as an argument does not belong here.
 MAX_ARGUMENT_CHARS = 500
 MAIN_AGENT = "main"
 
@@ -73,7 +73,7 @@ def _now() -> datetime:
 
 
 def safe_arguments(arguments: Any) -> str:
-    """Les arguments tels qu'on les garde : JSON, secrets masqués (EV2), tronqués."""
+    """The arguments as we keep them: JSON, secrets masked (EV2), truncated."""
     try:
         text = json.dumps(arguments, ensure_ascii=False, default=str, sort_keys=True)
     except (TypeError, ValueError):
@@ -106,8 +106,8 @@ class TurnRecord:
 
 
 class Journal:
-    """Le stockage. Une connexion par opération (le serveur web appelle depuis
-    plusieurs threads), comme `SessionStore`."""
+    """The storage. One connection per operation (the web server calls from
+    several threads), like `SessionStore`."""
 
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)
@@ -116,7 +116,7 @@ class Journal:
         with self._connect() as conn:
             conn.executescript(SCHEMA)
         if is_new:
-            # Les arguments citent des chemins et des requêtes du projet : propriétaire seul.
+            # Arguments quote project paths and queries: owner only.
             restrict_file(self.db_path)
 
     @contextmanager
@@ -131,7 +131,7 @@ class Journal:
             conn.close()
 
     def write(self, turn: TurnRecord) -> int:
-        """Écrit un tour et ses appels d'outils en une transaction ; renvoie l'id du tour."""
+        """Writes a turn and its tool calls in one transaction; returns the turn id."""
         with self._connect() as conn:
             cur = conn.execute(
                 "INSERT INTO turns (session_id, project, started_at, model_ms, tokens_sent,"
@@ -149,7 +149,7 @@ class Journal:
         return turn_id
 
     def turns(self, session_id: str, limit: int = 50) -> list[dict[str, Any]]:
-        """Les tours d'une session, le plus récent d'abord, chacun avec ses outils."""
+        """A session's turns, newest first, each with its tools."""
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT * FROM turns WHERE session_id = ? ORDER BY started_at DESC, id DESC"
@@ -171,8 +171,8 @@ class Journal:
         return out
 
     def metrics(self, days: int = 7) -> dict[str, Any]:
-        """Par outil : appels, échecs, durée moyenne et max ; et le temps du modèle.
-        Sur les tours commencés depuis `days` jours, toutes sessions et interfaces."""
+        """Per tool: calls, failures, mean and max duration; and the model time.
+        Over turns started in the last `days` days, all sessions and interfaces."""
         since = (_now() - timedelta(days=max(days, 0))).isoformat()
         with self._connect() as conn:
             tools = conn.execute(
@@ -197,8 +197,8 @@ class Journal:
         }
 
     def purge(self, retention_days: int) -> int:
-        """Supprime les tours plus anciens que `retention_days` (0 : jamais), comme les
-        sessions. Renvoie le nombre de tours supprimés (leurs outils partent avec)."""
+        """Deletes turns older than `retention_days` (0: never), like sessions.
+        Returns the number of turns deleted (their tools go with them)."""
         if retention_days <= 0:
             return 0
         cutoff = (_now() - timedelta(days=retention_days)).isoformat()
@@ -206,8 +206,8 @@ class Journal:
             return conn.execute("DELETE FROM turns WHERE started_at < ?", (cutoff,)).rowcount
 
     def delete_session(self, session_id: str) -> int:
-        """Supprime le journal d'une conversation supprimée, puis VACUUM (comme les sessions :
-        sinon le texte des arguments resterait dans les pages libres du fichier)."""
+        """Deletes the log of a deleted conversation, then VACUUM (like sessions:
+        otherwise the argument text would remain in the file's free pages)."""
         with self._connect() as conn:
             deleted = conn.execute("DELETE FROM turns WHERE session_id = ?",
                                    (session_id,)).rowcount
@@ -221,20 +221,20 @@ class Journal:
 
 
 def open_journal(data_dir: Path) -> Journal | None:
-    """Ouvre le journal ; None (avec un avertissement) s'il ne peut pas l'être."""
+    """Opens the log; None (with a warning) if it cannot be opened."""
     try:
         return Journal(data_dir / JOURNAL_FILE)
     except (sqlite3.Error, OSError) as e:
-        log.warning("journal EV3 désactivé : %s", e)
+        log.warning("EV3 log disabled: %s", e)
         return None
 
 
 class TurnRecorder:
-    """Mesure un tour à partir de ses événements et l'écrit à la fin.
+    """Measures a turn from its events and writes it at the end.
 
-    `on_event` reçoit chaque événement de la boucle de l'agent ; `subagent_call`
-    chaque outil exécuté par un sous-agent (déjà chronométré) ; `finish` écrit.
-    Aucune méthode ne lève : une panne du journal devient un avertissement.
+    `on_event` receives every event of the agent loop; `subagent_call` every
+    tool run by a subagent (already timed); `finish` writes.
+    No method raises: a log failure becomes a warning.
     """
 
     def __init__(self, journal: Journal | None, *, session_id: str | None, project: str,
@@ -263,7 +263,7 @@ class TurnRecorder:
             elif isinstance(event, Done):
                 self.record.outcome = event.reason
         except Exception as e:
-            log.warning("journal EV3 : événement non noté : %s", e)
+            log.warning("EV3 log: event not recorded: %s", e)
 
     def subagent_call(self, name: str, arguments: Any, ok: bool, duration_ms: int,
                       agent: str) -> None:
@@ -271,10 +271,10 @@ class TurnRecorder:
             self.record.tools.append(ToolRecord(name, safe_arguments(arguments),
                                                 int(duration_ms), bool(ok), agent))
         except Exception as e:
-            log.warning("journal EV3 : appel de sous-agent non noté : %s", e)
+            log.warning("EV3 log: subagent call not recorded: %s", e)
 
     def finish(self, outcome: str | None = None) -> None:
-        """Écrit le tour (une seule fois). `outcome` force l'issue (« interrupted »)."""
+        """Writes the turn (only once). `outcome` forces the outcome ("interrupted")."""
         if self._done:
             return
         self._done = True
@@ -287,4 +287,4 @@ class TurnRecorder:
             self.record.model_ms = max(round((total - self._tool_s) * 1000), 0)
             self.journal.write(self.record)
         except Exception as e:
-            log.warning("journal EV3 : tour non enregistré : %s", e)
+            log.warning("EV3 log: turn not recorded: %s", e)

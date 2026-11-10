@@ -1,43 +1,44 @@
-# Essai réel — [A4] Prompt Versioning
+# Real trial — [A4] Prompt Versioning
 
-> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `sensai-prompt history` and `check`: ✅ (< 1 s, no model call). Earlier measurements below.
+> **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `sensai-prompt history` and `check`: ✅ (< 1 s, no model call). Earlier measurements below.
 
-Ce document garde la trace de la vérification d'A4 avec un vrai modèle, en
-plus des tests automatiques (`tests/knowledge/test_prompt_versions.py`,
+This document records the verification of A4 with a real model, in addition
+to the automated tests (`tests/knowledge/test_prompt_versions.py`,
 `tests/test_prompt_cli.py`, `tests/test_config.py`,
-`tests/test_prompts_registry.py`). Choix :
-[ADR-0010](../decisions/0010-versionnement-des-prompts.md).
+`tests/test_prompts_registry.py`). Choice:
+[ADR-0010](../decisions/0010-prompt-versioning.md).
 
-## Ce qui est vérifié
-La Definition of Done : montrer l'historique des prompts système et revenir à
-une ancienne version en une commande — et surtout que **changer de version
-change réellement le comportement de l'agent**, puis que le retour en arrière
-le rétablit.
+## What is verified
+The Definition of Done: show the history of the system prompts and roll back
+to an older version with one command — and above all that **switching version
+really changes the agent's behaviour**, and that rolling back restores it.
 
-## Machine et réglages
-- VPS de l'équipe, 8 vCPU, 23 Go de RAM, **sans GPU**.
-- Ollama 0.40.3 installé pour l'essai dans un dossier dédié, sans sudo, puis
-  entièrement désinstallé (processus, dossier, clé `~/.ollama`, cache pip de
-  l'essai).
-- Modèle `qwen3:8b` (modèle de développement, ADR-0004), préchargé avant la
-  première question.
-- `sensai --no-rag --new-session` : RAG coupé et session vierge, pour isoler
-  l'effet du prompt.
-- Une copie du dossier `prompts/` de la branche : la `v2` d'essai n'est pas
-  entrée dans le dépôt.
+## Machine and settings
+- Team VPS, 8 vCPU, 23 GB RAM, **no GPU**.
+- Ollama 0.40.3 installed for the trial in a dedicated folder, without sudo,
+  then fully uninstalled (process, folder, `~/.ollama` key, the trial's pip
+  cache).
+- Model `qwen3:8b` (development model, ADR-0004), preloaded before the first
+  question.
+- `sensai --no-rag --new-session`: RAG off and a blank session, to isolate
+  the prompt's effect.
+- A copy of the branch's `prompts/` folder: the trial `v2` never entered the
+  repository.
 
-## Scénario
-Même question à chaque lancement, posée en anglais : « What is a Python
-decorator? Answer in two sentences. »
+## Scenario
+Same question at each launch, asked in English: "What is a Python
+decorator? Answer in two sentences."
 
-1. Lancement avec la version livrée (`system v1`).
-2. `sensai-prompt show system > brouillon.txt`, ajout d'une ligne,
+1. Launch with the shipped version (`system v1`).
+2. `sensai-prompt show system > brouillon.txt`, add a line,
    `sensai-prompt save system brouillon.txt "impose le français…"`,
    `sensai-prompt diff system v1 v2`, `sensai-prompt use system v2`.
-3. Lancement avec `system v2`.
-4. Retour en arrière : `sensai-prompt use system v1`, puis lancement.
+3. Launch with `system v2`.
+4. Rollback: `sensai-prompt use system v1`, then launch.
 
-Différence entre v1 et v2, affichée par `sensai-prompt diff` :
+Difference between v1 and v2, shown by `sensai-prompt diff` (the prompt was
+in French at the time; the added line says "Always answer in French, even if
+the question is asked in another language"):
 
 ```
 @@ -9,3 +9,4 @@
@@ -45,30 +46,29 @@ Différence entre v1 et v2, affichée par `sensai-prompt diff` :
 +- Réponds toujours en français, même si la question est posée dans une autre langue.
 ```
 
-## Résultats (2026-10-12)
+## Results (2026-10-12)
 
-| Étape | Ligne affichée au lancement | Réponse (début) | Durée du lancement |
+| Step | Line shown at launch | Answer (start) | Launch duration |
 |---|---|---|---|
-| 1. v1 | `prompts : system v1, memory v1` | « A Python decorator is a function that wraps another function… » (anglais) | 150 s |
-| 3. v2 | `prompts : system v2, memory v1` | « Un décorateur en Python est une fonction qui enveloppe une autre fonction… » (français) | 101 s |
-| 4. retour à v1 | `prompts : system v1, memory v1` | « A Python decorator is a function that wraps another function… » (anglais) | 106 s |
+| 1. v1 | `prompts : system v1, memory v1` | "A Python decorator is a function that wraps another function…" (English) | 150 s |
+| 3. v2 | `prompts : system v2, memory v1` | "Un décorateur en Python est une fonction qui enveloppe une autre fonction…" (French) | 101 s |
+| 4. back to v1 | `prompts : system v1, memory v1` | "A Python decorator is a function that wraps another function…" (English) | 106 s |
 
-`sensai-prompt history system` après l'essai :
+`sensai-prompt history system` after the trial (recorded output):
 
 ```
   v2  2026-10-12  Ridwane777        impose le français dans toutes les réponses
   v1  2026-09-22  fresnel-cyber     prompt initial (repris de prompts/system_prompt.txt)  (active)
 ```
 
-`sensai-prompt check` : « Registre cohérent ». **La DoD est atteinte** : la
-v2 n'a pas été effacée par le retour en arrière, et une seule commande a
-suffi dans chaque sens.
+`sensai-prompt check`: "Registry consistent". **The DoD is met**: v2 was not
+erased by the rollback, and a single command was enough in each direction.
 
-## Limites
-- Un scénario, une exécution par version : l'essai montre que le mécanisme
-  agit sur le modèle, pas un taux de réussite.
-- La durée inclut le démarrage du CLI et la génération sur CPU ; elle ne mesure
-  pas A4, dont les commandes répondent instantanément.
-- La consigne testée (la langue) a un effet facile à observer ; l'effet d'un
-  changement plus fin demande une évaluation sur plusieurs questions (EV1),
-  prévue dans les évolutions de l'ADR-0010.
+## Limits
+- One scenario, one run per version: the trial shows that the mechanism acts
+  on the model, not a success rate.
+- The duration includes CLI startup and generation on CPU; it does not
+  measure A4, whose commands answer instantly.
+- The tested instruction (language) has an easily observed effect; the effect
+  of a subtler change needs an evaluation over several questions (EV1),
+  planned in the follow-ups of ADR-0010.

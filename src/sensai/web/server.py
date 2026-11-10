@@ -1,19 +1,19 @@
 """
-[Lot D] Serveur web de CodeSensei : l'API de docs/architecture/web/web-api.md
-au-dessus du vrai agent.
+[Workstream D] CodeSensai web server: the API of docs/architecture/web/web-api.md
+on top of the real agent.
 
-Décisions : ADR-0022 (un tour = un flux SSE, l'agent dans un thread),
-ADR-0023 (jeton, écoute locale, CORS fermé), ADR-0024 (extensions du contrat),
-ADR-0035 (serveur réel, même agent que le CLI).
+Decisions: ADR-0022 (one turn = one SSE stream, the agent in a thread),
+ADR-0023 (token, local listening, closed CORS), ADR-0024 (contract extensions),
+ADR-0035 (real server, same agent as the CLI).
 
-- Le cœur est synchrone : `WebRuntime.run_turn` tourne dans un thread et ses
-  événements passent à la boucle asyncio par une file.
-- La confirmation passe par `WebConfirmationBroker` (lot B, ADR-0015), un par
-  tour : seul « oui » à temps autorise ; délai, interruption ou onglet fermé
-  refusent.
-- Un seul tour à la fois par session (409), plusieurs sessions en parallèle.
-- Toute route de l'API demande le jeton, sauf `/api/health`.
-- Les erreurs suivent le format de web-api.md : `{"error", "code", "details"}`.
+- The core is synchronous: `WebRuntime.run_turn` runs in a thread and its
+  events reach the asyncio loop through a queue.
+- Confirmation goes through `WebConfirmationBroker` (Workstream B, ADR-0015),
+  one per turn: only a timely "yes" authorizes; timeout, interruption or a
+  closed tab refuse.
+- Only one turn at a time per session (409), several sessions in parallel.
+- Every API route requires the token, except `/api/health`.
+- Errors follow the web-api.md format: `{"error", "code", "details"}`.
 """
 from __future__ import annotations
 
@@ -56,8 +56,8 @@ from sensai.web.runtime import WebRuntime
 log = logging.getLogger("sensai.web")
 
 MAX_MESSAGE_CHARS = 20_000
-# Chaque préférence entre dans le prompt système à chaque tour : une borne évite
-# qu'un client remplisse le contexte du modèle.
+# Every preference goes into the system prompt on every turn: a cap prevents
+# a client from filling the model's context.
 MAX_PREFERENCES = 50
 
 
@@ -69,7 +69,7 @@ class ApiError(Exception):
 
 @dataclass
 class Live:
-    """Ce qui n'existe que pendant un tour : le serveur ne garde rien d'autre en mémoire."""
+    """What exists only during a turn: the server keeps nothing else in memory."""
 
     lock: threading.Lock = field(default_factory=threading.Lock)
     busy: bool = False
@@ -80,26 +80,26 @@ class Live:
 
 class MessageIn(BaseModel):
     content: str
-    # /again : redemander au modèle sans passer par le cache (A6).
+    # /again: ask the model again, bypassing the cache (A6).
     skip_cache: StrictBool = False
 
 
 class ConfirmIn(BaseModel):
     confirm_id: str
-    # Seul le booléen JSON true autorise (ADR-0015) : pas "true", 1 ni "yes".
+    # Only the JSON boolean true authorizes (ADR-0015): not "true", 1 or "yes".
     approved: StrictBool
 
 
 class AnswerIn(BaseModel):
     question_id: str
-    # Validées contre le formulaire par WebQuestionBroker (X4, ADR-0046).
+    # Validated against the form by WebQuestionBroker (X4, ADR-0046).
     values: dict[str, Any]
 
 
 class TaskIn(BaseModel):
     id: str = Field(max_length=64)
     prompt: str = Field(max_length=4000)
-    every: str = Field(max_length=16)  # « 30m », « 2h », « 1d » : comme sensai-schedule
+    every: str = Field(max_length=16)  # "30m", "2h", "1d": like sensai-schedule
 
 
 class EnabledIn(BaseModel):
@@ -119,7 +119,7 @@ class PersonaIn(BaseModel):
 
 
 class PromptTrialIn(BaseModel):
-    # None : revenir à la version active du registre (ADR-0055).
+    # None: go back to the registry's active version (ADR-0055).
     version: str | None = Field(default=None, max_length=16)
 
 
@@ -127,8 +127,8 @@ class ForkIn(BaseModel):
     at_message: int = Field(ge=0)
 
 
-# La page publique d'un lien de partage (X3, ADR-0048) : aucun script, aucune
-# ressource externe, pas d'indexation, pas de référent transmis.
+# The public page of a share link (X3, ADR-0048): no script, no external
+# resource, no indexing, no referrer sent.
 SHARE_HEADERS = {
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; "
                                "base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
@@ -149,22 +149,22 @@ SHARE_STYLE = (
 
 
 def share_page(entry: dict[str, Any] | None) -> str:
-    """La conversation partagée en HTML statique ; tout le texte est échappé."""
+    """The shared conversation as static HTML; all text is escaped."""
     if entry is None:
-        body = ("<h1>Lien indisponible</h1><p>Ce lien de partage n'existe pas, "
-                "a été révoqué ou a expiré.</p>")
+        body = ("<h1>Link unavailable</h1><p>This share link does not exist, "
+                "has been revoked or has expired.</p>")
     else:
-        parts = [f"<h1>Conversation CodeSensei</h1><p class=note>Copie en lecture seule, "
-                 f"secrets masqués. Disponible jusqu'au "
+        parts = [f"<h1>CodeSensai conversation</h1><p class=note>Read-only copy, "
+                 f"secrets masked. Available until "
                  f"{html.escape(str(entry['expires_at'])[:16].replace('T', ' '))} (UTC).</p>"]
         for m in entry["messages"]:
-            who = "Vous" if m["role"] == "user" else "CodeSensei"
+            who = "You" if m["role"] == "user" else "CodeSensai"
             parts.append(f"<section><h2>{who}</h2><pre>{html.escape(m['content'])}</pre></section>")
         body = "".join(parts)
-    return (f"<!doctype html><html lang=fr><head><meta charset=utf-8>"
+    return (f"<!doctype html><html lang=en><head><meta charset=utf-8>"
             f"<meta name=viewport content='width=device-width,initial-scale=1'>"
             f"<meta name=robots content='noindex,nofollow'>"
-            f"<title>Conversation partagée</title><style>{SHARE_STYLE}</style></head>"
+            f"<title>Shared conversation</title><style>{SHARE_STYLE}</style></head>"
             f"<body>{body}</body></html>")
 
 
@@ -177,15 +177,15 @@ def create_app(
     adversarial_runner: Callable[[], dict[str, Any]] | None = None,
 ) -> FastAPI:
     if not token:
-        raise ValueError("un jeton est obligatoire (ADR-0023)")
-    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)  # pas de documentation publique
+        raise ValueError("a token is required (ADR-0023)")
+    app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)  # no public documentation
     live: dict[str, Live] = {}
     live_lock = threading.Lock()
 
     if allowed_origins:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=list(allowed_origins),  # liste fermée, jamais « * »
+            allow_origins=list(allowed_origins),  # closed list, never "*"
             allow_methods=["GET", "POST"],
             allow_headers=["Authorization", "Content-Type"],
         )
@@ -197,20 +197,20 @@ def create_app(
 
     @app.exception_handler(RequestValidationError)
     async def invalid(_: Request, exc: RequestValidationError) -> JSONResponse:
-        details = "; ".join(f"{'.'.join(map(str, e['loc']))} : {e['msg']}" for e in exc.errors())
-        return JSONResponse({"error": "Requête invalide", "code": "INVALID_REQUEST",
+        details = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
+        return JSONResponse({"error": "Invalid request", "code": "INVALID_REQUEST",
                              "details": details}, status_code=400)
 
     def require_token(authorization: str | None = Header(default=None)) -> None:
         scheme, _, supplied = (authorization or "").partition(" ")
         ok = scheme.lower() == "bearer" and hmac.compare_digest(supplied.encode(), token.encode())
-        if not ok:  # même réponse pour jeton absent, faux ou mal formé
-            raise ApiError(401, "UNAUTHORIZED", "Authentification requise")
+        if not ok:  # same response for a missing, wrong or malformed token
+            raise ApiError(401, "UNAUTHORIZED", "Authentication required")
 
     def known(session_id: str) -> str:
         if not runtime.store.exists(session_id):
-            raise ApiError(404, "SESSION_NOT_FOUND", "Session introuvable",
-                           f"La session {session_id} n'existe pas ou a été purgée")
+            raise ApiError(404, "SESSION_NOT_FOUND", "Session not found",
+                           f"Session {session_id} does not exist or has been purged")
         return session_id
 
     def live_of(session_id: str) -> Live:
@@ -219,15 +219,15 @@ def create_app(
 
     auth = [Depends(require_token)]
 
-    # --- Santé et configuration ---------------------------------------------------
+    # --- Health and configuration -----------------------------------------------
 
     @app.get("/api/health")
     def health() -> dict[str, str]:
-        return {"status": "ok"}  # volontairement sans authentification et sans détail
+        return {"status": "ok"}  # deliberately without authentication or details
 
     @app.get("/api/config", dependencies=auth)
     def config() -> dict[str, Any]:
-        # ADR-0023 : ni adresse Ollama, ni jeton, ni chemin complet.
+        # ADR-0023: no Ollama address, no token, no full path.
         return {
             "model": runtime.model,
             "project": Path(runtime.project).name,
@@ -257,30 +257,30 @@ def create_app(
 
     @app.post("/api/sessions/{session_id}/fork", status_code=201, dependencies=auth)
     def fork(session_id: str, body: ForkIn) -> dict[str, str]:
-        """Bifurcation (X2, ADR-0024) : une nouvelle session, avec les `at_message`
-        premiers messages de celle-ci."""
+        """Fork (X2, ADR-0024): a new session with the first `at_message`
+        messages of this one."""
         turns = runtime.store.load(known(session_id))
         if body.at_message > len(turns):
-            raise ApiError(400, "INVALID_REQUEST", "Point de bifurcation invalide",
-                           f"la session a {len(turns)} messages")
+            raise ApiError(400, "INVALID_REQUEST", "Invalid fork point",
+                           f"the session has {len(turns)} messages")
         new_id = runtime.store.create(runtime.project)
         runtime.store.save(new_id, turns[:body.at_message])
         return {"session_id": new_id}
 
     @app.post("/api/sessions/{session_id}/delete", status_code=204, dependencies=auth)
     def delete_session(session_id: str) -> Response:
-        """Supprime une conversation et ses messages (barre latérale du chat)."""
+        """Deletes a conversation and its messages (chat sidebar)."""
         state = live_of(known(session_id))
         with state.lock:
             if state.busy:
-                raise ApiError(409, "TURN_IN_PROGRESS", "Un tour est en cours")
+                raise ApiError(409, "TURN_IN_PROGRESS", "A turn is in progress")
             runtime.store.delete(session_id)
-            # Le journal EV3 de la conversation part avec elle (docs/legal/donnees-locales.md).
+            # The conversation's EV3 log goes with it (docs/legal/local-data.md).
             if runtime.journal is not None:
                 try:
                     runtime.journal.delete_session(session_id)
                 except (OSError, sqlite3.Error) as e:
-                    log.warning("journal EV3 de %s non supprimé : %s", session_id, e)
+                    log.warning("EV3 log of %s not deleted: %s", session_id, e)
         with live_lock:
             live.pop(session_id, None)
         runtime.forget_session(session_id)
@@ -288,7 +288,7 @@ def create_app(
 
     @app.get("/api/sessions/{session_id}/export", dependencies=auth)
     def export(session_id: str, format: Literal["json", "md"] = "json") -> Response:
-        """Export filtré des secrets (X3, ADR-0024) ; le PDF reste côté navigateur."""
+        """Export with secrets filtered (X3, ADR-0024); PDF stays browser-side."""
         turns = [{"role": t.get("role", ""), "content": filter_output(str(t.get("content", "")))}
                  for t in runtime.store.load(known(session_id))]
         name = f"codesensei-{session_id}"
@@ -297,25 +297,25 @@ def create_app(
                 "Content-Disposition": f'attachment; filename="{name}.json"'})
         lines = [f"# Conversation {session_id}", ""]
         for t in turns:
-            who = "Vous" if t["role"] == "user" else "CodeSensei"
+            who = "You" if t["role"] == "user" else "CodeSensai"
             lines += [f"## {who}", "", t["content"], ""]
         disposition = f'attachment; filename="{name}.md"'
         return PlainTextResponse("\n".join(lines), media_type="text/markdown; charset=utf-8",
                                  headers={"Content-Disposition": disposition})
 
-    # --- Partage (X3, ADR-0048) ------------------------------------------------------
+    # --- Sharing (X3, ADR-0048) ------------------------------------------------------
 
     @app.post("/api/sessions/{session_id}/share", status_code=201, dependencies=auth)
     def share(session_id: str) -> dict[str, str]:
-        # ADR-0056 : un lien public se lit sans jeton pendant 7 jours ; désactivé par
-        # défaut, Marc l'active avec `share_links: true` dans config.json.
+        # ADR-0056: a public link is readable without a token for 7 days; disabled by
+        # default, the user enables it with `share_links: true` in config.json.
         if not runtime.settings.get("share_links", False):
-            raise ApiError(403, "SHARE_DISABLED", "Liens de partage désactivés",
-                           "les activer avec \"share_links\": true dans config.json")
+            raise ApiError(403, "SHARE_DISABLED", "Share links disabled",
+                           "enable them with \"share_links\": true in config.json")
         turns = runtime.store.load(known(session_id))
         if not turns:
-            raise ApiError(400, "EMPTY_SESSION", "Rien à partager",
-                           "la conversation n'a encore aucun message")
+            raise ApiError(400, "EMPTY_SESSION", "Nothing to share",
+                           "the conversation has no messages yet")
         created = runtime.shares.create(session_id, turns)
         return {"url": f"/share/{created['token']}", "token": created["token"],
                 "expires_at": created["expires_at"]}
@@ -323,47 +323,47 @@ def create_app(
     @app.post("/api/shares/{token}/revoke", status_code=204, dependencies=auth)
     def revoke(token: str) -> Response:
         if not runtime.shares.revoke(token):
-            raise ApiError(404, "SHARE_NOT_FOUND", "Lien de partage inconnu")
+            raise ApiError(404, "SHARE_NOT_FOUND", "Unknown share link")
         return Response(status_code=204)
 
     @app.get("/share/{token}", include_in_schema=False)
     def shared(token: str) -> HTMLResponse:
-        # Sans jeton d'API : c'est le principe du lien. Inconnu, révoqué ou
-        # expiré : la même page 404, sans dire lequel.
+        # No API token: that is the point of the link. Unknown, revoked or
+        # expired: the same 404 page, without saying which.
         entry = runtime.shares.get(token)
         return HTMLResponse(share_page(entry), status_code=200 if entry else 404,
                             headers=SHARE_HEADERS)
 
-    # --- Un tour ----------------------------------------------------------------------
+    # --- A turn ----------------------------------------------------------------------
 
     @app.post("/api/sessions/{session_id}/messages", dependencies=auth)
     async def send_message(session_id: str, body: MessageIn) -> StreamingResponse:
         known(session_id)
         content = body.content.strip()
         if not content:
-            raise ApiError(400, "EMPTY_MESSAGE", "Message vide")
+            raise ApiError(400, "EMPTY_MESSAGE", "Empty message")
         if len(content) > MAX_MESSAGE_CHARS:
-            raise ApiError(413, "MESSAGE_TOO_LONG", "Message trop long",
-                           f"{MAX_MESSAGE_CHARS} caractères au plus")
+            raise ApiError(413, "MESSAGE_TOO_LONG", "Message too long",
+                           f"{MAX_MESSAGE_CHARS} characters at most")
         state = live_of(session_id)
         with state.lock:
             if state.busy:
-                raise ApiError(409, "TURN_IN_PROGRESS", "Un tour est déjà en cours")
+                raise ApiError(409, "TURN_IN_PROGRESS", "A turn is already in progress")
             state.busy = True
             state.cancel = threading.Event()
 
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue[dict | None] = asyncio.Queue()
 
-        def emit(item: dict | None) -> None:  # appelé depuis le thread de l'agent
+        def emit(item: dict | None) -> None:  # called from the agent's thread
             try:
                 loop.call_soon_threadsafe(queue.put_nowait, item)
-            except RuntimeError:  # boucle fermée : le serveur s'arrête, plus personne n'écoute
+            except RuntimeError:  # loop closed: the server is stopping, nobody is listening
                 pass
 
         def emit_confirm(payload: dict[str, Any]) -> None:
-            # Le broker nomme la clé `id` ; la réponse attend `confirm_id`
-            # (web-api-alignement.md, écart 9) : on envoie les deux.
+            # The broker names the key `id`; the reply expects `confirm_id`
+            # (web-api-alignment.md, gap 9): send both.
             emit({**payload, "confirm_id": payload.get("id")})
 
         state.broker = WebConfirmationBroker(emit_confirm)
@@ -378,16 +378,16 @@ def create_app(
                                              session_id=session_id)
                 if new_turns is not None:
                     runtime.store.save(session_id, new_turns)
-            except Exception:  # la session a pu être supprimée entre-temps : jamais de flux pendu
-                log.exception("tour web en échec")
-                emit({"type": "error", "message": "Erreur interne du serveur."})
+            except Exception:  # the session may have been deleted meanwhile: never leave a hanging stream
+                log.exception("web turn failed")
+                emit({"type": "error", "message": "Internal server error."})
                 emit({"type": "done", "reason": "error"})
             finally:
                 broker.close()
                 questions.close()
                 with state.lock:
                     state.busy = False
-                emit(None)  # fin du flux
+                emit(None)  # end of stream
 
         threading.Thread(target=work, name=f"sensai-turn-{session_id}", daemon=True).start()
 
@@ -399,7 +399,7 @@ def create_app(
                         break
                     yield f"data: {json.dumps(item, ensure_ascii=False, default=str)}\n\n"
             finally:
-                # Fin normale ou navigateur déconnecté : plus rien ne doit s'exécuter.
+                # Normal end or browser disconnected: nothing else may run.
                 cancel.set()
                 broker.close()
                 questions.close()
@@ -411,20 +411,20 @@ def create_app(
     def confirm(session_id: str, body: ConfirmIn) -> Response:
         broker = live_of(known(session_id)).broker
         if broker is None or not broker.resolve(body.confirm_id, body.approved):
-            # Inconnue, déjà résolue ou expirée : sans effet.
-            raise ApiError(404, "CONFIRM_NOT_FOUND", "Confirmation inconnue ou expirée")
+            # Unknown, already resolved or expired: no effect.
+            raise ApiError(404, "CONFIRM_NOT_FOUND", "Unknown or expired confirmation")
         return Response(status_code=204)
 
     @app.post("/api/sessions/{session_id}/answer", status_code=204, dependencies=auth)
     def answer(session_id: str, body: AnswerIn) -> Response:
-        """Réponse à une question de l'agent (X4, ADR-0046)."""
+        """Answer to a question from the agent (X4, ADR-0046)."""
         questions = live_of(known(session_id)).questions
         outcome = "unknown" if questions is None else questions.resolve(body.question_id,
                                                                          body.values)
         if outcome == "unknown":
-            raise ApiError(404, "QUESTION_NOT_FOUND", "Question inconnue ou expirée")
+            raise ApiError(404, "QUESTION_NOT_FOUND", "Unknown or expired question")
         if outcome != "ok":
-            raise ApiError(400, "INVALID_ANSWER", "Réponse invalide", outcome)
+            raise ApiError(400, "INVALID_ANSWER", "Invalid answer", outcome)
         return Response(status_code=204)
 
     @app.post("/api/sessions/{session_id}/interrupt", status_code=204, dependencies=auth)
@@ -433,12 +433,12 @@ def create_app(
         if state.busy:
             state.cancel.set()
             if state.broker is not None:
-                state.broker.close()  # une confirmation en attente devient un refus
+                state.broker.close()  # a pending confirmation becomes a refusal
             if state.questions is not None:
-                state.questions.close()  # une question en attente reste sans réponse
+                state.questions.close()  # a pending question stays unanswered
         return Response(status_code=204)
 
-    # --- Personas, par conversation (A5, lot A ; web : ADR-0054) ------------------------
+    # --- Personas, per conversation (A5, Workstream A; web: ADR-0054)---------------------
 
     def persona_view(p: Persona) -> dict[str, Any]:
         return {"id": p.id, "name": p.name, "role": p.role, "tone": p.tone, "scope": p.scope,
@@ -446,11 +446,11 @@ def create_app(
                 "default": p.id == runtime.personas.default_id}
 
     def idle(session_id: str) -> Live:
-        """La session existe et aucun tour n'y tourne : sinon 404 / 409."""
+        """The session exists and no turn is running in it: otherwise 404 / 409."""
         state = live_of(known(session_id))
         if state.busy:
-            raise ApiError(409, "TURN_IN_PROGRESS", "Un tour est en cours",
-                           "attendre la fin du tour pour changer ce réglage")
+            raise ApiError(409, "TURN_IN_PROGRESS", "A turn is in progress",
+                           "wait for the turn to end before changing this setting")
         return state
 
     @app.get("/api/personas", dependencies=auth)
@@ -466,27 +466,27 @@ def create_app(
         state = idle(session_id)
         with state.lock:
             if state.busy:
-                raise ApiError(409, "TURN_IN_PROGRESS", "Un tour est en cours")
+                raise ApiError(409, "TURN_IN_PROGRESS", "A turn is in progress")
             try:
                 persona = runtime.set_persona(session_id, body.persona)
             except PersonaError as e:
-                raise ApiError(404, "PERSONA_NOT_FOUND", "Persona inconnue", str(e)) from e
+                raise ApiError(404, "PERSONA_NOT_FOUND", "Unknown persona", str(e)) from e
         return persona_view(persona)
 
-    # --- Versions de prompts, en lecture (A4, lot A ; web : ADR-0055) -----------------
-    # Le registre n'est jamais écrit ici : rendre une version active pour tous reste
-    # `sensai-prompt use`. Le web ne fait qu'essayer une version dans une conversation.
+    # --- Prompt versions, read-only (A4, Workstream A; web: ADR-0055) ----------------
+    # The registry is never written here: making a version active for everyone remains
+    # `sensai-prompt use`. The web only trials a version within one conversation.
 
     def prompt_name(name: str) -> str:
         if name not in runtime.prompt_store.names():
-            raise ApiError(404, "PROMPT_NOT_FOUND", "Prompt inconnu", name)
+            raise ApiError(404, "PROMPT_NOT_FOUND", "Unknown prompt", name)
         return name
 
     def prompt_version(name: str, version: str) -> str:
         try:
             return runtime.prompt_store.resolve(prompt_name(name), version)
         except KeyError as e:
-            raise ApiError(404, "PROMPT_VERSION_NOT_FOUND", "Version inconnue",
+            raise ApiError(404, "PROMPT_VERSION_NOT_FOUND", "Unknown version",
                            f"{name} {version}") from e
 
     @app.get("/api/prompts", dependencies=auth)
@@ -522,13 +522,13 @@ def create_app(
         state = idle(session_id)
         with state.lock:
             if state.busy:
-                raise ApiError(409, "TURN_IN_PROGRESS", "Un tour est en cours")
+                raise ApiError(409, "TURN_IN_PROGRESS", "A turn is in progress")
             if body.version is not None:
                 prompt_version("system", body.version)
             runtime.set_prompt_trial(session_id, body.version)
         return trial_view(session_id)
 
-    # --- Mémoires, en lecture ---------------------------------------------------------
+    # --- Memories, read-only ----------------------------------------------------------
 
     @app.get("/api/profile", dependencies=auth)
     def profile() -> dict[str, Any]:
@@ -537,23 +537,23 @@ def create_app(
 
     @app.post("/api/profile/preferences", dependencies=auth)
     def add_preference(body: PreferenceIn) -> dict[str, Any]:
-        """US-WEB-6 : ajoute une préférence (vide ou déjà présente : ignorée), comme
-        `/remember` dans le CLI. Le profil est relu à chaque tour (prompt système)."""
+        """US-WEB-6: adds a preference (empty or already present: ignored), like
+        `/remember` in the CLI. The profile is reread on every turn (system prompt)."""
         text = body.text.strip()
         with runtime._profile_lock:
             p = runtime.profile
             if text and text not in p.preferences:
                 if len(p.preferences) >= MAX_PREFERENCES:
-                    raise ApiError(400, "TOO_MANY_PREFERENCES", "Trop de préférences",
-                                   f"{MAX_PREFERENCES} au plus")
+                    raise ApiError(400, "TOO_MANY_PREFERENCES", "Too many preferences",
+                                   f"{MAX_PREFERENCES} at most")
                 p.remember(text)
                 p.save(runtime.profile_path)
         return profile()
 
     @app.post("/api/profile/forget", dependencies=auth)
     def forget_preferences() -> dict[str, Any]:
-        """US-WEB-6 : efface toutes les préférences, comme `/forget` dans le CLI. En POST
-        plutôt qu'en DELETE /api/profile : le serveur n'ouvre que GET et POST (CORS)."""
+        """US-WEB-6: clears all preferences, like `/forget` in the CLI. POST rather
+        than DELETE /api/profile: the server only allows GET and POST (CORS)."""
         with runtime._profile_lock:
             runtime.profile.forget()
             runtime.profile.save(runtime.profile_path)
@@ -561,20 +561,20 @@ def create_app(
 
     @app.post("/api/facts/forget", dependencies=auth)
     def forget_fact(body: ForgetFactIn) -> dict[str, Any]:
-        """Oublie les faits d'une entité (comme `/facts forget` dans le CLI). Essai du
-        2026-11-01 : supprimer une conversation ne supprime pas les faits retenus pendant
-        celle-ci, il fallait pouvoir les oublier depuis le web."""
+        """Forgets an entity's facts (like `/facts forget` in the CLI). Trial run of
+        2026-11-01: deleting a conversation does not delete the facts saved during
+        it, so they had to be forgettable from the web."""
         try:
             removed = runtime.facts.forget(body.entity)
         except FactError as e:
-            raise ApiError(400, "INVALID_REQUEST", "Oubli impossible", str(e)) from e
+            raise ApiError(400, "INVALID_REQUEST", "Cannot forget", str(e)) from e
         if not removed:
-            raise ApiError(404, "FACT_NOT_FOUND", "Aucun fait pour cette entité")
+            raise ApiError(404, "FACT_NOT_FOUND", "No facts for this entity")
         return {"removed": removed}
 
     @app.get("/api/fewshot", dependencies=auth)
     def fewshot() -> dict[str, Any]:
-        """Les exemples few-shot configurés (A7, ADR-0044), en lecture seule."""
+        """The configured few-shot examples (A7, ADR-0044), read-only."""
         return runtime.fewshot_info()
 
     @app.get("/api/facts", dependencies=auth)
@@ -583,42 +583,42 @@ def create_app(
             entities = runtime.facts.entities(limit=200)
             return {"facts": {e: runtime.facts.recall(entity=e) for e in entities}}
         except FactError as e:
-            raise ApiError(500, "FACTS_UNAVAILABLE", "Mémoire de faits illisible", str(e)) from e
+            raise ApiError(500, "FACTS_UNAVAILABLE", "Fact memory unreadable", str(e)) from e
 
     @app.get("/api/state", dependencies=auth)
     def state_document() -> dict[str, Any]:
-        # `bodies` : le contenu de chaque section, pour le panneau Artefact (M4).
+        # `bodies`: the content of each section, for the Artifact panel (M4).
         return {"markdown": runtime.state.read() or "", "sections": runtime.state.sections(),
                 "bodies": runtime.state.bodies()}
 
-    # --- Évaluation à la demande (EV1) ------------------------------------------------
+    # --- On-demand evaluation (EV1) -------------------------------------------------
 
     @app.post("/api/sessions/{session_id}/evaluate", dependencies=auth)
     def evaluate(session_id: str) -> dict[str, Any]:
-        """Fait juger la dernière réponse de la conversation (un appel au modèle)."""
+        """Has the judge score the conversation's last answer (one model call)."""
         turns = runtime.store.load(known(session_id))
         try:
             result = runtime.evaluate(turns)
         except ValueError as e:
-            raise ApiError(400, "NOTHING_TO_EVALUATE", "Rien à évaluer", str(e)) from e
+            raise ApiError(400, "NOTHING_TO_EVALUATE", "Nothing to evaluate", str(e)) from e
         except (EmbeddingError, OSError) as e:
-            raise ApiError(502, "EVALUATION_FAILED", "Évaluation impossible", str(e)) from e
+            raise ApiError(502, "EVALUATION_FAILED", "Evaluation failed", str(e)) from e
         if result.get("status") != "ok":
-            raise ApiError(502, "EVALUATION_FAILED", "Le juge n'a pas rendu de note exploitable",
+            raise ApiError(502, "EVALUATION_FAILED", "The judge returned no usable score",
                            str(result.get("error", "")))
         return {"scores": result["scores"], "passages": result["passages"],
                 "question": result["question"],
                 "flagged": [{"text": filter_output(str(c.get("text", ""))),
                              "verdict": c.get("verdict")} for c in result.get("flagged", [])]}
 
-    # --- Corpus adversarial (EV4, lot B — Méric) ---------------------------------------
+    # --- Adversarial corpus (EV4, Workstream B) ---------------------------------------
 
     adversarial = {"last": None}
     adversarial_lock = threading.Lock()
 
     def run_adversarial() -> dict[str, Any]:
-        # Import tardif : le corpus importe beaucoup (cli, passerelle, sandbox) et ne
-        # sert qu'ici. Aucun modèle ; les conteneurs sont des doubles (docker_fakes).
+        # Late import: the corpus imports a lot (cli, gateway, sandbox) and is only
+        # used here. No model; the containers are test doubles (docker_fakes).
         from sensai.eval.adversarial import results_to_json, run_corpus
         ran_at = datetime.now(UTC).isoformat(timespec="seconds")
         return results_to_json(run_corpus(), ran_at, "run")
@@ -627,7 +627,7 @@ def create_app(
 
     @app.get("/api/quality/adversarial", dependencies=auth)
     def adversarial_results() -> dict[str, Any]:
-        """Le dernier passage de ce serveur, sinon le tableau versionné du dépôt."""
+        """This server's last run, otherwise the table committed in the repository."""
         if adversarial["last"] is not None:
             return adversarial["last"]
         from sensai.eval.adversarial import committed_results
@@ -635,47 +635,47 @@ def create_app(
 
     @app.post("/api/quality/adversarial/run", dependencies=auth)
     def adversarial_run() -> dict[str, Any]:
-        """Rejoue les 85 attaques (quelques secondes). Route synchrone : FastAPI la fait
-        tourner dans un thread de travail, la boucle du serveur reste libre."""
+        """Replays the 85 attacks (a few seconds). Synchronous route: FastAPI runs it
+        in a worker thread, the server loop stays free."""
         if not adversarial_lock.acquire(blocking=False):
-            raise ApiError(409, "ALREADY_RUNNING", "Les attaques sont déjà en cours")
+            raise ApiError(409, "ALREADY_RUNNING", "The attacks are already running")
         try:
             result = runner()
-        except Exception as e:  # un cas cassé ne doit pas laisser une trace brute au client
-            log.exception("corpus EV4 en échec")
-            raise ApiError(500, "ADVERSARIAL_FAILED", "Le corpus n'a pas pu tourner",
+        except Exception as e:  # a broken case must not leak a raw traceback to the client
+            log.exception("EV4 corpus failed")
+            raise ApiError(500, "ADVERSARIAL_FAILED", "The corpus could not run",
                            type(e).__name__) from e
         finally:
             adversarial_lock.release()
         adversarial["last"] = result
         return result
 
-    # --- Journal des tours (EV3, lot D — Valentino) -------------------------------------
+    # --- Turn log (EV3, Workstream D) -------------------------------------
 
     def journal_or_503():
         if runtime.journal is None:
-            raise ApiError(503, "JOURNAL_UNAVAILABLE", "Journal indisponible",
-                           "journal.db n'a pas pu être ouvert (voir les logs du serveur)")
+            raise ApiError(503, "JOURNAL_UNAVAILABLE", "Log unavailable",
+                           "journal.db could not be opened (see the server logs)")
         return runtime.journal
 
     @app.get("/api/journal", dependencies=auth)
     def journal(session: str, limit: int = 50) -> dict[str, Any]:
-        """Les tours d'une conversation, le plus récent d'abord, avec leurs outils."""
+        """A conversation's turns, most recent first, with their tools."""
         try:
             turns = journal_or_503().turns(session, max(1, min(limit, 500)))
         except sqlite3.Error as e:
-            raise ApiError(500, "JOURNAL_UNREADABLE", "Journal illisible", str(e)) from e
+            raise ApiError(500, "JOURNAL_UNREADABLE", "Log unreadable", str(e)) from e
         return {"session_id": session, "turns": turns}
 
     @app.get("/api/journal/metrics", dependencies=auth)
     def journal_metrics(days: int = 7) -> dict[str, Any]:
-        """Par outil et pour le modèle, toutes conversations et interfaces confondues."""
+        """Per tool and for the model, across all conversations and interfaces."""
         try:
             return journal_or_503().metrics(max(1, min(days, 3650)))
         except sqlite3.Error as e:
-            raise ApiError(500, "JOURNAL_UNREADABLE", "Journal illisible", str(e)) from e
+            raise ApiError(500, "JOURNAL_UNREADABLE", "Log unreadable", str(e)) from e
 
-    # --- Tâches planifiées (X5) -------------------------------------------------------
+    # --- Scheduled tasks (X5) --------------------------------------------------------
 
     def task_view(task: Task) -> dict[str, Any]:
         due = task.next_due()
@@ -686,40 +686,40 @@ def create_app(
         try:
             return [task_view(t) for t in runtime.tasks.load()]
         except (ValueError, ScheduleStoreError) as e:
-            raise ApiError(500, "TASKS_UNREADABLE", "Fichier des tâches illisible", str(e)) from e
+            raise ApiError(500, "TASKS_UNREADABLE", "Task file unreadable", str(e)) from e
 
     @app.post("/api/schedule/tasks", status_code=201, dependencies=auth)
     def add_task(body: TaskIn) -> dict[str, Any]:
-        """Comme `sensai-schedule add` : la tâche est exécutée par `sensai-schedule loop`
-        (ou `run-due`), pas par le serveur web."""
+        """Like `sensai-schedule add`: the task is run by `sensai-schedule loop`
+        (or `run-due`), not by the web server."""
         try:
             task_id = validate_task_id(body.id)
             interval = parse_interval(body.every)
             if not body.prompt.strip():
-                raise ValueError("Le prompt est vide.")
+                raise ValueError("The prompt is empty.")
             ensure_private_dir(runtime.tasks.path.parent.parent)
             ensure_private_dir(runtime.tasks.path.parent)
             task = Task(id=task_id, prompt=body.prompt.strip(), interval_s=interval)
             runtime.tasks.add(task)
         except ScheduleStoreError as e:
-            raise ApiError(500, "TASKS_UNREADABLE", "Fichier des tâches illisible", str(e)) from e
+            raise ApiError(500, "TASKS_UNREADABLE", "Task file unreadable", str(e)) from e
         except ValueError as e:
-            raise ApiError(400, "INVALID_TASK", "Tâche refusée", str(e)) from e
+            raise ApiError(400, "INVALID_TASK", "Task rejected", str(e)) from e
         return task_view(task)
 
     @app.post("/api/schedule/tasks/{task_id}/remove", status_code=204, dependencies=auth)
     def remove_task(task_id: str) -> Response:
         if not runtime.tasks.remove(task_id):
-            raise ApiError(404, "TASK_NOT_FOUND", "Tâche inconnue")
+            raise ApiError(404, "TASK_NOT_FOUND", "Unknown task")
         return Response(status_code=204)
 
     @app.post("/api/schedule/tasks/{task_id}/enabled", status_code=204, dependencies=auth)
     def enable_task(task_id: str, body: EnabledIn) -> Response:
         if not runtime.tasks.update(task_id, enabled=body.enabled):
-            raise ApiError(404, "TASK_NOT_FOUND", "Tâche inconnue")
+            raise ApiError(404, "TASK_NOT_FOUND", "Unknown task")
         return Response(status_code=204)
 
-    # --- L'interface construite ---------------------------------------------------------
+    # --- The built frontend -------------------------------------------------------------
 
     if frontend_dir is not None and (frontend_dir / "index.html").is_file():
         app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

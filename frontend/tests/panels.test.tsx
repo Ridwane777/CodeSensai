@@ -11,18 +11,18 @@ import { route } from '../src/engine/router'
 import Chat from '../src/pages/Chat'
 import { EngineProvider } from '../src/state/useEngine'
 
-test("l'artefact met en évidence la section modifiée et garde les autres", () => {
-  render(<ArtifactPanel sections={{ Décisions: '- a', Tests: '- b' }} lastPatched="Tests" />)
-  expect(screen.getByRole('heading', { name: 'Décisions' }).closest('section')).toHaveAttribute('data-fresh', 'false')
+test("the artifact highlights the patched section and keeps the others", () => {
+  render(<ArtifactPanel sections={{ Decisions: '- a', Tests: '- b' }} lastPatched="Tests" />)
+  expect(screen.getByRole('heading', { name: 'Decisions' }).closest('section')).toHaveAttribute('data-fresh', 'false')
   expect(screen.getByRole('heading', { name: 'Tests' }).closest('section')).toHaveAttribute('data-fresh', 'true')
 })
 
-test("l'artefact vide explique à quoi il sert", () => {
+test("the empty artifact explains what it is for", () => {
   render(<ArtifactPanel sections={{}} lastPatched={null} />)
-  expect(screen.getByText(/aucun document/i)).toBeInTheDocument()
+  expect(screen.getByText(/no document/i)).toBeInTheDocument()
 })
 
-test('les sources affichent chemin, lignes et score arrondi, et les liens web sont sûrs', () => {
+test('sources show path, lines and rounded score, and web links are safe', () => {
   render(
     <SourcesPanel
       sources={[{ path: 'src/sensai/cli.py', lines: '112-116', score: 0.834 }]}
@@ -36,53 +36,53 @@ test('les sources affichent chemin, lignes et score arrondi, et les liens web so
   expect(link.getAttribute('rel')).toContain('noopener')
 })
 
-test('la barre affiche les tokens et passe en alerte au-delà de 80 %', () => {
+test('the bar shows tokens and switches to alert above 80 %', () => {
   const { rerender } = render(<StatusBar usage={{ used: 1240, budget: 8192, contextPct: 15 }} saved={0} />)
   expect(screen.getByText(/1 240 \/ 8 192 tokens/)).toBeInTheDocument()
   expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '15')
   expect(screen.getByRole('progressbar')).toHaveAttribute('data-alert', 'false')
   rerender(<StatusBar usage={{ used: 6900, budget: 8192, contextPct: 84 }} saved={1840} />)
   expect(screen.getByRole('progressbar')).toHaveAttribute('data-alert', 'true')
-  expect(screen.getByText(/1 840 tokens économisés/)).toBeInTheDocument()
+  expect(screen.getByText(/1 840 tokens saved/)).toBeInTheDocument()
 })
 
-test("le sélecteur d'agent appelle le moteur", () => {
+test("the agent selector calls the engine", () => {
   const e = { send: vi.fn(), interrupt: vi.fn(), editMessage: vi.fn(() => null), confirm: vi.fn(), answer: vi.fn(), switchPersona: vi.fn(), subscribe: vi.fn(() => () => {}) }
   render(<EngineProvider engine={e as unknown as Engine}><PersonaSwitcher persona="sensei" /></EngineProvider>)
   fireEvent.change(screen.getByLabelText(/agent actif/i), { target: { value: 'reviewer' } })
   expect(e.switchPersona).toHaveBeenCalledWith('reviewer')
 })
 
-describe('page de chat avec panneaux', () => {
+describe('chat page with panels', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
   const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms) })
   const renderChat = () =>
     render(<MemoryRouter><EngineProvider engine={new MockEngine({ route })}><Chat /></EngineProvider></MemoryRouter>)
 
-  test("changer d'agent en cours de session garde la conversation", () => {
+  test("switching agents mid-session keeps the conversation", () => {
     renderChat()
-    fireEvent.click(screen.getByRole('button', { name: /reprendre la session/i }))
+    fireEvent.click(screen.getByRole('button', { name: /resume the session/i }))
     advance(20000)
     fireEvent.change(screen.getByLabelText(/agent actif/i), { target: { value: 'reviewer' } })
-    expect(screen.getByText(/Re-bonjour/)).toBeInTheDocument()
-    expect(screen.getByText(/Passage de relais/)).toBeInTheDocument()
+    expect(screen.getByText(/Welcome back/)).toBeInTheDocument()
+    expect(screen.getByText(/Handoff/)).toBeInTheDocument()
   })
 
-  test("le scénario d'écriture remplit l'onglet Artefact", () => {
+  test("the writing scenario fills the Artifact tab", () => {
     renderChat()
-    fireEvent.click(screen.getByRole('button', { name: /écrire et tester/i }))
+    fireEvent.click(screen.getByRole('button', { name: /write and test/i }))
     advance(30000)
-    fireEvent.click(screen.getByRole('button', { name: /afficher le panneau/i }))
-    fireEvent.click(screen.getByRole('tab', { name: /artefact/i }))
+    fireEvent.click(screen.getByRole('button', { name: /show the artifact and sources panel/i }))
+    fireEvent.click(screen.getByRole('tab', { name: /artifact/i }))
     expect(screen.getByRole('heading', { name: 'Tests' })).toBeInTheDocument()
   })
 
-  test("la recherche remplit l'onglet Sources", () => {
+  test("search fills the Sources tab", () => {
     renderChat()
-    fireEvent.click(screen.getByRole('button', { name: /chercher dans le code/i }))
+    fireEvent.click(screen.getByRole('button', { name: /search the code/i }))
     advance(30000)
-    fireEvent.click(screen.getByRole('button', { name: /afficher le panneau/i }))
+    fireEvent.click(screen.getByRole('button', { name: /show the artifact and sources panel/i }))
     fireEvent.click(screen.getByRole('tab', { name: /sources/i }))
     expect(screen.getByText('src/sensai/cli.py:112-116')).toBeInTheDocument()
   })

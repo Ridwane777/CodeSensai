@@ -1,4 +1,4 @@
-"""Faux serveur MCP (stdio, JSON-RPC ligne à ligne) pour tests/tools/test_mcp_tool.py.
+"""Fake MCP server (stdio, line-by-line JSON-RPC) for tests/tools/test_mcp_tool.py.
 
     python fake_mcp_server.py [normal|crash|silent|garbage]
 """
@@ -7,13 +7,13 @@ import sys
 
 MODE = sys.argv[1] if len(sys.argv) > 1 else "normal"
 TOOLS = [
-    {"name": "add", "description": "Additionne deux nombres.",
+    {"name": "add", "description": "Adds two numbers.",
      "inputSchema": {"type": "object",
                      "properties": {"a": {"type": "number"}, "b": {"type": "number"}},
                      "required": ["a", "b"]}},
-    {"name": "leak", "description": "Renvoie un secret.", "inputSchema": {"type": "object"}},
-    {"name": "fail", "description": "Échoue toujours.", "inputSchema": {"type": "object"}},
-    {"name": "bad name!", "description": "Nom à nettoyer."},
+    {"name": "leak", "description": "Returns a secret.", "inputSchema": {"type": "object"}},
+    {"name": "fail", "description": "Always fails.", "inputSchema": {"type": "object"}},
+    {"name": "bad name!", "description": "Name to sanitize."},
 ]
 
 
@@ -29,17 +29,17 @@ for line in sys.stdin:
     if MODE == "silent":
         continue
     if MODE == "garbage":
-        sys.stdout.write("ceci n'est pas du JSON\n")
+        sys.stdout.write("this is not JSON\n")
         sys.stdout.flush()
         continue
     method, mid = msg.get("method"), msg["id"]
-    print(f"log: {method}", file=sys.stderr, flush=True)  # un vrai serveur journalise sur stderr
+    print(f"log: {method}", file=sys.stderr, flush=True)  # a real server logs to stderr
     if method == "initialize":
         send({"jsonrpc": "2.0", "id": mid, "result": {
             "protocolVersion": msg["params"]["protocolVersion"], "capabilities": {"tools": {}},
-            "serverInfo": {"name": "faux", "version": "1"}}})
+            "serverInfo": {"name": "fake", "version": "1"}}})
     elif method == "tools/list":
-        # une notification du serveur au milieu : le client doit l'ignorer
+        # a server notification in the middle: the client must ignore it
         send({"jsonrpc": "2.0", "method": "notifications/message", "params": {"level": "info"}})
         send({"jsonrpc": "2.0", "id": mid, "result": {"tools": TOOLS}})
     elif method == "tools/call":
@@ -52,7 +52,7 @@ for line in sys.stdin:
             secret = 'API_KEY = "sk-abcdef1234567890abcdef"'
             result = {"content": [{"type": "text", "text": secret}]}
         else:
-            result = {"content": [{"type": "text", "text": "échec côté serveur"}], "isError": True}
+            result = {"content": [{"type": "text", "text": "server-side failure"}], "isError": True}
         send({"jsonrpc": "2.0", "id": mid, "result": result})
     else:
-        send({"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": "inconnu"}})
+        send({"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": "unknown"}})

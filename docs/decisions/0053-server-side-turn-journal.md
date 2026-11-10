@@ -2,7 +2,7 @@
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-11-01
-- **Deciders**: Ridwane (Lot C), on behalf of the owning lot (Lot D, Valentino, observability) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of the owning lot (Lot D, Christopher, observability) — to be confirmed by the team
 - **Lot concerned**: D (`observability/journal.py`, `web/runtime.py`, `web/server.py`, `frontend/src/pages/Journal.tsx`), A (`cli.py` turn loop)
 
 ## Context
@@ -15,7 +15,7 @@ browser (network included), sub-agent steps showed 0 ms, the time spent waiting
 for the model was not measured, and there was no view across sessions.
 `src/sensai/observability/` only had a README saying "not written yet".
 
-CodeSensei is a local, single-user tool: the journal has one reader, on the same
+CodeSensai is a local, single-user tool: the journal has one reader, on the same
 machine, and must follow the same privacy rules as the sessions (mode 600,
 retention, deletion with the conversation).
 
@@ -25,7 +25,7 @@ retention, deletion with the conversation).
 | --- | --- | --- |
 | Keep the browser-only journal | Nothing to store, nothing to protect | Lost on reload; no CLI; durations include the network; no cross-session metrics; does not meet EV3 |
 | JSON lines file per day | Simple, `grep`-able | Metrics need a full read; deleting one session's rows means rewriting the file; no transaction between a turn and its tool calls |
-| **SQLite store `<data_dir>/journal.db`** (chosen) | Same technology and rules as `sessions.db` (600, one connection per call, `VACUUM` on delete); metrics are one SQL query; delete by session and purge by date are one statement; written in one transaction per turn | One more file holding (filtered) arguments; no standard tooling to view it outside CodeSensei |
+| **SQLite store `<data_dir>/journal.db`** (chosen) | Same technology and rules as `sessions.db` (600, one connection per call, `VACUUM` on delete); metrics are one SQL query; delete by session and purge by date are one statement; written in one transaction per turn | One more file holding (filtered) arguments; no standard tooling to view it outside CodeSensai |
 | OpenTelemetry traces (OTLP exporter + Jaeger/Tempo) | Industry standard, spans and nesting for free, ready for a multi-user deployment | A collector and a backend to run next to a local tool; a heavy dependency for one user; the arguments would leave the process |
 
 ## Decision
@@ -58,7 +58,7 @@ retention, deletion with the conversation).
 - ❌ Durations are wall-clock: a tool's duration includes the time the user took to
   confirm it, and `model_ms` includes Python overhead between events. A sub-agent's
   own model time is inside the `delegate_task` duration, not in `model_ms`.
-- ❌ Local only: no export, no alerting, no standard trace format. If CodeSensei ever
+- ❌ Local only: no export, no alerting, no standard trace format. If CodeSensai ever
   becomes a shared service, OpenTelemetry is the replacement.
 - ❌ The CLI does not record the sub-agents' tool calls yet (the web does).
 - ❌ The purge is by turn date, the session purge by last activity: in a conversation

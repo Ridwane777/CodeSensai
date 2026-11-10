@@ -1,13 +1,13 @@
 """
-Mesures de T5 (sortie structurée, ADR-0039) : la réponse JSON est-elle fondée
-sur le projet ? Compare l'appel direct (sans outils, ADR-0036) et l'appel en
-deux temps (l'agent cherche avec ses outils, puis mise en forme par schéma),
-sur des questions dont la bonne réponse est connue. Projet jetable (dossier
-temporaire). Résultats : docs/performance/T5-structured.md.
+T5 measurements (structured output, ADR-0039): is the JSON answer grounded in
+the project? Compares the direct call (no tools, ADR-0036) with the two-step
+call (the agent searches with its tools, then the schema formats the answer),
+on questions whose correct answer is known. Throwaway project (temporary
+directory). Results: docs/performance/T5-structured.md.
 
-    python scripts/bench_t5.py <hôte Ollama> [essais]
+    python scripts/bench_t5.py <Ollama host> [runs]
 """
-# ruff: noqa: E402, E501  (chemin d'import ajouté avant les imports ; jeux sur une ligne)
+# ruff: noqa: E402, E501  (import path added before the imports; one-line datasets)
 import json
 import sys
 import tempfile
@@ -31,24 +31,24 @@ MODEL = "qwen3-coder:30b"
 SYSTEM = (ROOT / "prompts" / "system" / "v2.txt").read_text(encoding="utf-8")
 
 FILES = {
-    "stats.py": "def maximum(valeurs):\n    plus_grand = valeurs[0]\n    for v in valeurs:\n        if v > plus_grand:\n            plus_grand = v\n    return plus_grand\n",
-    "texte.py": 'def compter_mots(phrase):\n    return len(phrase.split())\n\n\ndef inverser(phrase):\n    return phrase[::-1]\n',
-    "reglages.py": "DEBUG = False\nPORT = 8042\n",
+    "stats.py": "def maximum(values):\n    largest = values[0]\n    for v in values:\n        if v > largest:\n            largest = v\n    return largest\n",
+    "text.py": 'def count_words(sentence):\n    return len(sentence.split())\n\n\ndef reverse(sentence):\n    return sentence[::-1]\n',
+    "settings.py": "DEBUG = False\nPORT = 8042\n",
 }
-LIST = {"type": "object", "properties": {"fonctions": {"type": "array", "items": {"type": "string"}}}, "required": ["fonctions"]}
+LIST = {"type": "object", "properties": {"functions": {"type": "array", "items": {"type": "string"}}}, "required": ["functions"]}
 PORT = {"type": "object", "properties": {"port": {"type": "integer"}}, "required": ["port"]}
 
 
 def names(r):
-    """Les noms de fonctions, sans signature : « inverser(phrase) » compte comme « inverser »."""
-    return sorted(str(f).split("(")[0].strip() for f in r.get("fonctions", []))
+    """Function names without signature: "reverse(sentence)" counts as "reverse"."""
+    return sorted(str(f).split("(")[0].strip() for f in r.get("functions", []))
 
 
-# (demande, schéma, vérification de la réponse)
+# (request, schema, answer check)
 CASES = [
-    ("Donne la liste des fonctions définies dans stats.py.", LIST, lambda r: names(r) == ["maximum"]),
-    ("Donne la liste des fonctions définies dans texte.py.", LIST, lambda r: names(r) == ["compter_mots", "inverser"]),
-    ("Quel port est configuré dans reglages.py ?", PORT, lambda r: r.get("port") == 8042),
+    ("List the functions defined in stats.py.", LIST, lambda r: names(r) == ["maximum"]),
+    ("List the functions defined in text.py.", LIST, lambda r: names(r) == ["count_words", "reverse"]),
+    ("Which port is configured in settings.py?", PORT, lambda r: r.get("port") == 8042),
 ]
 
 root = Path(tempfile.mkdtemp(prefix="sensai-t5-"))
@@ -64,7 +64,7 @@ def gather(question):
     return "".join(e.text for e in run_agent_turn(HOST, MODEL, messages, gateway) if isinstance(e, Token))
 
 
-for mode in ("direct", "deux temps"):
+for mode in ("direct", "two-step"):
     ok_total = 0
     for question, schema, check in CASES:
         ok, times, sample = 0, [], None
@@ -76,8 +76,8 @@ for mode in ("direct", "deux temps"):
             times.append(time.monotonic() - start)
             ok += check(result)
             if found and not check(result):
-                print(f"   faux ; l'agent avait trouvé : {found[:160]!r}", flush=True)
+                print(f"   wrong; the agent had found: {found[:160]!r}", flush=True)
             sample = result
         ok_total += ok
-        print(f"{mode:10} juste {ok}/{RUNS}  {min(times):5.1f} à {max(times):5.1f} s  | {question[:45]}  ex. {json.dumps(sample, ensure_ascii=False)[:80]}", flush=True)
-    print(f"==> {mode} : {ok_total}/{RUNS * len(CASES)} réponses justes", flush=True)
+        print(f"{mode:10} correct {ok}/{RUNS}  {min(times):5.1f} to {max(times):5.1f} s  | {question[:45]}  e.g. {json.dumps(sample, ensure_ascii=False)[:80]}", flush=True)
+    print(f"==> {mode}: {ok_total}/{RUNS * len(CASES)} correct answers", flush=True)

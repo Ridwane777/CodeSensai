@@ -8,42 +8,42 @@ import { ThemeToggle } from '../src/ui/ThemeToggle'
 
 beforeEach(() => {
   document.documentElement.removeAttribute('data-theme')
-  try { localStorage.clear() } catch { /* stockage indisponible */ }
+  try { localStorage.clear() } catch { /* storage unavailable */ }
 })
 
-test('le badge indique que le moteur est simulé', () => {
+test('the badge says the engine is simulated', () => {
   render(<SimBadge />)
-  expect(screen.getByText(/moteur simulé/i)).toBeInTheDocument()
+  expect(screen.getByText(/simulated engine/i)).toBeInTheDocument()
 })
 
-test('ThemeToggle bascule data-theme puis revient', async () => {
+test('ThemeToggle toggles data-theme and back', async () => {
   render(<ThemeToggle />)
-  const btn = screen.getByRole('button', { name: /thème/i })
+  const btn = screen.getByRole('button', { name: /theme/i })
   await userEvent.click(btn)
   expect(document.documentElement.dataset.theme).toBe('dark')
   await userEvent.click(btn)
   expect(document.documentElement.dataset.theme).toBe('light')
 })
 
-test('Orb signale quand il réfléchit', () => {
+test('Orb signals when it is thinking', () => {
   const { container, rerender } = render(<Orb thinking />)
   expect(container.firstChild).toHaveAttribute('data-thinking', 'true')
   rerender(<Orb thinking={false} />)
   expect(container.firstChild).toHaveAttribute('data-thinking', 'false')
 })
 
-test('PillButton avec `to` est un lien accessible', () => {
+test('PillButton with `to` is an accessible link', () => {
   render(
     <MemoryRouter>
-      <PillButton to="/chat">Lancer la démo</PillButton>
+      <PillButton to="/chat">Launch the demo</PillButton>
     </MemoryRouter>,
   )
-  expect(screen.getByRole('link', { name: /lancer la démo/i })).toHaveAttribute('href', '/chat')
+  expect(screen.getByRole('link', { name: /launch the demo/i })).toHaveAttribute('href', '/chat')
 })
 
-test('PillButton désactivé ne déclenche pas onClick', async () => {
+test('disabled PillButton does not fire onClick', async () => {
   const onClick = vi.fn()
-  render(<PillButton disabled onClick={onClick}>Envoyer</PillButton>)
-  await userEvent.click(screen.getByRole('button', { name: /envoyer/i }))
+  render(<PillButton disabled onClick={onClick}>Send</PillButton>)
+  await userEvent.click(screen.getByRole('button', { name: /send/i }))
   expect(onClick).not.toHaveBeenCalled()
 })

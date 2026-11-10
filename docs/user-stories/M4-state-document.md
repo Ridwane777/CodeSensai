@@ -20,10 +20,10 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/state`: ✅ with both set-ups (< 1 s).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/state`: ✅ with both set-ups (< 1 s).
 
 ## US-M4-1 — Know where the project stands when coming back to it
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer coming back to her project after several days,
 **I want** a state document kept up to date by the agent (what is done, what is in progress, the decisions taken, the known problems),
@@ -38,7 +38,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
   the first update.
 
 ## US-M4-2 — A targeted update, never a destructive one
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who wrote part of the document myself,
 **I want** the agent to change only the section concerned,
@@ -52,7 +52,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 - An interrupted write (crash, Ctrl+C) never leaves a half-written file.
 
 ## US-M4-3 — See and control what the agent changes
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent maintain the document,
 **I want** to see each change and be able to go back,
@@ -65,7 +65,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 
 > **Update on 2026-10-29:** ◐ Web interface ([ADR-0050](../decisions/0050-real-web-features-on-demand-evaluation.md), proposed): the Artefact panel is filled at load from `GET /api/state` (`bodies`, one entry per section), and each section changed by an `update_state` call is pushed live as an `artifact_patch` event. Tested (`tests/web/test_real_features.py`, `frontend/tests/realFeatures.test.tsx`), not yet with the real model.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): `update_state` sent an `artifact_patch`, `GET /api/state` returned the section, and the Artefact panel showed the real `SENSAI.md`.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): `update_state` sent an `artifact_patch`, `GET /api/state` returned the section, and the Artefact panel showed the real `SENSAI.md`.
 
 
 ---
@@ -76,6 +76,6 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| US-M4-1 | ✅ | `knowledge/state_document.py` | `tests/knowledge/test_state_document.py::test_premiere_mise_a_jour_cree_les_sections_de_base`, `tests/test_cli_rag.py::test_le_document_d_etat_est_dans_le_prompt_systeme` |  |
+| US-M4-1 | ✅ | `knowledge/state_document.py` | `tests/knowledge/test_state_document.py::test_first_update_creates_default_sections`, `tests/test_cli_rag.py::test_le_document_d_etat_est_dans_le_prompt_systeme` |  |
 | US-M4-2 | ✅ | `knowledge/state_document.py` | `tests/knowledge/test_state_document.py` (`les_autres_sections_restent_identiques_a_l_octet`, `section_inconnue_refusee_avec_la_liste_et_fichier_intact`, `ecriture_interrompue_ne_laisse_pas_un_fichier_a_moitie_ecrit`) |  |
-| US-M4-3 | ✅ | `knowledge/state_document.py`, `tools/state_tool.py` | `tests/tools/test_state_tool.py::test_la_confirmation_montre_l_avant_et_l_apres`, `tests/knowledge/test_state_document.py` (`chaque_mise_a_jour_est_journalisee`, `annuler_remet_la_section_dans_son_etat_precedent`) | The model may say it updated the document without calling the tool ([backlog](../backlog.md) #17) |
+| US-M4-3 | ✅ | `knowledge/state_document.py`, `tools/state_tool.py` | `tests/tools/test_state_tool.py::test_confirmation_shows_before_and_after`, `tests/knowledge/test_state_document.py` (`chaque_mise_a_jour_est_journalisee`, `annuler_remet_la_section_dans_son_etat_precedent`) | The model may say it updated the document without calling the tool ([backlog](../backlog.md) #17) |

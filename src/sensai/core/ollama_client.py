@@ -1,6 +1,6 @@
 """
-Client HTTP minimal pour l'API Ollama — AUCUN framework LLM (contrainte du sujet).
-Tout passe par des appels HTTP directs via `requests`.
+Minimal HTTP client for the Ollama API — NO LLM framework (project constraint).
+Everything goes through direct HTTP calls via `requests`.
 """
 import json
 from collections.abc import Iterator
@@ -10,44 +10,43 @@ import requests
 
 
 class OllamaError(Exception):
-    """Erreur levée quand Ollama est injoignable ou renvoie une erreur."""
+    """Raised when Ollama is unreachable or returns an error."""
     pass
 
 
-# Paramètres de génération (ADR-0057) acceptés dans config.json, section
-# `generation`, et envoyés dans `options` à chaque appel de chat. Les autres
-# options d'Ollama restent possibles mais ne sont pas exposées.
+# Generation parameters (ADR-0057) accepted in config.json, `generation`
+# section, and sent in `options` on every chat call. Other Ollama options
+# remain possible but are not exposed.
 GENERATION_KEYS = ("temperature", "top_p", "top_k", "seed", "num_predict", "repeat_penalty")
 
-# Réglés une fois au démarrage (CLI, sensai-web, sensai-schedule) : tous les
-# appels de chat passent par stream_chat_messages, un seul point suffit.
+# Set once at startup (CLI, sensai-web, sensai-schedule): every chat call
+# goes through stream_chat_messages, so a single point is enough.
 _generation: dict[str, Any] = {}
 
 
 def set_generation_options(options: dict[str, Any] | None) -> None:
-    """Paramètres de génération ajoutés à chaque appel (vide : ceux du modèle)."""
+    """Generation parameters added to every call (empty: the model's defaults)."""
     _generation.clear()
     _generation.update({k: v for k, v in (options or {}).items() if v is not None})
 
 
 def generation_options() -> dict[str, Any]:
-    """Les paramètres en vigueur (affichés par /context)."""
+    """The parameters in effect (shown by /context)."""
     return dict(_generation)
 
 
-# Délais HTTP (connexion, lecture). La lecture couvre l'attente du premier
-# morceau : sur CPU, qwen3:8b lit le prompt système et les outils (plusieurs
-# milliers de tokens) à ~10 tokens/s, soit plusieurs minutes avant de répondre.
-# 60 s faisaient échouer chaque tour sur le portable de développement
-# (docs/performance/essais/essai-2026-11-06.md). La connexion reste courte : un
-# Ollama arrêté est signalé aussitôt.
+# HTTP timeouts (connect, read). Read covers the wait for the first chunk: on
+# CPU, qwen3:8b reads the system prompt and tools (several thousand tokens) at
+# ~10 tokens/s, i.e. several minutes before answering. 60 s made every turn
+# fail on the development laptop (docs/performance/trials/trial-2026-11-06.md).
+# Connect stays short: a stopped Ollama is reported right away.
 CONNECT_TIMEOUT = 10
 DEFAULT_REQUEST_TIMEOUT = 600
 _timeout = {"read": DEFAULT_REQUEST_TIMEOUT}
 
 
 def set_request_timeout(seconds: float | None) -> None:
-    """Délai d'attente d'une réponse d'Ollama, réglé au démarrage (None : le défaut)."""
+    """Timeout for an Ollama reply, set at startup (None: the default)."""
     _timeout["read"] = seconds or DEFAULT_REQUEST_TIMEOUT
 
 
@@ -60,21 +59,21 @@ def stream_chat_messages(
     options: dict[str, Any] | None = None,
 ) -> Iterator[dict[str, Any]]:
     """
-    Envoie l'historique à Ollama et renvoie, au fil du streaming, le champ
-    `message` de chaque morceau : `content`, `thinking` et `tool_calls`
-    selon ce que le modèle produit.
+    Send the history to Ollama and yield, as it streams, the `message` field
+    of each chunk: `content`, `thinking` and `tool_calls` depending on what
+    the model produces.
 
-    `tools` est passé tel quel dans le champ du même nom (ADR-0003) : Ollama
-    renvoie alors les appels d'outils déjà structurés dans `tool_calls`, au
-    lieu qu'on doive les deviner dans le texte.
+    `tools` is passed as is in the field of the same name (ADR-0003): Ollama
+    then returns tool calls already structured in `tool_calls`, instead of us
+    having to guess them from the text.
 
-    `format` est passé tel quel dans le champ du même nom (ADR-0036) : un
-    schéma JSON pour contraindre la réponse à cette forme, ou `"json"`.
+    `format` is passed as is in the field of the same name (ADR-0036): a JSON
+    schema to constrain the reply to that shape, or `"json"`.
 
-    `options` est passé tel quel dans le champ du même nom — notamment
-    `num_ctx` (M2, ADR-0045) : sans lui, Ollama tronque l'historique à sa
-    propre limite par défaut (2048 ou 4096 selon la version), en silence et
-    bien avant le budget que M2 surveille.
+    `options` is passed as is in the field of the same name — notably
+    `num_ctx` (M2, ADR-0045): without it, Ollama truncates the history at its
+    own default limit (2048 or 4096 depending on the version), silently and
+    well before the budget M2 tracks.
     """
     url = f"{host}/api/chat"
     payload: dict[str, Any] = {"model": model, "messages": messages, "stream": True}
@@ -82,8 +81,8 @@ def stream_chat_messages(
         payload["tools"] = tools
     if format:
         payload["format"] = format
-    # Les paramètres de génération réglés au démarrage, puis ceux de l'appel
-    # (num_ctx…), qui l'emportent : le juge EV1 garde ainsi sa température 0.
+    # Generation parameters set at startup, then the call's own (num_ctx…),
+    # which win: the EV1 judge thus keeps its temperature 0.
     merged = {**_generation, **(options or {})}
     if merged:
         payload["options"] = merged
@@ -94,17 +93,17 @@ def stream_chat_messages(
         response.raise_for_status()
     except requests.exceptions.ConnectionError as e:
         raise OllamaError(
-            f"Impossible de contacter Ollama sur {host}. "
-            "Vérifiez que `ollama serve` tourne bien."
+            f"Cannot reach Ollama at {host}. "
+            "Check that `ollama serve` is running."
         ) from e
     except requests.exceptions.Timeout as e:
         raise OllamaError(
-            f"Ollama ne répond pas (timeout de {_timeout['read']:g} s). Sur CPU, augmenter "
-            "\"request_timeout\" dans config.json ou --request-timeout."
+            f"Ollama is not responding (timeout of {_timeout['read']:g} s). On CPU, increase "
+            "\"request_timeout\" in config.json or --request-timeout."
         ) from e
     except requests.exceptions.HTTPError as e:
         detail = response.text[:200] if response is not None else str(e)
-        raise OllamaError(f"Erreur Ollama : {detail}") from e
+        raise OllamaError(f"Ollama error: {detail}") from e
 
     for line in response.iter_lines():
         if not line:
@@ -115,8 +114,8 @@ def stream_chat_messages(
             continue
         if chunk.get("error"):
             raise OllamaError(chunk["error"])
-        # Le dernier morceau (done=True) porte encore un `message`, en général
-        # vide : on le transmet quand même plutôt que de parier qu'il l'est.
+        # The last chunk (done=True) still carries a `message`, usually empty:
+        # pass it on anyway rather than betting that it is.
         message = chunk.get("message")
         if message:
             yield message
@@ -128,10 +127,10 @@ def stream_chat(
     host: str, model: str, messages: list[dict], num_ctx: int | None = None
 ) -> Iterator[str]:
     """
-    Envoie l'historique de conversation à Ollama et streame la réponse
-    morceau par morceau (pas un seul bloc — exigence du sujet).
+    Send the conversation history to Ollama and stream the reply chunk by
+    chunk (not a single block — a project requirement).
 
-    `num_ctx` (M2, ADR-0045) : voir `stream_chat_messages`.
+    `num_ctx` (M2, ADR-0045): see `stream_chat_messages`.
     """
     options = {"num_ctx": num_ctx} if num_ctx else None
     for message in stream_chat_messages(host, model, messages, options=options):

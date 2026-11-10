@@ -2,12 +2,12 @@
 
 - **Status**: Accepted; partly superseded by ADR-0056 (2026-11-02: keyword routing and `/persona add` removed, tool restriction kept)
 - **Date**: 2026-10-27
-- **Deciders**: Fresnel (Lot A)
-- **Lot concerned**: A (`knowledge/persona.py`, `cli.py`)
+- **Deciders**: Fresnel (Workstream A)
+- **Workstream**: A (`knowledge/persona.py`, `cli.py`)
 
 ## Context
 
-[ADR-0042](0042-personas-configurables.md) shipped the part of [A5] Persona
+[ADR-0042](0042-configurable-personas.md) shipped the part of [A5] Persona
 the catalogue requires: config-driven profiles, switchable mid-session
 without losing context. Its "Consequences" section explicitly left three
 things for later, without forcing a rewrite of that ADR:
@@ -24,7 +24,7 @@ they make the feature closer to its real-world examples and reuse
 infrastructure the repo already has (`ToolPreferences`, the chat-command
 pattern).
 
-## Options considered
+## Considered options
 
 | Enrichment | Option chosen | Alternative rejected |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ pattern).
   question, or `None`. Matching is on **whole words**, ignoring case and
   accents (NFKD folding, `\b`-bounded): the keyword `test` does not fire on
   "latest" or inside a pasted traceback word, and "securite" finds
-  "sécurité". The matched keyword is shown in the switch message, so a
+  "security". The matched keyword is shown in the switch message, so a
   false positive is easy to understand. On a tie between several matching
   personas, the first by alphabetical id wins: simple and deterministic,
   not a ranked search.

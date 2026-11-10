@@ -1,8 +1,8 @@
-/** Salutation selon l'heure locale. */
+/** Greeting based on local time. */
 export function greeting(now: Date = new Date()): string {
   const h = now.getHours()
-  if (h >= 5 && h < 12) return 'Bonjour'
-  if (h >= 12 && h < 18) return 'Bon après-midi'
-  if (h >= 18 && h < 23) return 'Bonsoir'
-  return 'Bonne nuit'
+  if (h >= 5 && h < 12) return 'Good morning'
+  if (h >= 12 && h < 18) return 'Good afternoon'
+  if (h >= 18 && h < 23) return 'Good evening'
+  return 'Good night'
 }

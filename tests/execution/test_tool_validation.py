@@ -1,4 +1,4 @@
-"""Teste la validation des arguments et des résultats d'outils."""
+"""Tests validation of tool arguments and results."""
 import pytest
 
 from sensai.core.tools import ToolResult
@@ -36,7 +36,7 @@ def test_enum_is_enforced():
 
 
 def test_extra_fields_allowed_by_default():
-    # Les petits modèles ajoutent souvent un champ en trop : on le tolère,
+    # Small models often add an extra field: we tolerate it,
     # sauf si l'outil demande additionalProperties: false.
     assert check_arguments(SCHEMA, {"code": "x", "bonus": 1}) is None
     strict = {**SCHEMA, "additionalProperties": False}
@@ -54,10 +54,10 @@ def test_valid_result_passes():
 @pytest.mark.parametrize(
     "bad",
     [
-        "pas un ToolResult",
+        "not a ToolResult",
         None,
         ToolResult(ok=True, content=123),  # type: ignore[arg-type]
-        ToolResult(ok=True, content="x", data=["pas", "un", "dict"]),  # type: ignore[arg-type]
+        ToolResult(ok=True, content="x", data=["not", "a", "dict"]),  # type: ignore[arg-type]
         ToolResult(ok=True, content="x", data={"f": object()}),
         ToolResult(ok="oui", content="x"),  # type: ignore[arg-type]
     ],
@@ -70,5 +70,5 @@ def test_output_schema_checked_on_success_only():
     out = {"type": "object", "required": ["rows"], "properties": {"rows": {"type": "integer"}}}
     assert check_result(ToolResult(ok=True, content="x", data={}), out) is not None
     assert check_result(ToolResult(ok=True, content="x", data={"rows": 3}), out) is None
-    # Un échec n'a pas à respecter le schéma de succès.
-    assert check_result(ToolResult(ok=False, content="échec"), out) is None
+    # A failure does not have to match the success schema.
+    assert check_result(ToolResult(ok=False, content="failure"), out) is None

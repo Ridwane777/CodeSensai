@@ -1,29 +1,29 @@
 import { SCENARIOS } from './scenarios'
 import type { Scenario } from './scenarios/types'
 
-/** Ordre significatif : le premier scénario dont un mot-clé apparaît gagne. */
+/** Order matters: the first scenario with a matching keyword wins. French keywords are kept alongside English ones. */
 export const KEYWORDS: [string, string[]][] = [
-  ['risky', ['supprim', 'efface', 'delete', 'nettoie']],
-  ['secret', ['cle api', 'secret', 'mot de passe', 'password', '.env']],
-  ['form', ['deploi', 'configur', 'formulaire']],
-  ['web', ['web', 'internet', 'actualite', 'en ligne', 'mcp']],
-  ['budget', ['budget', 'contexte', 'compress', 'cache', 'evalue']],
-  ['wrapup', ['bilan', 'export', 'partage', 'planifi']],
-  ['fix', ['corrige', 'bug', 'erreur', 'repare', 'fonction', 'ecris']],
-  ['search', ['ou est', 'ou verifie', 'ou gere', 'cherche', 'trouve', 'explique', 'login']],
-  ['resume', ['reprend', 'bonjour', 'salut', 'session', 'profil']],
+  ['risky', ['delete', 'remove', 'clean', 'supprim', 'efface', 'nettoie']],
+  ['secret', ['api key', 'secret', 'password', '.env', 'cle api', 'mot de passe']],
+  ['form', ['deploy', 'configur', 'form', 'deploi', 'formulaire']],
+  ['web', ['web', 'internet', 'news', 'online', 'mcp', 'actualite', 'en ligne']],
+  ['budget', ['budget', 'context', 'compress', 'cache', 'evaluat', 'contexte', 'evalue']],
+  ['wrapup', ['wrap up', 'wrap-up', 'recap', 'summary', 'export', 'share', 'schedul', 'bilan', 'partage', 'planifi']],
+  ['fix', ['fix', 'bug', 'error', 'repair', 'function', 'write', 'corrige', 'erreur', 'repare', 'fonction', 'ecris']],
+  ['search', ['where is', 'where do', 'where are', 'search', 'find', 'explain', 'login', 'ou est', 'ou verifie', 'ou gere', 'cherche', 'trouve', 'explique']],
+  ['resume', ['resume', 'hello', 'session', 'profile', 'reprend', 'bonjour', 'salut', 'profil']],
 ]
 
 export const SUGGESTIONS: { label: string; text: string; scenario: string }[] = [
-  { label: 'Reprendre la session', text: "Reprends où on en était", scenario: 'resume' },
-  { label: 'Chercher dans le code', text: "Où vérifie-t-on qu'une session inconnue ne plante pas ?", scenario: 'search' },
-  { label: 'Écrire et tester', text: 'Écris une fonction qui calcule la latence moyenne du journal', scenario: 'fix' },
-  { label: 'Action risquée', text: 'Supprime les fichiers temporaires du dossier build/', scenario: 'risky' },
-  { label: 'Protéger un secret', text: 'Affiche la clé API de mon fichier .env', scenario: 'secret' },
-  { label: 'Poser des questions', text: 'Prépare un déploiement', scenario: 'form' },
-  { label: 'Chercher sur le web', text: 'Cherche sur le web la dernière version de pytest', scenario: 'web' },
-  { label: 'Contexte et cache', text: 'Le contexte devient long, compresse-le', scenario: 'budget' },
-  { label: 'Faire le bilan', text: 'Fais le bilan de la séance', scenario: 'wrapup' },
+  { label: 'Resume the session', text: 'Resume where we left off', scenario: 'resume' },
+  { label: 'Search the code', text: 'Where do we check that an unknown session does not crash?', scenario: 'search' },
+  { label: 'Write and test', text: 'Write a function that computes the average latency of the log', scenario: 'fix' },
+  { label: 'Risky action', text: 'Delete the temporary files in the build/ folder', scenario: 'risky' },
+  { label: 'Protect a secret', text: 'Show the API key from my .env file', scenario: 'secret' },
+  { label: 'Ask questions', text: 'Prepare a deployment', scenario: 'form' },
+  { label: 'Search the web', text: 'Look up the latest pytest version on the web', scenario: 'web' },
+  { label: 'Context and cache', text: 'The context is getting long, compress it', scenario: 'budget' },
+  { label: 'Wrap up', text: 'Give me a recap of the session', scenario: 'wrapup' },
 ]
 
 const normalize = (s: string) =>

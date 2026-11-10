@@ -1,13 +1,13 @@
 """
-Teste la Definition of Done de [M1] de bout en bout, sur le vrai CLI :
-« fermer et rouvrir le CLI conserve l'historique et les préférences ».
+Tests the [M1] Definition of Done end to end, on the real CLI:
+"closing and reopening the CLI keeps the history and preferences".
 
-Ollama n'est pas appelé : `stream_chat` est remplacé par un faux modèle qui
-note les messages reçus. C'est ce qui permet de vérifier ce que le modèle
-*voit* au second lancement, pas seulement ce qui est écrit en base.
+Ollama is not called: `stream_chat` is replaced by a fake model that
+records the messages it receives. That is what lets us check what the model
+*sees* on the second launch, not just what is written to the database.
 
-`test_tour_en_echec_non_sauvegarde` protège la gestion d'erreurs du Base
-Loop : il échoue si on sauvegarde la session avant d'avoir la réponse complète.
+`test_failed_turn_is_not_saved` protects the Base Loop error handling:
+it fails if the session is saved before the full answer is received.
 """
 import builtins
 import sqlite3
@@ -22,25 +22,25 @@ from sensai.knowledge.memory import SESSIONS_FILE, SessionStore
 
 @pytest.fixture
 def lancer(tmp_path, monkeypatch):
-    """Retourne une fonction qui lance le CLI avec une liste d'entrées clavier.
+    """Return a function that runs the CLI with a list of keyboard inputs.
 
-    Renvoie les listes de messages envoyées au modèle, une par tour.
+    It returns the message lists sent to the model, one per turn.
     """
     projet = tmp_path / "projet"
     projet.mkdir()
     monkeypatch.chdir(projet)
 
-    def _lancer(entrees, *, reponse="D'accord.", echec=False, **options):
+    def _lancer(entrees, *, reponse="Got it.", echec=False, **options):
         settings = {
-            "model": "faux-modele",
+            "model": "fake-model",
             "host": "http://localhost:11434",
-            "system_prompt": "Tu es CodeSensei.",
+            "system_prompt": "You are CodeSensai.",
             "session": None,
             "new_session": False,
             "data_dir": str(tmp_path / "donnees"),
-            "memory_prompt": "CONSIGNE_DE_REPRISE",
+            "memory_prompt": "RESUME_INSTRUCTION",
             "retention_days": 30,
-            # RAG coupé : ces tests portent sur M1 et ne doivent pas appeler Ollama.
+            # RAG off: these tests cover M1 and must not call Ollama.
             "rag": False,
             "rag_model": "bge-m3",
             "rag_min_score": 0.5,
@@ -52,7 +52,7 @@ def lancer(tmp_path, monkeypatch):
         def faux_stream_chat(host, model, messages):
             envoyes.append([dict(m) for m in messages])
             if echec:
-                raise OllamaError("Ollama injoignable")
+                raise OllamaError("Ollama unreachable")
             yield reponse
 
         restantes = iter(entrees)
@@ -72,87 +72,87 @@ def lancer(tmp_path, monkeypatch):
     return _lancer
 
 
-def test_historique_conserve_apres_relance(lancer, capsys):
-    lancer(["Le test de login échoue"], reponse="Montre-moi la trace.")
+def test_history_kept_after_restart(lancer, capsys):
+    lancer(["The login test fails"], reponse="Show me the traceback.")
 
-    envoyes = lancer(["Tu te souviens du bug ?"])
+    envoyes = lancer(["Do you remember the bug?"])
 
     messages = envoyes[0]
-    assert {"role": "user", "content": "Le test de login échoue"} in messages
-    assert {"role": "assistant", "content": "Montre-moi la trace."} in messages
+    assert {"role": "user", "content": "The login test fails"} in messages
+    assert {"role": "assistant", "content": "Show me the traceback."} in messages
     assert "2 messages" in capsys.readouterr().out
 
 
-def test_consigne_de_reprise_seulement_si_session_reprise(lancer):
-    """Essai réel (qwen3-coder:30b) : sur une session reprise, le modèle disait
-    « je ne peux pas me souvenir » tout en citant le bug de la session précédente.
-    La consigne lui dit que l'historique est réel ; elle n'a de sens, et n'est
-    envoyée, que si une session a été reprise."""
-    premier = lancer(["Le test de login échoue"])
-    assert "CONSIGNE_DE_REPRISE" not in premier[0][0]["content"], "nouvelle session"
+def test_resume_instruction_only_for_resumed_session(lancer):
+    """Real trial run (qwen3-coder:30b): on a resumed session, the model said
+    "I cannot remember" while quoting the bug from the previous session.
+    The instruction tells it the history is real; it only makes sense, and is
+    only sent, when a session was resumed."""
+    premier = lancer(["The login test fails"])
+    assert "RESUME_INSTRUCTION" not in premier[0][0]["content"], "new session"
 
-    reprise = lancer(["Tu te souviens du bug ?"])
-    assert "CONSIGNE_DE_REPRISE" in reprise[0][0]["content"]
+    reprise = lancer(["Do you remember the bug?"])
+    assert "RESUME_INSTRUCTION" in reprise[0][0]["content"]
 
-    nouvelle = lancer(["Bonjour"], new_session=True)
-    assert "CONSIGNE_DE_REPRISE" not in nouvelle[0][0]["content"]
+    nouvelle = lancer(["Hello"], new_session=True)
+    assert "RESUME_INSTRUCTION" not in nouvelle[0][0]["content"]
 
 
-def test_preference_conservee_apres_relance(lancer):
-    lancer(["/remember utilise pytest"])
+def test_preference_kept_after_restart(lancer):
+    lancer(["/remember use pytest"])
 
-    envoyes = lancer(["Écris un test"], new_session=True)
+    envoyes = lancer(["Write a test"], new_session=True)
 
     systeme = envoyes[0][0]
     assert systeme["role"] == "system"
-    assert "utilise pytest" in systeme["content"]
+    assert "use pytest" in systeme["content"]
 
 
-def test_nouvelle_session_n_emporte_pas_l_historique(lancer):
-    lancer(["Le test de login échoue"])
+def test_new_session_does_not_carry_history(lancer):
+    lancer(["The login test fails"])
 
-    envoyes = lancer(["Bonjour"], new_session=True)
+    envoyes = lancer(["Hello"], new_session=True)
 
     assert [m["role"] for m in envoyes[0]] == ["system", "user"]
 
 
-def test_tour_en_echec_non_sauvegarde(lancer):
-    lancer(["Question qui échoue"], echec=True)
+def test_failed_turn_is_not_saved(lancer):
+    lancer(["Question that fails"], echec=True)
 
-    envoyes = lancer(["Bonjour"])
+    envoyes = lancer(["Hello"])
 
     contenus = [m["content"] for m in envoyes[0]]
-    assert "Question qui échoue" not in contenus
+    assert "Question that fails" not in contenus
 
 
-def test_profil_illisible_ne_bloque_pas_le_demarrage(lancer, tmp_path, capsys):
+def test_unreadable_profile_does_not_block_startup(lancer, tmp_path, capsys):
     donnees = tmp_path / "donnees"
     donnees.mkdir()
-    (donnees / "profile.json").write_text("{ pas du json", encoding="utf-8")
+    (donnees / "profile.json").write_text("{ not json", encoding="utf-8")
 
-    envoyes = lancer(["Bonjour"])
+    envoyes = lancer(["Hello"])
 
-    assert envoyes, "le CLI doit avoir répondu malgré le profil illisible"
+    assert envoyes, "the CLI must answer despite the unreadable profile"
     assert "profil" in capsys.readouterr().out.lower()
 
 
-def test_base_corrompue_ne_bloque_pas_le_demarrage(lancer, tmp_path, capsys):
-    """La base n'est ni écrasée ni supprimée : elle contient peut-être des
-    conversations récupérables. Le CLI démarre sans historique."""
+def test_corrupt_database_does_not_block_startup(lancer, tmp_path, capsys):
+    """The database is neither overwritten nor deleted: it may hold
+    recoverable conversations. The CLI starts without history."""
     donnees = tmp_path / "donnees"
     donnees.mkdir()
     base = donnees / "sessions.db"
-    base.write_bytes(b"ceci n'est pas une base SQLite" * 100)
+    base.write_bytes(b"this is not a SQLite database" * 100)
 
-    envoyes = lancer(["Bonjour"])
+    envoyes = lancer(["Hello"])
 
-    assert envoyes, "le CLI doit avoir répondu malgré la base corrompue"
+    assert envoyes, "the CLI must answer despite the corrupt database"
     assert "sessions.db" in capsys.readouterr().out
-    assert base.read_bytes() == b"ceci n'est pas une base SQLite" * 100
+    assert base.read_bytes() == b"this is not a SQLite database" * 100
 
 
-def test_echec_de_sauvegarde_ne_coupe_pas_la_conversation(lancer, monkeypatch, capsys):
-    """Disque plein : on prévient, mais la conversation continue."""
+def test_save_failure_does_not_stop_the_conversation(lancer, monkeypatch, capsys):
+    """Disk full: warn, but the conversation goes on."""
     import sqlite3
 
     from sensai.knowledge.memory import SessionStore
@@ -162,19 +162,19 @@ def test_echec_de_sauvegarde_ne_coupe_pas_la_conversation(lancer, monkeypatch, c
 
     monkeypatch.setattr(SessionStore, "save", save_impossible)
 
-    envoyes = lancer(["Premier message", "Second message"])
+    envoyes = lancer(["First message", "Second message"])
 
-    assert len(envoyes) == 2, "le second tour doit avoir eu lieu"
-    assert {"role": "user", "content": "Premier message"} in envoyes[1]
+    assert len(envoyes) == 2, "the second turn must have happened"
+    assert {"role": "user", "content": "First message"} in envoyes[1]
     assert "disk is full" in capsys.readouterr().out
 
 
-def test_session_inconnue_ne_plante_pas(lancer, capsys):
+def test_unknown_session_does_not_crash(lancer, capsys):
     lancer([], session="nexiste-pas")
 
     sortie = capsys.readouterr().out
     assert "nexiste-pas" in sortie
-    assert "purgée" in sortie, "l'utilisateur doit comprendre pourquoi elle a pu disparaître"
+    assert "purged" in sortie, "the user must understand why it may have disappeared"
 
 
 def _vieillir_tout(tmp_path, jours):
@@ -183,44 +183,44 @@ def _vieillir_tout(tmp_path, jours):
         conn.execute("UPDATE sessions SET updated_at = ?", (date,))
 
 
-def test_purge_au_demarrage_est_annoncee(lancer, tmp_path, capsys):
-    lancer(["Vieux bug oublié"])
+def test_startup_purge_is_announced(lancer, tmp_path, capsys):
+    lancer(["Old forgotten bug"])
     _vieillir_tout(tmp_path, 31)
     capsys.readouterr()
 
-    envoyes = lancer(["Bonjour"])
+    envoyes = lancer(["Hello"])
 
     sortie = capsys.readouterr().out
-    assert "1 session" in sortie and "30 jours" in sortie
-    assert [m["role"] for m in envoyes[0]] == ["system", "user"], "rien ne doit être repris"
+    assert "1 session" in sortie and "30 days" in sortie
+    assert [m["role"] for m in envoyes[0]] == ["system", "user"], "nothing must be resumed"
 
 
-def test_retention_zero_garde_tout(lancer, tmp_path):
-    lancer(["Vieux bug oublié"])
+def test_zero_retention_keeps_everything(lancer, tmp_path):
+    lancer(["Old forgotten bug"])
     _vieillir_tout(tmp_path, 400)
 
-    envoyes = lancer(["Tu te souviens ?"], retention_days=0)
+    envoyes = lancer(["Do you remember?"], retention_days=0)
 
-    assert {"role": "user", "content": "Vieux bug oublié"} in envoyes[0]
+    assert {"role": "user", "content": "Old forgotten bug"} in envoyes[0]
 
 
-def test_versions_de_prompts_affichees_au_lancement(lancer, capsys):
-    """A4 (ADR-0010) : savoir avec quel prompt les réponses sont produites."""
+def test_prompt_versions_shown_at_startup(lancer, capsys):
+    """A4 (ADR-0010): know which prompt produced the answers."""
     lancer([], prompt_versions={"system": "v3", "memory": "v1"})
 
     assert "prompts : system v3, memory v1" in capsys.readouterr().out
 
 
-def test_sans_registre_aucune_ligne_de_versions(lancer, capsys):
+def test_without_registry_no_versions_line(lancer, capsys):
     lancer([])
 
     assert "prompts :" not in capsys.readouterr().out
 
 
-def test_secret_colle_dans_le_chat_enregistre_masque(lancer, tmp_path):
-    """Issue #66 : un secret collé dans le chat ne finit pas en clair dans
-    sessions.db, ni dans ce qui part au modèle (filtre d'entrée EV2, ADR-0027)."""
-    envoyes = lancer(['Ma clé est API_KEY="sk-abcdef1234567890abcdef", pourquoi ça échoue ?'])
+def test_secret_pasted_in_chat_is_saved_masked(lancer, tmp_path):
+    """Issue #66: a secret pasted in the chat does not end up in clear text in
+    sessions.db, nor in what is sent to the model (EV2 input filter, ADR-0027)."""
+    envoyes = lancer(['My key is API_KEY="sk-abcdef1234567890abcdef", why does it fail?'])
 
     assert "sk-abcdef1234567890abcdef" not in str(envoyes)
     store = SessionStore(tmp_path / "donnees" / SESSIONS_FILE)

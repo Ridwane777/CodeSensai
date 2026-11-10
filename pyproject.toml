@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sensai"
 version = "0.1.0"
-description = "CodeSensei — agent développeur local (Ollama, sans framework LLM)"
+description = "CodeSensai — local developer agent (Ollama, no LLM framework)"
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.31",
@@ -32,24 +32,24 @@ sensai-web = "sensai.web.cli:main"
 where = ["src"]
 
 [tool.ruff]
-# 100 colonnes : les descriptions d'outils et les commentaires sont en français,
-# plus verbeux que l'anglais. 88 obligeait à couper des phrases en deux.
+# 100 columns: tool descriptions and comments are fairly verbose;
+# 88 forced splitting sentences in two.
 line-length = 100
-# Le dossier docker/ à la racine (image Chromium) n'est pas le paquet `docker` du SDK.
+# The root docker/ folder (Chromium image) is not the SDK's `docker` package.
 src = ["src"]
 
 [tool.ruff.lint]
-# Jeu de règles explicite : sans ça, `ruff` en CI suit ses défauts, qui changent
-# d'une version à l'autre — la CI casserait toute seule sans qu'on ait touché au code.
+# Explicit rule set: otherwise `ruff` in CI follows its defaults, which change
+# between versions — CI would break on its own without any code change.
 select = ["E", "F", "I", "UP", "B", "RUF"]
-# UP042 propose StrEnum : str() d'un StrEnum rend la valeur, pas « Risk.WRITE ».
-# Changement de comportement, à faire à part s'il le faut, pas au passage à 3.12.
+# UP042 suggests StrEnum: str() of a StrEnum returns the value, not "Risk.WRITE".
+# That is a behavior change, to be done separately if needed, not as part of the 3.12 bump.
 ignore = ["UP042"]
 
 [tool.ruff.lint.per-file-ignores]
-# Hors du paquet : un prototype gardé comme trace (spike) et un script de
-# préparation d'images du frontend. Lignes longues tolérées, le reste est vérifié.
-"docs/conception/web_facade_spike.py" = ["E501"]
+# Outside the package: a prototype kept for reference (spike) and a frontend
+# image-preparation script. Long lines allowed, everything else is checked.
+"docs/design/web_facade_spike.py" = ["E501"]
 "frontend/scripts/prepare_ai_frames.py" = ["E501"]
 
 [tool.pytest.ini_options]

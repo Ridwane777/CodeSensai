@@ -1,11 +1,11 @@
 """
-[Lot C — Ridwane] Expose la recherche RAG (knowledge/rag.py) comme un Tool
-appelable par l'agent — feature [R1] Basic RAG.
+[Workstream C — Ridwane] Exposes RAG search (knowledge/rag.py) as a Tool
+the agent can call — feature [R1] Basic RAG.
 
-Le CLI ajoute déjà automatiquement les passages pertinents à chaque question.
-Cet outil sert à la boucle ReAct du Lot A : le modèle pourra chercher lui-même,
-plusieurs fois et avec ses propres mots (ADR-0009, décision 4). Le CLI
-l'enregistre sans index et le lui donne à la première question (ADR-0013).
+The CLI already adds the relevant passages to every question automatically.
+This tool serves Workstream A's ReAct loop: the model can search by itself,
+several times and in its own words (ADR-0009, decision 4). The CLI registers
+it without an index and hands it one on the first question (ADR-0013).
 """
 from __future__ import annotations
 
@@ -23,19 +23,19 @@ from sensai.knowledge.rag import (
 
 class RagTool:
     name = "search_codebase"
-    # Lecture seule : la passerelle l'autorise sans confirmation (ADR-0006).
+    # Read-only: the gateway allows it without confirmation (ADR-0006).
     risk = "read"
     description = (
-        "Cherche dans le code et la documentation du projet les passages les plus "
-        "proches d'une question, avec leur fichier et leurs lignes."
+        "Searches the project's code and documentation for the passages closest "
+        "to a question, with their file and lines."
     )
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "query": {"type": "string", "description": "Ce qu'on cherche"},
+            "query": {"type": "string", "description": "What to search for"},
             "kind": {"type": "string", "enum": ["code", "doc"],
-                     "description": "Seulement le code, ou seulement la documentation"},
-            "path": {"type": "string", "description": "Seulement ce dossier, ex. src/sensai"},
+                     "description": "Only code, or only documentation"},
+            "path": {"type": "string", "description": "Only this directory, e.g. src/sensai"},
         },
         "required": ["query"],
     }
@@ -53,17 +53,17 @@ class RagTool:
     def run(self, **kwargs) -> ToolResult:
         query = str(kwargs.get("query", "")).strip()
         if not query:
-            return ToolResult(ok=False, content="Requête vide : précise ce qu'il faut chercher.")
+            return ToolResult(ok=False, content="Empty query: say what to search for.")
         if self.index is None:
-            return ToolResult(ok=False, content="Recherche indisponible : projet non indexé.")
+            return ToolResult(ok=False, content="Search unavailable: project not indexed.")
         try:
-            # Filtres de R2 (US-R2-2) : une valeur inconnue est ignorée, pas refusée.
+            # R2 filters (US-R2-2): an unknown value is ignored, not rejected.
             kind = kwargs.get("kind") if kwargs.get("kind") in ("code", "doc") else None
             path = str(kwargs.get("path") or "").strip() or None
             hits = self.index.search(query, top_k=self.top_k, min_score=self.min_score,
                                      kind=kind, path=path)
         except EmbeddingError as e:
-            # Contrat Tool : jamais d'exception, l'agent doit pouvoir continuer.
-            return ToolResult(ok=False, content=f"Recherche impossible : {e}")
+            # Tool contract: never raise, the agent must be able to continue.
+            return ToolResult(ok=False, content=f"Search failed: {e}")
         content = format_search_results(query, hits)
         return ToolResult(ok=True, content=content, data={"passages": hits})

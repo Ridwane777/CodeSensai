@@ -1,25 +1,28 @@
 """
-Paramètres de génération (ADR-0057) et débit réel (tokens/s) du modèle.
+Generation parameters (ADR-0057) and actual model throughput (tokens/s).
 
-Quels paramètres de génération envoyer, et quel débit (tokens/s) sur nos
-propres machines. Ce script joue le même jeu de questions, à réponse vérifiable,
-sous plusieurs réglages, plusieurs fois chacun, et relève pour chaque réglage :
+Which generation parameters to send, and what throughput (tokens/s) we get on
+our own machines. This script plays the same set of questions with checkable
+answers under several settings, several times each, and records per setting:
 
-- justesse : la réponse contient ce qu'on attend (vérifié par une regex) ;
-- stabilité : part des questions qui donnent la même réponse à chaque essai ;
-- débit : tokens générés / seconde (eval_count / eval_duration, chiffres
-  renvoyés par Ollama lui-même), et vitesse de lecture du prompt.
+- accuracy: the answer contains what we expect (checked by a regex);
+- stability: share of questions that give the same answer on every run;
+- throughput: generated tokens / second (eval_count / eval_duration, figures
+  returned by Ollama itself), and prompt reading speed.
 
-Le jeu a été écrit avant la mesure. Usage :
+The dataset was written before the measurement. Usage:
 
-    python scripts/bench_generation.py --host http://<hôte-ollama>:11434 \
+    python scripts/bench_generation.py --host http://<ollama-host>:11434 \
         --model qwen3-coder:30b --runs 3 --out docs/performance/data/generation.json
 
-Sur le poste de développement (qwen3:8b, raisonnement coupé pour mesurer la réponse) :
+On the development laptop (qwen3:8b, reasoning off to measure the answer alone):
 
     ollama pull qwen3:8b
     python scripts/bench_generation.py --host http://localhost:11434 --model qwen3:8b \
         --think off --runs 1 --out docs/performance/data/generation-laptop-qwen3-8b.json
+
+The questions were translated from French after the published measurements;
+the regexes check the same answers.
 """
 import argparse
 import json
@@ -30,69 +33,71 @@ from pathlib import Path
 
 import requests
 
-SYSTEM = "Tu es CodeSensei, un assistant de développement. Réponds brièvement."
+SYSTEM = "You are CodeSensai, a development assistant. Answer briefly."
 
-# (question, regex que la bonne réponse doit contenir)
+# (question, regex the correct answer must contain)
 CASES = [
-    ("En Python, que renvoie len([]) ? Réponds juste la valeur.", r"\b0\b"),
-    ("Quelle commande lance les tests avec pytest en mode silencieux ? Juste la commande.",
-     r"pytest\s+(-q|--quiet)"),  # --quiet ajouté après la mesure locale : même option
-    ("Corrige ce code pour qu'une liste vide renvoie 0, réponds avec le code seul :\n"
-     "def moyenne(notes):\n    return sum(notes) / len(notes)",
-     # Corrigé après la première mesure : « if notes else 0 » est juste aussi.
-     r"if\s+not\s+notes|len\(notes\)\s*==\s*0|if\s+notes\s+else\s+0"),
-    ("Quel est le code HTTP d'une ressource introuvable ? Juste le nombre.", r"\b404\b"),
-    ("Écris une fonction Python mediane(notes) qui renvoie la médiane d'une liste non vide. "
-     # Corrigé après la première mesure : trier sur place (.sort()) donne aussi la médiane.
-     "Code seul.", r"def\s+mediane\s*\(.*(sorted|\.sort\()"),
-    ("Quel module de la bibliothèque standard Python sert à lire du JSON ? Un mot.",
+    ("In Python, what does len([]) return? Answer with the value only.", r"\b0\b"),
+    ("Which command runs the tests with pytest in quiet mode? Just the command.",
+     r"pytest\s+(-q|--quiet)"),  # --quiet added after the local measurement: same option
+    ("Fix this code so that an empty list returns 0, answer with the code only:\n"
+     "def mean(grades):\n    return sum(grades) / len(grades)",
+     # Fixed after the first measurement: "if grades else 0" is correct too.
+     r"if\s+not\s+grades|len\(grades\)\s*==\s*0|if\s+grades\s+else\s+0"),
+    ("What is the HTTP status code for a resource that was not found? Just the number.",
+     r"\b404\b"),
+    ("Write a Python function median(grades) that returns the median of a non-empty list. "
+     # Fixed after the first measurement: sorting in place (.sort()) also gives the median.
+     "Code only.", r"def\s+median\s*\(.*(sorted|\.sort\()"),
+    ("Which Python standard library module reads JSON? One word.",
      r"\bjson\b"),
 ]
 
-# Jeu « hard » : le jeu basic est trop facile et sa grille a été élargie après coup.
-# Écrit et committé AVANT toute mesure : sa grille ne change plus après les essais.
-# Calcul, complexité, commandes, corrections de code et raisonnements à étapes.
+# "hard" set: the basic set is too easy and its grading regexes were widened afterwards.
+# Written and committed BEFORE any measurement: its regexes no longer change after the runs.
+# Arithmetic, complexity, commands, code fixes and multi-step reasoning.
 HARD_CASES = [
-    ("Que renvoie sorted([3, 1, 2], reverse=True) en Python ? La valeur seule.",
+    ("What does sorted([3, 1, 2], reverse=True) return in Python? The value only.",
      r"\[\s*3\s*,\s*2\s*,\s*1\s*\]"),
-    ('Que vaut "abc"[::-1] en Python ? La valeur seule.', r"cba"),
-    ("Quelle est la complexité d'une recherche dichotomique dans une liste triée de n éléments ?",
+    ('What is "abc"[::-1] in Python? The value only.', r"cba"),
+    ("What is the complexity of a binary search in a sorted list of n elements?",
      r"O\(\s*log\s*\(?\s*n\s*\)?\s*\)"),
-    ("Quelle commande git crée une branche nommée fix et bascule dessus ? La commande seule.",
+    ("Which git command creates a branch named fix and switches to it? The command only.",
      r"git\s+(switch\s+-c|checkout\s+-b)\s+fix"),
-    ("Quel code HTTP renvoie une API quand une ressource vient d'être créée ? Le nombre seul.",
+    ("Which HTTP status code does an API return when a resource has just been created? "
+     "The number only.",
      r"\b201\b"),
-    ('Quelle exception lève int("x") en Python ? Le nom seul.', r"\bValueError\b"),
-    ("Quelle option de pytest arrête la suite au premier échec ? L'option seule.",
+    ('Which exception does int("x") raise in Python? The name only.', r"\bValueError\b"),
+    ("Which pytest option stops the suite at the first failure? The option only.",
      r"(?<![\w-])(-x|--exitfirst)\b"),
-    ("Écris la requête SQL qui compte les lignes de la table users. La requête seule.",
+    ("Write the SQL query that counts the rows of the users table. The query only.",
      r"(?i)select\s+count\s*\(\s*\*\s*\)\s+from\s+users"),
-    ("Quelle commande Docker liste les conteneurs en cours d'exécution ? La commande seule.",
+    ("Which Docker command lists the running containers? The command only.",
      r"docker\s+(ps|container\s+ls)\b"),
-    ("Quelle fonction du module json transforme un dict Python en chaîne JSON ? Le nom seul.",
+    ("Which json module function turns a Python dict into a JSON string? The name only.",
      r"json\.dumps|\bdumps\b"),
-    ("Quel verbe HTTP remplace entièrement une ressource existante ? Un mot.", r"\bPUT\b"),
-    ("Que renvoie len(set([1, 1, 2])) en Python ? La valeur seule.", r"(?<![\d.])2(?![\d.])"),
-    ("Quelle est la complexité moyenne d'une recherche par clé dans un dict Python ?",
+    ("Which HTTP verb fully replaces an existing resource? One word.", r"\bPUT\b"),
+    ("What does len(set([1, 1, 2])) return in Python? The value only.", r"(?<![\d.])2(?![\d.])"),
+    ("What is the average complexity of a key lookup in a Python dict?",
      r"O\(\s*1\s*\)"),
-    ("Corrige pour que la boucle aille de 1 à n inclus, code seul : for i in range(1, n): print(i)",
+    ("Fix this so the loop goes from 1 to n inclusive, code only: for i in range(1, n): print(i)",
      r"range\(\s*1\s*,\s*n\s*\+\s*1\s*\)"),
-    ("Écris en Python une fonction est_palindrome(s) qui renvoie True si s se lit pareil dans "
-     "les deux sens. Code seul.", r"def\s+est_palindrome\s*\(.*(\[::-1\]|reversed)"),
-    ("Que renvoie [x * x for x in range(1, 6)] en Python ? La valeur seule.",
+    ("Write a Python function is_palindrome(s) that returns True if s reads the same in "
+     "both directions. Code only.", r"def\s+is_palindrome\s*\(.*(\[::-1\]|reversed)"),
+    ("What does [x * x for x in range(1, 6)] return in Python? The value only.",
      r"\[\s*1\s*,\s*4\s*,\s*9\s*,\s*16\s*,\s*25\s*\]"),
-    ("Un fichier contient 3 fonctions de 10 lignes et 2 fonctions de 4 lignes. Combien de lignes "
-     "de fonctions au total ? Le nombre seul.", r"(?<![\d.])38(?![\d.])"),
-    ("Une requête prend 120 ms. On en lance 50 l'une après l'autre. Combien de secondes au total ? "
-     "Le nombre seul.", r"(?<![\d.])6(?:[.,]0+)?(?![\d.])"),
-    ("Un test échoue 1 fois sur 4. On le lance 2 fois de suite, indépendamment. Quelle est la "
-     "probabilité qu'il réussisse les 2 fois ? En fraction.", r"9\s*/\s*16"),
-    ("Une liste triée contient 1024 éléments. Combien de comparaisons au plus pour une recherche "
-     "dichotomique ? Le nombre seul.", r"(?<![\d.])(10|11)(?![\d.])"),
-    ("En Python 3.9+, avec quel opérateur fusionne-t-on deux dict a et b ? L'expression seule.",
+    ("A file contains 3 functions of 10 lines and 2 functions of 4 lines. How many lines "
+     "of functions in total? The number only.", r"(?<![\d.])38(?![\d.])"),
+    ("A request takes 120 ms. We run 50 of them one after another. How many seconds in total? "
+     "The number only.", r"(?<![\d.])6(?:[.,]0+)?(?![\d.])"),
+    ("A test fails 1 time in 4. We run it twice in a row, independently. What is the "
+     "probability that it passes both times? As a fraction.", r"9\s*/\s*16"),
+    ("A sorted list contains 1024 elements. At most how many comparisons for a binary "
+     "search? The number only.", r"(?<![\d.])(10|11)(?![\d.])"),
+    ("In Python 3.9+, which operator merges two dicts a and b? The expression only.",
      r"a\s*\|\s*b|\{\s*\*\*a\s*,\s*\*\*b\s*\}"),
-    ("Corrige ce code pour qu'il ne plante pas sur une liste vide, code seul :\n"
-     "def premier(l):\n    return l[0]", r"(if\s+not\s+l|len\(l\)\s*==\s*0|if\s+l\b|IndexError)"),
+    ("Fix this code so it does not crash on an empty list, code only:\n"
+     "def first(l):\n    return l[0]", r"(if\s+not\s+l|len\(l\)\s*==\s*0|if\s+l\b|IndexError)"),
 ]
 
 NUM_PREDICT = 512
@@ -111,12 +116,11 @@ def ask(host, model, question, options, num_ctx, think=None):
     payload = {"model": model, "stream": False,
                "messages": [{"role": "system", "content": SYSTEM},
                             {"role": "user", "content": question}],
-               # num_predict borné pour tous les réglages : sans limite, une génération
-               # à haute température peut ne jamais s'arrêter (une requête bloquée 600 s
-               # le 2026-11-02).
+               # num_predict is capped for every setting: without a limit, a high-temperature
+               # generation may never stop (one request hung for 600 s on 2026-11-02).
                "options": {**options, "num_ctx": num_ctx, "num_predict": NUM_PREDICT}}
-    # qwen3 (dont qwen3:8b) raisonne par défaut avant de répondre : `think` le coupe
-    # (off) ou le garde (on) ; non envoyé, le modèle fait comme il veut.
+    # qwen3 (including qwen3:8b) reasons by default before answering: `think` turns it
+    # off or keeps it on; when not sent, the model does as it pleases.
     if think is not None:
         payload["think"] = think
     started = time.monotonic()
@@ -125,11 +129,11 @@ def ask(host, model, question, options, num_ctx, think=None):
         r.raise_for_status()
         body = r.json()
     except requests.exceptions.Timeout:
-        # Comptée comme une réponse fausse, pas comme un plantage de la mesure.
+        # Counted as a wrong answer, not as a crash of the measurement.
         body = {"message": {"content": ""}, "timed_out": True}
     message = body.get("message", {})
     return {
-        # Le modèle tel qu'Ollama le nomme dans sa réponse, pas l'argument du script.
+        # The model as Ollama names it in its response, not the script argument.
         "served_model": body.get("model", ""),
         "text": message.get("content", ""),
         "timed_out": bool(body.get("timed_out")),
@@ -150,23 +154,23 @@ def main() -> None:
     parser.add_argument("--num-ctx", type=int, default=8192)
     parser.add_argument("--out", type=Path)
     parser.add_argument("--set", choices=["basic", "hard"], default="basic", dest="case_set",
-                        help="Jeu de questions : basic (6, la première mesure) ou hard (22)")
+                        help="Question set: basic (6, the first measurement) or hard (22)")
     parser.add_argument("--think", choices=["model", "on", "off"], default="model",
-                        help="Raisonnement de qwen3 : off pour mesurer la réponse seule, "
-                             "on pour le garder (compté dans eval_count), model : non envoyé")
+                        help="qwen3 reasoning: off to measure the answer alone, "
+                             "on to keep it (counted in eval_count), model: not sent")
     args = parser.parse_args()
     think = {"model": None, "on": True, "off": False}[args.think]
     cases = HARD_CASES if args.case_set == "hard" else CASES
 
-    # Le modèle doit être installé : sinon Ollama répond 404 sans le dire clairement.
+    # The model must be installed: otherwise Ollama answers 404 without saying so clearly.
     tags = requests.get(f"{args.host.rstrip('/')}/api/tags", timeout=30).json()
     installed = {m.get("name") for m in tags.get("models", [])}
     if args.model not in installed and f"{args.model}:latest" not in installed:
-        raise SystemExit(f"{args.model} n'est pas installé sur {args.host} : "
-                         f"lancer `ollama pull {args.model}` (installés : {sorted(installed)})")
+        raise SystemExit(f"{args.model} is not installed on {args.host}: "
+                         f"run `ollama pull {args.model}` (installed: {sorted(installed)})")
 
-    # Chargement du modèle hors mesure : le premier appel paie le chargement.
-    served = ask(args.host, args.model, "Bonjour.", {}, args.num_ctx, think)["served_model"]
+    # Load the model outside the measurement: the first call pays for loading.
+    served = ask(args.host, args.model, "Hello.", {}, args.num_ctx, think)["served_model"]
     results = {}
     for name, options in SETTINGS.items():
         answers, rows = {}, []
@@ -190,16 +194,16 @@ def main() -> None:
         }
         r = results[name]
         stable = f"{r['stable_cases']}/{r['cases']}"
-        print(f"{name:16} justesse {r['accuracy']:.0%}  stables {stable}  "
-              f"génération {r['gen_tokens_per_s_median']} tok/s  lecture "
-              f"{r['prompt_tokens_per_s_median']} tok/s  {r['wall_s_median']} s/réponse",
+        print(f"{name:16} accuracy {r['accuracy']:.0%}  stable {stable}  "
+              f"generation {r['gen_tokens_per_s_median']} tok/s  reading "
+              f"{r['prompt_tokens_per_s_median']} tok/s  {r['wall_s_median']} s/answer",
               flush=True)
         save(args, served, results)
     save(args, served, results)
 
 
 def save(args, served, results) -> None:
-    """Écrit les résultats déjà obtenus : appelé après chaque réglage."""
+    """Writes the results obtained so far: called after each setting."""
     if args.out:
         report = {"model": served, "requested_model": args.model, "think": args.think,
                   "case_set": args.case_set, "runs": args.runs, "num_ctx": args.num_ctx,

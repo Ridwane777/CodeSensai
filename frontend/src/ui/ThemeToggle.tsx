@@ -21,14 +21,14 @@ export function ThemeToggle() {
     const next: Theme = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
     document.documentElement.dataset.theme = next
-    try { localStorage.setItem('sensai-theme', next) } catch { /* ignoré */ }
+    try { localStorage.setItem('sensai-theme', next) } catch { /* ignored */ }
   }
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={`Changer de thème (actuellement ${theme === 'light' ? 'clair' : 'sombre'})`}
+      aria-label={`Change theme (currently ${theme === 'light' ? 'light' : 'dark'})`}
       className="grid h-10 w-10 place-items-center rounded-full border border-line bg-surface/60 text-lg hover:bg-accent-soft"
     >
       <span aria-hidden="true">{theme === 'light' ? '☾' : '☀'}</span>

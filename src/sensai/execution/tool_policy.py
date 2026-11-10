@@ -1,10 +1,10 @@
 """
-Niveaux de risque, modes de permission et préférences utilisateur des outils.
+Risk levels, permission modes and user preferences for tools.
 
-Fait partie du contrat de la passerelle d'outils (docs/architecture/tool-contract.md,
-ADR-0006). Ce module ne décide rien tout seul : il répond à une seule
-question — « pour cet outil, que doit faire la passerelle avant de l'exécuter :
-laisser passer, demander, ou refuser ? ».
+Part of the tool gateway contract (docs/architecture/tool-contract.md,
+ADR-0006). This module decides nothing on its own: it answers a single
+question — "for this tool, what must the gateway do before running it:
+let it through, ask, or refuse?".
 """
 from __future__ import annotations
 
@@ -17,24 +17,24 @@ from typing import Any
 
 
 class Risk(str, Enum):
-    """Ce qu'un outil peut abîmer. Chaque outil en déclare un (attribut `risk`)."""
+    """What a tool can damage. Every tool declares one (`risk` attribute)."""
 
-    READ = "read"  # lit, ne change rien (RAG, lecture de fichier autorisé)
-    NETWORK = "network"  # sort sur Internet (recherche web)
-    WRITE = "write"  # modifie le disque ou un état durable
-    EXECUTE = "execute"  # exécute du code (sandbox) : le pire cas
+    READ = "read"  # reads, changes nothing (RAG, reading an allowed file)
+    NETWORK = "network"  # goes out to the Internet (web search)
+    WRITE = "write"  # modifies the disk or durable state
+    EXECUTE = "execute"  # runs code (sandbox): the worst case
 
 
 class Mode(str, Enum):
-    ALLOW = "allow"  # s'exécute sans demander
-    ASK = "ask"  # demande une confirmation explicite (A3)
-    DENY = "deny"  # n'est jamais exécuté
+    ALLOW = "allow"  # runs without asking
+    ASK = "ask"  # asks for explicit confirmation (A3)
+    DENY = "deny"  # never runs
 
 
 _STRICTNESS = {Mode.ALLOW: 0, Mode.ASK: 1, Mode.DENY: 2}
 
-# Le critère A3 est « la sandbox ne part jamais sans confirmation explicite » :
-# écrire et exécuter demandent donc par défaut.
+# Requirement A3 is "the sandbox never starts without explicit confirmation":
+# writing and executing therefore ask by default.
 DEFAULT_MODES: dict[Risk, Mode] = {
     Risk.READ: Mode.ALLOW,
     Risk.NETWORK: Mode.ALLOW,
@@ -42,10 +42,10 @@ DEFAULT_MODES: dict[Risk, Mode] = {
     Risk.EXECUTE: Mode.ASK,
 }
 
-# Seuls ces niveaux peuvent être assouplis par les préférences. Pour WRITE et
-# EXECUTE une préférence ne peut que durcir : sinon un simple fichier de config
-# (ou une injection de prompt qui arriverait à le modifier) désactiverait la
-# confirmation que A3 promet.
+# Only these levels can be loosened by preferences. For WRITE and EXECUTE a
+# preference can only tighten: otherwise a plain config file (or a prompt
+# injection that managed to modify it) would disable the confirmation A3
+# promises.
 LOOSENABLE = frozenset({Risk.READ, Risk.NETWORK})
 
 _KNOWN_KEYS = {
@@ -60,10 +60,10 @@ _KNOWN_KEYS = {
 
 
 def risk_of(tool: Any) -> Risk:
-    """Risque déclaré par l'outil. Absent ou invalide => EXECUTE (échec fermé).
+    """Risk declared by the tool. Missing or invalid => EXECUTE (fail closed).
 
-    Un outil qui oublie de déclarer son risque doit être traité comme le plus
-    dangereux, pas comme inoffensif.
+    A tool that forgets to declare its risk must be treated as the most
+    dangerous, not as harmless.
     """
     try:
         return Risk(getattr(tool, "risk", None))
@@ -73,23 +73,23 @@ def risk_of(tool: Any) -> Risk:
 
 @dataclass(frozen=True)
 class ToolPreferences:
-    """Préférences de l'utilisateur sur l'usage des outils."""
+    """User preferences on tool usage."""
 
     disabled: frozenset[str] = frozenset()
     modes: Mapping[str, Mode] = field(default_factory=dict)
-    # Plafond de ce qui revient au modèle : un outil bavard ne doit pas
-    # noyer le contexte (cf. [M2] Token Budgeting).
+    # Cap on what goes back to the model: a verbose tool must not flood the
+    # context (see [M2] Token Budgeting).
     max_output_chars: int = 20_000
-    # Délai laissé à l'interface pour obtenir la réponse. Passé dans la demande
-    # de confirmation ; dépassé => refus (exigence web HITL).
+    # Time given to the interface to get the answer. Passed in the
+    # confirmation request; exceeded => refusal (web HITL requirement).
     confirm_timeout_s: float = 60.0
-    # Plafond de durée d'un appel d'outil. Un outil peut déclarer un `timeout_s`
-    # plus court ; jamais plus long : l'utilisateur garde le dernier mot.
+    # Maximum duration of a tool call. A tool can declare a shorter
+    # `timeout_s`, never a longer one: the user has the last word.
     tool_timeout_s: float = 120.0
-    # Durée laissée à un sous-agent (delegate_task, team_task, ADR-0037/0038) ;
-    # même défaut que DELEGATION_TIMEOUT_S. Sur CPU, un seul appel au modèle
-    # dépasse ce délai (essai du 2026-11-06) : l'augmenter avec tool_timeout_s,
-    # qui reste le plafond de tout appel d'outil.
+    # Time given to a sub-agent (delegate_task, team_task, ADR-0037/0038);
+    # same default as DELEGATION_TIMEOUT_S. On CPU, a single model call
+    # exceeds it (trial run of 2026-11-06): raise it together with
+    # tool_timeout_s, which stays the cap for every tool call.
     delegation_timeout_s: float = 120.0
     # Once untrusted content (a web page, a document) has been read, any tool
     # that is not read-only asks for confirmation, even if its mode is "allow".
@@ -98,25 +98,25 @@ class ToolPreferences:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> ToolPreferences:
-        """Construit depuis un dict (ex. la clé "tools" de config.json).
+        """Build from a dict (e.g. the "tools" key of config.json).
 
-        Lève ValueError sur toute clé ou valeur inconnue : une faute de frappe
-        dans « modes » ne doit pas être ignorée en silence, elle laisserait
-        croire qu'une restriction est active alors qu'elle ne l'est pas.
+        Raises ValueError on any unknown key or value: a typo in "modes" must
+        not be silently ignored, it would suggest a restriction is active when
+        it is not.
         """
         unknown = set(data) - _KNOWN_KEYS
         if unknown:
-            raise ValueError(f"Préférences d'outils inconnues : {sorted(unknown)}")
+            raise ValueError(f"Unknown tool preferences: {sorted(unknown)}")
 
         disabled = data.get("disabled", [])
         if not isinstance(disabled, (list, tuple, set, frozenset)) or not all(
             isinstance(n, str) for n in disabled
         ):
-            raise ValueError("'disabled' doit être une liste de noms d'outils")
+            raise ValueError("'disabled' must be a list of tool names")
 
         raw_modes = data.get("modes", {})
         if not isinstance(raw_modes, Mapping):
-            raise ValueError("'modes' doit associer un nom d'outil à un mode")
+            raise ValueError("'modes' must map a tool name to a mode")
         modes = {}
         for tool_name, raw in raw_modes.items():
             try:
@@ -124,16 +124,16 @@ class ToolPreferences:
             except ValueError:
                 allowed = [m.value for m in Mode]
                 raise ValueError(
-                    f"Mode invalide pour {tool_name!r} : {raw!r} (attendu : {allowed})"
+                    f"Invalid mode for {tool_name!r}: {raw!r} (expected: {allowed})"
                 ) from None
 
         max_chars = data.get("max_output_chars", cls.max_output_chars)
         if isinstance(max_chars, bool) or not isinstance(max_chars, int) or max_chars <= 0:
-            raise ValueError("'max_output_chars' doit être un entier > 0")
+            raise ValueError("'max_output_chars' must be an integer > 0")
 
         timeout = data.get("confirm_timeout_s", cls.confirm_timeout_s)
         if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0:
-            raise ValueError("'confirm_timeout_s' doit être un nombre > 0")
+            raise ValueError("'confirm_timeout_s' must be a number > 0")
 
         tool_timeout = data.get("tool_timeout_s", cls.tool_timeout_s)
         if (
@@ -141,7 +141,7 @@ class ToolPreferences:
             or not isinstance(tool_timeout, (int, float))
             or tool_timeout <= 0
         ):
-            raise ValueError("'tool_timeout_s' doit être un nombre > 0")
+            raise ValueError("'tool_timeout_s' must be a number > 0")
 
         delegation_timeout = data.get("delegation_timeout_s", cls.delegation_timeout_s)
         if (
@@ -149,7 +149,7 @@ class ToolPreferences:
             or not isinstance(delegation_timeout, (int, float))
             or delegation_timeout <= 0
         ):
-            raise ValueError("'delegation_timeout_s' doit être un nombre > 0")
+            raise ValueError("'delegation_timeout_s' must be a number > 0")
 
         after_untrusted = data.get("confirm_after_untrusted", cls.confirm_after_untrusted)
         if not isinstance(after_untrusted, bool):
@@ -171,10 +171,10 @@ class ToolPreferences:
 
 
 def effective_mode(name: str, risk: Risk, prefs: ToolPreferences) -> Mode:
-    """Mode appliqué à l'outil `name` : défaut du risque, ajusté par les préférences.
+    """Mode applied to tool `name`: the risk default, adjusted by preferences.
 
-    Les préférences peuvent toujours durcir ; elles ne peuvent assouplir que
-    les niveaux de LOOSENABLE.
+    Preferences can always tighten; they can only loosen the LOOSENABLE
+    levels.
     """
     default = DEFAULT_MODES[risk]
     wanted = prefs.modes.get(name)

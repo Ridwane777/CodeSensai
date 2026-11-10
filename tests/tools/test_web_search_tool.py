@@ -46,7 +46,7 @@ def test_search_returns_numbered_results_for_the_model():
     assert "https://docs.python.org/3/" in result.content
     assert "Event loop" in result.content
     assert result.data["results"][0]["url"] == "https://docs.python.org/3/"
-    # Daté : le modèle ne doit pas prendre des résultats récents pour des erreurs.
+    # Dated: the model must not mistake recent results for errors.
     from datetime import date
     assert f"searched on {date.today().isoformat()}" in result.content
 

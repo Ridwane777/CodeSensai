@@ -1,15 +1,15 @@
 """
-Jeu de données d'évaluation (JSONL, une question par ligne) — feature [EV1],
+Evaluation dataset (JSONL, one question per line) — feature [EV1],
 ADR-0019.
 
     {"id": "cas-1", "question": "...",
-     "answer": "...",                       réponse à juger (sinon --generate)
-     "sources": ["texte", {"source": "src/a.py", "text": "..."}],
-     "notes": "ce que le cas doit montrer"}
+     "answer": "...",                       answer to judge (otherwise --generate)
+     "sources": ["text", {"source": "src/a.py", "text": "..."}],
+     "notes": "what the case must show"}
 
-Seuls `id` et `question` sont obligatoires. Une clé inconnue est une erreur : une
-faute de frappe (`anwser`) ferait sinon juger un cas sans sa réponse. Chaque
-erreur donne le numéro de ligne du fichier.
+Only `id` and `question` are required. An unknown key is an error: a typo
+(`anwser`) would otherwise judge a case without its answer. Every error gives
+the file's line number.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ ALLOWED_KEYS = {"id", "question", "answer", "sources", "notes"}
 
 
 class DatasetError(ValueError):
-    """Fichier illisible ou ligne invalide (le message nomme la ligne)."""
+    """Unreadable file or invalid line (the message names the line)."""
 
 
 @dataclass(frozen=True)
@@ -46,13 +46,13 @@ def _text(record: dict, key: str, line: int, required: bool = False) -> str | No
     value = record.get(key)
     if value is None:
         if required:
-            raise DatasetError(f"ligne {line} : « {key} » est obligatoire")
+            raise DatasetError(f"line {line}: \"{key}\" is required")
         return None
     if not isinstance(value, str):
-        raise DatasetError(f"ligne {line} : « {key} » doit être une chaîne")
+        raise DatasetError(f"line {line}: \"{key}\" must be a string")
     if not value.strip():
         if required:
-            raise DatasetError(f"ligne {line} : « {key} » ne doit pas être vide")
+            raise DatasetError(f"line {line}: \"{key}\" must not be empty")
         return None
     return value
 
@@ -62,31 +62,31 @@ def _sources(record: dict, line: int) -> list[str | dict[str, Any]]:
     if raw is None:
         return []
     if not isinstance(raw, list):
-        raise DatasetError(f"ligne {line} : « sources » doit être une liste")
+        raise DatasetError(f"line {line}: \"sources\" must be a list")
     sources: list[str | dict[str, Any]] = []
     for n, item in enumerate(raw, start=1):
         if isinstance(item, str) and item.strip():
             sources.append(item)
         elif isinstance(item, dict) and isinstance(item.get("text"), str) and item["text"].strip():
             if not isinstance(item.get("source", ""), str):
-                raise DatasetError(f"ligne {line} : sources[{n}] « source » doit être une chaîne")
+                raise DatasetError(f"line {line}: sources[{n}] \"source\" must be a string")
             sources.append({"source": item.get("source", ""), "text": item["text"]})
         else:
             raise DatasetError(
-                f"ligne {line} : sources[{n}] doit être un texte ou {{\"source\", \"text\"}}"
+                f"line {line}: sources[{n}] must be a text or {{\"source\", \"text\"}}"
             )
     return sources
 
 
 def load_dataset(path: str | Path) -> Dataset:
-    """Lit le fichier ; DatasetError au premier problème (avec la ligne)."""
+    """Reads the file; DatasetError on the first problem (with the line)."""
     try:
         data = Path(path).read_bytes()
         content = data.decode("utf-8")
     except OSError as e:
-        raise DatasetError(f"jeu de données illisible : {e}") from e
+        raise DatasetError(f"unreadable dataset: {e}") from e
     except UnicodeDecodeError as e:
-        raise DatasetError(f"jeu de données : le fichier doit être en UTF-8 ({e})") from e
+        raise DatasetError(f"dataset: the file must be UTF-8 ({e})") from e
 
     cases: list[Case] = []
     first_line: dict[str, int] = {}
@@ -96,19 +96,19 @@ def load_dataset(path: str | Path) -> Dataset:
         try:
             record = json.loads(text)
         except json.JSONDecodeError as e:
-            raise DatasetError(f"ligne {line} : JSON invalide ({e.msg})") from e
+            raise DatasetError(f"line {line}: invalid JSON ({e.msg})") from e
         if not isinstance(record, dict):
-            raise DatasetError(f"ligne {line} : chaque ligne doit être un objet JSON")
+            raise DatasetError(f"line {line}: each line must be a JSON object")
         unknown = sorted(set(record) - ALLOWED_KEYS)
         if unknown:
             raise DatasetError(
-                f"ligne {line} : clé inconnue {', '.join(unknown)} "
-                f"(clés admises : {', '.join(sorted(ALLOWED_KEYS))})"
+                f"line {line}: unknown key {', '.join(unknown)} "
+                f"(allowed keys: {', '.join(sorted(ALLOWED_KEYS))})"
             )
         case_id = _text(record, "id", line, required=True)
         if case_id in first_line:
             raise DatasetError(
-                f"ligne {line} : id « {case_id} » déjà utilisé à la ligne {first_line[case_id]}"
+                f"line {line}: id \"{case_id}\" already used on line {first_line[case_id]}"
             )
         first_line[case_id] = line
         cases.append(
@@ -121,5 +121,5 @@ def load_dataset(path: str | Path) -> Dataset:
             )
         )
     if not cases:
-        raise DatasetError("jeu de données vide : aucune ligne")
+        raise DatasetError("empty dataset: no line")
     return Dataset(path=str(path), sha256=hashlib.sha256(data).hexdigest(), cases=cases)

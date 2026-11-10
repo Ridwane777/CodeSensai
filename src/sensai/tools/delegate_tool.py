@@ -1,22 +1,21 @@
 """
-Délégation d'une sous-tâche à un sous-agent — feature [A2] Multi-Agent
+Delegating a subtask to a sub-agent — feature [A2] Multi-Agent
 Orchestration (ADR-0037).
 
-L'agent principal décompose une tâche complexe en sous-tâches et délègue
-chacune à un sous-agent qui joue sa propre boucle ReAct (core/agent.py), avec
-son propre historique (isolé de la conversation en cours) et, optionnellement,
-son propre rôle (persona). Le sous-agent appelle les MÊMES outils, à travers
-la MÊME passerelle (ADR-0006) : une action risquée demande confirmation que
-ce soit l'agent principal ou un sous-agent qui la décide, et les garde-fous
-EV2 s'appliquent pareil.
+The main agent splits a complex task into subtasks and delegates each one to a
+sub-agent that runs its own ReAct loop (core/agent.py), with its own history
+(isolated from the current conversation) and, optionally, its own role
+(persona). The sub-agent calls the SAME tools through the SAME gateway
+(ADR-0006): a risky action requires confirmation whether the main agent or a
+sub-agent decides it, and the EV2 guardrails apply the same way.
 
-Choix mesurés avec le vrai modèle :
-- le sous-agent reçoit le prompt du projet (profil, SENSAI.md, faits), sinon il
-  ignore ce que l'agent principal sait et peut le contredire ;
-- un sous-agent ne redélègue pas (MAX_DELEGATION_DEPTH = 1) : en profondeur 2,
-  un sous-agent perdu a redélégué trois fois et rendu une réponse vide en 120 s ;
-- il s'arrête à son échéance : sans cela, il continuait après l'abandon et
-  demandait encore des confirmations d'écriture que personne n'attendait.
+Choices measured with the real model:
+- the sub-agent receives the project prompt (profile, SENSAI.md, facts);
+  otherwise it ignores what the main agent knows and may contradict it;
+- a sub-agent does not re-delegate (MAX_DELEGATION_DEPTH = 1): at depth 2, a
+  lost sub-agent re-delegated three times and returned an empty answer in 120 s;
+- it stops at its deadline: without that, it kept going after being abandoned
+  and still asked for write confirmations nobody was waiting for.
 """
 from __future__ import annotations
 
@@ -33,71 +32,71 @@ from sensai.core.events import Done, Error, Token
 from sensai.core.tools import ToolResult
 
 MAX_DELEGATION_DEPTH = 1
-# La passerelle garde le plus court des deux délais (le sien, 120 s par défaut,
-# et celui-ci). Le sous-agent s'arrête bien avant : l'échéance n'est vérifiée
-# qu'entre deux événements, et un appel au modèle déjà lancé peut durer une
-# vingtaine de secondes (mesuré : 5 s de marge ne suffisaient pas).
+# The gateway keeps the shorter of the two timeouts (its own, 120 s by default,
+# and this one). The sub-agent stops well before: the deadline is only checked
+# between two events, and a model call already in flight can last about twenty
+# seconds (measured: a 5 s margin was not enough).
 DELEGATION_TIMEOUT_S = 120.0
 STOP_MARGIN_S = 30.0
 
 _depth: contextvars.ContextVar[int] = contextvars.ContextVar("delegation_depth", default=0)
 
-# Les outils qui lancent d'autres agents : jamais proposés à un sous-agent.
+# Tools that launch other agents: never offered to a sub-agent.
 DELEGATION_TOOLS = frozenset({"delegate_task", "team_task"})
 
 
-# Jamais proposés à un sous-agent, quel que soit son rôle : planifier une tâche qui
-# rejouera un prompt sans surveillance reste une décision de l'agent principal, sur
-# accord de l'utilisateur (ADR-0052).
+# Never offered to a sub-agent, whatever its role: scheduling a task that will
+# replay a prompt unattended remains a decision of the main agent, with the
+# user's consent (ADR-0052).
 NEVER_DELEGATED = frozenset({"schedule_task"})
 
 
 @dataclass(frozen=True)
 class Role:
-    """Un agent spécialisé (A2, ADR-0038) : ses consignes et les seuls outils qu'il voit."""
+    """A specialized agent (A2, ADR-0038): its instructions and the only tools it sees."""
 
     prompt: str
     tools: frozenset[str]
 
 
-# list_files (ADR-0059) : sans RAG, seul moyen pour un rôle de voir les fichiers du projet.
+# list_files (ADR-0059): without RAG, the only way for a role to see the project files.
 _READ = frozenset({"read_file", "list_files", "search_codebase", "recall_facts"})
 ROLES: dict[str, Role] = {
     "explorateur": Role(
-        "Tu es l'explorateur de l'équipe. Tu lis et cherches dans le projet, tu ne "
-        "modifies rien. Rends un rapport court et factuel : les fichiers et fonctions "
-        "concernés, ce qu'ils font, les contraintes à respecter pour la tâche.",
+        "You are the team explorer. You read and search the project; you change "
+        "nothing. Return a short, factual report: the files and functions involved, "
+        "what they do, and the constraints the task must respect.",
         _READ | {"web_search"},
     ),
     "developpeur": Role(
-        "Tu es le développeur de l'équipe. À partir de la tâche et du travail reçu, "
-        "produis la modification demandée. Si la tâche demande d'écrire un fichier, "
-        "utilise write_file. Termine par le code produit et un résumé de ce que tu as fait.",
+        "You are the team developer. From the task and the work you received, "
+        "produce the requested change. If the task requires writing a file, use "
+        "write_file. End with the code you produced and a summary of what you did.",
         _READ | {"write_file", "run_code"},
     ),
     "relecteur": Role(
-        "Tu es le relecteur de l'équipe, et tu ne modifies rien. Ne crois pas le compte "
-        "rendu du développeur : avant de juger, lis toujours avec read_file chaque fichier "
-        "concerné, puis vérifie le code ligne par ligne au regard de la tâche, en essayant "
-        "mentalement quelques exemples (dont des cas limites). Commence ta réponse par "
-        "VALIDÉ seulement si le code lu est correct ; sinon commence par À CORRIGER, suivi "
-        "de la liste précise des défauts.",
+        "You are the team reviewer, and you change nothing. Do not trust the developer "
+        "report: before judging, always read every file involved with read_file, then "
+        "check the code line by line against the task, mentally trying a few examples "
+        "(including edge cases). Start your answer with APPROVED only if the code you "
+        "read is correct; otherwise start with NEEDS FIX, followed by the precise list "
+        "of defects.",
         _READ,
     ),
 }
 
 
 class AgentRunner(Protocol):
-    """Ce dont DelegateTool a besoin pour jouer le tour d'un sous-agent : en
-    pratique run_agent_turn (core/agent.py), remplacé en test par un faux tour."""
+    """What DelegateTool needs to run a sub-agent turn: in practice
+    run_agent_turn (core/agent.py), replaced by a fake turn in tests."""
 
     def __call__(self, host: str, model: str, messages: list[dict], tools: ToolCaller) -> Any: ...
 
 
 class _SubAgentTools:
-    """La passerelle vue par un sous-agent : ni les outils de délégation (il ne
-    redélègue pas) ni ceux hors de son rôle ne lui sont proposés, et après
-    l'échéance plus aucun outil ne s'exécute ni ne demande de confirmation."""
+    """The gateway as seen by a sub-agent: neither the delegation tools (it does
+    not re-delegate) nor those outside its role are offered, and after the
+    deadline no tool runs or asks for confirmation anymore."""
 
     def __init__(
         self,
@@ -121,13 +120,13 @@ class _SubAgentTools:
     def call(self, name: str, /, **kwargs: Any) -> ToolResult:
         if name in DELEGATION_TOOLS:
             return ToolResult(
-                ok=False, content="Un sous-agent ne redélègue pas : fais cette sous-tâche toi-même."
+                ok=False, content="A sub-agent does not re-delegate: do this subtask yourself."
             )
         if not self._allowed(name):
-            return ToolResult(ok=False, content=f"Outil « {name} » non autorisé pour ce rôle.")
+            return ToolResult(ok=False, content=f"Tool \"{name}\" is not allowed for this role.")
         if time.monotonic() >= self.deadline:
             return ToolResult(
-                ok=False, content="Délai de la sous-tâche dépassé : outil non exécuté."
+                ok=False, content="Subtask deadline exceeded: tool not run."
             )
         result = self.tools.call(name, **kwargs)
         if self.on_call:
@@ -138,17 +137,17 @@ class _SubAgentTools:
 class DelegateTool:
     name = "delegate_task"
     description = (
-        "Délègue une sous-tâche à un sous-agent, qui la traite avec les mêmes outils et "
-        "renvoie sa réponse. Utilise-le quand la demande porte sur plusieurs fichiers ou "
-        "parties indépendants (trois ou plus) : délègue une sous-tâche par fichier ou par "
-        "partie, puis assemble les réponses. Ne l'utilise pas pour une question simple ni "
-        "pour un ou deux fichiers : fais-le toi-même. Le sous-agent ne voit pas la "
-        "conversation : chaque sous-tâche doit se comprendre seule."
+        "Delegates a subtask to a sub-agent, which handles it with the same tools and "
+        "returns its answer. Use it when the request covers several independent files or "
+        "parts (three or more): delegate one subtask per file or part, then combine the "
+        "answers. Do not use it for a simple question or for one or two files: do it "
+        "yourself. The sub-agent does not see the conversation: each subtask must be "
+        "self-contained."
     )
-    # Le sous-agent peut appeler n'importe quel outil, y compris risqué : ce
-    # qui compte est le risque de CHAQUE appel qu'il fera, filtré par la même
-    # passerelle. Déclarer "execute" ici évite qu'une politique permissive sur
-    # ce seul outil serve à contourner les confirmations des outils utilisés.
+    # The sub-agent may call any tool, including risky ones: what matters is the
+    # risk of EACH call it makes, filtered by the same gateway. Declaring
+    # "execute" here prevents a permissive policy on this tool alone from being
+    # used to bypass the confirmations of the tools it uses.
     risk = "execute"
     timeout_s = DELEGATION_TIMEOUT_S
     parameters: ClassVar[dict[str, Any]] = {
@@ -157,22 +156,23 @@ class DelegateTool:
             "task": {
                 "type": "string",
                 "description": (
-                    "La sous-tâche à accomplir, formulée comme une consigne autonome "
-                    "(le sous-agent ne voit pas la conversation en cours)."
+                    "The subtask to perform, phrased as a self-contained instruction "
+                    "(the sub-agent does not see the current conversation)."
                 ),
             },
             "role": {
                 "type": "string",
                 "enum": sorted(ROLES),
                 "description": (
-                    "Agent spécialisé : explorateur (lit et cherche, ne modifie rien), "
-                    "developpeur (peut écrire), relecteur (vérifie, ne modifie rien). Optionnel."
+                    "Specialized agent: explorateur (explorer: reads and searches, changes "
+                    "nothing), developpeur (developer: can write), relecteur (reviewer: "
+                    "checks, changes nothing). Optional."
                 ),
             },
             "persona": {
                 "type": "string",
                 "description": (
-                    "Rôle à donner au sous-agent (ex. « relectrice de sécurité »). Optionnel."
+                    "Role to give the sub-agent (e.g. \"security reviewer\"). Optional."
                 ),
             },
         },
@@ -192,26 +192,26 @@ class DelegateTool:
         self.host = host
         self.model = model
         self.tools = tools
-        # M2, ADR-0045 : sans num_ctx, un sous-agent reste soumis à la troncature
-        # par défaut d'Ollama, que le CLI a pourtant évitée pour la boucle
-        # principale. `run_turn` explicite (tests) est utilisé tel quel.
+        # M2, ADR-0045: without num_ctx, a sub-agent is still subject to Ollama's
+        # default truncation, which the CLI avoids for the main loop. An explicit
+        # `run_turn` (tests) is used as is.
         self.run_turn = run_turn or functools.partial(_run_agent_turn, num_ctx=num_ctx)
-        # Le prompt du projet (profil, SENSAI.md, faits), relu à chaque
-        # délégation comme le CLI le relit à chaque tour.
+        # The project prompt (profile, SENSAI.md, facts), re-read on every
+        # delegation just as the CLI re-reads it every turn.
         self.system_prompt = system_prompt
 
     def describe_call(self, **args: Any) -> str:
-        """Ce que l'utilisateur est invité à approuver : la sous-tâche en clair."""
+        """What the user is asked to approve: the subtask in plain text."""
         who = args.get("role") or args.get("persona")
         task = args.get("task", "")
-        return f"Déléguer à un sous-agent ({who}) : {task}" if who else f"Déléguer : {task}"
+        return f"Delegate to a sub-agent ({who}): {task}" if who else f"Delegate: {task}"
 
     def _system(self, role: Role | None, persona: str | None) -> str:
         parts = [self.system_prompt() if self.system_prompt else ""]
         if role:
             parts.append(role.prompt)
         if persona:
-            parts.append(f"Ton rôle pour cette sous-tâche : {persona}" if any(parts) else persona)
+            parts.append(f"Your role for this subtask: {persona}" if any(parts) else persona)
         return "\n\n".join(p for p in parts if p)
 
     def run(self, **kwargs) -> ToolResult:
@@ -228,15 +228,15 @@ class DelegateTool:
         deadline: float | None = None,
         on_call: Callable[[str, dict, ToolResult], None] | None = None,
     ) -> ToolResult:
-        """Fait tourner un sous-agent jusqu'à sa réponse ou son échéance
-        (`deadline`, en time.monotonic() ; par défaut celle de cet outil).
-        `on_call` voit chaque outil exécuté par le sous-agent (l'équipe s'en sert
-        pour savoir ce que le développeur a vraiment écrit)."""
+        """Runs a sub-agent until its answer or its deadline (`deadline`, in
+        time.monotonic(); this tool's own by default). `on_call` sees every tool
+        the sub-agent runs (the team uses it to know what the developer actually
+        wrote)."""
         if not task.strip():
-            return ToolResult(ok=False, content="La sous-tâche est vide.")
+            return ToolResult(ok=False, content="The subtask is empty.")
         if role and role not in ROLES:
             return ToolResult(
-                ok=False, content=f"Rôle inconnu : {role} (rôles : {', '.join(sorted(ROLES))})."
+                ok=False, content=f"Unknown role: {role} (roles: {', '.join(sorted(ROLES))})."
             )
         spec = ROLES[role] if role else None
 
@@ -245,8 +245,8 @@ class DelegateTool:
             return ToolResult(
                 ok=False,
                 content=(
-                    f"Profondeur de délégation dépassée ({MAX_DELEGATION_DEPTH}) : un "
-                    "sous-agent ne redélègue pas, accomplis cette sous-tâche toi-même."
+                    f"Delegation depth exceeded ({MAX_DELEGATION_DEPTH}): a "
+                    "sub-agent does not re-delegate, do this subtask yourself."
                 ),
             )
 
@@ -278,22 +278,22 @@ class DelegateTool:
         finally:
             close = getattr(turn, "close", None)
             if close:
-                close()  # arrête vraiment le sous-agent : rien ne continue en arrière-plan
+                close()  # really stops the sub-agent: nothing keeps running in the background
             _depth.reset(token)
 
         reply = "".join(content).strip()
         if errors:
-            return ToolResult(ok=False, content=f"Le sous-agent a échoué : {' ; '.join(errors)}")
+            return ToolResult(ok=False, content=f"The sub-agent failed: {'; '.join(errors)}")
         if timed_out:
-            partial = f" Réponse partielle :\n{reply}" if reply else ""
+            partial = f" Partial answer:\n{reply}" if reply else ""
             return ToolResult(
                 ok=False,
                 content=(
-                    "Le sous-agent a atteint son délai et s'est arrêté." + partial
+                    "The sub-agent reached its deadline and stopped." + partial
                 ),
             )
         if not reply:
-            return ToolResult(ok=False, content="Le sous-agent n'a produit aucune réponse.")
+            return ToolResult(ok=False, content="The sub-agent produced no answer.")
         if max_iterations:
-            reply += "\n[sous-agent arrêté après le nombre maximal d'itérations]"
+            reply += "\n[sub-agent stopped after the maximum number of iterations]"
         return ToolResult(ok=True, content=reply)

@@ -1,23 +1,21 @@
 """
-[Lot D] Poser une question à l'utilisateur — feature [X4] Questions & Forms (ADR-0046).
+[Workstream D] Asking the user a question — feature [X4] Questions & Forms (ADR-0046).
 
-L'agent appelle `ask_user` quand il lui manque une information qu'il ne peut
-pas trouver seul (un choix, un nom, une préférence). L'outil ne sait pas
-comment on répond : il reçoit un `Asker`, fourni par l'interface.
+The agent calls `ask_user` when it lacks information it cannot find on its
+own (a choice, a name, a preference). The tool does not know how answers are
+given: it receives an `Asker`, provided by the interface.
 
-- CLI : `terminal_asker` pose les questions une à une dans le terminal.
-- Web : `sensai.web.questions.WebQuestionBroker` envoie un formulaire au
-  navigateur et attend la réponse (même mécanique que la confirmation, ADR-0015).
+- CLI: `terminal_asker` asks the questions one by one in the terminal.
+- Web: `sensai.web.questions.WebQuestionBroker` sends a form to the browser
+  and waits for the answer (same mechanism as confirmation, ADR-0015).
 
-Règles :
-- Les champs viennent du modèle : ils sont validés ici (types, nombre, tailles)
-  avant d'être montrés. Un formulaire invalide est un échec d'outil, que le
-  modèle peut corriger.
-- Pas de réponse (délai, onglet fermé, interruption) : l'outil échoue et le dit,
-  l'agent ne doit pas inventer la réponse.
-- Les réponses repartent au modèle comme résultat d'outil : la passerelle leur
-  applique les mêmes filtres que toute sortie (EV2), un secret tapé par erreur
-  est donc masqué.
+Rules:
+- The fields come from the model: they are validated here (types, count,
+  sizes) before being shown. An invalid form is a tool failure the model can fix.
+- No answer (timeout, tab closed, interruption): the tool fails and says so;
+  the agent must not make up the answer.
+- The answers go back to the model as a tool result: the gateway applies the
+  same filters as to any output (EV2), so a secret typed by mistake is masked.
 """
 from __future__ import annotations
 
@@ -32,66 +30,66 @@ MAX_FIELDS = 8
 MAX_OPTIONS = 12
 MAX_LABEL_CHARS = 200
 MAX_ANSWER_CHARS = 2000
-# Le temps laissé à l'utilisateur pour répondre. Sous le délai de l'outil
-# (`timeout_s`), lui-même sous `tool_timeout_s` (120 s par défaut) : sinon la
-# passerelle couperait l'outil avant qu'il ait pu dire « pas de réponse ».
+# The time left to the user to answer. Below the tool timeout (`timeout_s`),
+# itself below `tool_timeout_s` (120 s by default): otherwise the gateway would
+# cut the tool off before it could say "no answer".
 ANSWER_TIMEOUT_S = 100.0
 KINDS = ("text", "choice", "toggle")
 
 
 @dataclass(frozen=True)
 class Question:
-    """Un formulaire validé, prêt à être montré."""
+    """A validated form, ready to be shown."""
 
     title: str
     fields: tuple[dict[str, Any], ...]
 
 
-# Renvoie les valeurs saisies (identifiant du champ -> valeur), ou None si
-# l'utilisateur n'a pas répondu.
+# Returns the entered values (field id -> value), or None if the user did
+# not answer.
 Asker = Callable[[Question], "dict[str, Any] | None"]
 
 
 class FormError(ValueError):
-    """Formulaire ou réponse invalide ; le message est destiné au modèle ou au client."""
+    """Invalid form or answer; the message is meant for the model or the client."""
 
 
 def _text(value: Any, what: str, limit: int = MAX_LABEL_CHARS) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise FormError(f"{what} doit être un texte non vide")
+        raise FormError(f"{what} must be a non-empty string")
     if len(value) > limit:
-        raise FormError(f"{what} dépasse {limit} caractères")
+        raise FormError(f"{what} exceeds {limit} characters")
     return value.strip()
 
 
 def parse_question(title: Any, fields: Any) -> Question:
-    """Valide le formulaire proposé par le modèle. Lève FormError."""
+    """Validates the form proposed by the model. Raises FormError."""
     clean_title = _text(title, "title")
     if not isinstance(fields, list) or not fields:
-        raise FormError("fields doit être une liste non vide")
+        raise FormError("fields must be a non-empty list")
     if len(fields) > MAX_FIELDS:
-        raise FormError(f"au plus {MAX_FIELDS} champs")
+        raise FormError(f"at most {MAX_FIELDS} fields")
     seen: set[str] = set()
     out: list[dict[str, Any]] = []
     for i, raw in enumerate(fields):
         if not isinstance(raw, dict):
-            raise FormError(f"fields[{i}] doit être un objet")
+            raise FormError(f"fields[{i}] must be an object")
         field_id = _text(raw.get("id"), f"fields[{i}].id", 64)
         if field_id in seen:
-            raise FormError(f"identifiant de champ en double : {field_id}")
+            raise FormError(f"duplicate field id: {field_id}")
         seen.add(field_id)
         kind = raw.get("kind", "text")
         if kind not in KINDS:
-            raise FormError(f"fields[{i}].kind doit valoir {', '.join(KINDS)}")
+            raise FormError(f"fields[{i}].kind must be one of {', '.join(KINDS)}")
         field: dict[str, Any] = {"id": field_id, "kind": kind,
                                  "label": _text(raw.get("label"), f"fields[{i}].label")}
         if kind == "choice":
             options = raw.get("options")
             if not isinstance(options, list) or not 2 <= len(options) <= MAX_OPTIONS:
-                raise FormError(f"fields[{i}].options : entre 2 et {MAX_OPTIONS} choix")
+                raise FormError(f"fields[{i}].options: between 2 and {MAX_OPTIONS} choices")
             field["options"] = [_text(o, f"fields[{i}].options") for o in options]
             if len(set(field["options"])) != len(field["options"]):
-                raise FormError(f"fields[{i}].options : choix en double")
+                raise FormError(f"fields[{i}].options: duplicate choice")
         elif kind == "text" and raw.get("placeholder") is not None:
             field["placeholder"] = _text(raw.get("placeholder"), f"fields[{i}].placeholder")
         out.append(field)
@@ -99,28 +97,28 @@ def parse_question(title: Any, fields: Any) -> Question:
 
 
 def check_answers(question: Question, values: Any) -> dict[str, Any]:
-    """Vérifie les valeurs reçues contre le formulaire. Lève FormError.
+    """Checks the received values against the form. Raises FormError.
 
-    Chaque champ doit avoir une valeur du bon type : un texte (non vide), un des
-    choix proposés, ou un booléen. Rien d'autre n'est accepté.
+    Each field must have a value of the right type: a (non-empty) string, one of
+    the offered choices, or a boolean. Nothing else is accepted.
     """
     if not isinstance(values, dict):
-        raise FormError("les réponses doivent être un objet")
+        raise FormError("the answers must be an object")
     expected = {f["id"]: f for f in question.fields}
     unknown = set(values) - set(expected)
     if unknown:
-        raise FormError(f"champ inconnu : {sorted(unknown)[0]}")
+        raise FormError(f"unknown field: {sorted(unknown)[0]}")
     clean: dict[str, Any] = {}
     for field_id, field in expected.items():
         if field_id not in values:
-            raise FormError(f"réponse manquante : {field_id}")
+            raise FormError(f"missing answer: {field_id}")
         value = values[field_id]
         if field["kind"] == "toggle":
             if not isinstance(value, bool):
-                raise FormError(f"{field_id} doit être vrai ou faux")
+                raise FormError(f"{field_id} must be true or false")
         elif field["kind"] == "choice":
             if value not in field["options"]:
-                raise FormError(f"{field_id} : choix inconnu")
+                raise FormError(f"{field_id}: unknown choice")
         else:
             value = _text(value, field_id, MAX_ANSWER_CHARS)
         clean[field_id] = value
@@ -130,24 +128,24 @@ def check_answers(question: Question, values: Any) -> dict[str, Any]:
 class AskUserTool:
     name = "ask_user"
     description = (
-        "Pose une question à l'utilisateur sous forme de petit formulaire et attend sa "
-        "réponse. Utilise-le seulement quand il te manque une information que tu ne peux "
-        "ni trouver dans le projet ni déduire (un choix entre plusieurs options, un nom, "
-        "une préférence). Une question courte, au plus quelques champs. Si l'outil échoue "
-        "faute de réponse, n'invente pas la réponse : dis ce qui manque."
+        "Asks the user a question as a small form and waits for the answer. Use it "
+        "only when you lack information you can neither find in the project nor infer "
+        "(a choice between several options, a name, a preference). One short question, "
+        "a few fields at most. If the tool fails for lack of an answer, do not make up "
+        "the answer: say what is missing."
     )
-    # Ne touche à rien : seule une personne est sollicitée.
+    # Touches nothing: only a person is asked.
     risk = "read"
     timeout_s = ANSWER_TIMEOUT_S + 10.0
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
-            "title": {"type": "string", "description": "La question, en une phrase."},
+            "title": {"type": "string", "description": "The question, in one sentence."},
             "fields": {
                 "type": "array",
                 "description": (
-                    "Les informations demandées. kind : text (réponse libre), choice "
-                    "(un choix parmi options), toggle (oui / non)."
+                    "The requested information. kind: text (free answer), choice "
+                    "(one of options), toggle (yes / no)."
                 ),
                 "items": {
                     "type": "object",
@@ -170,27 +168,27 @@ class AskUserTool:
         self.asker = asker
 
     def describe_call(self, **args: Any) -> str:
-        return f"Demander à l'utilisateur : {args.get('title', '')}"
+        return f"Ask the user: {args.get('title', '')}"
 
     def run(self, **kwargs: Any) -> ToolResult:
         if self.asker is None:
-            return ToolResult(ok=False, content="Aucune personne ne peut répondre ici "
-                                                "(exécution sans interface).")
+            return ToolResult(ok=False, content="Nobody can answer here "
+                                                "(running without an interface).")
         try:
             question = parse_question(kwargs.get("title"), kwargs.get("fields"))
         except FormError as e:
-            return ToolResult(ok=False, content=f"Formulaire invalide : {e}.")
+            return ToolResult(ok=False, content=f"Invalid form: {e}.")
         values = self.asker(question)
         if values is None:
-            return ToolResult(ok=False, content="L'utilisateur n'a pas répondu : ne suppose "
-                                                "pas la réponse, dis ce qui te manque.")
-        return ToolResult(ok=True, content="Réponses de l'utilisateur : "
+            return ToolResult(ok=False, content="The user did not answer: do not assume "
+                                                "the answer, say what you are missing.")
+        return ToolResult(ok=True, content="User answers: "
                                            + json.dumps(values, ensure_ascii=False))
 
 
 def terminal_asker(read: Callable[[str], str] = input,
                    show: Callable[[str], None] = print) -> Asker:
-    """Le `Asker` du CLI : une question par ligne. Ctrl+D ou Ctrl+C : pas de réponse."""
+    """The CLI `Asker`: one question per line. Ctrl+D or Ctrl+C: no answer."""
 
     def ask(question: Question) -> dict[str, Any] | None:
         show(f"\n? {question.title}")
@@ -201,15 +199,15 @@ def terminal_asker(read: Callable[[str], str] = input,
                     for n, option in enumerate(field["options"], 1):
                         show(f"  {n}. {option}")
                     while True:
-                        raw = read(f"  {field['label']} (numéro) : ").strip()
+                        raw = read(f"  {field['label']} (number): ").strip()
                         if raw.isdigit() and 1 <= int(raw) <= len(field["options"]):
                             values[field["id"]] = field["options"][int(raw) - 1]
                             break
                 elif field["kind"] == "toggle":
-                    raw = read(f"  {field['label']} (o/n) : ").strip().lower()
-                    values[field["id"]] = raw in ("o", "oui", "y", "yes")
+                    raw = read(f"  {field['label']} (y/n): ").strip().lower()
+                    values[field["id"]] = raw in ("y", "yes", "o", "oui")
                 else:
-                    while not (raw := read(f"  {field['label']} : ").strip()):
+                    while not (raw := read(f"  {field['label']}: ").strip()):
                         pass
                     values[field["id"]] = raw[:MAX_ANSWER_CHARS]
         except (EOFError, KeyboardInterrupt):

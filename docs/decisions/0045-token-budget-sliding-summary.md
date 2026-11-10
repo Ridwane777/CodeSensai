@@ -15,7 +15,7 @@ Projects summarizing older exchanges, a support system condensing a long
 ticket's history.
 
 This is explicitly in tension with [M1] Session Persistence
-([ADR-0007](0007-persistance-des-sessions.md)), which states "the agent has
+([ADR-0007](0007-session-persistence.md)), which states "the agent has
 access to all past history (no arbitrary limit)" when a session is resumed.
 M2 only concerns what is *sent to the model on a given turn*, never what is
 *kept in the saved session* — the two don't actually conflict once that

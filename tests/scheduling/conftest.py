@@ -1,4 +1,4 @@
-"""Fixtures communes aux tests de la planification (X5)."""
+"""Shared fixtures for the scheduling tests (X5)."""
 import pytest
 
 from sensai.core.tools import ToolRegistry

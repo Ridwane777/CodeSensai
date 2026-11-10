@@ -1,22 +1,22 @@
 """
-[Lot C — Ridwane] RAG sur le code et la documentation du projet — feature [R1].
+[Workstream C — Ridwane] RAG over the project's code and documentation — feature [R1].
 
-Le pipeline du catalogue, étape par étape :
+The catalog pipeline, step by step:
 
-1. `scan_files`   — repérer les fichiers à indexer (sans secrets ni bruit) ;
-2. `chunk_file`   — les découper selon leur structure ;
-3. `RagIndex.update` — calculer les embeddings et les ranger dans SQLite, en ne
-   retraitant que les fichiers ajoutés, modifiés ou supprimés ;
-4. `RagIndex.search` — retrouver les passages les plus proches d'une question,
-   au-dessus d'un seuil ;
-5. `format_context` — les mettre en forme pour le modèle, avec leur source.
+1. `scan_files`   — find the files to index (no secrets, no noise);
+2. `chunk_file`   — split them by structure;
+3. `RagIndex.update` — compute embeddings and store them in SQLite, reprocessing
+   only added, modified or deleted files;
+4. `RagIndex.search` — retrieve the passages closest to a question, above a
+   threshold;
+5. `format_context` — format them for the model, with their source.
 
-Les choix (bge-m3, SQLite + numpy, découpage par structure, seuil 0,50,
-exclusions) et leurs mesures : docs/decisions/0009-rag-sur-la-codebase.md et
-docs/performance/R1-rag.md.
+The choices (bge-m3, SQLite + numpy, structure-aware chunking, 0.54 threshold,
+exclusions) and their measurements: docs/decisions/0009-rag-over-the-codebase.md
+and docs/performance/R1-rag.md.
 
-Pas de framework LLM (ADR-0001) : les embeddings passent par l'API HTTP
-d'Ollama, `/api/embed`, comme le chat passe par `/api/chat`.
+No LLM framework (ADR-0001): embeddings go through Ollama's HTTP API,
+`/api/embed`, just as chat goes through `/api/chat`.
 """
 from __future__ import annotations
 
@@ -43,12 +43,12 @@ from sensai.knowledge.state_document import STATE_FILE
 
 RAG_FILE = "rag.db"
 DEFAULT_EMBED_MODEL = "bge-m3"
-# Délai minimal entre deux mises à jour de l'index pendant une session (voir refresh_if_stale).
+# Minimum delay between two index updates during a session (see refresh_if_stale).
 REFRESH_EVERY_S = 30.0
-DEFAULT_MIN_SCORE = 0.54  # mesuré pour bge-m3 : R1 (ADR-0009), puis R2 (ADR-0032)
+DEFAULT_MIN_SCORE = 0.54  # measured for bge-m3: R1 (ADR-0009), then R2 (ADR-0032)
 DEFAULT_TOP_K = 5
-CANDIDATES = 50  # passages gardés par chaque classement avant la fusion (R2)
-# Passages de documentation pour le filtre `kind` de la recherche (US-R2-2).
+CANDIDATES = 50  # passages kept by each ranking before fusion (R2)
+# Documentation passages for the search `kind` filter (US-R2-2).
 DOC_SUFFIXES = (".md", ".markdown", ".rst", ".txt")
 
 MAX_FILE_BYTES = 1_000_000
@@ -57,44 +57,44 @@ WINDOW_LINES = 40
 WINDOW_OVERLAP = 10
 EMBED_BATCH = 16
 
-# Jamais parcourus : du bruit (dépendances, caches) qui noierait les résultats.
+# Never walked: noise (dependencies, caches) that would drown the results.
 SKIPPED_DIRS = {
     ".git", ".hg", ".svn", ".venv", "venv", "env", "node_modules", "__pycache__",
     ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox", ".idea", ".vscode",
 }
 
-# Jamais indexés, même si le .gitignore du projet les oublie : tout passage
-# indexé peut être envoyé au modèle, y compris sur un serveur distant.
+# Never indexed, even if the project's .gitignore misses them: any indexed
+# passage may be sent to the model, including on a remote server.
 SECRET_PATTERNS = (
     ".env", ".env.*", "*.env", "*.pem", "*.key", "*.p12", "*.pfx", "*.jks",
     "*.keystore", "*.kdbx", "id_rsa*", "id_dsa*", "id_ecdsa*", "id_ed25519*",
     ".netrc", ".pgpass", ".npmrc", ".pypirc", "credentials.json",
 )
 
-# Documents convertis en texte à l'indexation, dans la sandbox (issue #64,
-# ADR-0034), comme le font LlamaIndex, AnythingLLM ou PrivateGPT. Le texte
-# converti est découpé comme du Markdown ; ses numéros de ligne sont ceux que
-# read_file renvoie pour le même fichier.
+# Documents converted to text at indexing time, in the sandbox (issue #64,
+# ADR-0034), as LlamaIndex, AnythingLLM or PrivateGPT do. The converted text
+# is chunked like Markdown; its line numbers are the ones read_file returns
+# for the same file.
 DOCUMENT_FORMATS = {
     ".pdf": ".pdf", ".docx": ".docx", ".pptx": ".pptx", ".xlsx": ".xlsx",
     ".xls": ".xls", ".epub": ".epub", ".msg": ".msg",
 }
 MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 
-# Formats que l'on sait reconnaître mais pas lire (ADR-0009, décision 7) : on
-# dit à l'utilisateur quoi faire plutôt que de les ignorer en silence. Les
-# DOCUMENT_FORMATS en font partie quand aucun convertisseur n'est disponible.
+# Formats we can recognize but not read (ADR-0009, decision 7): we tell the
+# user what to do instead of silently ignoring them. DOCUMENT_FORMATS belong
+# here when no converter is available.
 UNSUPPORTED_FORMATS = {
-    ".pdf": "PDF non indexé : le convertir en texte (pdftotext fichier.pdf) "
-            "ou installer pypdf pour une future prise en charge",
-    ".docx": "Word non indexé : l'exporter en Markdown ou en texte (pandoc fichier.docx -o x.md)",
-    ".doc": "Word non indexé : l'exporter en texte",
-    ".odt": "OpenDocument non indexé : l'exporter en Markdown ou en texte (pandoc)",
-    ".xlsx": "Tableur non indexé : l'exporter en CSV",
-    ".xls": "Tableur non indexé : l'exporter en CSV",
-    ".ods": "Tableur non indexé : l'exporter en CSV",
-    ".pptx": "Présentation non indexée : exporter le texte des diapositives",
-    ".epub": "Livre numérique non indexé : le convertir en texte (pandoc)",
+    ".pdf": "PDF not indexed: convert it to text (pdftotext file.pdf) "
+            "or install pypdf for future support",
+    ".docx": "Word not indexed: export it to Markdown or text (pandoc file.docx -o x.md)",
+    ".doc": "Word not indexed: export it to text",
+    ".odt": "OpenDocument not indexed: export it to Markdown or text (pandoc)",
+    ".xlsx": "Spreadsheet not indexed: export it to CSV",
+    ".xls": "Spreadsheet not indexed: export it to CSV",
+    ".ods": "Spreadsheet not indexed: export it to CSV",
+    ".pptx": "Presentation not indexed: export the slide text",
+    ".epub": "E-book not indexed: convert it to text (pandoc)",
 }
 
 HEADING = re.compile(r"^#{1,6}\s")
@@ -102,17 +102,17 @@ IMPORT_LINE = re.compile(r"^\s*(import\s|from\s\S+\s+import\s)")
 
 
 class EmbeddingError(RuntimeError):
-    """Les embeddings n'ont pas pu être calculés (Ollama absent, modèle manquant...)."""
+    """Embeddings could not be computed (Ollama missing, model missing...)."""
 
 
-# --- 1. Repérer les fichiers ------------------------------------------------
+# --- 1. Find the files ------------------------------------------------------
 
 
 @dataclass
 class ScanResult:
     files: list[Path] = field(default_factory=list)
     unsupported: list[tuple[Path, str]] = field(default_factory=list)
-    documents: list[Path] = field(default_factory=list)  # à convertir (ADR-0034)
+    documents: list[Path] = field(default_factory=list)  # to convert (ADR-0034)
 
 
 def _is_secret(name: str) -> bool:
@@ -120,9 +120,9 @@ def _is_secret(name: str) -> bool:
 
 
 def _git_files(root: Path) -> list[str] | None:
-    """Fichiers suivis ou non ignorés selon git : respecte exactement le .gitignore.
+    """Files tracked or not ignored according to git: honors .gitignore exactly.
 
-    None si le dossier n'est pas un dépôt git (ou si git est absent).
+    None if the folder is not a git repository (or git is missing).
     """
     if not (root / ".git").exists():
         return None
@@ -142,7 +142,7 @@ def _gitignore_patterns(root: Path) -> list[str]:
     if not path.is_file():
         return []
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    # Les négations (!motif) ne sont pas gérées hors d'un dépôt git : limite assumée.
+    # Negations (!pattern) are not handled outside a git repository: accepted limitation.
     return [p.strip() for p in lines if p.strip() and not p.startswith(("#", "!"))]
 
 
@@ -159,7 +159,7 @@ def _ignored(rel: str, is_dir: bool, patterns: list[str]) -> bool:
 
 
 def _walk_files(root: Path) -> list[str]:
-    """Parcours sans git : .gitignore de la racine interprété simplement."""
+    """Walk without git: the root .gitignore, interpreted simply."""
     patterns = _gitignore_patterns(root)
     found = []
     for dirpath, dirnames, filenames in os.walk(root):
@@ -181,7 +181,7 @@ def _is_binary(path: Path) -> bool:
 
 
 def scan_files(root: str | Path) -> ScanResult:
-    """Fichiers texte du projet à indexer, et formats reconnus mais non pris en charge."""
+    """Project text files to index, plus recognized but unsupported formats."""
     root = Path(root)
     relatives = _git_files(root)
     if relatives is None:
@@ -193,7 +193,7 @@ def scan_files(root: str | Path) -> ScanResult:
         if any(p in SKIPPED_DIRS for p in parts[:-1]) or _is_secret(parts[-1]):
             continue
         if rel == STATE_FILE:
-            # Déjà donné en entier à l'agent (M4, ADR-0029) : pas deux fois.
+            # Already given in full to the agent (M4, ADR-0029): not twice.
             continue
         path = root / rel
         if not path.is_file():
@@ -205,7 +205,7 @@ def scan_files(root: str | Path) -> ScanResult:
                 continue
             if too_big:
                 result.unsupported.append(
-                    (path, f"document de plus de {MAX_DOCUMENT_BYTES // 2**20} Mo non indexé"))
+                    (path, f"document larger than {MAX_DOCUMENT_BYTES // 2**20} MB not indexed"))
             else:
                 result.documents.append(path)
             continue
@@ -222,14 +222,14 @@ def scan_files(root: str | Path) -> ScanResult:
     return result
 
 
-# --- 2. Découper -------------------------------------------------------------
+# --- 2. Chunk ----------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Chunk:
     source: str
-    start: int  # première ligne, numérotée à partir de 1
-    end: int    # dernière ligne, incluse
+    start: int  # first line, numbered from 1
+    end: int    # last line, inclusive
     text: str
 
 
@@ -246,10 +246,10 @@ def _windows(source: str, lines: list[str], start: int, end: int) -> Iterator[Ch
 
 
 def _span(source: str, lines: list[str], start: int, end: int) -> Iterator[Chunk]:
-    """Passages couvrant les lignes start..end (1-indexées), lignes vides des bords retirées.
+    """Passages covering lines start..end (1-indexed), with blank edge lines trimmed.
 
-    Un bloc plus long que MAX_CHUNK_LINES est redécoupé en fenêtres qui se
-    chevauchent, pour qu'aucun passage ne dilue sa question dans trop de texte.
+    A block longer than MAX_CHUNK_LINES is split again into overlapping windows,
+    so that no passage dilutes its topic in too much text.
     """
     while start <= end and not lines[start - 1].strip():
         start += 1
@@ -264,10 +264,10 @@ def _span(source: str, lines: list[str], start: int, end: int) -> Iterator[Chunk
 
 
 def _gap(source: str, lines: list[str], start: int, end: int) -> list[Chunk]:
-    """Code de niveau module entre deux définitions (docstring, constantes...).
+    """Module-level code between two definitions (docstring, constants...).
 
-    Un bloc qui ne contient que des imports est ignoré : seul, il n'apprend rien
-    au modèle et ferait remonter le fichier pour n'importe quelle question.
+    A block containing only imports is skipped: on its own it teaches the model
+    nothing and would surface the file for any question.
     """
     meaningful = [
         line for line in lines[start - 1:end] if line.strip() and not IMPORT_LINE.match(line)
@@ -304,11 +304,11 @@ def _chunk_markdown(source: str, lines: list[str]) -> list[Chunk]:
 
 
 def chunk_file(path: str | Path, source: str) -> list[Chunk]:
-    """Découpe un fichier selon sa structure (ADR-0009, décision 3).
+    """Split a file by its structure (ADR-0009, decision 3).
 
-    Python : une fonction ou une classe par passage (via `ast`). Markdown : une
-    section par titre. Le reste, ou un Python qui ne se parse pas : des blocs de
-    lignes qui se chevauchent. Chaque passage garde ses lignes, pour être cité.
+    Python: one function or class per passage (via `ast`). Markdown: one section
+    per heading. Anything else, or Python that does not parse: overlapping line
+    blocks. Each passage keeps its lines, so it can be cited.
     """
     path = Path(path)
     return chunk_text(source, path.read_text(encoding="utf-8", errors="replace"),
@@ -316,7 +316,7 @@ def chunk_file(path: str | Path, source: str) -> list[Chunk]:
 
 
 def chunk_text(source: str, text: str, suffix: str) -> list[Chunk]:
-    """`chunk_file` sur un texte déjà lu (un document converti arrive en ".md")."""
+    """`chunk_file` on already-read text (a converted document arrives as ".md")."""
     lines = text.splitlines()
     if not lines:
         return []
@@ -324,20 +324,20 @@ def chunk_text(source: str, text: str, suffix: str) -> list[Chunk]:
         try:
             return _chunk_python(source, text, lines)
         except SyntaxError:
-            pass  # fichier en cours d'écriture : on retombe sur les blocs de lignes
+            pass  # file being written: fall back to line blocks
     elif suffix in (".md", ".markdown"):
         return _chunk_markdown(source, lines)
     return list(_windows(source, lines, 1, len(lines)))
 
 
-# --- 3. Calculer les embeddings ---------------------------------------------
+# --- 3. Compute embeddings ---------------------------------------------------
 
 
 Embedder = Callable[[list[str]], list[list[float]]]
 
 
 class OllamaEmbedder:
-    """Embeddings via `POST /api/embed` d'Ollama (HTTP brut, ADR-0001)."""
+    """Embeddings via `POST /api/embed` on Ollama (raw HTTP, ADR-0001)."""
 
     def __init__(self, host: str, model: str = DEFAULT_EMBED_MODEL, timeout: float = 300):
         self.host = host.rstrip("/")
@@ -352,13 +352,13 @@ class OllamaEmbedder:
                 timeout=self.timeout,
             )
         except requests.RequestException as e:
-            raise EmbeddingError(f"Ollama injoignable sur {self.host} ({e})") from e
+            raise EmbeddingError(f"Ollama unreachable at {self.host} ({e})") from e
         if response.status_code == 404 or "not found" in response.text.lower():
             raise EmbeddingError(
-                f"modèle d'embeddings {self.model} introuvable : ollama pull {self.model}"
+                f"embedding model {self.model} not found: ollama pull {self.model}"
             )
         if not response.ok:
-            raise EmbeddingError(f"Ollama a répondu {response.status_code} : {response.text[:200]}")
+            raise EmbeddingError(f"Ollama answered {response.status_code}: {response.text[:200]}")
         return response.json()["embeddings"]
 
 
@@ -369,7 +369,7 @@ def _normalized(vectors: list[list[float]]) -> np.ndarray:
     return matrix / norms
 
 
-# --- 4. Ranger et retrouver --------------------------------------------------
+# --- 4. Store and retrieve ----------------------------------------------------
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS rag_meta (
@@ -398,16 +398,16 @@ CREATE INDEX IF NOT EXISTS rag_chunks_par_fichier ON rag_chunks (project, path);
 class UpdateReport:
     files_indexed: int = 0
     files_removed: int = 0
-    chunks: int = 0  # passages dans l'index après la mise à jour
+    chunks: int = 0  # passages in the index after the update
     unsupported: list[tuple[Path, str]] = field(default_factory=list)
 
 
 class RagIndex:
-    """Index des passages d'un projet, stocké dans SQLite à côté des sessions (M1).
+    """Index of a project's passages, stored in SQLite next to the sessions (M1).
 
-    `project` sépare les projets dans une même base ; `model` est le nom du
-    modèle d'embeddings : si on en change, l'index du projet est vidé, car des
-    vecteurs de modèles différents ne se comparent pas.
+    `project` separates projects within one database; `model` is the embedding
+    model name: if it changes, the project's index is cleared, since vectors
+    from different models are not comparable.
     """
 
     def __init__(
@@ -420,7 +420,7 @@ class RagIndex:
     ):
         self.db_path = Path(db_path)
         # converter(path, extension) -> ConversionResult (execution/sandbox/
-        # document_sandbox.py) ; None : les documents sont seulement listés.
+        # document_sandbox.py); None: documents are only listed.
         self.converter = converter
         self.project = project
         self.embed = embed
@@ -428,9 +428,9 @@ class RagIndex:
         self._matrix: np.ndarray | None = None
         self._rows: list[tuple[str, int, int, str]] = []
         self._bm25: BM25 | None = None
-        # Reclasse les premiers passages (R2, `retrieval.LlmReranker`) ; None : pas de reclassement.
+        # Reranks the top passages (R2, `retrieval.LlmReranker`); None: no reranking.
         self.reranker: Callable[[str, list[dict]], list[dict]] | None = None
-        self._updated_at: float | None = None  # time.monotonic() de la dernière mise à jour
+        self._updated_at: float | None = None  # time.monotonic() of the last update
         ensure_private_dir(self.db_path.parent)
         is_new = not self.db_path.exists()
         with self._connect() as conn:
@@ -471,13 +471,13 @@ class RagIndex:
     def refresh_if_stale(
         self, root: str | Path, every_s: float = REFRESH_EVERY_S
     ) -> UpdateReport | None:
-        """Remet l'index à jour si la dernière mise à jour date de plus de `every_s`
-        secondes ; sinon ne fait rien et renvoie None.
+        """Update the index if the last update is older than `every_s` seconds;
+        otherwise do nothing and return None.
 
-        Sans ça, un fichier créé ou modifié après la première question (par
-        l'agent lui-même, souvent) restait invisible à la recherche, et le modèle
-        affirmait qu'il n'existait pas (essai du 2026-11-01). Une mise à jour ne
-        recalcule que l'empreinte des fichiers et n'indexe que ceux qui ont changé.
+        Without this, a file created or modified after the first question (often
+        by the agent itself) stayed invisible to search, and the model claimed it
+        did not exist (trial run of 2026-11-01). An update only recomputes file
+        hashes and only indexes the files that changed.
         """
         now = time.monotonic()
         if self._updated_at is not None and now - self._updated_at < every_s:
@@ -489,11 +489,11 @@ class RagIndex:
         root: str | Path,
         progress: Callable[[int, int], None] | None = None,
     ) -> UpdateReport:
-        """Met l'index à jour : seuls les fichiers ajoutés, modifiés ou supprimés.
+        """Update the index: only added, modified or deleted files.
 
-        Chaque fichier est enregistré dans sa propre transaction : si Ollama
-        tombe au milieu, les fichiers déjà traités restent indexés et ne seront
-        pas recalculés à la prochaine tentative.
+        Each file is stored in its own transaction: if Ollama goes down midway,
+        files already processed stay indexed and will not be recomputed on the
+        next attempt.
         """
         root = Path(root)
         scan = scan_files(root)
@@ -531,8 +531,8 @@ class RagIndex:
             if rel in documents:
                 result = self.converter(path, DOCUMENT_FORMATS[path.suffix.lower()])
                 if not result.ok:
-                    # Pas de sha enregistré : le document est réessayé la fois
-                    # suivante, et une ancienne version n'est plus citée.
+                    # No sha stored: the document is retried next time,
+                    # and an old version is no longer cited.
                     report.unsupported.append((path, _document_advice(path, result)))
                     with self._connect() as conn:
                         self._forget(conn, rel)
@@ -563,7 +563,7 @@ class RagIndex:
         report.files_indexed = indexed
 
         if to_index or removed:
-            self._matrix = self._bm25 = None  # le cache de recherche n'est plus à jour
+            self._matrix = self._bm25 = None  # the search cache is stale
         with self._connect() as conn:
             report.chunks = conn.execute(
                 "SELECT COUNT(*) FROM rag_chunks WHERE project = ?", (self.project,)
@@ -576,8 +576,8 @@ class RagIndex:
         conn.execute("DELETE FROM rag_files WHERE project = ? AND path = ?", (self.project, rel))
 
     def _embed_documents(self, chunks: list[Chunk]) -> list[np.ndarray]:
-        # Le chemin en tête du passage aide le modèle : « auth.py » parle déjà
-        # d'authentification. Mesuré ainsi dans docs/performance/R1-rag.md.
+        # The path at the top of the passage helps the model: "auth.py" already
+        # says authentication. Measured this way in docs/performance/R1-rag.md.
         texts = [f"{c.source}\n{c.text}" for c in chunks]
         vectors: list[np.ndarray] = []
         for i in range(0, len(texts), EMBED_BATCH):
@@ -605,17 +605,16 @@ class RagIndex:
         path: str | None = None,
         rerank: bool = True,
     ) -> list[dict]:
-        """Passages les plus pertinents pour `query`, du meilleur au moins bon.
+        """Most relevant passages for `query`, best first.
 
-        R2 (ADR-0032) : les classements par embeddings et par mots (BM25) sont
-        fusionnés (RRF), puis `self.reranker`, s'il existe, reclasse les premiers.
-        `kind` (« code » ou « doc ») et `path` (un dossier) restreignent la
-        recherche (US-R2-2).
+        R2 (ADR-0032): the embedding and keyword (BM25) rankings are fused (RRF),
+        then `self.reranker`, if set, reranks the top ones. `kind` ("code" or
+        "doc") and `path` (a folder) narrow the search (US-R2-2).
 
-        `score` reste la similarité des embeddings. Sous `min_score`, un passage
-        est écarté, même trouvé par BM25 : il y a toujours un « plus proche »,
-        même quand le projet ne contient pas la réponse, et l'envoyer au modèle
-        l'inciterait à inventer (US-R1-3, US-R2-3).
+        `score` remains the embedding similarity. Below `min_score`, a passage is
+        dropped, even if BM25 found it: there is always a "closest" one, even when
+        the project does not contain the answer, and sending it to the model
+        would encourage it to make things up (US-R1-3, US-R2-3).
         """
         if self._matrix is None:
             self._load()
@@ -624,8 +623,8 @@ class RagIndex:
         q = _normalized(self.embed([query]))[0]
         if q.shape[0] != self._matrix.shape[1]:
             raise EmbeddingError(
-                "l'index a été construit avec un autre modèle d'embeddings : il sera "
-                "reconstruit au prochain démarrage"
+                "the index was built with a different embedding model: it will be "
+                "rebuilt on next startup"
             )
         scores = self._matrix @ q
         allowed = {
@@ -659,7 +658,7 @@ class RagIndex:
 
 
 def _matches(source: str, kind: str | None, path: str | None) -> bool:
-    """Filtres de la recherche (US-R2-2) : type de fichier et dossier."""
+    """Search filters (US-R2-2): file type and folder."""
     if kind == "doc" and not source.endswith(DOC_SUFFIXES):
         return False
     if kind == "code" and source.endswith(DOC_SUFFIXES):
@@ -669,28 +668,28 @@ def _matches(source: str, kind: str | None, path: str | None) -> bool:
 
 
 def _document_advice(path: Path, result: object) -> str:
-    """Conseil affiché à l'indexation quand un document n'a pas pu être converti."""
+    """Advice shown at indexing time when a document could not be converted."""
     error = getattr(result, "error", None)
     if error == "image_missing":
-        return ("document non indexé : construire l'image de conversion "
+        return ("document not indexed: build the conversion image "
                 "(docker build -t sensai-docs:latest docker/docs)")
     if error == "sandbox_error":
-        return "document non indexé : Docker indisponible pour la conversion"
+        return "document not indexed: Docker unavailable for conversion"
     if error == "empty" and path.suffix.lower() == ".pdf":
-        return f"PDF sans texte (scanné ?) : ocrmypdf {path.name} {path.stem}-ocr.pdf"
+        return f"PDF without text (scanned?): ocrmypdf {path.name} {path.stem}-ocr.pdf"
     if error == "empty":
-        return "document sans texte"
-    return f"conversion impossible ({error}) : {UNSUPPORTED_FORMATS[path.suffix.lower()]}"
+        return "document without text"
+    return f"conversion failed ({error}): {UNSUPPORTED_FORMATS[path.suffix.lower()]}"
 
 
-# --- 5. Mettre en forme pour le modèle ---------------------------------------
+# --- 5. Format for the model ---------------------------------------------------
 
 
 def _numbered(hit: dict) -> str:
-    """Chaque ligne précédée de son numéro dans le fichier.
+    """Each line prefixed with its number in the file.
 
-    Un modèle ne sait pas compter les lignes d'un passage : sans numéros, il les
-    devine (essai réel : `cli.py:123-127` cité pour du code situé ligne 112).
+    A model cannot count the lines of a passage: without numbers it guesses them
+    (real trial run: `cli.py:123-127` cited for code at line 112).
     """
     return "\n".join(
         f"{number}│ {line}"
@@ -699,25 +698,25 @@ def _numbered(hit: dict) -> str:
 
 
 def format_context(hits: list[dict]) -> str:
-    """Bloc ajouté à la question de l'utilisateur avant l'envoi au modèle.
+    """Block appended to the user's question before it is sent to the model.
 
-    La consigne autorise explicitement à ignorer les passages : la recherche
-    tourne à chaque question, même « c'est quoi une closure ? », et un modèle à
-    qui l'on fournit des passages a tendance à les commenter au lieu de répondre
-    (essai réel du 2026-10-11). Le score n'est pas montré pour la même raison.
+    The instruction explicitly allows ignoring the passages: the search runs on
+    every question, even "what is a closure?", and a model given passages tends
+    to comment on them instead of answering (real trial run of 2026-10-11). The
+    score is not shown for the same reason.
     """
     if not hits:
         return (
-            "[Recherche automatique dans le projet : aucun passage pertinent.] Si la "
-            "question porte sur le code ou les documents de ce projet, dis que tu n'as "
-            "pas trouvé l'information au lieu de l'inventer. Sinon, réponds normalement, "
-            "sans mentionner cette recherche."
+            "[Automatic project search: no relevant passage.] If the question is "
+            "about this project's code or documents, say you did not find the "
+            "information instead of making it up. Otherwise, answer normally, "
+            "without mentioning this search."
         )
     parts = [
-        "[Extraits du projet trouvés automatiquement : ils peuvent ne pas concerner la "
-        "question.] Si la question porte sur ce projet, appuie-toi sur eux et cite tes "
-        "sources sous la forme fichier:ligne, en lisant le numéro écrit en début de "
-        "ligne. Sinon, ignore-les et réponds normalement, sans mentionner ces extraits."
+        "[Project excerpts found automatically: they may be unrelated to the "
+        "question.] If the question is about this project, rely on them and cite your "
+        "sources as file:line, reading the number written at the start of each "
+        "line. Otherwise, ignore them and answer normally, without mentioning these excerpts."
     ]
     for hit in hits:
         parts.append(f"--- {hit['source']}:{hit['start']}-{hit['end']}\n{_numbered(hit)}")
@@ -725,20 +724,20 @@ def format_context(hits: list[dict]) -> str:
 
 
 def format_search_results(query: str, hits: list[dict]) -> str:
-    """Réponse de l'outil `search_codebase` (ADR-0013).
+    """Output of the `search_codebase` tool (ADR-0013).
 
-    Contrairement à `format_context`, c'est le modèle qui a demandé cette
-    recherche : on ne lui dit pas que les passages peuvent être hors sujet ni
-    de les ignorer (essai réel du 2026-10-14).
+    Unlike `format_context`, the model asked for this search itself: we do not
+    tell it the passages may be off-topic or that it may ignore them (real trial
+    run of 2026-10-14).
     """
     if not hits:
         return (
-            f'[Recherche "{query}" : aucun passage pertinent dans le projet.] '
-            "Essaie d'autres mots, ou dis que tu n'as pas trouvé l'information."
+            f'[Search "{query}": no relevant passage in the project.] '
+            "Try other words, or say you did not find the information."
         )
     parts = [
-        f'[Recherche "{query}" : {len(hits)} passage(s) du projet.] Cite tes '
-        "sources sous la forme fichier:ligne, en lisant le numéro écrit en début de ligne."
+        f'[Search "{query}": {len(hits)} passage(s) from the project.] Cite your '
+        "sources as file:line, reading the number written at the start of each line."
     ]
     for hit in hits:
         parts.append(f"--- {hit['source']}:{hit['start']}-{hit['end']}\n{_numbered(hit)}")

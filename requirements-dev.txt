@@ -1,11 +1,11 @@
-# Outils de développement (tests et lint), en plus des dépendances d'exécution.
-# La CI installe l'équivalent avec `pip install -e ".[dev]"`.
+# Development tools (tests and lint), on top of the runtime dependencies.
+# CI installs the equivalent with `pip install -e ".[dev]"`.
 -r requirements.txt
 pytest==9.1.1
 ruff==0.17.0
-httpx==0.28.1             # tests du prototype web (docs/examples)
+httpx==0.28.1             # web prototype tests (docs/examples)
 httpcore==1.0.9
-# Dépendances de pytest :
+# pytest dependencies:
 iniconfig==2.3.1
 packaging==26.3
 pluggy==1.6.0

@@ -4,11 +4,11 @@ import { ConnectionProvider, useConnection } from '../src/state/connection'
 import { ConnectGate } from '../src/ui/ConnectGate'
 import { SimBadge } from '../src/ui/SimBadge'
 
-const CONFIG = { model: 'qwen3-coder:30b', project: 'projet', rag: true, rerank: true, cache: true, notices: [] }
+const CONFIG = { model: 'qwen3-coder:30b', project: 'project', rag: true, rerank: true, cache: true, notices: [] }
 
 function server({ up = true, token = 'BON' } = {}) {
   return vi.fn(async (url: string, init?: RequestInit) => {
-    if (!up) throw new Error('injoignable')
+    if (!up) throw new Error('unreachable')
     if (url.endsWith('/api/health')) return new Response(JSON.stringify({ status: 'ok' }))
     const auth = new Headers(init?.headers).get('Authorization')
     if (auth !== `Bearer ${token}`) return new Response('{}', { status: 401 })
@@ -28,45 +28,45 @@ function Probe() {
 
 beforeEach(() => sessionStorage.clear())
 
-test('sans serveur, la démonstration démarre seule', async () => {
+test('without a server, the demo starts on its own', async () => {
   render(<ConnectionProvider fetchFn={server({ up: false })}><Probe /></ConnectionProvider>)
   expect(await screen.findByText(/mode demo/)).toBeInTheDocument()
-  expect(screen.getByText(/moteur simulé/i)).toBeInTheDocument()
+  expect(screen.getByText(/simulated engine/i)).toBeInTheDocument()
 })
 
-test('avec un serveur, le jeton est demandé puis vérifié', async () => {
+test('with a server, the token is requested then checked', async () => {
   render(<ConnectionProvider fetchFn={server()}><Probe /></ConnectionProvider>)
-  const input = await screen.findByLabelText(/jeton/i)
+  const input = await screen.findByLabelText(/token/i)
   await userEvent.type(input, 'FAUX')
-  await userEvent.click(screen.getByRole('button', { name: /se connecter/i }))
-  expect(await screen.findByRole('alert')).toHaveTextContent(/jeton refusé/i)
+  await userEvent.click(screen.getByRole('button', { name: /^connect$/i }))
+  expect(await screen.findByRole('alert')).toHaveTextContent(/token rejected/i)
   await userEvent.clear(input)
   await userEvent.type(input, 'BON')
-  await userEvent.click(screen.getByRole('button', { name: /se connecter/i }))
+  await userEvent.click(screen.getByRole('button', { name: /^connect$/i }))
   expect(await screen.findByText(/mode live/)).toBeInTheDocument()
-  expect(screen.getByText(/agent réel · qwen3-coder:30b/i)).toBeInTheDocument()
+  expect(screen.getByText(/real agent · qwen3-coder:30b/i)).toBeInTheDocument()
   expect(sessionStorage.getItem('sensai.token')).toBe('BON')
 })
 
-test("le jeton gardé dans l'onglet reconnecte sans redemander", async () => {
+test("the token kept in the tab reconnects without asking again", async () => {
   sessionStorage.setItem('sensai.token', 'BON')
   render(<ConnectionProvider fetchFn={server()}><Probe /></ConnectionProvider>)
   expect(await screen.findByText(/mode live/)).toBeInTheDocument()
 })
 
-test('un jeton gardé mais périmé redemande le jeton', async () => {
+test('a kept but stale token asks for the token again', async () => {
   sessionStorage.setItem('sensai.token', 'VIEUX')
   render(<ConnectionProvider fetchFn={server()}><Probe /></ConnectionProvider>)
-  expect(await screen.findByLabelText(/jeton/i)).toBeInTheDocument()
+  expect(await screen.findByLabelText(/token/i)).toBeInTheDocument()
 })
 
-test('on peut choisir la démonstration même avec un serveur', async () => {
+test('the demo can be chosen even with a server', async () => {
   render(<ConnectionProvider fetchFn={server()}><Probe /></ConnectionProvider>)
-  await userEvent.click(await screen.findByRole('button', { name: /démonstration/i }))
+  await userEvent.click(await screen.findByRole('button', { name: /demo mode/i }))
   expect(await screen.findByText(/mode demo/)).toBeInTheDocument()
 })
 
-test("sensai-web lancé après l'interface : la démonstration le retrouve et demande le jeton", async () => {
+test("sensai-web started after the UI: the demo finds it and asks for the token", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   let up = false
   const fetchFn = vi.fn(async (url: string, init?: RequestInit) => server({ up })(url, init)) as unknown as typeof fetch
@@ -74,11 +74,11 @@ test("sensai-web lancé après l'interface : la démonstration le retrouve et de
   expect(await screen.findByText(/mode demo/)).toBeInTheDocument()
   up = true
   await vi.advanceTimersByTimeAsync(3100)
-  expect(await screen.findByLabelText(/jeton/i)).toBeInTheDocument()
+  expect(await screen.findByLabelText(/token/i)).toBeInTheDocument()
   vi.useRealTimers()
 })
 
-test('sans serveur, la démonstration arrête de le chercher au bout de 5 minutes', async () => {
+test('without a server, the demo stops looking for it after 5 minutes', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   const fetchFn = vi.fn(async (url: string, init?: RequestInit) => server({ up: false })(url, init)) as unknown as typeof fetch
   render(<ConnectionProvider fetchFn={fetchFn}><Probe /></ConnectionProvider>)

@@ -22,7 +22,7 @@ function setup() {
   return { e, got }
 }
 
-test("rejoue les étapes dans l'ordre avec leurs délais", () => {
+test("replays the steps in order with their delays", () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'bonjour' })
   expect(got).toHaveLength(0)
@@ -30,14 +30,14 @@ test("rejoue les étapes dans l'ordre avec leurs délais", () => {
   expect(got.map((x) => x.type)).toEqual(['turn_start', 'token', 'done'])
 })
 
-test('saisie vide : aucun événement', () => {
+test('empty input: no event', () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: '   ' })
   vi.advanceTimersByTime(1000)
   expect(got).toHaveLength(0)
 })
 
-test("désabonnement : plus d'événements", () => {
+test("unsubscribe: no more events", () => {
   const e = new MockEngine({ route: () => scenario })
   const got: EngineEvent[] = []
   const off = e.subscribe((ev) => got.push(ev))
@@ -47,7 +47,7 @@ test("désabonnement : plus d'événements", () => {
   expect(got).toHaveLength(0)
 })
 
-test('deux envois successifs produisent des identifiants de tour distincts', () => {
+test('two successive sends produce distinct turn ids', () => {
   const { e, got } = setup()
   e.send({ id: 'm1', text: 'a' })
   vi.advanceTimersByTime(30)

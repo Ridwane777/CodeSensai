@@ -1,14 +1,14 @@
 """
-Exécution des tâches planifiées — feature [X5], ADR-0016.
+Running scheduled tasks — feature [X5], ADR-0016.
 
-Personne n'est devant l'écran quand une tâche tourne. Les garanties :
+Nobody is in front of the screen when a task runs. The guarantees:
 
-- tout appel d'outil passe par une ToolGateway dont le confirmeur est
-  `deny_all` : un outil qui demande confirmation (écriture, exécution) est
-  toujours refusé ; aucune préférence ne peut l'assouplir (tool_policy.py) ;
-- une tâche qui plante n'empêche pas les suivantes ;
-- une même tâche ne tourne jamais deux fois en même temps (fichier verrou) ;
-- chaque exécution laisse un compte rendu JSON.
+- every tool call goes through a ToolGateway whose confirmer is
+  `deny_all`: a tool that asks for confirmation (write, execute) is
+  always refused; no preference can loosen this (tool_policy.py);
+- a task that crashes does not prevent the following ones;
+- the same task never runs twice at the same time (lock file);
+- every run leaves a JSON run report.
 """
 from __future__ import annotations
 
@@ -43,13 +43,13 @@ ERROR = "error"
 MAX_ITERATIONS = "max_iterations"
 TIMEOUT = "timeout"
 SKIPPED_LOCKED = "skipped_locked"
-# Statuts qui comptent comme un échec pour le code de sortie de la commande.
+# Statuses that count as a failure for the command exit code.
 FAILED_STATUSES = frozenset({ERROR, MAX_ITERATIONS, TIMEOUT})
 
 UNATTENDED_NOTE = (
-    "Cette tâche s'exécute sans surveillance : personne ne peut confirmer une action. "
-    "Si un outil est refusé, ne le relance pas : n'insiste pas et n'en contourne pas le refus. "
-    "Termine en indiquant clairement ce que tu n'as pas pu faire."
+    "This task runs unattended: nobody can confirm an action. "
+    "If a tool is refused, do not retry it: do not insist and do not work around the refusal. "
+    "Finish by stating clearly what you could not do."
 )
 
 Agent = Callable[[str, str, list[dict], Any], Iterator[Event]]
@@ -57,7 +57,7 @@ GatewayFactory = Callable[[Task], Any]
 
 
 def runs_path(base_dir: Path, task_id: str) -> Path:
-    # Défense en profondeur : un identifiant ne doit jamais sortir du dossier.
+    # Defense in depth: an id must never escape the directory.
     return base_dir / "runs" / validate_task_id(task_id)
 
 
@@ -70,8 +70,8 @@ def delete_runs(base_dir: Path, task_id: str) -> None:
 
 
 def list_runs(base_dir: Path, task_id: str) -> list[dict]:
-    """Comptes rendus d'une tâche, du plus récent au plus ancien. Les fichiers
-    illisibles sont ignorés : un compte rendu abîmé ne doit rien bloquer."""
+    """Run reports of a task, newest first. Unreadable files are skipped:
+    a damaged run report must not block anything."""
     folder = runs_path(base_dir, task_id)
     if not folder.is_dir():
         return []
@@ -80,20 +80,20 @@ def list_runs(base_dir: Path, task_id: str) -> list[dict]:
         try:
             records.append(json.loads(path.read_text(encoding="utf-8")))
         except (OSError, ValueError):
-            log.warning("compte rendu illisible ignoré : %s", path)
+            log.warning("unreadable run report skipped: %s", path)
     return records
 
 
 def unattended_preferences(
     base: ToolPreferences, registry: ToolRegistry, allowed: list[str] | None
 ) -> ToolPreferences:
-    """Préférences d'une exécution sans surveillance.
+    """Preferences for an unattended run.
 
-    `confirm_after_untrusted` est forcé : après la lecture d'un contenu non
-    fiable, plus aucun outil non lecture ne part sans confirmation — donc,
-    ici, plus aucun. Une liste `allowed` retire les autres outils de ce que le
-    modèle voit. On ne touche pas à `modes` : de toute façon la politique
-    ignore tout assouplissement pour WRITE et EXECUTE.
+    `confirm_after_untrusted` is forced: after reading untrusted content, no
+    non-read tool runs without confirmation — so, here, none at all. An
+    `allowed` list removes the other tools from what the model sees. `modes`
+    is left alone: the policy ignores any loosening for WRITE and EXECUTE
+    anyway.
     """
     disabled = set(base.disabled)
     if allowed is not None:
@@ -107,14 +107,14 @@ def unattended_preferences(
 def build_unattended_gateway(
     registry: ToolRegistry, base: ToolPreferences, allowed: list[str] | None = None
 ) -> ToolGateway:
-    """Une passerelle neuve par exécution : l'état « contenu non fiable lu » ne
-    déborde pas d'une tâche sur l'autre. `deny_all` est passé explicitement."""
+    """A fresh gateway per run: the "untrusted content read" state does not
+    leak from one task to another. `deny_all` is passed explicitly."""
     gateway = ToolGateway(
         registry,
         unattended_preferences(base, registry, allowed),
         confirm=deny_all,
-        # Personne ne relit ce qu'un outil renvoie : les secrets sont masqués
-        # avant le modèle et le compte rendu (EV4, OUT-15).
+        # Nobody reviews what a tool returns: secrets are masked
+        # before the model and the run report (EV4, OUT-15).
         input_guards=[check_input],
         output_filters=[filter_output],
     )
@@ -123,8 +123,8 @@ def build_unattended_gateway(
 
 
 class _RecordingGateway:
-    """Enveloppe la passerelle pour garder, par appel d'outil, le nom et l'issue
-    (ok ou code d'erreur) — jamais les arguments, qui peuvent contenir des secrets."""
+    """Wraps the gateway to keep, per tool call, the name and the outcome
+    (ok or error code) — never the arguments, which may contain secrets."""
 
     def __init__(self, inner: Any) -> None:
         self.inner = inner
@@ -165,8 +165,8 @@ class Scheduler:
         input_rules: InputRules | None = None,
     ) -> None:
         self.store = store
-        # Le filtre d'entrée du CLI et du web (EV2, ADR-0027) s'applique aussi au
-        # prompt d'une tâche : il est rejoué sans personne devant l'écran.
+        # The CLI and web input filter (EV2, ADR-0027) also applies to a task
+        # prompt: it is replayed with nobody in front of the screen.
         self.input_rules = input_rules
         self.base_dir = Path(base_dir)
         self.host = host
@@ -185,30 +185,30 @@ class Scheduler:
             self.registry = build_registry()
         return build_unattended_gateway(self.registry, self.preferences, task.tools)
 
-    # -- quoi lancer ----------------------------------------------------------
+    # -- what to run ----------------------------------------------------------
 
     def due_tasks(self, now: datetime | None = None) -> list[Task]:
         now = now or self.clock()
         return [t for t in self.store.load() if t.is_due(now)]
 
     def run_due(self, now: datetime | None = None) -> list[dict]:
-        """Une passe : joue chaque tâche échue, l'une après l'autre.
+        """One pass: runs each due task, one after the other.
 
-        Lève ScheduleStoreError si le fichier des tâches est cassé (rien n'est
-        alors lancé). Toute autre panne est isolée à la tâche qui la cause.
+        Raises ScheduleStoreError if the task file is broken (nothing is run
+        then). Any other failure is isolated to the task that causes it.
         """
         records = []
         for task in self.due_tasks(now):
             try:
                 records.append(self.run_task(task))
-            except Exception as exc:  # une tâche cassée ne doit pas empêcher les suivantes
-                log.exception("tâche %s : échec inattendu", task.id)
+            except Exception as exc:  # a broken task must not prevent the following ones
+                log.exception("task %s: unexpected failure", task.id)
                 records.append(self._salvage(task, exc))
         return records
 
     def _salvage(self, task: Task, exc: Exception) -> dict:
-        """Dernier recours quand run_task lui-même a planté (disque plein, fichier
-        des tâches devenu illisible...) : on note ce qu'on peut, sans relancer d'exception."""
+        """Last resort when run_task itself crashed (disk full, task file became
+        unreadable...): record what we can, without raising again."""
         now = self.clock()
         record = self._record(task, now, now, ERROR, error=f"{type(exc).__name__}: {exc}")
         for action in (
@@ -218,7 +218,7 @@ class Scheduler:
             try:
                 action()
             except Exception:
-                log.exception("tâche %s : impossible de noter l'échec", task.id)
+                log.exception("task %s: could not record the failure", task.id)
         return record
 
     def loop(
@@ -227,8 +227,8 @@ class Scheduler:
         sleep: Callable[[float], None] = time.sleep,
         max_passes: int | None = None,
     ) -> None:
-        """Appelle run_due toutes les `every_s` secondes (mode de secours quand
-        on n'a ni cron ni systemd). `sleep` est injectable pour les tests."""
+        """Calls run_due every `every_s` seconds (fallback mode when there is
+        neither cron nor systemd). `sleep` is injectable for tests."""
         passes = 0
         while max_passes is None or passes < max_passes:
             self.run_due()
@@ -237,16 +237,16 @@ class Scheduler:
                 break
             sleep(every_s)
 
-    # -- une exécution ----------------------------------------------------------
+    # -- one run ----------------------------------------------------------
 
     def run_task(self, task: Task) -> dict:
-        """Joue `task` maintenant, échue ou non (c'est `run_due` qui filtre)."""
+        """Runs `task` now, due or not (`run_due` does the filtering)."""
         started = self.clock()
         lock = self._acquire_lock(task, started)
         if lock is None:
-            log.warning("tâche %s déjà en cours : exécution ignorée", task.id)
+            log.warning("task %s already running: run skipped", task.id)
             record = self._record(
-                task, started, started, SKIPPED_LOCKED, error="une exécution est déjà en cours"
+                task, started, started, SKIPPED_LOCKED, error="a run is already in progress"
             )
             self._write_record(task.id, record, started)
             return record
@@ -254,7 +254,7 @@ class Scheduler:
             try:
                 record = self._execute(task, started)
             except Exception as exc:
-                log.exception("tâche %s en échec", task.id)
+                log.exception("task %s failed", task.id)
                 record = self._record(
                     task, started, self.clock(), ERROR, error=f"{type(exc).__name__}: {exc}"
                 )
@@ -268,18 +268,18 @@ class Scheduler:
 
     def _execute(self, task: Task, started: datetime) -> dict:
         gateway = _RecordingGateway(self.gateway_factory(task))
-        # Une tâche ne doit pas hériter de la méfiance (ou de la confiance) d'une autre.
+        # A task must not inherit the distrust (or trust) of another one.
         reset = getattr(gateway.inner, "reset_untrusted", None)
         if callable(reset):
             reset()
-        # La date du jour, calculée à chaque exécution : une boucle `loop` peut tourner
-        # des jours (sans elle, le modèle se croyait en 2024, essai du 2026-11-01).
+        # Today's date, computed on every run: a `loop` can run for days
+        # (without it, the model thought it was 2024, trial run on 2026-11-01).
         system = f"{UNATTENDED_NOTE}\n\n{date_block()}\n\n{self.system_prompt}".strip()
         allowed, prompt = filter_input(task.prompt, self.input_rules)
         if not allowed:
-            # Bloquée comme le serait le même texte tapé dans le chat : rien ne part au modèle.
+            # Blocked just like the same text typed in the chat: nothing reaches the model.
             return self._record(task, started, self.clock(), ERROR,
-                                error=f"Bloquée par le filtre d'entrée : {prompt}")
+                                error=f"Blocked by the input filter: {prompt}")
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
@@ -300,9 +300,9 @@ class Scheduler:
                 elif isinstance(event, Done):
                     reason = event.reason
                     break
-                # Le délai n'est vérifié qu'entre deux événements : un appel
-                # bloqué dans le modèle ou dans un outil ne peut pas être
-                # interrompu d'ici (ADR-0016).
+                # The timeout is only checked between two events: a call
+                # stuck in the model or in a tool cannot be
+                # interrupted from here (ADR-0016).
                 if self.monotonic() >= deadline:
                     timed_out = True
                     break
@@ -312,14 +312,14 @@ class Scheduler:
                 try:
                     close()
                 except Exception:
-                    log.exception("tâche %s : fermeture du flux en échec", task.id)
+                    log.exception("task %s: closing the stream failed", task.id)
 
         if timed_out:
-            status, error = TIMEOUT, f"délai de {task.timeout_s} s dépassé"
+            status, error = TIMEOUT, f"timeout of {task.timeout_s} s exceeded"
         elif error is not None or reason == "error":
-            status, error = ERROR, error or "l'agent a signalé une erreur"
+            status, error = ERROR, error or "the agent reported an error"
         elif reason == "max_iterations":
-            status, error = MAX_ITERATIONS, "nombre maximal d'étapes atteint sans réponse finale"
+            status, error = MAX_ITERATIONS, "maximum number of steps reached without a final answer"
         else:
             status = OK
         return self._record(
@@ -332,7 +332,7 @@ class Scheduler:
             error=error,
         )
 
-    # -- comptes rendus ----------------------------------------------------------
+    # -- run reports ----------------------------------------------------------
 
     @staticmethod
     def _record(
@@ -360,7 +360,7 @@ class Scheduler:
         stamp = started.astimezone(UTC).strftime("%Y%m%dT%H%M%S%fZ")
         path = folder / f"{stamp}.json"
         n = 0
-        while path.exists():  # horloge identique (tests, --force à la suite)
+        while path.exists():  # identical clock (tests, back-to-back --force)
             n += 1
             path = folder / f"{stamp}_{n}.json"
         atomic_write(path, json.dumps(record, ensure_ascii=False, indent=2) + "\n")
@@ -368,16 +368,16 @@ class Scheduler:
             try:
                 old.unlink()
             except OSError:
-                log.warning("ancien compte rendu non supprimé : %s", old)
+                log.warning("old run report not deleted: %s", old)
 
-    # -- verrou ----------------------------------------------------------------
+    # -- lock ----------------------------------------------------------------
 
     def _acquire_lock(self, task: Task, now: datetime) -> Path | None:
-        """Crée le verrou avec O_EXCL (atomique). Un verrou de plus de deux fois le
-        délai de la tâche est jugé abandonné (processus tué) et repris.
+        """Creates the lock with O_EXCL (atomic). A lock older than twice the
+        task timeout is deemed abandoned (killed process) and taken over.
 
-        Simple et fondé sur le temps : deux processus qui reprennent le même
-        verrou périmé au même instant peuvent se chevaucher (ADR-0016).
+        Simple and time-based: two processes taking over the same stale lock
+        at the same instant may overlap (ADR-0016).
         """
         path = lock_path(self.base_dir, task.id)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -386,7 +386,7 @@ class Scheduler:
                 fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             except FileExistsError:
                 if attempt == 0 and self._lock_is_stale(path, task, now):
-                    log.warning("tâche %s : verrou périmé supprimé (%s)", task.id, path)
+                    log.warning("task %s: stale lock removed (%s)", task.id, path)
                     try:
                         path.unlink()
                     except FileNotFoundError:
@@ -403,8 +403,8 @@ class Scheduler:
         try:
             started = parse_time(json.loads(path.read_text(encoding="utf-8"))["started_at"])
         except (OSError, ValueError, KeyError, TypeError):
-            # Verrou vide ou illisible (créé à l'instant par un autre processus ?) :
-            # on se fie à la date du fichier.
+            # Empty or unreadable lock (just created by another process?):
+            # rely on the file timestamp.
             try:
                 started = datetime.fromtimestamp(path.stat().st_mtime, UTC)
             except OSError:

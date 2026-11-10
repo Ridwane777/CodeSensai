@@ -1,12 +1,12 @@
 """
-Essai réel des outils du lot B à travers la passerelle (T2, T3, T4, A3,
-garde-fous), sans modèle : la boucle ReAct (A1) qui laisserait le modèle les
-appeler n'existe pas encore. Résultats : docs/performance/essai-2026-10-13.md.
+Real trial run of the Workstream B tools through the gateway (T2, T3, T4, A3,
+guardrails), without a model: the ReAct loop (A1) that would let the model call
+them did not exist yet. Results: docs/performance/trials/trial-2026-10-13.md.
 
-    python scripts/essai_outils.py            # T2, T4, A3, garde-fous
-    python scripts/essai_outils.py --web      # + T3 (image sensai-browser requise)
+    python scripts/essai_outils.py            # T2, T4, A3, guardrails
+    python scripts/essai_outils.py --web      # + T3 (sensai-browser image required)
 
-Prérequis : Docker qui répond ; pour --web,
+Prerequisites: a responding Docker; for --web,
 `docker build -t sensai-browser:latest docker/browser`.
 """
 import argparse
@@ -26,13 +26,13 @@ from sensai.tools.write_file_tool import WriteFileTool
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Essai réel des outils du lot B")
-    parser.add_argument("--web", action="store_true", help="tester aussi web_search")
+    parser = argparse.ArgumentParser(description="Real trial run of the Workstream B tools")
+    parser.add_argument("--web", action="store_true", help="also test web_search")
     web = parser.parse_args().web
 
-    workspace = Path(tempfile.mkdtemp(prefix="sensai-essai-"))
-    # Faux secret, au format d'une clé d'API, pour vérifier le masquage.
-    (workspace / "a.txt").write_text("bonjour\nAPI_KEY=sk-abcdef1234567890abcdef\n")
+    workspace = Path(tempfile.mkdtemp(prefix="sensai-trial-"))
+    # Fake secret, in API key format, to check masking.
+    (workspace / "a.txt").write_text("hello\nAPI_KEY=sk-abcdef1234567890abcdef\n")
     permissions = FilePermissions.for_workspace(workspace)
     registry = ToolRegistry()
     tools = [SandboxTool(), ReadFileTool(permissions), WriteFileTool(permissions)]
@@ -41,11 +41,11 @@ def main() -> int:
     for tool in tools:
         registry.register(tool)
 
-    # Confirmeur scripté (A3) : « oui » sauf quand un essai veut tester un refus.
+    # Scripted confirmer (A3): "yes" unless a trial wants to test a refusal.
     answer = {"value": True}
 
     def confirm(request) -> bool:
-        print(f"   [confirmation demandée] -> {'oui' if answer['value'] else 'non'}")
+        print(f"   [confirmation requested] -> {'yes' if answer['value'] else 'no'}")
         return answer["value"]
 
     gateway = ToolGateway(
@@ -61,29 +61,29 @@ def main() -> int:
         return content
 
     try:
-        out = run("T2 code simple", True, "run_code", code="print(sum(range(10)))")
-        checks.append(("T2 résultat 45", "45" in out))
-        out = run("T2 boucle infinie", False, "run_code", code="while True: pass")
-        checks.append(("T2 tuée par le timeout", "Timeout" in out))
-        run("T2 réseau coupé", False, "run_code",
+        out = run("T2 simple code", True, "run_code", code="print(sum(range(10)))")
+        checks.append(("T2 result 45", "45" in out))
+        out = run("T2 infinite loop", False, "run_code", code="while True: pass")
+        checks.append(("T2 killed by the timeout", "Timeout" in out))
+        run("T2 network cut off", False, "run_code",
             code="import urllib.request; urllib.request.urlopen('http://example.com', timeout=3)")
-        out = run("T4 lecture dans le projet", True, "read_file", path=str(workspace / "a.txt"))
-        checks.append(("garde-fou : secret masqué", "sk-abcdef" not in out))
-        run("T4 lecture hors projet", False, "read_file", path="/etc/passwd")
-        run("T4 écriture confirmée", True, "write_file",
-            path=str(workspace / "b.txt"), content="nouveau\n")
-        checks.append(("T4 b.txt créé", (workspace / "b.txt").exists()))
+        out = run("T4 read inside the project", True, "read_file", path=str(workspace / "a.txt"))
+        checks.append(("guardrail: secret masked", "sk-abcdef" not in out))
+        run("T4 read outside the project", False, "read_file", path="/etc/passwd")
+        run("T4 confirmed write", True, "write_file",
+            path=str(workspace / "b.txt"), content="new\n")
+        checks.append(("T4 b.txt created", (workspace / "b.txt").exists()))
         answer["value"] = False
-        run("A3 écrasement refusé", False, "write_file",
-            path=str(workspace / "a.txt"), content="écrasé\n")
-        checks.append(("A3 a.txt intact", (workspace / "a.txt").read_text().startswith("bonjour")))
+        run("A3 overwrite refused", False, "write_file",
+            path=str(workspace / "a.txt"), content="overwritten\n")
+        checks.append(("A3 a.txt intact", (workspace / "a.txt").read_text().startswith("hello")))
         if web:
             answer["value"] = True
-            run("T3 recherche web", True, "web_search", query="Ollama tool calling API")
+            run("T3 web search", True, "web_search", query="Ollama tool calling API")
     finally:
         shutil.rmtree(workspace, ignore_errors=True)
 
-    print("\nBilan :")
+    print("\nSummary:")
     for title, passed in checks:
         print(f"  {'✅' if passed else '❌'} {title}")
     return 0 if all(passed for _, passed in checks) else 1

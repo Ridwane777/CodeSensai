@@ -1,15 +1,15 @@
 """
-[Lot D] Questions de l'agent depuis le navigateur — feature [X4] (ADR-0046).
+[Workstream D] Agent questions from the browser — feature [X4] (ADR-0046).
 
-Même mécanique que la confirmation web (`execution/web_confirmation.py`,
-ADR-0015) : l'outil `ask_user` appelle un `Asker` SYNCHRONE, qui publie un
-événement `question` dans le flux SSE et bloque le thread de l'agent jusqu'à
-la réponse du navigateur (`POST /api/sessions/{id}/answer`).
+Same mechanism as web confirmation (`execution/web_confirmation.py`,
+ADR-0015): the `ask_user` tool calls a SYNCHRONOUS `Asker`, which publishes a
+`question` event on the SSE stream and blocks the agent thread until the
+browser answers (`POST /api/sessions/{id}/answer`).
 
-Pas de réponse à temps, broker fermé (onglet fermé, interruption, fin du
-tour) ou `emit` en panne : `None`, que l'outil transforme en « pas de
-réponse ». Une réponse invalide (champ inconnu, mauvais type, choix absent)
-est refusée sans réveiller l'agent : le navigateur peut la corriger.
+No answer in time, broker closed (tab closed, interruption, end of turn) or
+`emit` failing: `None`, which the tool turns into "no answer". An invalid
+answer (unknown field, wrong type, missing choice) is rejected without waking
+the agent: the browser can correct it.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ class _Pending:
 
 
 class WebQuestionBroker:
-    """Un broker par tour : relie l'outil `ask_user` à la réponse du navigateur."""
+    """One broker per turn: connects the `ask_user` tool to the browser's answer."""
 
     def __init__(self, emit: Callable[[dict[str, Any]], None], *,
                  timeout_s: float = ANSWER_TIMEOUT_S) -> None:
@@ -45,7 +45,7 @@ class WebQuestionBroker:
         self._closed = False
 
     def ask(self, question: Question) -> dict[str, Any] | None:
-        """L'`Asker` de l'outil. Ne lève jamais."""
+        """The tool's `Asker`. Never raises."""
         question_id = "question_" + uuid.uuid4().hex
         entry = _Pending(question)
         try:
@@ -60,7 +60,7 @@ class WebQuestionBroker:
             with self._lock:
                 return entry.values
         except Exception:
-            log.exception("question web en échec : traitée comme sans réponse")
+            log.exception("web question failed: treated as unanswered")
             return None
         finally:
             with self._lock:
@@ -68,10 +68,10 @@ class WebQuestionBroker:
                     del self._pending[question_id]
 
     def resolve(self, question_id: str, values: Any) -> str:
-        """Donne la réponse du navigateur.
+        """Delivers the browser's answer.
 
-        Renvoie "ok", "unknown" (identifiant inconnu, déjà répondu ou expiré) ou
-        le message d'erreur d'une réponse invalide (la question reste ouverte).
+        Returns "ok", "unknown" (unknown id, already answered or expired) or
+        the error message of an invalid answer (the question stays open).
         """
         with self._lock:
             entry = self._pending.get(question_id)
@@ -87,7 +87,7 @@ class WebQuestionBroker:
             return "ok"
 
     def close(self) -> None:
-        """Toutes les questions en attente deviennent « sans réponse »."""
+        """All pending questions become "unanswered"."""
         with self._lock:
             self._closed = True
             entries = list(self._pending.values())

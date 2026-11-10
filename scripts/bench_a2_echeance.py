@@ -1,11 +1,12 @@
-"""Point 2 de la #87 : combien de temps dure une vraie délégation, et que se passe-t-il au-delà ?
+"""Item 2 of #87: how long does a real delegation take, and what happens past the deadline?
 
-Lancé avec le vrai modèle.
-Projet lu : ce dépôt, en lecture seule.
+Run with the real model.
+Project read: this repository, read-only.
 
-    python scripts/bench_a2_echeance.py <hôte Ollama> durees|fantome
+    python scripts/bench_a2_echeance.py <Ollama host> durations|ghost
+    (the former mode names "durees" and "fantome" are still accepted)
 """
-# ruff: noqa: E402, E501  (chemin d'import ajouté avant les imports)
+# ruff: noqa: E402, E501  (import path added before the imports)
 import sys as _sys
 from pathlib import Path as _Path
 
@@ -23,24 +24,24 @@ from sensai.execution.tool_policy import ToolPreferences
 from sensai.tools.delegate_tool import DelegateTool
 from sensai.tools.read_file_tool import ReadFileTool
 
-HOST, MODE = sys.argv[1], sys.argv[2]
+HOST, MODE = sys.argv[1], {"durees": "durations", "fantome": "ghost"}.get(sys.argv[2], sys.argv[2])
 MODEL = "qwen3-coder:30b"
 import os
 
 PROJECT = os.environ.get("PROJET", str(ROOT))
 
 TASKS = [
-    "Lis src/sensai/core/structured.py et résume ce que fait ce module en trois phrases.",
-    "Lis src/sensai/tools/delegate_tool.py puis src/sensai/execution/gateway.py, et explique comment "
-    "la passerelle exécute un outil et pourquoi la profondeur de délégation est conservée.",
-    "Lis src/sensai/knowledge/cache.py et liste ses fonctions et classes publiques avec une ligne chacune.",
-    "Lis README.md et donne les commandes pour installer et lancer CodeSensei.",
-    "Lis src/sensai/web/server.py et liste toutes les routes HTTP avec leur méthode.",
+    "Read src/sensai/core/structured.py and summarize what this module does in three sentences.",
+    "Read src/sensai/tools/delegate_tool.py then src/sensai/execution/gateway.py, and explain how "
+    "the gateway runs a tool and why the delegation depth is preserved.",
+    "Read src/sensai/knowledge/cache.py and list its public functions and classes, one line each.",
+    "Read README.md and give the commands to install and run CodeSensai.",
+    "Read src/sensai/web/server.py and list every HTTP route with its method.",
 ]
 
 
 class Counting:
-    """Passerelle qui compte et horodate les appels d'outils (ceux du sous-agent compris)."""
+    """Gateway that counts and timestamps tool calls (including the sub-agent's)."""
 
     def __init__(self, gateway):
         self.gateway = gateway
@@ -64,26 +65,26 @@ def build(timeout_s):
     return counting
 
 
-if MODE == "durees":
+if MODE == "durations":
     for task in TASKS:
         tools = build(120)
         start = time.monotonic()
         result = tools.call("delegate_task", task=task)
         took = time.monotonic() - start
         inner = [n for _, n in tools.calls[1:]]
-        print(f"{took:6.1f} s  ok={result.ok}  appels du sous-agent={inner}", flush=True)
+        print(f"{took:6.1f} s  ok={result.ok}  sub-agent calls={inner}", flush=True)
         print(f"         {result.content[:140]!r}", flush=True)
 
-if MODE == "fantome":
-    DelegateTool.timeout_s = 38  # échéance : 38 - 30 = 8 s
+if MODE == "ghost":
+    DelegateTool.timeout_s = 38  # deadline: 38 - 30 = 8 s
     tools = build(120)
     start = time.monotonic()
     result = tools.call("delegate_task", task=TASKS[1])
     t_result = time.monotonic() - start
-    print(f"résultat rendu à l'agent après {t_result:.1f} s : ok={result.ok} {result.content[:120]!r}",
+    print(f"result returned to the agent after {t_result:.1f} s: ok={result.ok} {result.content[:120]!r}",
           flush=True)
     before = len(tools.calls)
     time.sleep(90)
     after = [(round(t - start, 1), n) for t, n in tools.calls[before:]]
-    print(f"appels d'outils faits APRÈS le délai, en arrière-plan : {after}", flush=True)
-    print("threads encore vivants :", [t.name for t in threading.enumerate() if t.daemon], flush=True)
+    print(f"tool calls made AFTER the timeout, in the background: {after}", flush=True)
+    print("threads still alive:", [t.name for t in threading.enumerate() if t.daemon], flush=True)

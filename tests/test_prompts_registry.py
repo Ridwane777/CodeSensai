@@ -1,22 +1,22 @@
 """
-Vérifie le registre de prompts réellement livré dans le dépôt — feature [A4].
+Checks the prompt registry actually shipped in the repository — feature [A4].
 
-Ce test tourne en CI : il échoue si quelqu'un modifie une version déjà rangée,
-supprime un fichier de version, ou fusionne deux branches qui ont créé le même
-numéro (ADR-0010). Pour corriger un prompt, on range une nouvelle version.
+This test runs in CI: it fails if someone edits an already stored version,
+deletes a version file, or merges two branches that created the same
+number (ADR-0010). To fix a prompt, store a new version.
 """
 from sensai.config import PROJECT_ROOT
 from sensai.knowledge.prompt_versions import PromptStore
 
 
-def test_registre_du_depot_coherent():
+def test_repository_registry_is_consistent():
     store = PromptStore(PROJECT_ROOT / "prompts")
 
     assert store.exists()
     assert store.check() == []
 
 
-def test_prompts_de_l_agent_versionnes():
+def test_agent_prompts_are_versioned():
     store = PromptStore(PROJECT_ROOT / "prompts")
 
     assert {"system", "memory"} <= set(store.names())

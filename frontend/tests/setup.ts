@@ -1,12 +1,12 @@
 import '@testing-library/jest-dom/vitest'
 import { beforeEach } from 'vitest'
 
-// Certains choix de l'interface sont gardés dans localStorage (panneau ouvert, jeton…) :
-// chaque test repart d'un stockage vide, sinon un test hérite de l'état du précédent.
+// Some UI choices are kept in localStorage (open panel, token…):
+// each test starts from empty storage, otherwise a test inherits the previous one's state.
 beforeEach(() => {
   try {
     localStorage.clear()
   } catch {
-    /* stockage indisponible : rien à vider */
+    /* storage unavailable: nothing to clear */
   }
 })

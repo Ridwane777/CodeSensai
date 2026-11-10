@@ -1,17 +1,17 @@
-# Dépendances d'exécution de CodeSensei, versions testées le 2026-10-18
-# (Python 3.12, pip check sans conflit). Les bornes larges sont dans pyproject.toml ;
-# ce fichier fixe un environnement reproductible :
+# CodeSensai runtime dependencies, versions tested on 2026-10-18
+# (Python 3.12, pip check with no conflict). Loose bounds live in pyproject.toml;
+# this file pins a reproducible environment:
 #   pip install -r requirements.txt && pip install -e . --no-deps
-# Détail, licences et remplaçants : docs/dependances.md.
-requests==2.34.2          # appels HTTP à Ollama, dont le reclassement du RAG (ADR-0001, ADR-0032)
-numpy==2.5.4              # recherche vectorielle du RAG (ADR-0009) ; BM25 (R2) est en Python pur
-puremagic==2.2.0          # type d'un fichier d'après son contenu, pour read_file (ADR-0034)
-docker==7.2.0             # pilote les sandboxes Python et Chromium (ADR-0012)
-rich==15.0.0              # affichage du CLI : couleurs, cadres, Markdown
-prompt_toolkit==3.0.53    # invite du CLI : historique et complétion des commandes
-fastapi==0.146.0          # serveur web sensai-web (ADR-0035)
-uvicorn==0.54.0           # serveur HTTP qui fait tourner sensai-web
-# Dépendances de requests, docker, rich et prompt_toolkit :
+# Details, licenses and replacements: docs/dependencies.md.
+requests==2.34.2          # HTTP calls to Ollama, including RAG reranking (ADR-0001, ADR-0032)
+numpy==2.5.4              # RAG vector search (ADR-0009); BM25 (R2) is pure Python
+puremagic==2.2.0          # file type from its content, for read_file (ADR-0034)
+docker==7.2.0             # drives the Python and Chromium sandboxes (ADR-0012)
+rich==15.0.0              # CLI rendering: colors, panels, Markdown
+prompt_toolkit==3.0.53    # CLI prompt: history and command completion
+fastapi==0.146.0          # sensai-web web server (ADR-0035)
+uvicorn==0.54.0           # HTTP server that runs sensai-web
+# Dependencies of requests, docker, rich and prompt_toolkit:
 certifi==2026.7.22
 charset-normalizer==3.5.2
 idna==3.20
@@ -20,7 +20,7 @@ markdown-it-py==4.2.0
 mdurl==0.1.2
 Pygments==2.21.0
 wcwidth==0.9.2
-# Dépendances de fastapi et uvicorn :
+# Dependencies of fastapi and uvicorn:
 starlette==1.9.0
 pydantic==2.14.1
 pydantic_core==2.50.1

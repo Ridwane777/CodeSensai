@@ -1,21 +1,21 @@
 """
-[Lot B — Méric] Confirmation depuis le navigateur — feature [A3] Human-in-the-Loop,
-version web (issue #47).
+[Workstream B — Meric] Confirmation from the browser — feature [A3] Human-in-the-Loop,
+web version (issue #47).
 
-Contrat inter-lots (ADR-0005, ADR-0006) : la passerelle appelle un `Confirmer`
-SYNCHRONE, `(ConfirmationRequest) -> bool`. `human_in_loop.py` fournit celui de
-la CLI ; ce module fournit celui du web, sans toucher à la passerelle
-(ADR-0015). Il ne dépend d'aucun framework : seulement `threading`. C'est le
-Lot D qui branche `emit` (pousser un événement dans le flux SSE) et qui appelle
-`resolve` depuis sa route `POST /sessions/{id}/confirm`. « À brancher par le
-Lot D » : voir docs/architecture/web/web-api.md.
+Cross-workstream contract (ADR-0005, ADR-0006): the gateway calls a
+SYNCHRONOUS `Confirmer`, `(ConfirmationRequest) -> bool`. `human_in_loop.py`
+provides the CLI one; this module provides the web one, without touching the
+gateway (ADR-0015). It depends on no framework, only `threading`. Workstream D
+wires `emit` (push an event into the SSE stream) and calls `resolve` from its
+`POST /sessions/{id}/confirm` route. "To be wired by Workstream D": see
+docs/architecture/web/web-api.md.
 
-Règle : seul `approved is True` autorise. Délai dépassé, broker fermé (onglet
-fermé, session terminée), `emit` en panne, identifiant inconnu : refus. Le
-confirmeur ne lève jamais, et ne laisse jamais de demande en attente.
+Rule: only `approved is True` allows. Timeout, closed broker (tab closed,
+session ended), failing `emit`, unknown id: refusal. The confirmer never
+raises, and never leaves a request pending.
 
-Le confirmeur BLOQUE le thread qui l'appelle jusqu'à la réponse : l'agent doit
-donc tourner dans un thread de travail, pas dans la boucle d'événements.
+The confirmer BLOCKS its calling thread until the answer: the agent must
+therefore run in a worker thread, not in the event loop.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 
 
 class _Pending:
-    """Une demande en attente : l'événement qui réveille le confirmeur et la réponse."""
+    """A pending request: the event that wakes the confirmer, and the answer."""
 
     __slots__ = ("approved", "event")
 
@@ -46,11 +46,11 @@ def _new_id() -> str:
 
 
 class WebConfirmationBroker:
-    """Relie le confirmeur bloquant de la passerelle à une réponse venue du web.
+    """Connects the gateway's blocking confirmer to an answer from the web.
 
-    Un broker par session. `emit` reçoit le dictionnaire à envoyer au
-    navigateur (type `confirm_request`) ; il est appelé depuis le thread de
-    l'agent, hors de tout verrou, et doit donc être sûr entre threads (ex.
+    One broker per session. `emit` receives the dict to send to the browser
+    (type `confirm_request`); it is called from the agent thread, outside any
+    lock, and must therefore be thread-safe (e.g.
     `loop.call_soon_threadsafe(queue.put_nowait, payload)`).
     """
 
@@ -66,18 +66,18 @@ class WebConfirmationBroker:
         self._pending: dict[str, _Pending] = {}
         self._closed = False
 
-    # -- côté passerelle ------------------------------------------------------
+    # -- gateway side ---------------------------------------------------------
 
     @property
     def confirmer(self) -> Callable[[ConfirmationRequest], bool]:
-        """Le `Confirmer` à passer à `ToolGateway(confirm=...)`."""
+        """The `Confirmer` to pass to `ToolGateway(confirm=...)`."""
         return self._confirm
 
     def make_confirmer(self) -> Callable[[ConfirmationRequest], bool]:
         return self._confirm
 
     def _confirm(self, request: ConfirmationRequest) -> bool:
-        """Publie la demande, attend au plus `request.timeout_s`. Ne lève jamais."""
+        """Publish the request, wait at most `request.timeout_s`. Never raises."""
         confirm_id: str | None = None
         entry = _Pending()
         try:
@@ -86,15 +86,14 @@ class WebConfirmationBroker:
                 if self._closed:
                     return False
                 if confirm_id in self._pending:
-                    # Collision d'identifiant : répondre à la mauvaise demande
-                    # serait pire qu'un refus.
-                    log.error("identifiant de confirmation déjà utilisé : refus")
+                    # Id collision: answering the wrong request would be worse
+                    # than a refusal.
+                    log.error("confirmation id already in use: refused")
                     confirm_id = None
                     return False
                 self._pending[confirm_id] = entry
-            # Hors du verrou : un `emit` qui répond tout de suite (ou qui prend
-            # du temps) ne doit ni bloquer `resolve`/`close` ni provoquer
-            # d'interblocage.
+            # Outside the lock: an `emit` that answers at once (or takes time)
+            # must neither block `resolve`/`close` nor cause a deadlock.
             self._emit(
                 {
                     "type": "confirm_request",
@@ -108,11 +107,11 @@ class WebConfirmationBroker:
             )
             entry.event.wait(request.timeout_s)
             with self._lock:
-                # Une réponse arrivée pile au dernier instant reste valable :
-                # `resolve` a écrit `approved` sous ce même verrou.
+                # An answer arriving at the very last moment still counts:
+                # `resolve` wrote `approved` under this same lock.
                 return entry.approved is True
         except Exception:
-            log.exception("confirmation web en échec : traité comme un refus")
+            log.exception("web confirmation failed: treated as a refusal")
             return False
         finally:
             if confirm_id is not None:
@@ -120,14 +119,14 @@ class WebConfirmationBroker:
                     if self._pending.get(confirm_id) is entry:
                         del self._pending[confirm_id]
 
-    # -- côté web ----------------------------------------------------------------
+    # -- web side ---------------------------------------------------------------
 
     def resolve(self, confirm_id: str, approved: object) -> bool:
-        """Donne la réponse du navigateur. Vrai seulement si une demande en attente correspond.
+        """Deliver the browser's answer. True only if a pending request matches.
 
-        Seul `approved is True` autorise (pas `1`, pas `"true"`). Identifiant
-        inconnu, déjà répondu ou expiré : `False`, sans exception ; la première
-        réponse l'emporte.
+        Only `approved is True` allows (not `1`, not `"true"`). Unknown,
+        already answered or expired id: `False`, no exception; the first
+        answer wins.
         """
         if not isinstance(confirm_id, str):
             return False
@@ -140,14 +139,14 @@ class WebConfirmationBroker:
             return True
 
     def pending_ids(self) -> list[str]:
-        """Identifiants des demandes qui attendent encore une réponse."""
+        """Ids of the requests still waiting for an answer."""
         with self._lock:
             return list(self._pending)
 
     def close(self) -> None:
-        """Refuse toutes les demandes en attente ; les suivantes sont refusées sans `emit`.
+        """Refuse every pending request; later ones are refused without `emit`.
 
-        À appeler quand le navigateur se déconnecte ou que la session finit.
+        Call it when the browser disconnects or the session ends.
         """
         with self._lock:
             self._closed = True

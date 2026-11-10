@@ -1,4 +1,4 @@
-"""Teste la confirmation console [A3] : seul un « oui » explicite autorise."""
+"""Tests console confirmation [A3]: only an explicit "yes" authorizes."""
 import pytest
 
 from sensai.core.tools import ToolRegistry
@@ -53,7 +53,7 @@ def test_user_sees_the_exact_plan():
 
 
 class _FakeSandbox:
-    """Compte les exécutions, sans Docker."""
+    """Counts executions, without Docker."""
 
     class config:
         @staticmethod
@@ -65,7 +65,7 @@ class _FakeSandbox:
 
     def run(self, *a, **k):
         self.ran += 1
-        raise AssertionError("ne doit pas être appelé sans confirmation")
+        raise AssertionError("must not be called without confirmation")
 
 
 def test_run_code_does_not_start_without_yes_through_gateway():

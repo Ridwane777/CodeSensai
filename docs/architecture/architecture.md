@@ -1,181 +1,181 @@
-# Architecture — CodeSensei
+# Architecture — CodeSensai
 
-État au 2026-10-14 (`main`, après #73). Les décisions sont dans
-[decisions/](../decisions/README.md) ; ce document décrit ce que fait le code.
+Status as of 2026-10-14 (`main`, after #73). Decisions live in
+[decisions/](../decisions/README.md); this document describes what the code does.
 
 ## Use case
-Un développeur seul (ou en petite équipe) sur un projet long, qui veut un
-assistant capable de : se souvenir du contexte du code d'une session à
-l'autre, exécuter et corriger du code de façon autonome, et expliquer son
-raisonnement de façon transparente — tout en demandant confirmation avant
-toute action risquée et sans jamais laisser fuiter de secrets.
+A solo developer (or a small team) on a long-running project who wants an
+assistant that can: remember the code context from one session to the next,
+run and fix code autonomously, and explain its reasoning transparently —
+while asking for confirmation before any risky action and never leaking
+secrets.
 
-## Vue d'ensemble
+## Overview
 
 ```
- sensai (CLI)        sensai-schedule (X5)        interface web (lot D, à venir)
+ sensai (CLI)        sensai-schedule (X5)        web interface (Workstream D, upcoming)
       │                     │                          │
       └──────────┬──────────┴──────────────────────────┘
-                 │  les mêmes événements : Token, Thought, ToolCall, ToolReturn, Error, Done
+                 │  the same events: Token, Thought, ToolCall, ToolReturn, Error, Done
                  ▼
-        Agent ReAct — core/agent.py                         lot A (A1)
-        appelle le modèle → lit tool_calls → appelle un outil → recommence (6 appels max)
-                 │  tool calling natif d'Ollama (ADR-0003)
+        ReAct agent — core/agent.py                         Workstream A (A1)
+        calls the model → reads tool_calls → calls a tool → repeats (6 calls max)
+                 │  Ollama native tool calling (ADR-0003)
                  ▼
-        Passerelle — execution/gateway.py                   lot B (ADR-0006)
-        politique de risque · validation des arguments · garde-fous EV2 ·
-        confirmation A3 · délai (120 s) · nettoyage et validation du résultat
+        Gateway — execution/gateway.py                      Workstream B (ADR-0006)
+        risk policy · argument validation · EV2 guardrails ·
+        A3 confirmation · timeout (120 s) · result sanitizing and validation
                  │
                  ▼
-        Registre d'outils — core/tools.py + registry.py     contrat Tool commun (ADR-0002)
+        Tool registry — core/tools.py + registry.py         shared Tool contract (ADR-0002)
    ┌─────────────┬──────────────┬──────────────┬──────────────┬─────────────────┐
  run_code      read_file      write_file     web_search     search_codebase
- (T2, Docker)  (T4)           (T4)           (T3, Chromium  (R1, lot C, ajouté
-                                              Docker, Bing)  par le CLI)
+ (T2, Docker)  (T4)           (T4)           (T3, Chromium  (R1, Workstream C,
+                                              Docker, Bing)  added by the CLI)
                  │
                  ▼
-        Ollama (HTTP brut, core/ollama_client.py) : qwen3:8b en dev,
-        qwen3-coder:30b et bge-m3 sur un pod RunPod pour la validation (ADR-0004)
+        Ollama (raw HTTP, core/ollama_client.py): qwen3:8b in dev,
+        qwen3-coder:30b and bge-m3 on a RunPod pod for validation (ADR-0004)
 ```
 
-Autour de la boucle :
-- **Mémoire** (`knowledge/memory.py`, M1) : sessions et profil dans
-  `~/.sensai` (SQLite), reprises au démarrage ; le profil est ajouté au
-  prompt système.
-- **RAG** (`knowledge/rag.py`, R1) : index du projet dans `~/.sensai/rag.db`,
-  ouvert à la première question ; les meilleurs passages sont joints à chaque
-  question, et l'outil `search_codebase` permet à l'agent de chercher lui-même
-  (ADR-0009, ADR-0013). Les PDF, documents Office et EPUB sont convertis en
-  Markdown dans un conteneur `sensai-docs` (`execution/sandbox/document_sandbox.py`)
-  avant d'être indexés, et `read_file` les lit de la même façon ;
-  `knowledge/documents.py` identifie le type d'un fichier par son contenu (ADR-0034). Depuis R2 (`knowledge/retrieval.py`, ADR-0032), chaque
-  recherche fusionne les embeddings et BM25 (RRF), puis le modèle de chat
-  reclasse les 10 premiers passages.
-- **Document d'état** (`knowledge/state_document.py`, M4) : `SENSAI.md` dans
-  le projet, ajouté au prompt système, modifié section par section par
-  l'outil `update_state` ; journal et annulation dans `~/.sensai/state/`
+Around the loop:
+- **Memory** (`knowledge/memory.py`, M1): sessions and profile in
+  `~/.sensai` (SQLite), restored at startup; the profile is added to the
+  system prompt.
+- **RAG** (`knowledge/rag.py`, R1): project index in `~/.sensai/rag.db`,
+  opened on the first question; the best passages are attached to each
+  question, and the `search_codebase` tool lets the agent search on its own
+  (ADR-0009, ADR-0013). PDFs, Office documents and EPUBs are converted to
+  Markdown in a `sensai-docs` container (`execution/sandbox/document_sandbox.py`)
+  before indexing, and `read_file` reads them the same way;
+  `knowledge/documents.py` identifies a file's type from its content (ADR-0034). Since R2 (`knowledge/retrieval.py`, ADR-0032), each
+  search fuses embeddings and BM25 (RRF), then the chat model
+  reranks the top 10 passages.
+- **State document** (`knowledge/state_document.py`, M4): `SENSAI.md` in
+  the project, added to the system prompt, edited section by section by
+  the `update_state` tool; log and undo in `~/.sensai/state/`
   (ADR-0029).
-- **Mémoire de faits** (`knowledge/facts.py`, M3) : triplets entité,
-  attribut, valeur dans `~/.sensai/memory.db`, enregistrés par `save_fact`
-  (confirmé) et retrouvés par `recall_facts` ; le prompt système liste les
-  entités connues (ADR-0030).
-- **Serveur web** (`web/runtime.py`, `web/server.py`, `web/cli.py`, X1) :
-  `sensai-web` assemble le même agent que le CLI et l'expose en HTTP (flux
-  SSE d'un tour, confirmation, interruption, branches, export) ; il sert
-  aussi l'interface `frontend/` (ADR-0035).
-- **Cache des réponses** (`knowledge/cache.py`, A6) : questions, réponses et
-  empreintes des fichiers lus dans `~/.sensai/cache.db` ; une question proche
-  (bge-m3, seuil 0,90, sans action ni nom différents) reçoit la réponse sans
-  appel au modèle de chat (ADR-0033).
-- **Prompts versionnés** (`knowledge/prompt_versions.py`, `prompts/`, A4) :
-  l'agent charge la version active de chaque prompt (ADR-0010).
-- **Outils d'équipe**, hors conversation : `sensai-prompt` (A4),
-  `sensai-eval` (EV1, juge LLM, ADR-0019), le corpus adversarial
+- **Fact memory** (`knowledge/facts.py`, M3): entity, attribute, value
+  triples in `~/.sensai/memory.db`, saved by `save_fact`
+  (confirmed) and retrieved by `recall_facts`; the system prompt lists the
+  known entities (ADR-0030).
+- **Web server** (`web/runtime.py`, `web/server.py`, `web/cli.py`, X1):
+  `sensai-web` builds the same agent as the CLI and exposes it over HTTP (SSE
+  stream for a turn, confirmation, interruption, branches, export); it also
+  serves the `frontend/` interface (ADR-0035).
+- **Answer cache** (`knowledge/cache.py`, A6): questions, answers and
+  fingerprints of the files read, in `~/.sensai/cache.db`; a close question
+  (bge-m3, threshold 0.90, no differing action or name) gets the answer without
+  a chat model call (ADR-0033).
+- **Versioned prompts** (`knowledge/prompt_versions.py`, `prompts/`, A4):
+  the agent loads the active version of each prompt (ADR-0010).
+- **Team tools**, outside conversations: `sensai-prompt` (A4),
+  `sensai-eval` (EV1, LLM judge, ADR-0019), the adversarial corpus
   `tests/adversarial/` (EV4, ADR-0018).
 
-## Composants et responsabilités
+## Components and responsibilities
 
-| Composant | Fichier(s) | Lot | Rôle |
+| Component | File(s) | Workstream | Role |
 |---|---|---|---|
-| Client Ollama | `core/ollama_client.py` | A | Appels HTTP bruts, streaming, outils dans le champ `tools` |
-| Historique | `core/history.py` | A | Contexte de conversation envoyé au modèle |
-| Agent (ReAct) | `core/agent.py` | A | Boucle d'appels d'outils, au plus 6 appels au modèle par tour |
-| Événements | `core/events.py` | A | Ce qu'un tour émet — contrat CLI ↔ web ([api-contract.md](web/api-contract.md), [web-api.md](web/web-api.md)) |
-| Contrat Tool, registre | `core/tools.py` | A | Protocole `Tool`, `ToolRegistry` |
-| Registre partagé | `registry.py` | tous | Outils proposés au CLI et au planificateur : une ligne par outil |
-| Passerelle | `execution/gateway.py`, `tool_policy.py`, `tool_validation.py`, `output_sanitizer.py` | B | Tout appel d'outil passe par elle ([tool-contract.md](tool-contract.md)) |
-| Confirmation | `execution/human_in_loop.py`, `web_confirmation.py` | B | Confirmeur du terminal ; courtier pour le web (ADR-0015) |
-| Garde-fous | `execution/guardrails.py` | B | Masquage des secrets et données personnelles (EV2) |
-| Permissions fichiers | `execution/file_permissions.py` | B | Dossiers autorisés, fichiers sensibles refusés (ADR-0011) |
-| Sandboxes | `execution/sandbox/` | B | Python et Chromium dans des conteneurs jetables ([sandbox.md](sandbox.md)) |
-| Outils | `tools/*.py` | B, C | `run_code`, `read_file`, `write_file`, `web_search`, `search_codebase`, `update_state`, `save_fact`, `recall_facts` |
-| Planificateur | `scheduling/`, `schedule_cli.py` | B | Tâches à intervalle, sans surveillance ([scheduling.md](scheduling.md)) |
-| Évaluation | `eval/` | B | Juge LLM et détection des hallucinations ([EV1](../performance/EV1-evaluation.md)) |
-| Mémoire, RAG, prompts | `knowledge/` | C | Sessions et profil, index du projet, registre des prompts |
-| Configuration | `config.py` | A | Argument CLI > `config.json` > défaut ; valide les sections `tools` et `files` |
-| Interface web | `web/` | D | À venir : façade au-dessus du même cœur (ADR-0005) |
-| Outil MCP externe | `tools/mcp_tool.py` | D | Squelette : à écrire |
-| Observabilité | `observability/` | D | À venir : journal des tours, alimente l'interface |
+| Ollama client | `core/ollama_client.py` | A | Raw HTTP calls, streaming, tools in the `tools` field |
+| History | `core/history.py` | A | Conversation context sent to the model |
+| Agent (ReAct) | `core/agent.py` | A | Tool-calling loop, at most 6 model calls per turn |
+| Events | `core/events.py` | A | What a turn emits — CLI ↔ web contract ([api-contract.md](web/api-contract.md), [web-api.md](web/web-api.md)) |
+| Tool contract, registry | `core/tools.py` | A | `Tool` protocol, `ToolRegistry` |
+| Shared registry | `registry.py` | all | Tools offered to the CLI and the scheduler: one line per tool |
+| Gateway | `execution/gateway.py`, `tool_policy.py`, `tool_validation.py`, `output_sanitizer.py` | B | Every tool call goes through it ([tool-contract.md](tool-contract.md)) |
+| Confirmation | `execution/human_in_loop.py`, `web_confirmation.py` | B | Terminal confirmer; broker for the web (ADR-0015) |
+| Guardrails | `execution/guardrails.py` | B | Masking of secrets and personal data (EV2) |
+| File permissions | `execution/file_permissions.py` | B | Allowed folders, sensitive files refused (ADR-0011) |
+| Sandboxes | `execution/sandbox/` | B | Python and Chromium in disposable containers ([sandbox.md](sandbox.md)) |
+| Tools | `tools/*.py` | B, C | `run_code`, `read_file`, `write_file`, `web_search`, `search_codebase`, `update_state`, `save_fact`, `recall_facts` |
+| Scheduler | `scheduling/`, `schedule_cli.py` | B | Interval tasks, unattended ([scheduling.md](scheduling.md)) |
+| Evaluation | `eval/` | B | LLM judge and hallucination detection ([EV1](../performance/EV1-evaluation.md)) |
+| Memory, RAG, prompts | `knowledge/` | C | Sessions and profile, project index, prompt registry |
+| Configuration | `config.py` | A | CLI argument > `config.json` > default; validates the `tools` and `files` sections |
+| Web interface | `web/` | D | Upcoming: facade over the same core (ADR-0005) |
+| External MCP tool | `tools/mcp_tool.py` | D | Skeleton: to be written |
+| Observability | `observability/` | D | Upcoming: turn log, feeds the interface |
 
-## Interfaces — les contrats qui relient les lots
+## Interfaces — the contracts between workstreams
 
-Chaque capacité exposée à l'agent implémente le protocole `Tool`
-(`core/tools.py`) :
+Every capability exposed to the agent implements the `Tool` protocol
+(`core/tools.py`):
 
 ```python
 class Tool(Protocol):
     name: str
     description: str
-    parameters: dict          # JSON Schema des arguments
+    parameters: dict          # JSON Schema of the arguments
     def run(self, **kwargs) -> ToolResult: ...
 ```
 
-Un outil déclare aussi son `risk` (`read`, `network`, `write`, `execute`) :
-sans risque déclaré, la passerelle le traite comme une exécution. L'agent ne
-reçoit jamais le registre brut, seulement la passerelle : c'est elle qui
-décide si un appel part, avec quelle confirmation, et ce qui revient au
-modèle. Voir [ADR-0002](../decisions/0002-registre-d-outils-partage.md) et
-[ADR-0006](../decisions/0006-passerelle-d-outils.md).
+A tool also declares its `risk` (`read`, `network`, `write`, `execute`):
+with no declared risk, the gateway treats it as an execution. The agent never
+receives the raw registry, only the gateway: the gateway decides whether a call
+goes out, with which confirmation, and what comes back to the
+model. See [ADR-0002](../decisions/0002-shared-tool-registry.md) and
+[ADR-0006](../decisions/0006-tool-gateway.md).
 
-Second contrat, pour les interfaces : un tour d'agent émet des
-**événements** (`core/events.py`), pas du texte — la CLI les affiche, le
-planificateur les résume dans un compte rendu, le web les sérialisera en JSON.
-Voir [ADR-0005](../decisions/0005-interface-web-facade.md).
+Second contract, for the interfaces: an agent turn emits
+**events** (`core/events.py`), not text — the CLI displays them, the
+scheduler summarizes them in a run report, the web will serialize them to JSON.
+See [ADR-0005](../decisions/0005-web-interface-facade.md).
 
-## Contrat interface ⇄ moteur (proposé)
+## Interface ⇄ engine contract (proposed)
 
-Le Lot D a figé le format d'échange avant d'avoir un backend
-([ADR-0005](../decisions/0005-interface-web-facade.md),
-[ADR-0020](../decisions/0020-interface-web-simulee.md)). Il est écrit en
-TypeScript dans `frontend/src/contract/` et testé dans `frontend/tests/`.
-**C'est une proposition, à valider avec le Lot A.**
+Workstream D froze the exchange format before having a backend
+([ADR-0005](../decisions/0005-web-interface-facade.md),
+[ADR-0020](../decisions/0020-simulated-web-interface.md)). It is written in
+TypeScript in `frontend/src/contract/` and tested in `frontend/tests/`.
+**It is a proposal, to be validated with Workstream A.**
 
-L'interface ne connaît qu'une interface `Engine` :
+The interface only knows an `Engine` interface:
 
-| Commande (interface → moteur) | Effet |
+| Command (interface → engine) | Effect |
 |---|---|
-| `send`, `interrupt` | envoyer un message ; interrompre la génération en cours |
-| `editMessage` | bifurquer depuis un message modifié (branche) |
-| `confirm`, `answer` | répondre à une demande de confirmation ou à un formulaire |
-| `switchPersona` | changer d'agent sans effacer l'historique |
+| `send`, `interrupt` | send a message; interrupt the current generation |
+| `editMessage` | fork from an edited message (branch) |
+| `confirm`, `answer` | answer a confirmation request or a form |
+| `switchPersona` | switch agent without clearing the history |
 
-Le moteur répond par un flux d'événements typés : `turn_start`, `token`,
-`thought` / `action` / `observation` (le raisonnement), `confirm_request`,
+The engine answers with a stream of typed events: `turn_start`, `token`,
+`thought` / `action` / `observation` (the reasoning), `confirm_request`,
 `question`, `usage`, `compression`, `artifact_patch`, `rag_sources`,
 `web_results`, `guardrail`, `eval_score`, `cache_hit`, `agent_handoff`,
-`error`, `done`. Deux implémentations : `MockEngine` (scénarios, utilisé par la
-démo) et `HttpEngine` (squelette SSE, non branché ; routes `/messages`,
-`/interrupt`, `/confirm`, `/answer`, `/persona` à confirmer).
+`error`, `done`. Two implementations: `MockEngine` (scenarios, used by the
+demo) and `HttpEngine` (SSE skeleton, not wired; routes `/messages`,
+`/interrupt`, `/confirm`, `/answer`, `/persona` to be confirmed).
 
-## Pourquoi cette architecture (résumé)
+## Why this architecture (summary)
 
-- **`core/` vs `execution/` vs `knowledge/`** : découpage par
-  responsabilité, pas par personne — résiste à un changement de répartition.
-- **Une passerelle obligatoire entre l'agent et les outils** : les
-  protections (confirmation, garde-fous, délais) sont écrites une fois, et
-  aucun outil ne peut les oublier.
-- **Un registre partagé** : un outil branché une fois arrive au CLI et au
-  planificateur ; seule la politique change (confirmation d'un côté, refus
-  systématique de l'autre).
-- **`prompts/` comme fichiers versionnés, pas comme constantes Python** :
-  exigence du Base Loop, et base d'A4.
-- **`src/` layout + `pyproject.toml`** : package installable
-  (`pip install -e .`), imports propres quel que soit le dossier d'où l'on
-  lance les commandes.
-- **`tests/` qui reflète `src/`** : chaque lot peut vérifier son module sans
-  lancer tout le système.
-- **`web/` et `observability/` dans le même lot** : la trace produite par
-  l'un est ce que l'autre affiche.
+- **`core/` vs `execution/` vs `knowledge/`**: split by
+  responsibility, not by person — survives a change in who does what.
+- **A mandatory gateway between the agent and the tools**: the
+  protections (confirmation, guardrails, timeouts) are written once, and
+  no tool can forget them.
+- **A shared registry**: a tool wired once reaches the CLI and the
+  scheduler; only the policy changes (confirmation on one side, systematic
+  refusal on the other).
+- **`prompts/` as versioned files, not Python constants**:
+  a Base Loop requirement, and the basis of A4.
+- **`src/` layout + `pyproject.toml`**: installable package
+  (`pip install -e .`), clean imports whatever folder the commands are
+  run from.
+- **`tests/` mirrors `src/`**: each workstream can check its module without
+  starting the whole system.
+- **`web/` and `observability/` in the same workstream**: the trace produced by
+  one is what the other displays.
 
-## Décidé depuis la première version de ce document
+## Decided since the first version of this document
 
-- Isolation : Docker, conteneurs jetables ([ADR-0012](../decisions/0012-sandbox-docker-chromium.md)).
-- Stockage vectoriel du RAG : SQLite + numpy ([ADR-0009](../decisions/0009-rag-sur-la-codebase.md)).
-- Tool calling natif d'Ollama ([ADR-0003](../decisions/0003-tool-calling-natif-ollama.md)),
-  utilisé par la boucle livrée dans #13.
+- Isolation: Docker, disposable containers ([ADR-0012](../decisions/0012-docker-chromium-sandbox.md)).
+- RAG vector storage: SQLite + numpy ([ADR-0009](../decisions/0009-rag-over-the-codebase.md)).
+- Ollama native tool calling ([ADR-0003](../decisions/0003-native-ollama-tool-calling.md)),
+  used by the loop shipped in #13.
 
-## Limites connues (à corriger)
+## Known limitations (to fix)
 
 - Since 2026-11-01, tool results reach the model wrapped in
   `<tool_output trust="untrusted">` (`core/agent.py`, `fence_untrusted`; former
-  gap EV4-OUT-14, [EV4 report](../securite/EV4-tests-adversariaux.md)).
+  gap EV4-OUT-14, [EV4 report](../security/EV4-adversarial-tests.md)).

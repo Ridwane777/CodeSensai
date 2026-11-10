@@ -103,7 +103,7 @@ it — same pattern as A6's cache and R1's RAG.
 - ❌ The web server (`src/sensai/web/runtime.py`) never opens a few-shot
   index: a team running `sensai-web` gets no example attached to any
   question, even with `fewshot_examples` set in `config.json`, although
-  [ADR-0035](0035-serveur-web-reel.md) asks for the same agent on both
+  [ADR-0035](0035-real-web-server.md) asks for the same agent on both
   sides (review: PR #96). The sub-agents of `delegate_task`/`team_task`
   receive only their task, so they never get an example either. Wiring the
   web side means giving `Runtime` the same `FewShotIndex` and the same

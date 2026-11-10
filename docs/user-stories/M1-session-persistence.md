@@ -1,6 +1,6 @@
 # User stories — [M1] Session persistence & profiles
 
-CodeSensei scenario: Camille, working alone or with Marc's small team, on a long
+CodeSensai scenario: Camille, working alone or with Marc's small team, on a long
 project. What she loses each time the CLI restarts — the conversation context
 and her working habits — is what M1 must give back.
 
@@ -10,13 +10,13 @@ M1.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: resume a session and recall a word: ✅ with both models (20 min 33 on CPU, 16 s on GPU).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: resume a session and recall a word: ✅ with both models (20 min 33 on CPU, 16 s on GPU).
 
 ## US-M1-1 — Pick up where I left off
-> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who works on the same project over several days,
-**I want** to find my previous conversation with CodeSensei when I restart the CLI,
+**I want** to find my previous conversation with CodeSensai when I restart the CLI,
 **so that** I do not have to re-explain the context (the current bug, the files involved, what we already tried).
 
 **Acceptance criteria:**
@@ -32,10 +32,10 @@ M1.
   cannot be committed by mistake.
 
 ## US-M1-2 — Not repeat my preferences
-> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer with her own habits (Python 3.12, pytest, answers in French, no unnecessary dependency),
-**I want** CodeSensei to know my preferences and instructions from startup, without me repeating them,
+**I want** CodeSensai to know my preferences and instructions from startup, without me repeating them,
 **so that** every answer follows my way of working from the start, even in a new conversation.
 
 **Acceptance criteria:**
@@ -48,7 +48,7 @@ M1.
   empty profile and a warning — it does not crash.
 
 ## US-M1-3 — Choose which conversation to resume
-> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who handles several topics in parallel (an authentication bug, an API redesign),
 **I want** to list my past conversations and choose the one to resume, or start a new one,
@@ -75,6 +75,6 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| US-M1-1 | ✅ | `knowledge/memory.py` (`SessionStore`, SQLite) | `tests/test_cli_persistence.py` (`historique_conserve_apres_relance`, `tour_en_echec_non_sauvegarde`), `tests/knowledge/test_memory.py::test_dossier_cree_en_700_et_base_en_600` | Recalling the earlier exchange in words depends on the model |
-| US-M1-2 | ✅ | `knowledge/memory.py` (`Profile`), `/remember`, `/profile`, `/forget` | `tests/test_cli_persistence.py` (`preference_conservee_apres_relance`, `profil_illisible_ne_bloque_pas_le_demarrage`), `tests/knowledge/test_memory.py::test_profil_injecte_dans_le_prompt_systeme` | Following the preference in the answer depends on the model ([backlog](../backlog.md) #11) |
+| US-M1-1 | ✅ | `knowledge/memory.py` (`SessionStore`, SQLite) | `tests/test_cli_persistence.py` (`historique_conserve_apres_relance`, `tour_en_echec_non_sauvegarde`), `tests/knowledge/test_memory.py::test_folder_created_700_and_database_600` | Recalling the earlier exchange in words depends on the model |
+| US-M1-2 | ✅ | `knowledge/memory.py` (`Profile`), `/remember`, `/profile`, `/forget` | `tests/test_cli_persistence.py` (`preference_conservee_apres_relance`, `profil_illisible_ne_bloque_pas_le_demarrage`), `tests/knowledge/test_memory.py::test_profile_injected_into_system_prompt` | Following the preference in the answer depends on the model ([backlog](../backlog.md) #11) |
 | US-M1-3 | ✅ | `knowledge/memory.py`, `web/server.py` (`/api/sessions`) | `tests/knowledge/test_memory.py` (`liste_des_sessions_du_projet`, `reprendre_une_session_precise`, `nouvelle_session_ignore_l_historique`), `tests/web/test_server.py` |  |

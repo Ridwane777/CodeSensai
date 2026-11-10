@@ -10,7 +10,7 @@ export const end = (turnId: string): Step => ({
   event: { type: 'done', turnId, interrupted: false },
 })
 
-/** Découpe un texte en tokens (un mot + son espace) pour simuler le streaming. */
+/** Splits text into tokens (a word plus its space) to simulate streaming. */
 export function say(turnId: string, text: string, perWord = 34): Step[] {
   return text
     .split(/(?<=\s)/)

@@ -1,18 +1,21 @@
 """
-Tests du cache sémantique — feature [A6].
+Tests for the semantic cache — feature [A6].
 
-Chaque bloc renvoie à une user story de docs/user-stories/A6-semantic-cache.md ;
-les choix testés viennent de docs/decisions/0033-cache-semantique-prudent.md.
+Each block refers to a user story in docs/user-stories/A6-semantic-cache.md;
+the tested choices come from docs/decisions/0033-conservative-semantic-cache.md.
 
-Ollama n'est jamais appelé : `FauxEmbedder` (sac de mots haché) suffit à
-rendre deux questions identiques très proches.
+Ollama is never called: `FakeEmbedder` (hashed bag of words) is enough to
+make two identical questions very close.
 
-Les tests qui comptent le plus :
-- `test_une_action_differente_n_est_jamais_servie` et
-  `test_un_nom_different_n_est_jamais_servi` : ce sont les pièges mesurés
-  qui passaient avec les embeddings seuls (US-A6-2).
-- `test_un_fichier_modifie_invalide_la_reponse` : sinon le cache décrit du
-  code qui n'existe plus.
+The tests that matter most:
+- `test_a_different_action_is_never_served` and
+  `test_a_different_name_is_never_served`: these are the measured traps
+  that got through with embeddings alone (US-A6-2).
+- `test_a_modified_file_invalidates_the_answer`: otherwise the cache
+  describes code that no longer exists.
+
+The rules are bilingual (French and English roots in `cache.ACTIONS`), so the
+parametrized cases keep French questions next to the English ones on purpose.
 """
 import os
 import stat
@@ -28,26 +31,26 @@ from sensai.knowledge.cache import (
     names,
     standalone,
 )
-from tests.knowledge.test_rag import FauxEmbedder
+from tests.knowledge.test_rag import FakeEmbedder
 
-QUESTION = "Comment lancer les tests du projet ?"
+QUESTION = "How do I run the project tests?"
 
 
 @pytest.fixture
 def projet(tmp_path):
     racine = tmp_path / "projet"
     racine.mkdir()
-    (racine / "README.md").write_text("Lancer pytest.\n", encoding="utf-8")
+    (racine / "README.md").write_text("Run pytest.\n", encoding="utf-8")
     return racine
 
 
 @pytest.fixture
 def cache(tmp_path, projet):
-    return AnswerCache(tmp_path / "donnees" / "cache.db", str(projet), FauxEmbedder(),
+    return AnswerCache(tmp_path / "donnees" / "cache.db", str(projet), FakeEmbedder(),
                        model="qwen3-coder:30b")
 
 
-# --- Règles « mots décisifs » (US-A6-2) ---------------------------------------
+# --- "Decisive words" rules (US-A6-2) ----------------------------------------------
 
 
 @pytest.mark.parametrize("a, b", [
@@ -56,9 +59,14 @@ def cache(tmp_path, projet):
     ("Comment activer le debug ?", "Comment désactiver le debug ?"),
     ("Comment ajouter un utilisateur ?", "Comment supprimer un utilisateur ?"),
     ("Comment démarrer le serveur ?", "Comment arrêter le serveur ?"),
+    ("What is the maximum size?", "What is the minimum size?"),
+    ("How do I read a file?", "How do I write a file?"),
+    ("How do I enable debug?", "How do I disable debug?"),
+    ("How do I add a user?", "How do I delete a user?"),
+    ("How do I start the server?", "How do I stop the server?"),
 ])
-def test_une_action_differente_n_est_jamais_servie(a, b):
-    assert conflict(a, b) == "actions différentes"
+def test_a_different_action_is_never_served(a, b):
+    assert conflict(a, b) == "different actions"
 
 
 @pytest.mark.parametrize("a, b", [
@@ -66,132 +74,144 @@ def test_une_action_differente_n_est_jamais_servie(a, b):
      "Comment installer les dépendances JavaScript ?"),
     ("Que fait purge_sessions ?", "Que fait purge_facts ?"),
     ("Comment corriger KeyError ?", "Comment corriger ModuleNotFoundError ?"),
+    ("How do I install the Python dependencies?",
+     "How do I install the JavaScript dependencies?"),
+    ("What does purge_sessions do?", "What does purge_facts do?"),
 ])
-def test_un_nom_different_n_est_jamais_servi(a, b):
-    assert conflict(a, b) == "noms différents"
+def test_a_different_name_is_never_served(a, b):
+    assert conflict(a, b) == "different names"
 
 
-def test_une_reformulation_sans_mot_decisif_passe_les_regles():
+def test_a_rephrasing_without_decisive_word_passes_the_rules():
     assert conflict("Combien de temps sont gardées les sessions ?",
                     "Quelle est la durée de conservation des sessions ?") is None
+    assert conflict("How long are sessions kept?",
+                    "What is the retention period for sessions?") is None
 
 
-def test_limite_connue_un_synonyme_hors_liste_est_refuse():
-    # « passer en » n'est pas dans la famille « activer » : le cache refuse,
-    # par prudence (ADR-0033, ❌ « environ une reformulation sur cinq »).
+def test_known_limit_a_synonym_outside_the_list_is_refused():
+    # "passer en" / "turn on" are not in the "enable" family: the cache refuses,
+    # to be safe (ADR-0033, ❌ "about one rephrasing in five").
     assert conflict("Comment activer le mode debug ?", "Comment passer en mode debug ?")
+    assert conflict("How do I enable debug mode?", "How do I turn on debug mode?")
 
 
-def test_familles_d_actions_et_noms():
+def test_action_families_and_names():
     assert actions("Comment supprimer une branche ?") == {"delete"}
-    assert names("Que retourne load_settings en Python 3.12 ?") == {
+    assert actions("How do I delete a branch?") == {"delete"}
+    assert names("What does load_settings return in Python 3.12?") == {
         "load_settings", "python", "3.12"}
-    assert names("Comment lancer les tests ?") == set()
+    assert names("How to run the tests?") == set()
 
 
-@pytest.mark.parametrize("question, attendu", [
+@pytest.mark.parametrize("question, expected", [
     ("Comment lancer les tests du projet ?", True),
     ("et ensuite ?", False),
     ("corrige ça", False),
     ("Peux-tu réexpliquer ce que tu viens de dire ?", False),
     ("Explique ce code", False),
     ("ok", False),
+    ("How do I run the project tests?", True),
+    ("and then?", False),
+    ("fix that", False),
+    ("Can you explain again what you just said?", False),
+    ("Explain this code", False),
 ])
-def test_une_question_qui_depend_de_la_conversation_n_est_pas_cachee(question, attendu):
-    assert standalone(question) is attendu
+def test_a_conversation_dependent_question_is_not_cached(question, expected):
+    assert standalone(question) is expected
 
 
-# --- Stockage et service (US-A6-1) --------------------------------------------
+# --- Storage and serving (US-A6-1) ---------------------------------------------
 
 
-def test_la_meme_question_est_servie(cache):
-    cache.store(QUESTION, "Lancez pytest.", sources=[], seconds=12.0)
+def test_the_same_question_is_served(cache):
+    cache.store(QUESTION, "Run pytest.", sources=[], seconds=12.0)
     servie = cache.lookup(QUESTION)
     assert servie is not None
-    assert servie.answer == "Lancez pytest."
+    assert servie.answer == "Run pytest."
     assert servie.question == QUESTION
     assert servie.similarity >= 0.99
 
 
-def test_une_question_eloignee_n_est_pas_servie(cache):
-    cache.store(QUESTION, "Lancez pytest.", sources=[], seconds=12.0)
-    assert cache.lookup("Où est la configuration de la base de données ?") is None
+def test_a_distant_question_is_not_served(cache):
+    cache.store(QUESTION, "Run pytest.", sources=[], seconds=12.0)
+    assert cache.lookup("Where is the database configuration?") is None
 
 
-def test_les_regles_s_appliquent_meme_au_dessus_du_seuil(cache):
-    cache.store("Comment activer le mode debug ?", "Mettez DEBUG=1.", sources=[], seconds=5)
-    assert cache.lookup("Comment désactiver le mode debug ?") is None
+def test_rules_apply_even_above_the_threshold(cache):
+    cache.store("How do I enable debug mode?", "Set DEBUG=1.", sources=[], seconds=5)
+    assert cache.lookup("How do I disable debug mode?") is None
 
 
-def test_un_autre_modele_ou_projet_ne_sert_pas(cache, tmp_path, projet):
-    cache.store(QUESTION, "Lancez pytest.", sources=[], seconds=12.0)
-    autre_modele = AnswerCache(cache.db_path, str(projet), FauxEmbedder(), model="qwen3:8b")
-    autre_projet = AnswerCache(cache.db_path, str(tmp_path), FauxEmbedder(),
+def test_another_model_or_project_does_not_serve(cache, tmp_path, projet):
+    cache.store(QUESTION, "Run pytest.", sources=[], seconds=12.0)
+    autre_modele = AnswerCache(cache.db_path, str(projet), FakeEmbedder(), model="qwen3:8b")
+    autre_projet = AnswerCache(cache.db_path, str(tmp_path), FakeEmbedder(),
                                model="qwen3-coder:30b")
     assert autre_modele.lookup(QUESTION) is None
     assert autre_projet.lookup(QUESTION) is None
 
 
-def test_une_question_dependante_n_est_ni_servie_ni_enregistree(cache):
-    assert cache.store("et ensuite ?", "Ensuite…", sources=[], seconds=3) is False
+def test_a_dependent_question_is_neither_served_nor_stored(cache):
+    assert cache.store("and then?", "Then…", sources=[], seconds=3) is False
     assert cache.stats()["entries"] == 0
 
 
-# --- Fraîcheur (US-A6-2) --------------------------------------------------------
+# --- Freshness (US-A6-2) ---------------------------------------------------------
 
 
-def test_un_fichier_modifie_invalide_la_reponse(cache, projet):
-    cache.store(QUESTION, "Lancez pytest.", sources=["README.md"], seconds=12.0)
+def test_a_modified_file_invalidates_the_answer(cache, projet):
+    cache.store(QUESTION, "Run pytest.", sources=["README.md"], seconds=12.0)
     assert cache.lookup(QUESTION) is not None
-    (projet / "README.md").write_text("Lancer tox.\n", encoding="utf-8")
+    (projet / "README.md").write_text("Run tox.\n", encoding="utf-8")
     assert cache.lookup(QUESTION) is None
-    assert cache.stats()["entries"] == 0, "l'entrée périmée doit être retirée"
+    assert cache.stats()["entries"] == 0, "the stale entry must be removed"
 
 
-def test_un_fichier_supprime_invalide_la_reponse(cache, projet):
-    cache.store(QUESTION, "Lancez pytest.", sources=["README.md"], seconds=12.0)
+def test_a_deleted_file_invalidates_the_answer(cache, projet):
+    cache.store(QUESTION, "Run pytest.", sources=["README.md"], seconds=12.0)
     (projet / "README.md").unlink()
     assert cache.lookup(QUESTION) is None
 
 
-def test_une_entree_trop_ancienne_expire(tmp_path, projet):
-    vieux = AnswerCache(tmp_path / "c.db", str(projet), FauxEmbedder(), model="m", ttl_days=30,
+def test_a_too_old_entry_expires(tmp_path, projet):
+    vieux = AnswerCache(tmp_path / "c.db", str(projet), FakeEmbedder(), model="m", ttl_days=30,
                         now=lambda: datetime.now(UTC) - timedelta(days=31))
-    vieux.store(QUESTION, "Lancez pytest.", sources=[], seconds=1)
-    actuel = AnswerCache(tmp_path / "c.db", str(projet), FauxEmbedder(), model="m", ttl_days=30)
+    vieux.store(QUESTION, "Run pytest.", sources=[], seconds=1)
+    actuel = AnswerCache(tmp_path / "c.db", str(projet), FakeEmbedder(), model="m", ttl_days=30)
     assert actuel.lookup(QUESTION) is None
 
 
-# --- Savoir et décider (US-A6-3) ------------------------------------------------
+# --- Know and decide (US-A6-3) --------------------------------------------------
 
 
-def test_les_statistiques_comptent_les_reponses_servies_et_le_temps_gagne(cache):
-    cache.store(QUESTION, "Lancez pytest.", sources=[], seconds=12.0)
+def test_stats_count_served_answers_and_time_saved(cache):
+    cache.store(QUESTION, "Run pytest.", sources=[], seconds=12.0)
     cache.lookup(QUESTION)
     cache.lookup(QUESTION)
     assert cache.stats() == {"entries": 1, "served": 2, "seconds_saved": 24.0}
 
 
-def test_vider_le_cache(cache):
-    cache.store(QUESTION, "Lancez pytest.", sources=[], seconds=12.0)
+def test_clear_the_cache(cache):
+    cache.store(QUESTION, "Run pytest.", sources=[], seconds=12.0)
     assert cache.clear() == 1
     assert cache.lookup(QUESTION) is None
 
 
-def test_commande_cache(cache):
-    cache.store(QUESTION, "Lancez pytest.", sources=[], seconds=12.0)
+def test_cache_command(cache):
+    cache.store(QUESTION, "Run pytest.", sources=[], seconds=12.0)
     cache.lookup(QUESTION)
     sortie = handle_cache_command("/cache", cache)
-    assert "1 réponse" in sortie and "servie" in sortie and "12" in sortie
-    assert "vidé" in handle_cache_command("/cache clear", cache)
+    assert "1 answer" in sortie and "served" in sortie and "12" in sortie
+    assert "cleared" in handle_cache_command("/cache clear", cache)
     assert cache.stats()["entries"] == 0
     assert handle_cache_command("/state", cache) is None
 
 
-def test_commande_cache_sans_cache():
-    assert "désactivé" in handle_cache_command("/cache", None)
+def test_cache_command_without_cache():
+    assert "disabled" in handle_cache_command("/cache", None)
 
 
-@pytest.mark.skipif(os.name != "posix", reason="droits Unix")
-def test_cache_cree_en_prive(cache):
+@pytest.mark.skipif(os.name != "posix", reason="Unix permissions")
+def test_cache_created_private(cache):
     assert stat.S_IMODE(cache.db_path.stat().st_mode) == 0o600

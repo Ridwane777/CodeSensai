@@ -1,13 +1,13 @@
 """
-Le texte de la réponse d'un tour, tel qu'il est enregistré (session M1, cache A6).
+The text of a turn's reply, as it is stored (M1 session, A6 cache).
 
-Le modèle écrit parfois un peu de texte, appelle un outil, puis écrit la suite —
-voire réécrit la même réponse. Concaténés tels quels, ces morceaux donnaient
-« …le fichier.Le fichier… » dans la session enregistrée (essai réel du
-2026-11-01). Ici, chaque morceau séparé par un appel d'outil devient un
-paragraphe, et un morceau que le modèle réécrit ensuite est retiré, à l'identique
-ou reformulé (essai du 2026-11-01 après-midi : « …is located in `stats.py`… »
-puis « …is defined in `stats.py`… »).
+The model sometimes writes a bit of text, calls a tool, then writes the rest —
+or even rewrites the same reply. Concatenated as is, these chunks produced
+"…the file.The file…" in the stored session (real trial run on 2026-11-01).
+Here, each chunk separated by a tool call becomes a paragraph, and a chunk the
+model rewrites later is dropped, whether identical or rephrased (trial run on
+the afternoon of 2026-11-01: "…is located in `stats.py`…" then
+"…is defined in `stats.py`…").
 """
 from __future__ import annotations
 
@@ -15,11 +15,11 @@ import re
 
 _STRAY_TAGS = re.compile(r"</?tool_call>")
 
-# En dessous, deux morceaux qui commencent pareil peuvent être une coïncidence
-# (« D'accord. »), pas une réponse réécrite.
+# Below this, two chunks starting the same way may be a coincidence
+# ("Okay."), not a rewritten reply.
 MIN_REPEAT_CHARS = 30
-# Part des mots d'un morceau retrouvés dans un morceau suivant à partir de laquelle
-# c'est une reformulation. Une annonce (« Je lis stats.py. ») reste bien en dessous.
+# Share of a chunk's words found again in a later chunk from which it counts as
+# a rephrasing. An announcement ("Reading stats.py.") stays well below.
 REPHRASE_OVERLAP = 0.8
 
 _WORD = re.compile(r"\w[\w'-]*")
@@ -30,7 +30,7 @@ def _words(text: str) -> set[str]:
 
 
 def _rephrased_later(part: str, later: list[str]) -> bool:
-    """Vrai si presque tous les mots de `part` reviennent dans un morceau suivant."""
+    """True if almost all the words of `part` come back in a later chunk."""
     words = _words(part)
     if len(part) < MIN_REPEAT_CHARS or not words:
         return False
@@ -42,16 +42,16 @@ class AnswerBuilder:
         self._segments: list[str] = [""]
 
     def add(self, text: str) -> None:
-        """Un morceau de texte (événement Token)."""
+        """A chunk of text (Token event)."""
         self._segments[-1] += text
 
     def tool_boundary(self) -> None:
-        """Un appel d'outil : le texte qui suit est un nouveau morceau."""
+        """A tool call: the text that follows is a new chunk."""
         if self._segments[-1]:
             self._segments.append("")
 
     def text(self) -> str:
-        # Une balise <tool_call> vide laissée par le modèle n'a rien à faire dans la réponse.
+        # An empty <tool_call> tag left by the model does not belong in the reply.
         parts = [p for p in (_STRAY_TAGS.sub("", s).strip() for s in self._segments) if p]
         kept = []
         for i, part in enumerate(parts):

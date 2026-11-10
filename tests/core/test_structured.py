@@ -1,4 +1,4 @@
-"""`/structured` et run_structured_query (T5, ADR-0036) — sans Ollama."""
+"""`/structured` and run_structured_query (T5, ADR-0036) — without Ollama."""
 import json
 
 import pytest
@@ -13,7 +13,7 @@ from sensai.core.structured import (
 
 
 class FakeOllama:
-    """Remplace stream_chat_messages : rejoue une réponse déjà écrite, ou lève."""
+    """Replaces stream_chat_messages: replays a pre-written answer, or raises."""
 
     def __init__(self, reply):
         self.reply = reply
@@ -39,158 +39,158 @@ def fake(monkeypatch):
 SCHEMA = {"type": "object", "properties": {"ok": {"type": "boolean"}}, "required": ["ok"]}
 
 
-def test_renvoie_le_json_parse(fake):
+def test_returns_the_parsed_json(fake):
     fake('{"ok": true}')
     assert run_structured_query("http://h:1", "m1", "question", SCHEMA) == {"ok": True}
 
 
-def test_passe_le_schema_dans_le_champ_format(fake):
+def test_passes_the_schema_in_the_format_field(fake):
     ollama = fake('{"ok": true}')
     run_structured_query("http://h:1", "m1", "question", SCHEMA)
     assert ollama.calls[0]["format"] == SCHEMA
 
 
-def test_json_invalide_leve_une_erreur_explicite(fake):
-    fake("ceci n'est pas du json")
-    with pytest.raises(StructuredOutputError, match="JSON invalide"):
+def test_invalid_json_raises_an_explicit_error(fake):
+    fake("this is not json")
+    with pytest.raises(StructuredOutputError, match="invalid JSON"):
         run_structured_query("http://h:1", "m1", "question", SCHEMA)
 
 
-def test_panne_ollama_devient_structured_output_error(fake):
-    fake(OllamaError("Ollama ne répond pas (timeout)."))
+def test_ollama_failure_becomes_structured_output_error(fake):
+    fake(OllamaError("Ollama is not responding (timeout)."))
     with pytest.raises(StructuredOutputError, match="timeout"):
         run_structured_query("http://h:1", "m1", "question", SCHEMA)
 
 
-@pytest.mark.parametrize("line", ['/structured s.json "fais X"', "/structured x"])
-def test_les_lignes_qui_commencent_par_la_commande_sont_reconnues(line):
+@pytest.mark.parametrize("line", ['/structured s.json "do X"', "/structured x"])
+def test_lines_starting_with_the_command_are_recognized(line):
     assert is_structured_command(line)
 
 
-def test_autre_chose_n_est_pas_reconnu():
-    assert not is_structured_command("pourquoi /structured échoue ?")
+def test_anything_else_is_not_recognized():
+    assert not is_structured_command("why does /structured fail?")
 
 
-def test_sans_assez_d_arguments_affiche_l_usage():
+def test_too_few_arguments_shows_usage():
     out = handle_structured_command("/structured schema.json", host="h", model="m")
     assert "Usage" in out
 
 
-def test_schema_absent_est_signale(tmp_path):
+def test_missing_schema_is_reported(tmp_path):
     missing = tmp_path / "absent.json"
     out = handle_structured_command(
         f"/structured {missing} \"fais X\"", host="h", model="m"
     )
-    assert "[Erreur]" in out and str(missing) in out
+    assert "[Error]" in out and str(missing) in out
 
 
-def test_schema_mal_forme_est_signale(tmp_path):
+def test_malformed_schema_is_reported(tmp_path):
     bad = tmp_path / "schema.json"
-    bad.write_text("{pas du json", encoding="utf-8")
-    out = handle_structured_command(f'/structured {bad} "fais X"', host="h", model="m")
-    assert "[Erreur]" in out
+    bad.write_text("{not json", encoding="utf-8")
+    out = handle_structured_command(f'/structured {bad} "do X"', host="h", model="m")
+    assert "[Error]" in out
 
 
-def test_commande_complete_renvoie_le_json_mis_en_forme(tmp_path):
+def test_full_command_returns_formatted_json(tmp_path):
     schema_file = tmp_path / "schema.json"
     schema_file.write_text(json.dumps(SCHEMA), encoding="utf-8")
 
     def query(host, model, prompt, schema):
         assert schema == SCHEMA
-        assert prompt == "fais X"
+        assert prompt == "do X"
         return {"ok": True}
 
     out = handle_structured_command(
-        f'/structured {schema_file} "fais X"', host="h", model="m", query=query
+        f'/structured {schema_file} "do X"', host="h", model="m", query=query
     )
     assert json.loads(out) == {"ok": True}
 
 
-def test_erreur_du_modele_est_signalee_sans_lever(tmp_path):
+def test_model_error_is_reported_without_raising(tmp_path):
     schema_file = tmp_path / "schema.json"
     schema_file.write_text(json.dumps(SCHEMA), encoding="utf-8")
 
     def query(host, model, prompt, schema):
-        raise StructuredOutputError("réponse non conforme")
+        raise StructuredOutputError("non-conforming answer")
 
     out = handle_structured_command(
-        f'/structured {schema_file} "fais X"', host="h", model="m", query=query
+        f'/structured {schema_file} "do X"', host="h", model="m", query=query
     )
-    assert "[Erreur]" in out
+    assert "[Error]" in out
 
 
-# --- Réponse fondée sur le projet (ADR-0039) ---------------------------------------------
+# --- Answer grounded in the project (ADR-0039) -------------------------------------------
 
 
-def test_avec_gather_la_reponse_de_l_agent_sert_de_source(tmp_path):
-    """Essai réel du 2026-10-24 : sans outils, /structured inventait les fonctions
-    de stats.py. L'agent cherche d'abord (avec ses outils), puis la mise en forme
-    selon le schéma ne s'appuie que sur ce qu'il a trouvé."""
+def test_with_gather_the_agent_answer_is_the_source(tmp_path):
+    """Real trial run on 2026-10-24: without tools, /structured made up the functions
+    of stats.py. The agent searches first (with its tools), then the schema-based
+    formatting relies only on what it found."""
     schema_file = tmp_path / "schema.json"
     schema_file.write_text(json.dumps(SCHEMA), encoding="utf-8")
     asked = []
 
     def gather(prompt):
         asked.append(prompt)
-        return "stats.py ne définit qu'une fonction : maximum."
+        return "stats.py defines only one function: maximum."
 
     def query(host, model, prompt, schema):
-        assert "fais X" in prompt
-        assert "stats.py ne définit qu'une fonction : maximum." in prompt
+        assert "do X" in prompt
+        assert "stats.py defines only one function: maximum." in prompt
         return {"ok": True}
 
     out = handle_structured_command(
-        f'/structured {schema_file} "fais X"', host="h", model="m", query=query, gather=gather
+        f'/structured {schema_file} "do X"', host="h", model="m", query=query, gather=gather
     )
-    assert asked == ["fais X"]
+    assert asked == ["do X"]
     assert json.loads(out) == {"ok": True}
 
 
-def test_echec_de_la_recherche_est_signale_sans_appel_structure(tmp_path):
+def test_search_failure_is_reported_without_structured_call(tmp_path):
     schema_file = tmp_path / "schema.json"
     schema_file.write_text(json.dumps(SCHEMA), encoding="utf-8")
 
     def gather(prompt):
-        raise StructuredOutputError("Ollama ne répond pas")
+        raise StructuredOutputError("Ollama is not responding")
 
     def query(*args):
-        raise AssertionError("pas de mise en forme sans recherche")
+        raise AssertionError("no formatting without a search")
 
     out = handle_structured_command(
-        f'/structured {schema_file} "fais X"', host="h", model="m", query=query, gather=gather
+        f'/structured {schema_file} "do X"', host="h", model="m", query=query, gather=gather
     )
-    assert out.startswith("[Erreur]") and "Ollama ne répond pas" in out
+    assert out.startswith("[Error]") and "Ollama is not responding" in out
 
 
-def test_le_schema_est_verifie_avant_de_lancer_la_recherche(tmp_path):
+def test_the_schema_is_checked_before_starting_the_search(tmp_path):
     def gather(prompt):
-        raise AssertionError("schéma absent : rien ne doit être lancé")
+        raise AssertionError("missing schema: nothing must start")
 
     out = handle_structured_command(
-        f'/structured {tmp_path / "absent.json"} "fais X"', host="h", model="m", gather=gather
+        f'/structured {tmp_path / "absent.json"} "do X"', host="h", model="m", gather=gather
     )
-    assert "[Erreur]" in out
+    assert "[Error]" in out
 
 
-def test_num_ctx_part_dans_les_options_de_l_appel(fake):
-    """Revue PR #97 : sans lui, Ollama tronque en silence un prompt long."""
+def test_num_ctx_is_sent_in_the_call_options(fake):
+    """PR #97 review: without it, Ollama silently truncates a long prompt."""
     ollama = fake('{"ok": true}')
     run_structured_query("http://h:1", "m1", "question", SCHEMA, num_ctx=4096)
     assert ollama.calls[0]["options"] == {"num_ctx": 4096}
 
 
-def test_sans_num_ctx_aucune_option_n_est_envoyee(fake):
+def test_without_num_ctx_no_option_is_sent(fake):
     ollama = fake('{"ok": true}')
     run_structured_query("http://h:1", "m1", "question", SCHEMA)
     assert ollama.calls[0]["options"] is None
 
 
-def test_la_commande_transmet_num_ctx_a_l_appel(fake, tmp_path):
+def test_the_command_forwards_num_ctx_to_the_call(fake, tmp_path):
     ollama = fake('{"ok": true}')
     schema = tmp_path / "schema.json"
     schema.write_text(json.dumps(SCHEMA), encoding="utf-8")
     out = handle_structured_command(
-        f'/structured {schema} "fais X"', host="h", model="m", num_ctx=2048
+        f'/structured {schema} "do X"', host="h", model="m", num_ctx=2048
     )
     assert json.loads(out) == {"ok": True}
     assert ollama.calls[0]["options"] == {"num_ctx": 2048}

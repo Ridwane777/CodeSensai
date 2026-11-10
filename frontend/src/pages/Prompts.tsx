@@ -10,15 +10,15 @@ import { PageHeader } from '../ui/PageHeader'
 import { PillButton } from '../ui/PillButton'
 
 const CANDIDATES = [
-  { label: 'Consigne actuelle', score: 0.82 },
-  { label: '+ 2 exemples choisis selon la question', score: 0.88 },
-  { label: '+ reformulation adaptée au contexte', score: 0.9 },
+  { label: 'Current instruction', score: 0.82 },
+  { label: '+ 2 examples picked for the question', score: 0.88 },
+  { label: '+ rewording adapted to the context', score: 0.9 },
 ]
 
 /**
- * Serveur réel (A4, lot A ; ADR-0055) : le vrai registre, en lecture seule. On peut lire une
- * version, comparer deux versions et essayer une version du prompt système dans la conversation
- * affichée ; la mettre en service pour tous reste `sensai-prompt use`.
+ * Real server (A4, Workstream A; ADR-0055): the real registry, read-only. You can read a
+ * version, compare two versions and try a system prompt version in the conversation
+ * shown; activating it for everyone remains `sensai-prompt use`.
  */
 function RealPrompts() {
   const { state, listPrompts, getPromptText, diffPrompts, setPromptTrial } = useEngine()
@@ -63,9 +63,9 @@ function RealPrompts() {
     <>
       <PageHeader
         title="Prompts"
-        intro="Le registre des prompts de sensai-web (prompts/versions.json), en lecture seule. Une version du prompt système peut être essayée dans la conversation affichée ; la mettre en service pour tous se fait avec sensai-prompt use."
+        intro="The sensai-web prompt registry (prompts/versions.json), read-only. A system prompt version can be tried in the conversation shown; activating it for everyone is done with sensai-prompt use."
       />
-      {entries && entries.length === 0 && <p className="text-sm text-muted">Aucun registre de prompts trouvé.</p>}
+      {entries && entries.length === 0 && <p className="text-sm text-muted">No prompt registry found.</p>}
       {entry && selected && (
         <>
           <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Prompt">
@@ -98,9 +98,9 @@ function RealPrompts() {
             </GlassCard>
             <GlassCard className="p-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-extrabold">{diffing ? `Différences ${compareTo} → ${selected.id}` : `Texte de ${selected.id}`}</h2>
+                <h2 className="font-extrabold">{diffing ? `Differences ${compareTo} → ${selected.id}` : `Text of ${selected.id}`}</h2>
                 <label className="flex items-center gap-2 text-xs font-bold">
-                  Comparer avec
+                  Compare with
                   <select value={compareTo} onChange={(e) => setCompareTo(e.target.value)}
                     className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold">
                     <option value="">(aucune)</option>
@@ -111,14 +111,14 @@ function RealPrompts() {
                 </label>
                 {entry.name === 'system' && setPromptTrial && (
                   <PillButton disabled={state.promptTrial === selected.id} onClick={() => void setPromptTrial(selected.id)}>
-                    Essayer dans cette conversation
+                    Try in this conversation
                   </PillButton>
                 )}
               </div>
               {entry.name === 'system' && state.promptTrial && (
                 <p className="mb-2 text-xs text-muted">
-                  Essai en cours dans cette conversation : <strong>{state.promptTrial}</strong>.{' '}
-                  <button type="button" className="underline" onClick={() => void setPromptTrial?.(null)}>Revenir à la version active</button>
+                  Trial run in this conversation: <strong>{state.promptTrial}</strong>.{' '}
+                  <button type="button" className="underline" onClick={() => void setPromptTrial?.(null)}>Back to the active version</button>
                 </p>
               )}
               <pre data-testid="prompt-text" className="max-h-80 overflow-auto whitespace-pre-wrap rounded-2xl bg-bg/60 p-3 font-mono text-xs leading-relaxed">
@@ -137,7 +137,7 @@ function RealPrompts() {
   )
 }
 
-/** A7 avec le serveur réel : les exemples few-shot configurés (ADR-0044). */
+/** A7 with the real server: the configured few-shot examples (ADR-0044). */
 function FewshotCard() {
   const { getFewshot } = useEngine()
   const [info, setInfo] = useState<FewshotInfo | null>(null)
@@ -150,19 +150,19 @@ function FewshotCard() {
   }, [getFewshot])
   return (
     <GlassCard className="mt-6 p-5">
-      <h2 className="mb-1 font-extrabold">Exemples few-shot <span className="text-xs font-semibold text-muted">· A7</span></h2>
+      <h2 className="mb-1 font-extrabold">Few-shot examples <span className="text-xs font-semibold text-muted">· A7</span></h2>
       <p className="mb-3 text-sm text-muted">
-        À chaque question, l&apos;exemple le plus proche par le sens est joint à la demande, s&apos;il dépasse le seuil ; la réponse
-        l&apos;indique alors (« Inspirée de l&apos;exemple… »).
+        For each question, the closest example by meaning is attached to the request if it passes the threshold; the answer
+        then says so (“Inspired by the example…”).
       </p>
       {info === null ? (
-        <p className="text-sm text-muted">Chargement…</p>
+        <p className="text-sm text-muted">Loading…</p>
       ) : !info.configured ? (
-        <p className="text-sm text-muted">Aucun exemple configuré (clé <code>fewshot_examples</code> de config.json).</p>
+        <p className="text-sm text-muted">No example configured (<code>fewshot_examples</code> key in config.json).</p>
       ) : (
         <>
           <p className="mb-2 text-sm">
-            Fichier <code>{info.file}</code> · seuil {info.minScore} · {info.questions.length} exemple(s)
+            File <code>{info.file}</code> · threshold {info.minScore} · {info.questions.length} example(s)
           </p>
           {info.error && <p className="mb-2 text-sm text-warn">{info.error}</p>}
           <ul className="list-disc space-y-1 pl-5 text-sm">
@@ -179,8 +179,8 @@ function OptimisationCard() {
   if (getFewshot) return <FewshotCard />
   return (
     <GlassCard className="mt-6 p-5">
-      <h2 className="mb-1 font-extrabold">Optimisation automatique <span className="text-xs font-semibold text-muted">· A7</span></h2>
-      <p className="mb-3 text-sm text-muted">Exemple simulé (démonstration sans serveur) : chaque variante est notée sur un jeu de questions.</p>
+      <h2 className="mb-1 font-extrabold">Automatic optimization <span className="text-xs font-semibold text-muted">· A7</span></h2>
+      <p className="mb-3 text-sm text-muted">Simulated example (demo without a server): each variant is scored on a question set.</p>
       <ul className="space-y-2 text-sm">
         {CANDIDATES.map((c, i) => (
           <li key={c.label} className="flex items-center gap-3">
@@ -213,11 +213,11 @@ function DemoPrompts({ live }: { live: boolean }) {
   const lines = prev ? diffLines(prev.text, current.text) : []
   return (
     <>
-      <PageHeader title="Prompts" intro="Les prompts sont des versions immuables : on les compare, on en met une en service, on revient en arrière. Les versions v1 sont celles du dépôt ; v2 est un brouillon de démo." />
+      <PageHeader title="Prompts" intro="Prompts are immutable versions: you compare them, activate one, roll back. The v1 versions are the ones in the repository; v2 is a demo draft." />
       {live && (
         <p role="note" className="mb-4 rounded-2xl border border-warn/40 bg-surface px-4 py-3 text-sm">
-          <strong>Non relié au serveur :</strong> sensai-web n&apos;expose pas encore les versions de prompts. Les textes v1 sont ceux du
-          dépôt, v2 est un brouillon de démo, et « Mettre en service » ne change rien côté agent. L&apos;outil réel est{' '}
+          <strong>Not connected to the server:</strong> sensai-web does not expose prompt versions yet. The v1 texts are the ones in the
+          repository, v2 is a demo draft, and “Activate” changes nothing on the agent side. The real tool is{' '}
           <code>sensai-prompt</code> (A4).
         </p>
       )}
@@ -241,7 +241,7 @@ function DemoPrompts({ live }: { live: boolean }) {
                 <button type="button" aria-pressed={current.id === v.id} onClick={() => setSel({ ...sel, [name]: v.id })}
                   className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${current.id === v.id ? 'border-accent-strong bg-accent-soft' : 'border-line'}`}>
                   <span className="font-bold">{v.id}</span> · {v.date}
-                  <span className="block text-xs text-muted">{v.description}{v.simulated ? ' (brouillon simulé)' : ''}</span>
+                  <span className="block text-xs text-muted">{v.description}{v.simulated ? ' (simulated draft)' : ''}</span>
                 </button>
               </li>
             ))}
@@ -249,9 +249,9 @@ function DemoPrompts({ live }: { live: boolean }) {
         </GlassCard>
         <GlassCard className="p-5">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-extrabold">{prev ? `Différences ${prev.id} → ${current.id}` : `Texte de ${current.id}`}</h2>
+            <h2 className="font-extrabold">{prev ? `Differences ${prev.id} → ${current.id}` : `Text of ${current.id}`}</h2>
             <PillButton disabled={data.promptActive[name] === current.id} onClick={() => dispatch({ type: 'use_prompt', name, version: current.id })}>
-              Mettre en service
+              Activate
             </PillButton>
           </div>
           <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-2xl bg-bg/60 p-3 font-mono text-xs leading-relaxed">

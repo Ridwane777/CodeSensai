@@ -3,10 +3,9 @@ import type { SessionSummary } from '../../contract/engine'
 import { useEngine } from '../../state/useEngine'
 
 /**
- * Les conversations du projet, à gauche du chat (serveur réel seulement) : en commencer une,
- * en rouvrir une, en supprimer une. La suppression se confirme dans la ligne (pas de boîte de
- * dialogue du navigateur) et elle est définitive. `onOpen` est appelé après une ouverture (la barre
- * latérale s'en sert pour aller sur le chat).
+ * The project conversations, left of the chat (real server only): start one, reopen one,
+ * delete one. Deletion is confirmed inline (no browser dialog) and is permanent. `onOpen` is
+ * called after opening one (the sidebar uses it to go to the chat).
  */
 export function ConversationList({ onOpen }: { onOpen?: () => void } = {}) {
   const { state, listSessions, openSession, newConversation, deleteSession, currentSession } = useEngine()
@@ -14,7 +13,7 @@ export function ConversationList({ onOpen }: { onOpen?: () => void } = {}) {
   const [confirming, setConfirming] = useState<string | null>(null)
   const turns = state.timeline.filter((i) => i.kind === 'turn').length
 
-  // Relue au chargement et après chaque réponse (une nouvelle conversation apparaît).
+  // Reloaded on mount and after each answer (a new conversation appears).
   useEffect(() => {
     if (state.thinking || !listSessions) return
     let alive = true
@@ -43,18 +42,18 @@ export function ConversationList({ onOpen }: { onOpen?: () => void } = {}) {
         + Nouvelle conversation
       </button>
       {sessions === null ? (
-        <p className="text-muted">Chargement…</p>
+        <p className="text-muted">Loading…</p>
       ) : sessions.length === 0 ? (
-        <p className="text-muted">Aucune conversation enregistrée.</p>
+        <p className="text-muted">No saved conversations.</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {sessions.map((s) => (
             <li key={s.id} className={`group rounded-xl px-2 py-1.5 ${s.id === open ? 'bg-accent-soft' : 'hover:bg-accent-soft'}`}>
               {confirming === s.id ? (
                 <div className="flex items-center gap-2">
-                  <span className="flex-1 text-xs" title="Les faits retenus pendant la conversation restent dans Mémoire, où l'on peut les oublier.">Supprimer définitivement ? (les faits retenus restent dans Mémoire)</span>
-                  <button type="button" className="text-xs font-bold text-danger" onClick={() => remove(s.id)}>Oui</button>
-                  <button type="button" className="text-xs" onClick={() => setConfirming(null)}>Non</button>
+                  <span className="flex-1 text-xs" title="Facts remembered during the conversation stay in Memory, where they can be forgotten.">Delete permanently? (remembered facts stay in Memory)</span>
+                  <button type="button" className="text-xs font-bold text-danger" onClick={() => remove(s.id)}>Yes</button>
+                  <button type="button" className="text-xs" onClick={() => setConfirming(null)}>No</button>
                 </div>
               ) : (
                 <div className="flex items-center gap-1">
@@ -70,7 +69,7 @@ export function ConversationList({ onOpen }: { onOpen?: () => void } = {}) {
                   </button>
                   <button
                     type="button"
-                    aria-label={`Supprimer ${s.title || s.id}`}
+                    aria-label={`Delete ${s.title || s.id}`}
                     disabled={state.thinking}
                     onClick={() => setConfirming(s.id)}
                     className="rounded px-1 text-xs text-muted opacity-0 hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"

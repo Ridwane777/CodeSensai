@@ -1,5 +1,5 @@
 """
-[Lot B] write_file — creates or replaces a text file inside the allowed
+[Workstream B] write_file — creates or replaces a text file inside the allowed
 folders — feature [T4].
 
 Risk `write`: the gateway always asks first, and what the user approves is

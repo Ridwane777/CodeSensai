@@ -1,15 +1,15 @@
 """
-[Lot C — Ridwane] Recherche par mots et fusion des classements — feature [R2].
+[Workstream C — Ridwane] Keyword search and rank fusion — feature [R2].
 
-`BM25` complète la recherche par embeddings de R1 : les noms du code
-(`retention_days`, `purge`, `SessionStore`) sont des mots exacts, que les
-embeddings rapprochent mal. `reciprocal_rank_fusion` combine les deux
-classements par leurs rangs (Cormack, Clarke et Büttcher, SIGIR 2009), sans
-avoir à rendre leurs scores comparables. Choix et mesures : ADR-0032.
+`BM25` complements R1's embedding search: code names (`retention_days`,
+`purge`, `SessionStore`) are exact words that embeddings match poorly.
+`reciprocal_rank_fusion` combines both rankings by rank (Cormack, Clarke and
+Büttcher, SIGIR 2009), without having to make their scores comparable.
+Choices and measurements: ADR-0032.
 
-BM25 et la fusion n'utilisent que la bibliothèque standard : une dépendance
-(rank_bm25) n'apporterait rien. `LlmReranker` demande ensuite au modèle de
-chat de reclasser les premiers passages (Ollama n'a pas de `/api/rerank`).
+BM25 and the fusion use only the standard library: a dependency (rank_bm25)
+would add nothing. `LlmReranker` then asks the chat model to rerank the top
+passages (Ollama has no `/api/rerank`).
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from typing import Any
 
 import requests
 
-# Mots trop fréquents pour aider à trouver un passage (français et anglais).
+# Words too frequent to help find a passage (French and English).
 STOPWORDS = frozenset("""
 le la les un une des du de d l au aux et ou en dans sur par pour avec sans ce cet cette
 ces qui que quoi dont où est sont a ont être avoir fait faire il elle ils elles on se
@@ -36,8 +36,8 @@ _CAMEL = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 
 
 def tokenize(text: str) -> list[str]:
-    """Mots en minuscules, sans accents, `snake_case` et `CamelCase` découpés,
-    en gardant aussi le nom entier (`retention_days`, `retention`, `days`)."""
+    """Lowercase words, accents stripped, `snake_case` and `CamelCase` split,
+    also keeping the whole name (`retention_days`, `retention`, `days`)."""
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     tokens: list[str] = []
     for whole in re.findall(r"[A-Za-z0-9_]+", text):
@@ -49,7 +49,7 @@ def tokenize(text: str) -> list[str]:
 
 
 class BM25:
-    """Okapi BM25 sur une liste de documents (k1 = 1,2 ; b = 0,75)."""
+    """Okapi BM25 over a list of documents (k1 = 1.2; b = 0.75)."""
 
     def __init__(self, documents: Sequence[str], k1: float = 1.2, b: float = 0.75) -> None:
         self.k1, self.b = k1, b
@@ -74,7 +74,7 @@ class BM25:
         return result
 
     def search(self, query: str, top_k: int) -> list[tuple[int, float]]:
-        """(index du document, score), du meilleur au moins bon ; scores nuls exclus."""
+        """(document index, score), best first; zero scores excluded."""
         ranked = sorted(enumerate(self.scores(query)), key=lambda p: -p[1])
         return [(i, s) for i, s in ranked[:top_k] if s > 0]
 
@@ -84,10 +84,10 @@ def reciprocal_rank_fusion(
     key: Callable[[dict[str, Any]], Hashable],
     k: int = 60,
 ) -> list[dict[str, Any]]:
-    """Fusionne des classements : score = somme de 1 / (k + rang) sur chacun.
+    """Fuses rankings: score = sum of 1 / (k + rank) over each.
 
-    Le premier dict rencontré pour une clé est gardé (avec ses champs) ; son
-    score de fusion est dans `fusion`.
+    The first dict seen for a key is kept (with its fields); its fusion
+    score is in `fusion`.
     """
     fused: dict[Hashable, float] = {}
     items: dict[Hashable, dict[str, Any]] = {}
@@ -102,26 +102,26 @@ def reciprocal_rank_fusion(
 
 RERANK_DEPTH = 10
 RERANK_PROMPT = (
-    "Question : {question}\n\nPassages numérotés :\n{passages}\n\n"
-    "Classe les numéros des passages du plus utile au moins utile pour répondre à la "
-    "question. Réponds seulement en JSON : {{\"ordre\": [numéros]}}."
+    "Question: {question}\n\nNumbered passages:\n{passages}\n\n"
+    "Rank the passage numbers from most to least useful for answering the "
+    "question. Reply only in JSON: {{\"ordre\": [numbers]}}."
 )
 
 
 class LlmReranker:
-    """Le modèle de chat reclasse les `depth` premiers passages, en un seul appel.
+    """The chat model reranks the top `depth` passages in a single call.
 
-    Mesuré avec le vrai modèle (ADR-0032) : le bon fichier passe de 5 à 12 fois sur 15
-    en première position, pour environ 3 s de plus. En cas d'échec (Ollama
-    injoignable, JSON invalide), l'ordre reçu est rendu tel quel : le
-    reclassement améliore la recherche, il ne doit jamais la casser.
+    Measured with the real model (ADR-0032): the right file goes from 5 to 12
+    times out of 15 in first position, for about 3 s more. On failure (Ollama
+    unreachable, invalid JSON), the received order is returned unchanged:
+    reranking improves search, it must never break it.
     """
 
     def __init__(self, host: str, model: str, depth: int = RERANK_DEPTH,
                  timeout: float = 60, num_ctx: int | None = None) -> None:
         self.host, self.model, self.depth, self.timeout = host, model, depth, timeout
-        # M2, ADR-0045 : sans num_ctx, Ollama tronque en silence le prompt de
-        # reclassement (jusqu'à `depth` passages de 600 caractères).
+        # M2, ADR-0045: without num_ctx, Ollama silently truncates the rerank
+        # prompt (up to `depth` passages of 600 characters).
         self.num_ctx = num_ctx
 
     def __call__(self, question: str, hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -135,8 +135,8 @@ class LlmReranker:
             "messages": [{"role": "user", "content": RERANK_PROMPT.format(
                 question=question, passages=passages)}],
         }
-        # Température 0 : un classement doit être reproductible (ADR-0057) ; il ne suit
-        # pas les paramètres de génération de la conversation.
+        # Temperature 0: a ranking must be reproducible (ADR-0057); it does not follow
+        # the conversation's generation parameters.
         payload["options"] = {"temperature": 0}
         if self.num_ctx:
             payload["options"]["num_ctx"] = self.num_ctx

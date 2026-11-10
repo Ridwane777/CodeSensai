@@ -26,11 +26,11 @@ interface Ctx {
   confirm(requestId: string, approved: boolean): void
   answer(requestId: string, values: Record<string, unknown>): void
   edit(messageId: string, text: string): void
-  /** Redemande la dernière question (↻) ; sans effet s'il n'y en a pas ou si un tour est en cours. */
+  /** Asks the last question again (↻); no effect if there is none or a turn is running. */
   regenerate(): void
   switchBranch(branch: string): void
   switchPersona(id: string): void
-  /** Présents seulement avec le serveur réel (#44). */
+  /** Present only with the real server (#44). */
   listSessions?: () => Promise<SessionSummary[] | null>
   evaluate?: () => Promise<Evaluation | null>
   listTasks?: () => Promise<ScheduledTask[] | null>
@@ -46,19 +46,19 @@ interface Ctx {
   deleteSession?: (id: string) => Promise<boolean>
   currentSession?: () => string | null
   openSession?: (id: string) => Promise<boolean>
-  /** Présent seulement avec le serveur réel (X3). */
+  /** Present only with the real server (X3). */
   share?: () => Promise<SharedLink | null>
   revokeShare?: (token: string) => Promise<boolean>
   exportSession?: (format: 'json' | 'md') => Promise<string | null>
-  /** Personas réelles (A5, ADR-0054) : présentes seulement avec le serveur réel. */
+  /** Real personas (A5, ADR-0054): present only with the real server. */
   listPersonas?: () => Promise<PersonaInfo[] | null>
   getFewshot?: () => Promise<FewshotInfo | null>
-  /** Registre des prompts en lecture et essai dans la conversation (A4, ADR-0055). */
+  /** Prompt registry, read-only, plus trial runs in the conversation (A4, ADR-0055). */
   listPrompts?: () => Promise<PromptEntry[] | null>
   getPromptText?: (name: string, version: string) => Promise<string | null>
   diffPrompts?: (name: string, a: string, b: string) => Promise<string | null>
   setPromptTrial?: (version: string | null) => Promise<PromptTrial | null>
-  /** Présents seulement avec le serveur réel (EV4, EV3). */
+  /** Present only with the real server (EV4, EV3). */
   adversarialResults?: () => Promise<AdversarialRun | null>
   runAdversarial?: () => Promise<AdversarialRun | null>
   journal?: (sessionId: string) => Promise<JournalTurn[] | null>
@@ -76,8 +76,8 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
 
   useEffect(() => eng.subscribe(dispatch), [eng])
 
-  // A5 / A4 (serveur réel) : la persona et l'essai de prompt appartiennent à la conversation
-  // affichée ; relus au chargement, à l'ouverture d'une conversation et sur une nouvelle.
+  // A5 / A4 (real server): the persona and the prompt trial run belong to the conversation
+  // shown; reread on load, when a conversation is opened and on a new one.
   const syncConversation = useCallback(async () => {
     const [persona, trial] = await Promise.all([eng.getPersona?.(), eng.getPromptTrial?.()])
     if (persona) dispatch({ type: 'set_persona', persona: persona.id })
@@ -88,7 +88,7 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
     void syncConversation()
   }, [syncConversation])
 
-  // M4 : le vrai document d'état remplit le panneau Artefact dès le chargement.
+  // M4: the real state document fills the Artifact panel right from load.
   useEffect(() => {
     if (!eng.getState) return
     let alive = true
@@ -134,12 +134,12 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
     counter.current += 1
     const id = `m${counter.current}`
     dispatch({ type: 'user_message', id, text: last.text })
-    // Serveur réel : `/again` saute le cache ; démonstration : la même question rejouée.
+    // Real server: `/again` skips the cache; demo: the same question replayed.
     eng.send({ id, text: eng.regenerates ? '/again' : last.text })
   }, [eng])
 
-  // Fonctions stables tant que le moteur ne change pas : la page Mémoire et la barre
-  // latérale s'en servent comme dépendances d'effet (sinon une requête par rendu).
+  // Functions stay stable while the engine does not change: the Memory page and the sidebar
+  // use them as effect dependencies (otherwise one request per render).
   const sessions = useMemo(
     () => ({
       share: eng.share ? () => eng.share!() : undefined,
@@ -150,7 +150,7 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
       evaluate: eng.evaluate
         ? async () => {
             const result = await eng.evaluate!()
-            // Le carnet de la page Qualité reprend la note (pertinence ramenée sur 1).
+            // The Quality page notebook takes the score (relevance scaled to 1).
             if (result)
               dispatch({ type: 'eval_score', relevance: result.relevance / 5, faithfulness: result.faithfulness ?? 0 })
             return result
@@ -168,7 +168,7 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
         ? () => {
             if (eng.newConversation!()) {
               dispatch({ type: 'load_history', messages: [] })
-              // Nouvelle conversation : persona par défaut et prompt actif.
+              // New conversation: default persona and active prompt.
               void syncConversation()
             }
           }
@@ -240,7 +240,7 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
       dispatch({ type: 'switch_branch', branch })
     },
     ...sessions,
-    // Serveur réel : la persona de la conversation change sur le serveur (A5) ; simulé : le nom affiché.
+    // Real server: the conversation persona changes on the server (A5); simulated: the displayed name.
     switchPersona: (id) => (sessions.setPersona ? void sessions.setPersona(id) : eng.switchPersona(id)),
   }
   return <EngineContext.Provider value={value}>{children}</EngineContext.Provider>
@@ -248,6 +248,6 @@ export function EngineProvider({ children, engine }: { children: ReactNode; engi
 
 export function useEngine(): Ctx {
   const ctx = useContext(EngineContext)
-  if (!ctx) throw new Error('useEngine doit être utilisé dans <EngineProvider>')
+  if (!ctx) throw new Error('useEngine must be used inside <EngineProvider>')
   return ctx
 }

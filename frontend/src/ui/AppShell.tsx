@@ -2,11 +2,11 @@ import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 
-/** Barre latérale à gauche (navigation + conversations), contenu de la page à droite. */
+/** Sidebar on the left (navigation + conversations), page content on the right. */
 export function AppShell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   const path = useLocation().pathname
   const home = path === '/'
-  // Le chat occupe toute la largeur à droite de la barre latérale ; sa zone de saisie colle au bas de l'écran.
+  // The chat takes the full width right of the sidebar; its input area sticks to the bottom of the screen.
   const chat = path === '/chat'
   return (
     <div className="min-h-screen">
@@ -17,7 +17,7 @@ export function AppShell({ children, wide = false }: { children: ReactNode; wide
             chat
               ? 'max-w-none px-4 pt-14 sm:px-8 lg:pt-0'
               : home
-                ? 'max-w-none pb-10' // la scène d'accueil va d'un bord à l'autre ; la suite se recentre dans la page
+                ? 'max-w-none pb-10' // the landing stage goes edge to edge; the rest is centered in the page
                 : `px-4 pb-10 pt-16 sm:px-8 lg:pt-6 ${wide ? 'max-w-[110rem]' : 'max-w-7xl'}`
           }`}
         >

@@ -1,11 +1,11 @@
 /**
- * Choix du moteur au démarrage (ADR-0035).
+ * Engine choice at startup (ADR-0035).
  *
- * - Un serveur `sensai-web` répond sur la même origine : on demande le jeton affiché à son
- *   démarrage, on le vérifie, puis l'interface parle au vrai agent (`HttpEngine`).
- * - Aucun serveur : l'interface reste en démonstration (`MockEngine`, ADR-0020), et le dit.
+ * - A `sensai-web` server answers on the same origin: we ask for the token it printed at
+ *   startup, check it, then the interface talks to the real agent (`HttpEngine`).
+ * - No server: the interface stays in demo mode (`MockEngine`, ADR-0020), and says so.
  *
- * Le jeton est gardé dans `sessionStorage` (l'onglet seulement), jamais dans l'URL (ADR-0023).
+ * The token is kept in `sessionStorage` (this tab only), never in the URL (ADR-0023).
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Engine } from '../contract/engine'
@@ -26,22 +26,22 @@ interface Connection {
   mode: Mode
   config: ServerConfig | null
   engine: Engine | null
-  /** Le serveur a répondu au démarrage : on peut proposer de se connecter. */
+  /** The server answered at startup: we can offer to connect. */
   serverFound: boolean
-  /** Change à chaque connexion réussie : l'interface repart d'un moteur neuf. */
+  /** Changes on each successful connection: the interface restarts with a fresh engine. */
   generation: number
   login(token: string): Promise<string | null>
   logout(): void
   chooseDemo(): void
-  /** Lecture authentifiée d'une route de l'API (pages mémoire…) ; null hors connexion. */
+  /** Authenticated read of an API route (memory pages…); null when not connected. */
   getJson<T>(path: string): Promise<T | null>
 }
 
 const TOKEN_KEY = 'sensai.token'
-/** Délai entre deux recherches du serveur en mode démonstration. */
+/** Delay between two server lookups in demo mode. */
 const RETRY_MS = 3000
-/** Au-delà, on arrête de chercher (une démo laissée ouverte n'interroge pas le réseau sans fin) ;
- *  recharger la page relance la recherche. */
+/** Beyond this, we stop looking (a demo left open does not poll the network forever);
+ *  reloading the page restarts the lookup. */
 const RETRY_FOR_MS = 5 * 60 * 1000
 const ConnectionContext = createContext<Connection | null>(null)
 
@@ -90,15 +90,15 @@ export function ConnectionProvider({
   const login = useCallback(
     async (candidate: string): Promise<string | null> => {
       const clean = candidate.trim()
-      if (!clean) return 'Collez le jeton affiché au démarrage de sensai-web.'
+      if (!clean) return 'Paste the token printed when sensai-web starts.'
       let res: Response
       try {
         res = await withTimeout(fetchFn, `${baseUrl}/api/config`, { headers: { Authorization: `Bearer ${clean}` } }, 5000)
       } catch {
-        return 'Serveur injoignable.'
+        return 'Server unreachable.'
       }
-      if (res.status === 401) return 'Jeton refusé : vérifiez le jeton affiché par sensai-web (il change à chaque démarrage).'
-      if (!res.ok) return `Réponse inattendue du serveur (${res.status}).`
+      if (res.status === 401) return 'Token rejected: check the token printed by sensai-web (it changes on every start).'
+      if (!res.ok) return `Unexpected server response (${res.status}).`
       setConfig((await res.json()) as ServerConfig)
       storage()?.setItem(TOKEN_KEY, clean)
       setToken(clean)
@@ -141,8 +141,8 @@ export function ConnectionProvider({
     }
   }, [healthy, connect])
 
-  // Démonstration faute de serveur : on revérifie de temps en temps, pour que lancer sensai-web
-  // après l'interface suffise (sans recharger la page). Un choix explicite de la démo n'est pas repris.
+  // Demo because there is no server: we check again from time to time, so that starting sensai-web
+  // after the interface is enough (no page reload). An explicit choice of the demo is not overridden.
   useEffect(() => {
     if (mode !== 'demo' || serverFound) return
     let cancelled = false
@@ -201,7 +201,7 @@ export function ConnectionProvider({
   return <ConnectionContext.Provider value={value}>{children}</ConnectionContext.Provider>
 }
 
-/** null hors de `ConnectionProvider` (tests de composants, démo autonome). */
+/** null outside `ConnectionProvider` (component tests, standalone demo). */
 export function useConnection(): Connection | null {
   return useContext(ConnectionContext)
 }

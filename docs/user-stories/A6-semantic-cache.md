@@ -5,7 +5,7 @@ them directly for questions that are close in meaning (embedding comparison),
 without calling the model. Issue #58.
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 What is done elsewhere (Redis LangCache, GPTCache, LiteLLM): the cache mostly
 serves information questions asked in a single turn and often rephrased (FAQ,
@@ -13,10 +13,10 @@ internal Q&A, RAG). Agent loops and multi-turn conversations are excluded.
 The main risk is the false positive: two questions close in meaning that call
 for different answers. Hence the use case chosen here, the "repository FAQ".
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: cache on, same question twice: qwen3:8b ✅ (5 min 37, then 0.5 s); qwen3-coder:30b ✅ (9.0 s, then 1.8 s). Identical question only, not a rephrasing.
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: cache on, same question twice: qwen3:8b ✅ (5 min 37, then 0.5 s); qwen3-coder:30b ✅ (9.0 s, then 1.8 s). Identical question only, not a rephrasing.
 
 ## US-A6-1 — The project FAQ
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
 
@@ -33,7 +33,7 @@ Acceptance criteria:
   realistic questions and documented.
 
 ## US-A6-2 — Not be fooled
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
 
@@ -52,7 +52,7 @@ Acceptance criteria:
   a question that depends on the current conversation.
 
 ## US-A6-3 — Know and decide
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
 
@@ -76,6 +76,6 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| US-A6-1 | ✅ | `knowledge/cache.py`, `cli.py`, `scripts/bench_cache.py` | `tests/test_cli_cache.py::test_une_question_reposee_ne_rappelle_pas_le_modele`, `tests/knowledge/test_cache.py::test_la_meme_question_est_servie` | Timing and hit rate are measured by the script, not by a test |
+| US-A6-1 | ✅ | `knowledge/cache.py`, `cli.py`, `scripts/bench_cache.py` | `tests/test_cli_cache.py::test_a_repeated_question_does_not_call_the_model_again`, `tests/knowledge/test_cache.py::test_the_same_question_is_served` | Timing and hit rate are measured by the script, not by a test |
 | US-A6-2 | ✅ | `knowledge/cache.py`, `cli.py` (`CACHEABLE_TOOLS`) | `tests/knowledge/test_cache.py` (`une_action_differente_n_est_jamais_servie`, `un_fichier_modifie_invalide_la_reponse`, `un_fichier_supprime_invalide_la_reponse`, `une_question_dependante_n_est_ni_servie_ni_enregistree`) |  |
-| US-A6-3 | ✅ | `ui.py` (`cached_answer`), `cli.py` (`/again`, `/cache`) | `tests/test_cli_cache.py` (`again_redemande_au_modele`, `commande_cache`), `tests/knowledge/test_cache.py::test_vider_le_cache` |  |
+| US-A6-3 | ✅ | `ui.py` (`cached_answer`), `cli.py` (`/again`, `/cache`) | `tests/test_cli_cache.py` (`again_redemande_au_modele`, `commande_cache`), `tests/knowledge/test_cache.py::test_clear_the_cache` |  |

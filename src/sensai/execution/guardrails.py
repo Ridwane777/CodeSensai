@@ -1,5 +1,5 @@
 """
-[Lot B — Méric] Content & privacy guardrails — feature [EV2].
+[Workstream B — Meric] Content & privacy guardrails — feature [EV2].
 
 What is implemented here plugs into the tool gateway (docs/architecture/tool-contract.md):
 
@@ -143,19 +143,19 @@ _DEFAULT_RULES: tuple[InputRule, ...] = (
         r"(?:.{0,40}\b(?:instructions?|consignes?|r[èe]gles?|directives?)\b"
         r".{0,25}\b(?:pr[ée]c[ée]dentes?|ant[ée]rieures?|ci-dessus|syst[èe]me)\b"
         r"|.{0,25}\b(?:toutes?|tes|vos)\b.{0,15}\b(?:instructions?|consignes?|r[èe]gles?)\b)",
-        "tentative d'écraser les consignes de l'agent",
+        "attempt to override the agent's instructions",
     ),
     _rule(
         "reveal_prompt_fr",
         r"\b(?:r[ée]v[èe]le[rz]?|affiche[rz]?|montre[rz]?|donne[rz]?|r[ée]p[èe]te[rz]?|recopie[rz]?)"
         r"\b.{0,30}\b(?:prompt syst[èe]me|tes instructions|ton prompt|tes consignes)\b",
-        "demande de révéler le prompt système",
+        "request to reveal the system prompt",
     ),
     _rule(
         "jailbreak_persona",
         r"\bdo anything now\b|\byou are now (?:DAN|unrestricted|unfiltered|jailbroken)\b"
         r"|\b(?:jailbreak|developer|mode d[ée]veloppeur)\s+mode\b",
-        "persona de contournement connue (jailbreak)",
+        "known jailbreak persona",
     ),
     _rule(
         "malware_request",
@@ -164,21 +164,21 @@ _DEFAULT_RULES: tuple[InputRule, ...] = (
         r"\b(?:ransomware|keylogger|botnet|spyware|rootkit|malware|trojan|cheval de troie"
         r"|virus informatique|computer virus)\b"
         r"(?!.{0,20}\b(?:detect|scanner|analy|d[ée]tecteur|d[ée]tection|signature))",
-        "demande de création d'un logiciel malveillant",
+        "request to create malware",
     ),
     _rule(
         "credential_theft",
         r"\b(?:steal|exfiltrate|harvest|vole[rz]?|exfiltre[rz]?)\b.{0,40}"
         r"\b(?:passwords?|credentials?|cookies|mots? de passe|identifiants)\b",
-        "demande de vol d'identifiants",
+        "request to steal credentials",
     ),
 )
 # Judged on the sanitized text (below), so these English markers also catch
 # "ign\u200bore previous instructions" and fullwidth letters.
 _BLOCKING_MARKERS = frozenset({"override_instructions", "reveal_prompt"})
 _MARKER_WHY = {
-    "override_instructions": "tentative d'écraser les consignes de l'agent",
-    "reveal_prompt": "demande de révéler le prompt système",
+    "override_instructions": "attempt to override the agent's instructions",
+    "reveal_prompt": "request to reveal the system prompt",
 }
 
 
@@ -205,24 +205,24 @@ class InputRules:
         if raw is None:
             return cls()
         if not isinstance(raw, (list, tuple)):
-            raise ValueError("'input_blocklist' doit être une liste de règles")
+            raise ValueError("'input_blocklist' must be a list of rules")
         rules = []
         for index, entry in enumerate(raw):
             if not isinstance(entry, Mapping) or not isinstance(entry.get("pattern"), str):
-                raise ValueError(f"input_blocklist[{index}] : « pattern » (texte) est obligatoire")
+                raise ValueError(f"input_blocklist[{index}]: 'pattern' (text) is required")
             unknown = set(entry) - {"name", "pattern", "why"}
             if unknown:
-                raise ValueError(f"input_blocklist[{index}] : clés inconnues {sorted(unknown)}")
+                raise ValueError(f"input_blocklist[{index}]: unknown keys {sorted(unknown)}")
             try:
                 rules.append(
                     _rule(
                         str(entry.get("name") or f"custom_{index}"),
                         entry["pattern"],
-                        str(entry.get("why") or "sujet interdit par la configuration"),
+                        str(entry.get("why") or "topic forbidden by the configuration"),
                     )
                 )
             except re.error as exc:
-                raise ValueError(f"input_blocklist[{index}] : expression invalide ({exc})") from exc
+                raise ValueError(f"input_blocklist[{index}]: invalid expression ({exc})") from exc
         return cls(extra=tuple(rules))
 
 
@@ -256,7 +256,7 @@ def filter_input(text: str, rules: InputRules | None = None) -> tuple[bool, str]
     violation = find_input_violation(text, rules)
     if violation is not None:
         name, why = violation
-        return False, f"règle « {name} » : {why}. Reformule ta demande."
+        return False, f"rule '{name}': {why}. Rephrase your request."
     return True, mask_secrets(strip_invisible(strip_ansi(text)))
 
 
@@ -270,13 +270,13 @@ _KEY_END = re.compile(r"-----END [A-Z ]*PRIVATE KEY-----")
 
 
 class StreamRedactor:
-    """`filter_output` appliqué à la réponse du modèle pendant son streaming.
+    """`filter_output` applied to the model's answer while it streams.
 
-    Un secret peut
-    arriver coupé en plusieurs morceaux (« AKIA » puis « IOSF… ») : le texte est
-    donc retenu jusqu'à la fin de la ligne, puis filtré d'un bloc. Aucun motif de
-    `filter_output` ne déborde d'une ligne, sauf la clé privée, suivie à part.
-    Le prix : la réponse s'affiche ligne par ligne au lieu de mot par mot.
+    A secret can arrive split into several chunks ("AKIA" then "IOSF…"): the
+    text is therefore held until the end of the line, then filtered in one
+    piece. No `filter_output` pattern spans more than a line, except the
+    private key, which is tracked separately. The cost: the answer shows line
+    by line instead of word by word.
     """
 
     def __init__(self) -> None:
@@ -284,7 +284,7 @@ class StreamRedactor:
         self._in_key = False
 
     def feed(self, text: str) -> str:
-        """Le texte sûr à afficher maintenant (les lignes complètes)."""
+        """The safe text to show now (complete lines)."""
         self._pending += text
         out = []
         while "\n" in self._pending:
@@ -295,14 +295,14 @@ class StreamRedactor:
         return "".join(out)
 
     def flush(self) -> str:
-        """La fin du texte, à la fin de la réponse ou avant un appel d'outil."""
+        """The rest of the text, at the end of the answer or before a tool call."""
         line, self._pending = self._pending, ""
         return (self._line(line) or "") if line else ""
 
     def _line(self, line: str) -> str | None:
-        """La ligne filtrée ; None pour une ligne du corps d'une clé, retirée en entier."""
+        """The filtered line; None for a line inside a key body, removed entirely."""
         if self._in_key:
-            # Corps de la clé : rien n'est montré, jusqu'à la ligne de fin comprise.
+            # Key body: nothing is shown, up to and including the end line.
             if _KEY_END.search(line):
                 self._in_key = False
             return None

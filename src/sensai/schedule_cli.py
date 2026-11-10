@@ -1,14 +1,14 @@
 """
-Commande `sensai-schedule` : planifier des tâches de l'agent — feature [X5],
+`sensai-schedule` command: schedule agent tasks — feature [X5],
 ADR-0016.
 
-    sensai-schedule add resume-quotidien --every 1d --prompt "Résume le journal du jour"
+    sensai-schedule add daily-summary --every 1d --prompt "Summarize today's log"
     sensai-schedule list
-    sensai-schedule run-due          (à appeler depuis cron ou un timer systemd)
-    sensai-schedule history resume-quotidien
+    sensai-schedule run-due          (call from cron or a systemd timer)
+    sensai-schedule history daily-summary
 
-Ce module n'appelle PAS `get_settings()` : il lit `sys.argv` pour la CLI
-interactive. Il relit `config.json` lui-même, avec les mêmes valeurs par défaut.
+This module does NOT call `get_settings()`: that reads `sys.argv` for the
+interactive CLI. It reads `config.json` itself, with the same defaults.
 """
 from __future__ import annotations
 
@@ -55,49 +55,49 @@ from sensai.scheduling.tasks import (
 )
 
 EXIT_FAILED = 1
-EXIT_USAGE = 2  # mauvaise utilisation ou fichier des tâches inutilisable
+EXIT_USAGE = 2  # misuse or unusable task file
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="sensai-schedule", description="Tâches planifiées de Sensai (ADR-0016)"
+        prog="sensai-schedule", description="CodeSensai scheduled tasks (ADR-0016)"
     )
-    parser.add_argument("--data-dir", help="Dossier des données (défaut : $SENSAI_HOME, ~/.sensai)")
-    parser.add_argument("--model", help="Modèle Ollama (défaut : config.json)")
-    parser.add_argument("--host", help="URL de l'API Ollama (défaut : config.json)")
+    parser.add_argument("--data-dir", help="Data directory (default: $SENSAI_HOME, ~/.sensai)")
+    parser.add_argument("--model", help="Ollama model (default: config.json)")
+    parser.add_argument("--host", help="Ollama API URL (default: config.json)")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser("add", help="Ajouter une tâche")
-    p.add_argument("id", help="Identifiant : lettres minuscules, chiffres et « - » (40 max)")
+    p = sub.add_parser("add", help="Add a task")
+    p.add_argument("id", help="Id: lowercase letters, digits and \"-\" (40 max)")
     p.add_argument(
-        "--every", required=True, help="Intervalle : 30m, 1h, 1d, 7d ou secondes (>= 60)"
+        "--every", required=True, help="Interval: 30m, 1h, 1d, 7d or seconds (>= 60)"
     )
-    p.add_argument("--prompt", required=True, help="Ce que l'agent doit faire")
-    p.add_argument("--tools", help="Outils autorisés, séparés par des virgules (défaut : tous)")
+    p.add_argument("--prompt", required=True, help="What the agent should do")
+    p.add_argument("--tools", help="Allowed tools, comma-separated (default: all)")
     p.add_argument(
-        "--timeout", type=int, default=DEFAULT_TIMEOUT_S, help="Durée maximale en secondes"
+        "--timeout", type=int, default=DEFAULT_TIMEOUT_S, help="Maximum duration in seconds"
     )
-    sub.add_parser("list", help="Lister les tâches")
-    p = sub.add_parser("remove", help="Supprimer une tâche et ses comptes rendus")
+    sub.add_parser("list", help="List tasks")
+    p = sub.add_parser("remove", help="Remove a task and its run reports")
     p.add_argument("id")
-    p = sub.add_parser("enable", help="Réactiver une tâche")
+    p = sub.add_parser("enable", help="Re-enable a task")
     p.add_argument("id")
-    p = sub.add_parser("disable", help="Suspendre une tâche sans la supprimer")
+    p = sub.add_parser("disable", help="Pause a task without removing it")
     p.add_argument("id")
-    p = sub.add_parser("run-due", help="Jouer les tâches échues, puis s'arrêter")
-    p.add_argument("--dry-run", action="store_true", help="Lister sans rien lancer")
-    p = sub.add_parser("run", help="Jouer une tâche maintenant, échue ou non")
+    p = sub.add_parser("run-due", help="Run due tasks, then exit")
+    p.add_argument("--dry-run", action="store_true", help="List without running anything")
+    p = sub.add_parser("run", help="Run a task now, due or not")
     p.add_argument("id")
-    p = sub.add_parser("history", help="Derniers comptes rendus d'une tâche")
+    p = sub.add_parser("history", help="Latest run reports of a task")
     p.add_argument("id")
-    p.add_argument("-n", type=int, default=10, help="Nombre de comptes rendus (défaut : 10)")
-    p = sub.add_parser("loop", help="Appeler run-due en boucle (sans cron ni systemd)")
-    p.add_argument("--every", default="300", help="Pause entre deux passes (défaut : 300 s)")
+    p.add_argument("-n", type=int, default=10, help="Number of run reports (default: 10)")
+    p = sub.add_parser("loop", help="Call run-due in a loop (no cron or systemd)")
+    p.add_argument("--every", default="300", help="Pause between two passes (default: 300 s)")
     return parser
 
 
 def _error(message: str) -> None:
-    print(f"[Erreur] {message}", file=sys.stderr)
+    print(f"[Error] {message}", file=sys.stderr)
 
 
 def _paths(args: argparse.Namespace, file_config: dict) -> tuple[Path, TaskStore]:
@@ -120,10 +120,10 @@ def _make_scheduler(
     )
     preferences = ToolPreferences.from_dict(file_config.get("tools", {}))
     permissions = FilePermissions.from_dict(file_config.get("files"))
-    # M2, ADR-0045 : sans num_ctx, une tâche planifiée resterait soumise à la
-    # troncature par défaut d'Ollama, sans personne pour s'en apercevoir.
+    # M2, ADR-0045: without num_ctx, a scheduled task would be subject to
+    # Ollama's default truncation, with nobody around to notice.
     num_ctx = num_ctx_from_config(file_config)
-    # Paramètres de génération et nombre d'étapes (ADR-0057), comme le CLI.
+    # Generation parameters and step count (ADR-0057), like the CLI.
     set_generation_options(generation_from_config(file_config))
     set_request_timeout(request_timeout_from_config(file_config))
     max_iterations = max_iterations_from_config(file_config)
@@ -134,7 +134,7 @@ def _make_scheduler(
         model=args.model or file_config.get("model", DEFAULT_MODEL),
         system_prompt=system_prompt,
         agent=functools.partial(run_agent_turn, num_ctx=num_ctx, max_iterations=max_iterations),
-        # Mêmes règles de refus que le CLI et le web (EV2, ADR-0027).
+        # Same refusal rules as the CLI and the web UI (EV2, ADR-0027).
         input_rules=InputRules.from_config(file_config.get("input_blocklist")),
         registry=build_registry(permissions),
         preferences=preferences,
@@ -156,7 +156,7 @@ def _next_due(task: Task) -> str:
         return "-"
     due = task.next_due()
     if due is None or due <= utc_now():
-        return "maintenant"
+        return "now"
     return due.astimezone().strftime("%Y-%m-%d %H:%M")
 
 
@@ -168,10 +168,10 @@ def _cmd_add(args: argparse.Namespace, store: TaskStore, base_dir: Path) -> int:
         _error(str(exc))
         return EXIT_USAGE
     if not args.prompt.strip():
-        _error("Le prompt est vide.")
+        _error("The prompt is empty.")
         return EXIT_USAGE
     if args.timeout <= 0:
-        _error("--timeout doit être un nombre de secondes positif.")
+        _error("--timeout must be a positive number of seconds.")
         return EXIT_USAGE
     tools = None
     if args.tools is not None:
@@ -180,8 +180,8 @@ def _cmd_add(args: argparse.Namespace, store: TaskStore, base_dir: Path) -> int:
         unknown = [t for t in tools if t not in known]
         if unknown:
             _error(
-                f"Outil(s) inconnu(s) : {', '.join(unknown)}. "
-                f"Outils disponibles : {', '.join(sorted(known)) or 'aucun'}."
+                f"Unknown tool(s): {', '.join(unknown)}. "
+                f"Available tools: {', '.join(sorted(known)) or 'none'}."
             )
             return EXIT_USAGE
     _prepare(base_dir)
@@ -193,20 +193,20 @@ def _cmd_add(args: argparse.Namespace, store: TaskStore, base_dir: Path) -> int:
     except ValueError as exc:
         _error(str(exc))
         return EXIT_FAILED
-    print(f"Tâche « {args.id} » ajoutée (toutes les {format_interval(interval)}).")
+    print(f"Task \"{args.id}\" added (every {format_interval(interval)}).")
     return 0
 
 
 def _cmd_list(store: TaskStore) -> int:
     tasks = store.load()
     if not tasks:
-        print("Aucune tâche planifiée.")
+        print("No scheduled tasks.")
         return 0
-    print(f"{'ID':<40}  {'INTERVALLE':<10}  {'ACTIVE':<6}  {'DERNIÈRE EXÉCUTION':<25}  "
-          f"{'STATUT':<14}  PROCHAINE")
+    print(f"{'ID':<40}  {'INTERVAL':<10}  {'ACTIVE':<6}  {'LAST RUN':<25}  "
+          f"{'STATUS':<14}  NEXT")
     for t in tasks:
         print(
-            f"{t.id:<40}  {format_interval(t.interval_s):<10}  {'oui' if t.enabled else 'non':<6}  "
+            f"{t.id:<40}  {format_interval(t.interval_s):<10}  {'yes' if t.enabled else 'no':<6}  "
             f"{(t.last_run_at or '-')[:19]:<25}  {t.last_status or '-':<14}  {_next_due(t)}"
         )
     return 0
@@ -215,10 +215,10 @@ def _cmd_list(store: TaskStore) -> int:
 def _cmd_history(args: argparse.Namespace, store: TaskStore, base_dir: Path) -> int:
     records = list_runs(base_dir, args.id)
     if not records and store.get(args.id) is None:
-        _error(f"Tâche inconnue : {args.id}")
+        _error(f"Unknown task: {args.id}")
         return EXIT_FAILED
     if not records:
-        print("Aucune exécution pour l'instant.")
+        print("No runs yet.")
         return 0
     for record in records[: max(args.n, 0)]:
         calls = record.get("tool_calls", [])
@@ -226,7 +226,7 @@ def _cmd_history(args: argparse.Namespace, store: TaskStore, base_dir: Path) -> 
         detail = record.get("error") or " ".join((record.get("answer") or "").split())[:80]
         print(
             f"{record['started_at'][:19]}  {record['status']:<14}  "
-            f"outils : {len(calls)} ({refused} en échec)  {detail}"
+            f"tools: {len(calls)} ({refused} failed)  {detail}"
         )
     return 0
 
@@ -236,7 +236,7 @@ def run(args: argparse.Namespace) -> int:
     base_dir, store = _paths(args, file_config)
 
     if args.command in ("history", "remove", "enable", "disable", "run"):
-        # Avant tout accès disque : l'identifiant sert à fabriquer des chemins.
+        # Before any disk access: the id is used to build paths.
         try:
             validate_task_id(args.id)
         except ValueError as exc:
@@ -251,19 +251,19 @@ def run(args: argparse.Namespace) -> int:
         return _cmd_history(args, store, base_dir)
     if args.command == "remove":
         if not store.remove(args.id):
-            _error(f"Tâche inconnue : {args.id}")
+            _error(f"Unknown task: {args.id}")
             return EXIT_FAILED
         delete_runs(base_dir, args.id)
-        print(f"Tâche « {args.id} » supprimée, ainsi que ses comptes rendus.")
+        print(f"Task \"{args.id}\" removed, along with its run reports.")
         return 0
     if args.command in ("enable", "disable"):
         if not store.update(args.id, enabled=args.command == "enable"):
-            _error(f"Tâche inconnue : {args.id}")
+            _error(f"Unknown task: {args.id}")
             return EXIT_FAILED
-        print(f"Tâche « {args.id} » {'activée' if args.command == 'enable' else 'suspendue'}.")
+        print(f"Task \"{args.id}\" {'enabled' if args.command == 'enable' else 'paused'}.")
         return 0
 
-    # Les commandes qui jouent des tâches : run-due, run, loop.
+    # Commands that run tasks: run-due, run, loop.
     if args.command == "loop":
         try:
             every = parse_interval(args.every)
@@ -272,32 +272,32 @@ def run(args: argparse.Namespace) -> int:
             return EXIT_USAGE
     if args.command == "run-due" and args.dry_run:
         due = [t for t in store.load() if t.is_due(utc_now())]
-        print("\n".join(t.id for t in due) if due else "Aucune tâche échue.")
+        print("\n".join(t.id for t in due) if due else "No tasks due.")
         return 0
     _prepare(base_dir)
     scheduler = _make_scheduler(args, file_config, base_dir, store)
     if args.command == "run-due":
         records = scheduler.run_due()
         if not records:
-            print("Aucune tâche échue.")
+            print("No tasks due.")
         _print_records(records)
         return EXIT_FAILED if _failed(records) else 0
     if args.command == "run":
         task = store.get(args.id)
         if task is None:
-            _error(f"Tâche inconnue : {args.id}")
+            _error(f"Unknown task: {args.id}")
             return EXIT_FAILED
         record = scheduler.run_task(task)
         _print_records([record])
         return EXIT_FAILED if record["status"] in FAILED_STATUSES else 0
     if args.command == "loop":
-        print(f"Boucle : une passe toutes les {every} s (Ctrl+C pour arrêter).")
+        print(f"Loop: one pass every {every} s (Ctrl+C to stop).")
         try:
             scheduler.loop(every)
         except KeyboardInterrupt:
-            print("\nArrêt.")
+            print("\nStopped.")
         return 0
-    return EXIT_USAGE  # inatteignable : argparse impose une commande connue
+    return EXIT_USAGE  # unreachable: argparse requires a known command
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -307,13 +307,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run(args)
     except ScheduleStoreError as exc:
         _error(
-            f"Fichier des tâches inutilisable, il n'a pas été modifié : {exc}\n"
-            "Corrigez-le à la main ou déplacez-le pour repartir de zéro."
+            f"Unusable task file, it was not modified: {exc}\n"
+            "Fix it by hand or move it away to start from scratch."
         )
         return EXIT_USAGE
     except (ValueError, OSError, UnicodeDecodeError) as exc:
-        # Configuration illisible (config.json, clé « tools »), dossier non inscriptible...
-        _error(f"Configuration ou fichiers inutilisables : {exc}")
+        # Unreadable configuration (config.json, "tools" key), unwritable directory...
+        _error(f"Unusable configuration or files: {exc}")
         return EXIT_USAGE
 
 

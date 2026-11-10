@@ -25,72 +25,72 @@ function wrap(ui: ReactElement) {
 }
 
 test.each([
-  [Memory, 'Mémoire'],
+  [Memory, 'Memory'],
   [Agents, 'Agents'],
-  [Quality, 'Qualité'],
+  [Quality, 'Quality'],
   [Prompts, 'Prompts'],
-  [Journal, 'Journal'],
-  [Planning, 'Planification'],
-])('chaque page se rend avec son titre', (Page, title) => {
+  [Journal, 'Log'],
+  [Planning, 'Scheduling'],
+])('each page renders with its title', (Page, title) => {
   wrap(<Page />)
   expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument()
 })
 
-describe('reducer de données de démo', () => {
-  test('ignore une préférence vide ou en double', () => {
+describe('demo data reducer', () => {
+  test('ignores an empty or duplicate preference', () => {
     let s = demoReducer(initialDemo, { type: 'add_pref', text: '  ' })
     expect(s.prefs).toEqual(initialDemo.prefs)
     s = demoReducer(s, { type: 'add_pref', text: initialDemo.prefs[0] })
     expect(s.prefs).toHaveLength(initialDemo.prefs.length)
   })
-  test('ignore une version de prompt inconnue', () => {
+  test('ignores an unknown prompt version', () => {
     const s = demoReducer(initialDemo, { type: 'use_prompt', name: 'system', version: 'v99' })
     expect(s.promptActive.system).toBe('v1')
   })
-  test('ignore une tâche sans titre', () => {
-    const s = demoReducer(initialDemo, { type: 'add_task', title: ' ', every: 'chaque jour' })
+  test('ignores a task without a title', () => {
+    const s = demoReducer(initialDemo, { type: 'add_task', title: ' ', every: 'every day' })
     expect(s.tasks).toEqual(initialDemo.tasks)
   })
 })
 
-test('mémoire : ajouter, ignorer le vide, tout oublier', () => {
+test('memory: add, ignore empty, forget all', () => {
   wrap(<Memory />)
-  const input = screen.getByLabelText(/nouvelle préférence/i)
-  fireEvent.change(input, { target: { value: 'commente en anglais' } })
-  fireEvent.click(screen.getByRole('button', { name: /^ajouter$/i }))
-  expect(screen.getByText('commente en anglais')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /^ajouter$/i })).toBeDisabled()
-  fireEvent.click(screen.getByRole('button', { name: /tout oublier/i }))
-  expect(screen.queryByText('commente en anglais')).not.toBeInTheDocument()
-  expect(screen.getByText(/aucune préférence/i)).toBeInTheDocument()
+  const input = screen.getByLabelText(/new preference/i)
+  fireEvent.change(input, { target: { value: 'comment in English' } })
+  fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
+  expect(screen.getByText('comment in English')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /^add$/i })).toBeDisabled()
+  fireEvent.click(screen.getByRole('button', { name: /forget everything/i }))
+  expect(screen.queryByText('comment in English')).not.toBeInTheDocument()
+  expect(screen.getByText(/no saved preference/i)).toBeInTheDocument()
 })
 
-test('prompts : voir un diff, mettre en service puis revenir en arrière', () => {
+test('prompts: view a diff, activate, then roll back', () => {
   wrap(<Prompts />)
   expect(screen.getByTestId('active-system')).toHaveTextContent('v1')
   fireEvent.click(screen.getByRole('button', { name: /v2/i }))
   expect(screen.getAllByText(/^\+ /).length).toBeGreaterThan(0)
-  fireEvent.click(screen.getByRole('button', { name: /mettre en service/i }))
+  fireEvent.click(screen.getByRole('button', { name: /activate/i }))
   expect(screen.getByTestId('active-system')).toHaveTextContent('v2')
   fireEvent.click(screen.getByRole('button', { name: /v1/i }))
-  fireEvent.click(screen.getByRole('button', { name: /mettre en service/i }))
+  fireEvent.click(screen.getByRole('button', { name: /activate/i }))
   expect(screen.getByTestId('active-system')).toHaveTextContent('v1')
 })
 
-test('planification : créer, ignorer le titre vide, désactiver', () => {
+test('scheduling: create, ignore empty title, disable', () => {
   wrap(<Planning />)
-  fireEvent.click(screen.getByRole('button', { name: /planifier/i }))
-  expect(screen.queryByText('Veille des dépendances')).not.toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText(/titre de la tâche/i), { target: { value: 'Veille des dépendances' } })
-  fireEvent.change(screen.getByLabelText(/fréquence/i), { target: { value: 'chaque lundi' } })
-  fireEvent.click(screen.getByRole('button', { name: /planifier/i }))
-  const row = screen.getByText('Veille des dépendances').closest('li') as HTMLElement
-  expect(row).toHaveTextContent('chaque lundi')
+  fireEvent.click(screen.getByRole('button', { name: /schedule/i }))
+  expect(screen.queryByText('Dependency watch')).not.toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText(/task title/i), { target: { value: 'Dependency watch' } })
+  fireEvent.change(screen.getByLabelText(/frequency/i), { target: { value: 'every Monday' } })
+  fireEvent.click(screen.getByRole('button', { name: /schedule/i }))
+  const row = screen.getByText('Dependency watch').closest('li') as HTMLElement
+  expect(row).toHaveTextContent('every Monday')
   fireEvent.click(within(row).getByRole('switch'))
   expect(within(row).getByRole('switch')).toHaveAttribute('aria-checked', 'false')
 })
 
-describe('pages alimentées par la session', () => {
+describe('session-fed pages', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
@@ -99,9 +99,9 @@ describe('pages alimentées par la session', () => {
     return <button onClick={() => send(text)}>go</button>
   }
 
-  test('journal vide puis alimenté par les appels réels de la session', () => {
-    wrap(<><Driver text="Écris une fonction qui calcule la latence moyenne du journal" /><Journal /></>)
-    expect(screen.getByText(/aucun appel/i)).toBeInTheDocument()
+  test('log empty, then filled by the real session calls', () => {
+    wrap(<><Driver text="Write a function that computes the average latency of the log" /><Journal /></>)
+    expect(screen.getByText(/no call yet/i)).toBeInTheDocument()
     fireEvent.click(screen.getByText('go'))
     act(() => { vi.advanceTimersByTime(30000) })
     expect(screen.getAllByText('sandbox.run')).toHaveLength(2)
@@ -110,39 +110,39 @@ describe('pages alimentées par la session', () => {
     expect(screen.getByTestId('metric-errors')).toHaveTextContent('50 %')
   })
 
-  test('agents : activer un agent crée un relais visible', () => {
+  test('agents: enabling an agent creates a visible handoff', () => {
     wrap(<Agents />)
-    fireEvent.click(screen.getByRole('button', { name: /activer relecteur/i }))
-    expect(screen.getByText(/CodeSensei → Relecteur/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /enable reviewer/i }))
+    expect(screen.getByText(/CodeSensai → Reviewer/)).toBeInTheDocument()
   })
 
-  test('qualité : liste les tests adverses, dont une faiblesse assumée', () => {
+  test('quality: lists the adversarial tests, including an acknowledged weakness', () => {
     wrap(<Quality />)
-    expect(screen.getAllByText(/bloqué/i).length).toBeGreaterThan(0)
-    expect(screen.getAllByText(/faiblesse/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/blocked/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/weakness/i).length).toBeGreaterThan(0)
   })
 
-  test('qualité : la sortie structurée renvoie à /structured dans le terminal, sans faux exemple', () => {
+  test('quality: structured output points to /structured in the terminal, with no fake example', () => {
     wrap(<Quality />)
-    expect(screen.queryByRole('heading', { name: /sortie structurée/i })).not.toBeInTheDocument()
-    expect(screen.queryByText(/accepté par le schéma/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /structured output/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/accepted by the schema/i)).not.toBeInTheDocument()
     expect(screen.getByTestId('structured-note')).toHaveTextContent('/structured')
     expect(screen.getByTestId('structured-note')).toHaveTextContent('ADR-0039')
   })
 
-  test('qualité : sans serveur, les tests adverses sont étiquetés comme exemple simulé', () => {
+  test('quality: without a server, the adversarial tests are labeled as a simulated example', () => {
     wrap(<Quality />)
-    expect(screen.getByText(/Exemple simulé pour la démo/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Relancer les attaques' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Simulated example for the demo/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rerun the attacks' })).not.toBeInTheDocument()
   })
 })
 
-test('#44 : avec le serveur réel, la page Mémoire liste les vraies conversations et en rouvre une', async () => {
+test('#44: with the real server, the Memory page lists the real conversations and reopens one', async () => {
   const { Routes, Route } = await import('react-router-dom')
   const engine = new MockEngine({ route })
   const openSession = vi.fn(async () => [{ id: 'h0', role: 'user' as const, text: 'q1' }])
   Object.assign(engine, {
-    listSessions: vi.fn(async () => [{ id: 'OLD', title: 'Hier', updatedAt: '2026-10-28T18:00:00+00:00', messageCount: 4 }]),
+    listSessions: vi.fn(async () => [{ id: 'OLD', title: 'Yesterday', updatedAt: '2026-10-28T18:00:00+00:00', messageCount: 4 }]),
     openSession,
   })
   render(
@@ -151,22 +151,22 @@ test('#44 : avec le serveur réel, la page Mémoire liste les vraies conversatio
         <EngineProvider engine={engine}>
           <Routes>
             <Route path="/memoire" element={<Memory />} />
-            <Route path="/chat" element={<p>page du chat</p>} />
+            <Route path="/chat" element={<p>chat page</p>} />
           </Routes>
         </EngineProvider>
       </DemoDataProvider>
     </MemoryRouter>,
   )
-  expect(await screen.findByText('Hier')).toBeInTheDocument()
+  expect(await screen.findByText('Yesterday')).toBeInTheDocument()
   expect(screen.getByText(/4 messages · 2026-10-28 18:00/)).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'Rouvrir Hier' }))
-  expect(await screen.findByText('page du chat')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Reopen Yesterday' }))
+  expect(await screen.findByText('chat page')).toBeInTheDocument()
   expect(openSession).toHaveBeenCalledWith('OLD')
 })
 
-test('avec le serveur réel, la page Mémoire montre et modifie le vrai profil et les vrais faits', async () => {
+test('with the real server, the Memory page shows and edits the real profile and facts', async () => {
   const engine = new MockEngine({ route })
-  let prefs = ['utilise pytest']
+  let prefs = ['use pytest']
   const addPreference = vi.fn(async (t: string) => { prefs = [...prefs, t]; return { name: '', instructions: '', preferences: prefs } })
   const forgetPreferences = vi.fn(async () => { prefs = []; return { name: '', instructions: '', preferences: [] } })
   Object.assign(engine, {
@@ -182,17 +182,17 @@ test('avec le serveur réel, la page Mémoire montre et modifie le vrai profil e
       </EngineProvider>
     </MemoryRouter>,
   )
-  expect(await screen.findByText('utilise pytest')).toBeInTheDocument()
+  expect(await screen.findByText('use pytest')).toBeInTheDocument()
   expect(await screen.findByText('version : 7')).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText('Nouvelle préférence'), { target: { value: 'commente en anglais' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
-  expect(await screen.findByText('commente en anglais')).toBeInTheDocument()
-  expect(addPreference).toHaveBeenCalledWith('commente en anglais')
-  fireEvent.click(screen.getByRole('button', { name: 'Tout oublier' }))
-  expect(await screen.findByText('Aucune préférence enregistrée.')).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText('New preference'), { target: { value: 'comment in English' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+  expect(await screen.findByText('comment in English')).toBeInTheDocument()
+  expect(addPreference).toHaveBeenCalledWith('comment in English')
+  fireEvent.click(screen.getByRole('button', { name: 'Forget everything' }))
+  expect(await screen.findByText('No saved preference.')).toBeInTheDocument()
 })
 
-test('Mémoire : « Oublier » retire les faits d\'une entité (serveur réel)', async () => {
+test('Memory: "Forget" removes the facts of an entity (real server)', async () => {
   const engine = new MockEngine({ route })
   const forgetFact = vi.fn(async () => true)
   Object.assign(engine, {
@@ -201,7 +201,7 @@ test('Mémoire : « Oublier » retire les faits d\'une entité (serveur réel)',
     forgetFact,
   })
   render(<MemoryRouter><EngineProvider engine={engine}><DemoDataProvider><Memory /></DemoDataProvider></EngineProvider></MemoryRouter>)
-  fireEvent.click(await screen.findByRole('button', { name: 'Oublier mot_de_test' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Forget mot_de_test' }))
   expect(forgetFact).toHaveBeenCalledWith('mot_de_test')
   await vi.waitFor(() => expect(screen.queryByText('mot : zebre')).not.toBeInTheDocument())
 })

@@ -1,30 +1,30 @@
-# ADR-NNNN — Titre court de la décision
+# ADR-NNNN — Short title of the decision
 
-- **Statut** : Proposé | Accepté | Remplacé par ADR-xxxx | Abandonné
-- **Date** : AAAA-MM-JJ
-- **Décideurs** : qui a tranché (personnes ou lots)
-- **Lot concerné** : A / B / C / D / Tous (et qui est impacté)
+- **Status**: Proposed | Accepted | Superseded by ADR-xxxx | Abandoned
+- **Date**: YYYY-MM-DD
+- **Deciders**: who decided (people or workstreams)
+- **Workstream**: A / B / C / D / All (and who is affected)
 
-## Contexte
-Le problème, les contraintes, ce qui force à choisir.
+## Context
+The problem, the constraints, what forces a choice.
 
-## Options envisagées
-| Option | Pour | Contre |
+## Considered options
+| Option | Pros | Cons |
 | --- | --- | --- |
 | Option 1 | … | … |
 | Option 2 | … | … |
 
-## Décision
-Ce qu'on retient, en une ou deux phrases.
+## Decision
+What we choose, in one or two sentences.
 
-## Conséquences
-- ✅ ce qu'on gagne
-- ❌ ce qu'on accepte de perdre (obligatoire : un choix présenté comme parfait ne vaut rien)
-- Suivi : tests, documents, seuil à partir duquel la décision serait à revoir
+## Consequences
+- ✅ what we gain
+- ❌ what we accept to lose (mandatory: a choice presented as perfect is worthless)
+- Follow-up: tests, documents, threshold at which the decision should be revisited
 
 <!--
-Rappels (AGENTS.md) :
-- écrire l'ADR au moment de la décision, et ajouter sa ligne dans README.md (l'index) ;
-- un ADR accepté n'est jamais réécrit : on en crée un nouveau qui le remplace,
-  et seule la ligne Statut de l'ancien change.
+Reminders (AGENTS.md):
+- write the ADR when the decision is made, and add its line to README.md (the index);
+- an accepted ADR is never rewritten: create a new one that supersedes it,
+  and only the Status line of the old one changes.
 -->

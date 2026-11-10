@@ -7,10 +7,10 @@ export const fallback: Scenario = {
   id: 'fallback',
   steps: [
     start(T),
-    think(T, 's1', "Je n'ai pas de piste précise pour cette demande : je propose des exemples."),
+    think(T, 's1', "I don't have a clear lead for this request: I'll suggest some examples."),
     ...say(
       T,
-      "Je ne suis pas sûr d'avoir bien compris. Je sais par exemple chercher dans le code du projet, écrire et tester une fonction, préparer un déploiement, chercher sur le web ou résumer la séance. Dis-moi ce que tu veux faire !",
+      "I'm not sure I understood. For example, I can search the project code, write and test a function, prepare a deployment, search the web or summarize the session. Tell me what you want to do!",
     ),
     end(T),
   ],

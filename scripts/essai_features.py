@@ -1,18 +1,22 @@
-"""Essai de bout en bout de chaque feature avec le vrai modèle (qwen3:8b par défaut).
+"""End-to-end trial run of every feature with the real model (qwen3:8b by default).
 
-Un scénario par feature, tiré de ses user stories, joué comme un utilisateur :
-le CLI `sensai` (réponses tapées dans un tube), les commandes `sensai-prompt`,
-`sensai-eval`, `sensai-schedule`, et l'API de `sensai-web`. Chaque scénario a
-un critère observable (texte affiché, fichier écrit, réponse HTTP) et sa durée
-est mesurée. Tout se passe dans un projet jetable (dossier temporaire) avec
-son propre `SENSAI_HOME` : ni le dépôt ni ~/.sensai ne sont touchés.
+One scenario per feature, taken from its user stories, played like a user would:
+the `sensai` CLI (answers typed through a pipe), the `sensai-prompt`,
+`sensai-eval` and `sensai-schedule` commands, and the `sensai-web` API. Each
+scenario has an observable criterion (printed text, written file, HTTP
+response) and its duration is measured. Everything happens in a throwaway
+project (temporary directory) with its own `SENSAI_HOME`: neither the
+repository nor ~/.sensai is touched.
 
-Les résultats sont écrits au fil de l'eau (un essai long peut être coupé) :
+Results are written as they come (a long trial run may be cut short):
     python scripts/essai_features.py --out docs/performance/data/features-qwen3-8b.json
-    python scripts/essai_features.py --only T4,A3 --out /tmp/essai.json
+    python scripts/essai_features.py --only T4,A3 --out /tmp/trial.json
 
-Prérequis : Ollama avec le modèle et bge-m3 ; Docker et les images
-`python:3.12-slim` (T2) et `sensai-browser` (T3).
+Prerequisites: Ollama with the model and bge-m3; Docker and the
+`python:3.12-slim` (T2) and `sensai-browser` (T3) images.
+
+The prompts were translated from French after the published trial runs. Output
+checks accept both the French and English UI labels.
 """
 
 import argparse
@@ -34,10 +38,10 @@ import httpx
 REPO = Path(__file__).resolve().parent.parent
 BIN = Path(sys.executable).parent
 FAKE_MCP = REPO / "tests" / "tools" / "fake_mcp_server.py"
-CLI_TIMEOUT = 1800  # un tour d'agent sur CPU peut dépasser 10 min
+CLI_TIMEOUT = 1800  # an agent turn on CPU can exceed 10 min
 
 STATS = '''def moyenne(notes):
-    """Moyenne d'une liste de notes."""
+    """Mean of a list of grades."""
     return sum(notes) / len(notes)
 
 
@@ -51,11 +55,11 @@ def test_moyenne():
     assert moyenne([10, 20]) == 15
 '''
 SCHEMA = {"type": "object",
-          "properties": {"fonction": {"type": "string"}, "fichier": {"type": "string"}},
-          "required": ["fonction", "fichier"]}
-FEWSHOT = {"id": "ex-tests", "question": "Comment lancer les tests de ce projet ?",
-           "answer": "Lance `pytest -q` à la racine : il trouve tests/test_stats.py.",
-           "sources": [], "notes": "exemple few-shot de l'essai"}
+          "properties": {"function": {"type": "string"}, "file": {"type": "string"}},
+          "required": ["function", "file"]}
+FEWSHOT = {"id": "ex-tests", "question": "How do I run this project's tests?",
+           "answer": "Run `pytest -q` at the root: it finds tests/test_stats.py.",
+           "sources": [], "notes": "few-shot example of the trial run"}
 
 
 @dataclass
@@ -73,13 +77,13 @@ class Scenario:
 
 
 class Trial:
-    rag = False  # --rag : le RAG reste actif dans tous les scénarios
-    """Le projet jetable et les moyens de le piloter."""
+    rag = False  # --rag: RAG stays on in every scenario
+    """The throwaway project and the means to drive it."""
 
     def __init__(self, base: Path, model: str, host: str,
                  delegation_timeout: int | None = None) -> None:
         self.base, self.model, self.host = base, model, host
-        self.project = base / "projet"
+        self.project = base / "project"
         self.data = base / "data"
         self.project.mkdir()
         (self.project / "tests").mkdir()
@@ -92,12 +96,12 @@ class Trial:
         config.update(model=model, host=host, share_links=True,
                       mcp_servers={"calc": {"command": sys.executable,
                                             "args": [str(FAKE_MCP), "normal"]}})
-        if delegation_timeout:  # A2 sur CPU : laisser aux sous-agents le temps d'un appel
+        if delegation_timeout:  # A2 on CPU: give sub-agents time for one call
             config["tools"] = {"tool_timeout_s": delegation_timeout,
                                "delegation_timeout_s": delegation_timeout}
         (self.project / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
         for cmd in (["git", "init", "-q"], ["git", "add", "."],
-                    ["git", "-c", "user.name=essai", "-c", "user.email=essai@local",
+                    ["git", "-c", "user.name=trial", "-c", "user.email=trial@local",
                      "commit", "-qm", "init"]):
             subprocess.run(cmd, cwd=self.project, check=True)
         self.env = {**os.environ, "SENSAI_HOME": str(self.data), "NO_COLOR": "1",
@@ -122,7 +126,7 @@ class Trial:
         if new:
             argv.append("--new-session")
         if not self.rag and not any(a.startswith("--rag") for a in extra):
-            argv.append("--no-rag")  # le RAG n'est mesuré que par R1/R2 : sinon trop lent sur CPU
+            argv.append("--no-rag")  # RAG is only measured by R1/R2: too slow on CPU otherwise
         return self.run(argv, [*lines, "exit"])
 
 
@@ -130,52 +134,56 @@ def has(pattern: str, text: str) -> bool:
     return re.search(pattern, text, re.IGNORECASE | re.DOTALL) is not None
 
 
-# --- Scénarios CLI ----------------------------------------------------------------
+# --- CLI scenarios ----------------------------------------------------------------
 
 
 def b1_a1(t: Trial):
-    r = t.chat(["Lis stats.py et dis-moi en une phrase ce que fait la fonction moyenne."])
-    # Le CLI affiche « Lecture(stats.py) », pas le nom de l'outil (essai du 2026-11-06).
-    return has(r"read_file|Lecture\(", r.out) and has(r"moyenne|somme|divis", r.out), r
+    r = t.chat(["Read stats.py and tell me in one sentence what the moyenne function does."])
+    # The CLI prints "Lecture(stats.py)" (or "Read(...)"), not the tool name
+    # (trial run of 2026-11-06).
+    read = has(r"read_file|Lecture\(|Read\(", r.out)
+    return read and has(r"moyenne|mean|average|sum|somme|divi", r.out), r
 
 
 def t4_write(t: Trial):
-    r = t.chat(["Crée le fichier notes.txt contenant exactement le mot bonjour.", "o"])
+    r = t.chat(["Create the file notes.txt containing exactly the word hello.", "y"])
     f = t.project / "notes.txt"
-    return f.exists() and "bonjour" in f.read_text(encoding="utf-8"), r
+    return f.exists() and "hello" in f.read_text(encoding="utf-8"), r
 
 
 def a3_refuse(t: Trial):
-    r = t.chat(["Crée le fichier refus.txt contenant le mot non.", "n"])
-    return not (t.project / "refus.txt").exists() and has(r"confirm|refus|annul", r.out), r
+    r = t.chat(["Create the file refused.txt containing the word no.", "n"])
+    refused = has(r"confirm|refus|annul|cancel|declin", r.out)
+    return not (t.project / "refused.txt").exists() and refused, r
 
 
 def t2_sandbox(t: Trial):
-    r = t.chat(["Utilise run_code pour exécuter en Python : print(6 * 7)", "o"])
+    r = t.chat(["Use run_code to run in Python: print(6 * 7)", "y"])
     return has(r"run_code", r.out) and has(r"\b42\b", r.out), r
 
 
 def t3_web(t: Trial):
-    r = t.chat(["Cherche sur le web le site officiel du langage Python et donne son adresse.",
-                "o"])
+    r = t.chat(["Search the web for the official website of the Python language "
+                "and give its address.",
+                "y"])
     return has(r"web_search", r.out) and has(r"python\.org", r.out), r
 
 
 def t1_mcp(t: Trial):
-    r = t.chat(["Utilise l'outil MCP calc pour additionner 19 et 23.", "o"])
+    r = t.chat(["Use the calc MCP tool to add 19 and 23.", "y"])
     return has(r"calc", r.out) and has(r"\b42\b", r.out), r
 
 
 def t5_structured(t: Trial):
-    r = t.chat(["/structured schema.json Quelle fonction de ce projet calcule une moyenne, "
-                "et dans quel fichier ?"])
-    m = re.search(r"\{[^{}]*\"fonction\"[^{}]*\}", r.out)
+    r = t.chat(["/structured schema.json Which function of this project computes a mean, "
+                "and in which file?"])
+    m = re.search(r"\{[^{}]*\"function\"[^{}]*\}", r.out)
     return bool(m) and "moyenne" in m.group(0) and "stats.py" in m.group(0), r
 
 
 def a2_team(t: Trial):
-    r = t.chat(["Utilise team_task : moyenne([]) doit lever ValueError ; ajoute un test pour ce "
-                "cas.", "o", "o", "o", "o"])
+    r = t.chat(["Use team_task: moyenne([]) must raise ValueError; add a test for this "
+                "case.", "y", "y", "y", "y"])
     tests = subprocess.run([sys.executable, "-m", "pytest", "-q"], cwd=t.project,
                            capture_output=True, text=True)
     ok = has(r"team_task", r.out) and "ValueError" in (t.project / "stats.py").read_text()
@@ -183,8 +191,8 @@ def a2_team(t: Trial):
 
 
 def m1_session(t: Trial):
-    a = t.chat(["Retiens ce mot de passe de jeu : ANANAS. Réponds juste OK."])
-    b = t.chat(["Quel mot de passe de jeu t'ai-je donné tout à l'heure ?"], new=False)
+    a = t.chat(["Remember this game password: ANANAS. Just answer OK."])
+    b = t.chat(["Which game password did I give you earlier?"], new=False)
     return has(r"ananas", b.out), Run(a.out + "\n----\n" + b.out, a.seconds + b.seconds, b.code)
 
 
@@ -194,33 +202,33 @@ def m2_context(t: Trial):
 
 
 def m3_profile(t: Trial):
-    r = t.chat(["/remember Ce projet utilise pytest pour les tests.", "/profile"])
+    r = t.chat(["/remember This project uses pytest for its tests.", "/profile"])
     return has(r"pytest", r.out), r
 
 
 def m4_state(t: Trial):
     r = t.chat(["/state"])
-    return has(r"SENSAI\.md|état|state", r.out), r
+    return has(r"SENSAI\.md|\u00e9tat|state", r.out), r
 
 
 def r1_r2_rag(t: Trial):
-    r = t.chat(["Dans quel fichier est définie la fonction maximum ?"], "--rag-model", "bge-m3")
+    r = t.chat(["In which file is the maximum function defined?"], "--rag-model", "bge-m3")
     return has(r"stats\.py", r.out), r
 
 
 def a6_cache(t: Trial):
-    q = "Que renvoie maximum([3, 9, 4]) ? Réponds juste par le nombre."
+    q = "What does maximum([3, 9, 4]) return? Answer with the number only."
     a = t.chat([q], "--cache")
     b = t.chat([q], "--cache")
-    note = f"1er appel {a.seconds}s, 2e appel {b.seconds}s"
+    note = f"1st call {a.seconds}s, 2nd call {b.seconds}s"
     return has(r"cache", b.out) and b.seconds < a.seconds, \
         Run(a.out + "\n----\n" + b.out + "\n" + note, a.seconds + b.seconds, b.code)
 
 
 def a7_fewshot(t: Trial):
-    r = t.chat(["Comment je lance les tests de ce projet ?"],
+    r = t.chat(["How do I run the tests of this project?"],
                "--fewshot-examples", "fewshot.jsonl")
-    return has(r"pytest", r.out) and has(r"ex-tests|exemple", r.out), r
+    return has(r"pytest", r.out) and has(r"ex-tests|exemple|example", r.out), r
 
 
 def a5_persona(t: Trial):
@@ -229,14 +237,14 @@ def a5_persona(t: Trial):
 
 
 def ev2_secret(t: Trial):
-    r = t.chat(["Sans utiliser d'outil, recopie exactement cette ligne d'exemple de la "
-                "documentation AWS : AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE"])
-    # Le texte tapé est renvoyé à l'écran par l'invite : on ne regarde que la réponse.
+    r = t.chat(["Without using any tool, copy exactly this example line from the "
+                "AWS documentation: AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE"])
+    # The prompt echoes the typed text on screen: only look at the answer.
     answer = r.out.split("AKIAIOSFODNN7EXAMPLE", 1)[-1]
     return "AKIAIOSFODNN7EXAMPLE" not in answer and has(r"REDACTED", answer), r
 
 
-# --- Commandes à part ------------------------------------------------------------------
+# --- Standalone commands ------------------------------------------------------------------
 
 
 def a4_prompts(t: Trial):
@@ -265,7 +273,7 @@ def x5_schedule(t: Trial):
     s = [str(BIN / "sensai-schedule"), "--data-dir", str(t.data), "--model", t.model,
          "--host", t.host]
     a = t.run([*s, "add", "resume", "--every", "1d", "--tools", "read_file",
-               "--prompt", "Lis stats.py et liste ses fonctions en une ligne."])
+               "--prompt", "Read stats.py and list its functions in one line."])
     r = t.run([*s, "run", "resume"])
     h = t.run([*s, "history", "resume"])
     ok = a.code == 0 and r.code == 0 and has(r"moyenne|maximum", r.out + h.out)
@@ -282,10 +290,11 @@ class Web:
                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         token, deadline = None, time.monotonic() + 120
         while token is None and time.monotonic() < deadline:
-            m = re.search(r"Jeton d'accès.*: (\S+)", self.proc.stdout.readline())
+            line = self.proc.stdout.readline()
+            m = re.search(r"(?:Access token|Jeton d'acc\u00e8s).*: (\S+)", line)
             token = m.group(1) if m else None
         if token is None:
-            raise RuntimeError("sensai-web n'a pas donné de jeton")
+            raise RuntimeError("sensai-web did not print an access token")
         self.http = httpx.Client(base_url=f"http://127.0.0.1:{port}", timeout=CLI_TIMEOUT,
                                  headers={"Authorization": f"Bearer {token}"})
         for _ in range(60):
@@ -317,7 +326,7 @@ class Web:
 
 def text_of(events: list[dict]) -> str:
     tokens = "".join(e.get("text", "") for e in events if e.get("type") == "token")
-    return tokens + " | événements : " + " ".join(sorted({e.get("type", "?") for e in events}))
+    return tokens + " | events: " + " ".join(sorted({e.get("type", "?") for e in events}))
 
 
 def web_scenarios(w: Web) -> list[Scenario]:
@@ -327,7 +336,7 @@ def web_scenarios(w: Web) -> list[Scenario]:
         return ev, round(time.monotonic() - start, 1)
 
     def x1(t):
-        ev, s = timed(w.session(), "Lis stats.py et dis en une phrase ce que fait maximum.")
+        ev, s = timed(w.session(), "Read stats.py and say in one sentence what maximum does.")
         done = any(e.get("type") == "done" for e in ev)
         return done and has(r"max", text_of(ev)), Run(text_of(ev), s, 0)
 
@@ -337,7 +346,7 @@ def web_scenarios(w: Web) -> list[Scenario]:
                 w.http.post(f"/api/sessions/{sid}/confirm",
                             json={"confirm_id": e["confirm_id"], "approved": True})
 
-        ev, s = timed(w.session(), "Crée le fichier web.txt contenant le mot web.", approve)
+        ev, s = timed(w.session(), "Create the file web.txt containing the word web.", approve)
         asked = any(e.get("type") == "confirm_request" for e in ev)
         ok = (t.project / "web.txt").exists() and asked
         return ok, Run(text_of(ev), s, 0)
@@ -365,27 +374,27 @@ def web_scenarios(w: Web) -> list[Scenario]:
             if e.get("type") == "question":
                 chosen.extend(str(v) for v in values_of(e).values() if v is not True)
 
-        ev, s = timed(w.session(), "Utilise ask_user pour me demander mon langage de "
-                                   "programmation préféré dans un formulaire, puis répète ma "
-                                   "réponse.", answer_and_note)
-        # Le modèle choisit lui-même les options : on vérifie que la valeur envoyée revient.
+        ev, s = timed(w.session(), "Use ask_user to ask me for my favorite "
+                                   "programming language in a form, then repeat my "
+                                   "answer.", answer_and_note)
+        # The model picks the options itself: check that the submitted value comes back.
         ok = bool(chosen) and all(has(re.escape(c), text_of(ev)) for c in chosen)
         return ok, Run(text_of(ev) + "\n" + json.dumps([e for e in ev if e.get("type") ==
                                                         "question"], ensure_ascii=False), s, 0)
 
     def x2(t):
         sid = w.session()
-        w.send(sid, "Réponds juste : bonjour.")
-        # Bifurquer après la 1re question : la nouvelle session n'a qu'elle.
+        w.send(sid, "Just answer: hello.")
+        # Fork after the 1st question: the new session only has that one.
         fork = w.http.post(f"/api/sessions/{sid}/fork", json={"at_message": 1})
         if fork.status_code != 201:
             return False, Run(fork.text, 0, fork.status_code)
         copy = w.http.get(f"/api/sessions/{fork.json()['session_id']}")
-        return has(r"bonjour", copy.text), Run(fork.text + "\n" + copy.text[:500], 0, 201)
+        return has(r"hello", copy.text), Run(fork.text + "\n" + copy.text[:500], 0, 201)
 
     def x3(t):
         sid = w.session()
-        w.send(sid, "Réponds juste : bonjour.")
+        w.send(sid, "Just answer: hello.")
         exp = w.http.get(f"/api/sessions/{sid}/export")
         share = w.http.post(f"/api/sessions/{sid}/share", json={})
         ok = exp.status_code == 200 and share.status_code == 201
@@ -393,7 +402,7 @@ def web_scenarios(w: Web) -> list[Scenario]:
 
     def ev3(t):
         sid = w.session()
-        w.send(sid, "Réponds juste : bonjour.")
+        w.send(sid, "Just answer: hello.")
         m = w.http.get("/api/journal/metrics")
         j = w.http.get("/api/journal", params={"session": sid})
         ok = has(r"\"turns\":\s*[1-9]", m.text) and has(r"\"turns\":\s*\[\s*\{", j.text)
@@ -404,38 +413,38 @@ def web_scenarios(w: Web) -> list[Scenario]:
         return p.status_code == 200 and len(p.json()) > 0, Run(p.text[:500], 0, p.status_code)
 
     return [
-        Scenario("X1", "web : un tour complet en streaming (SSE)", x1),
-        Scenario("A3-web", "web : confirmation approuvée par l'API", a3_web),
-        Scenario("X4", "web : formulaire ask_user rempli par l'API", x4),
-        Scenario("X2", "web : bifurcation d'une conversation (fork)", x2),
-        Scenario("X3", "web : export et lien de partage", x3),
-        Scenario("EV3", "web : journal des tours et métriques", ev3),
-        Scenario("A5-web", "web : liste des personas", a5_web),
+        Scenario("X1", "web: a full streamed turn (SSE)", x1),
+        Scenario("A3-web", "web: confirmation approved through the API", a3_web),
+        Scenario("X4", "web: ask_user form filled through the API", x4),
+        Scenario("X2", "web: forking a conversation", x2),
+        Scenario("X3", "web: export and share link", x3),
+        Scenario("EV3", "web: turn log and metrics", ev3),
+        Scenario("A5-web", "web: list of personas", a5_web),
     ]
 
 
 CLI = [
-    Scenario("B1/A1", "lire un fichier et l'expliquer (boucle ReAct + read_file)", b1_a1),
-    Scenario("T4", "écrire un fichier après confirmation", t4_write),
-    Scenario("A3", "refuser une écriture : rien n'est écrit", a3_refuse),
-    Scenario("T2", "exécuter du code dans la sandbox Docker", t2_sandbox),
-    Scenario("T3", "recherche web isolée", t3_web),
-    Scenario("T1", "appeler un outil d'un serveur MCP", t1_mcp),
-    Scenario("T5", "réponse JSON conforme à un schéma (/structured)", t5_structured),
-    Scenario("M1", "reprendre la session et retrouver une information", m1_session),
-    Scenario("M2", "/context : prompt et budget envoyés", m2_context),
-    Scenario("M3", "/remember puis /profile", m3_profile),
-    Scenario("M4", "/state : document d'état", m4_state),
-    Scenario("R1/R2", "RAG : trouver le fichier qui définit une fonction", r1_r2_rag),
-    Scenario("A6", "cache sémantique : 2e question servie plus vite", a6_cache),
-    Scenario("A7", "few-shot : l'exemple proche est utilisé", a7_fewshot),
+    Scenario("B1/A1", "read a file and explain it (ReAct loop + read_file)", b1_a1),
+    Scenario("T4", "write a file after confirmation", t4_write),
+    Scenario("A3", "refuse a write: nothing is written", a3_refuse),
+    Scenario("T2", "run code in the Docker sandbox", t2_sandbox),
+    Scenario("T3", "isolated web search", t3_web),
+    Scenario("T1", "call a tool from an MCP server", t1_mcp),
+    Scenario("T5", "JSON answer matching a schema (/structured)", t5_structured),
+    Scenario("M1", "resume the session and recall a piece of information", m1_session),
+    Scenario("M2", "/context: prompt and budget sent", m2_context),
+    Scenario("M3", "/remember then /profile", m3_profile),
+    Scenario("M4", "/state: state document", m4_state),
+    Scenario("R1/R2", "RAG: find the file that defines a function", r1_r2_rag),
+    Scenario("A6", "semantic cache: 2nd question served faster", a6_cache),
+    Scenario("A7", "few-shot: the close example is used", a7_fewshot),
     Scenario("A5", "/persona list", a5_persona),
-    Scenario("EV2", "une clé AWS écrite par le modèle est masquée", ev2_secret),
+    Scenario("EV2", "an AWS key written by the model is masked", ev2_secret),
     Scenario("A4", "sensai-prompt history + check", a4_prompts),
-    Scenario("EV4", "corpus adversarial (sans modèle)", ev4_adversarial),
-    Scenario("X5", "tâche planifiée ajoutée puis lancée", x5_schedule),
-    Scenario("EV1", "évaluation par juge LLM sur ev1_sample", ev1_eval),
-    Scenario("A2", "team_task : explorateur → développeur → relecteur", a2_team),
+    Scenario("EV4", "adversarial corpus (no model)", ev4_adversarial),
+    Scenario("X5", "scheduled task added then run", x5_schedule),
+    Scenario("EV1", "LLM judge evaluation on ev1_sample", ev1_eval),
+    Scenario("A2", "team_task: explorer → developer → reviewer", a2_team),
 ]
 
 
@@ -444,20 +453,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--model", default="qwen3:8b")
     parser.add_argument("--host", default="http://localhost:11434")
-    parser.add_argument("--only", help="features à jouer, séparées par des virgules")
+    parser.add_argument("--only", help="features to play, comma-separated")
     parser.add_argument("--no-web", action="store_true")
     parser.add_argument("--rag", action="store_true",
-                        help="garder le RAG dans tous les scénarios "
-                             "(désactivé par défaut, sauf R1/R2)")
+                        help="keep RAG on in every scenario "
+                             "(off by default, except R1/R2)")
     parser.add_argument("--delegation-timeout", type=int,
-                        help="délai des sous-agents (section tools de config.json), en secondes")
+                        help="sub-agent timeout (tools section of config.json), in seconds")
     parser.add_argument("--scenario-timeout", type=int, default=CLI_TIMEOUT,
-                        help="durée maximale d'un scénario CLI, en secondes")
+                        help="maximum duration of a CLI scenario, in seconds")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     only = set(args.only.split(",")) if args.only else None
 
-    base = Path(tempfile.mkdtemp(prefix="sensai-essai-"))
+    base = Path(tempfile.mkdtemp(prefix="sensai-trial-"))
     CLI_TIMEOUT = args.scenario_timeout
     t = Trial(base, args.model, args.host, args.delegation_timeout)
     t.rag = args.rag
@@ -468,9 +477,9 @@ def main() -> None:
         print(f"[{s.feature}] {s.what} …", flush=True)
         try:
             ok, run = s.play(t)
-        except Exception as exc:  # un scénario cassé ne doit pas arrêter les autres
+        except Exception as exc:  # a broken scenario must not stop the others
             ok, run = False, Run(f"{type(exc).__name__}: {exc}", 0, None)
-        print(f"  {'OK' if ok else 'ÉCHEC'} en {run.seconds}s", flush=True)
+        print(f"  {'OK' if ok else 'FAIL'} in {run.seconds}s", flush=True)
         report["results"].append({"feature": s.feature, "what": s.what, "ok": ok,
                                   "seconds": run.seconds, "exit": run.code,
                                   "output": run.out[-3000:]})
@@ -491,7 +500,7 @@ def main() -> None:
     finally:
         shutil.rmtree(base, ignore_errors=True)
     passed = sum(r["ok"] for r in report["results"])
-    print(f"{passed}/{len(report['results'])} scénarios réussis -> {args.out}")
+    print(f"{passed}/{len(report['results'])} scenarios passed -> {args.out}")
 
 
 if __name__ == "__main__":

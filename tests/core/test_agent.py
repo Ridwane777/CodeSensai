@@ -1,12 +1,12 @@
 """
-Teste la boucle ReAct (core/agent.py) sans Ollama : un faux modèle rejoue
-une suite de réponses écrites à l'avance, et on vérifie les événements émis
-et ce que l'agent renvoie au modèle.
+Tests the ReAct loop (core/agent.py) without Ollama: a fake model replays
+a sequence of pre-written responses, and we check the emitted events and
+what the agent sends back to the model.
 
-Les outils passent par la vraie ToolGateway (ADR-0006), comme en production.
-Les tests de confirmation sont ceux qui comptent le plus : ils échouent si
-quelqu'un fait exécuter une action risquée sans accord explicite — par
-exemple en rebranchant l'agent sur le registre brut.
+Tools go through the real ToolGateway (ADR-0006), as in production.
+The confirmation tests matter most: they fail if someone lets a risky
+action run without explicit consent — for example by wiring the agent
+back to the raw registry.
 """
 from typing import Any, ClassVar
 
@@ -22,16 +22,16 @@ from sensai.tools.echo_tool import EchoTool
 
 
 class FakeOllama:
-    """Remplace stream_chat_messages. Chaque élément de `script` est la liste
-    des morceaux `message` d'un appel au modèle ; une OllamaError dans le
-    script est levée à la place."""
+    """Replaces stream_chat_messages. Each item of `script` is the list of
+    `message` chunks of one model call; an OllamaError in the script is
+    raised instead."""
 
     def __init__(self, script: list) -> None:
         self.script = list(script)
         self.calls: list[dict[str, Any]] = []
 
     def __call__(self, host, model, messages, tools=None, options=None):
-        # Copie : l'agent continue de modifier sa liste après l'appel.
+        # Copy: the agent keeps modifying its list after the call.
         self.calls.append({"messages": list(messages), "tools": tools})
         step = self.script.pop(0)
         if isinstance(step, Exception):
@@ -56,9 +56,9 @@ def fake(monkeypatch):
 
 
 class RiskyTool:
-    """Outil qui note s'il a été exécuté — pour prouver qu'il ne l'a pas été."""
+    """Tool that records whether it ran — to prove it did not."""
     name = "run_code"
-    description = "Exécute du code."
+    description = "Runs code."
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {"code": {"type": "string"}},
@@ -70,7 +70,7 @@ class RiskyTool:
 
     def run(self, **kwargs) -> ToolResult:
         self.executed = True
-        return ToolResult(ok=True, content="exécuté")
+        return ToolResult(ok=True, content="executed")
 
 
 def gateway_with(*tools, confirm=deny_all) -> ToolGateway:
@@ -85,30 +85,30 @@ def run(tools):
     return list(run_agent_turn("http://x", "m", history, tools))
 
 
-# --- Réponse directe -------------------------------------------------------
+# --- Direct answer ---------------------------------------------------------
 
-def test_reponse_directe_streame_les_tokens_puis_done(fake):
-    fake([[{"content": "Bon"}, {"content": "jour"}]])
+def test_direct_answer_streams_tokens_then_done(fake):
+    fake([[{"content": "Hel"}, {"content": "lo"}]])
 
     events = run(gateway_with())
 
-    # Un Token par morceau reçu (le tour reste interruptible), le texte livré par
-    # ligne complète une fois filtré (EV2, ADR-0058).
-    assert events == [Token(text=""), Token(text=""), Token(text="Bonjour"), Done()]
+    # One Token per received chunk (the turn stays interruptible), the text delivered
+    # per complete line once filtered (EV2, ADR-0058).
+    assert events == [Token(text=""), Token(text=""), Token(text="Hello"), Done()]
 
 
-def test_un_secret_ecrit_par_le_modele_est_masque_meme_coupe_en_morceaux(fake):
-    """EV2 : la réponse du modèle est filtrée avant d'être affichée."""
-    fake([[{"content": "La clé est AKIA"}, {"content": "IOSFODNN7EXAMPLE.\nRégion "},
+def test_a_secret_written_by_the_model_is_masked_even_split_into_chunks(fake):
+    """EV2: the model answer is filtered before being displayed."""
+    fake([[{"content": "The key is AKIA"}, {"content": "IOSFODNN7EXAMPLE.\nRegion "},
            {"content": "eu-west-3."}]])
 
     text = "".join(e.text for e in run(gateway_with()) if isinstance(e, Token))
 
     assert "AKIAIOSFODNN7EXAMPLE" not in text
-    assert "[REDACTED:aws_access_key]" in text and text.endswith("Région eu-west-3.")
+    assert "[REDACTED:aws_access_key]" in text and text.endswith("Region eu-west-3.")
 
 
-def test_les_outils_partent_au_format_ollama(fake):
+def test_tools_are_sent_in_ollama_format(fake):
     ollama = fake([[{"content": "ok"}]])
 
     run(gateway_with(EchoTool()))
@@ -118,29 +118,29 @@ def test_les_outils_partent_au_format_ollama(fake):
     assert tool["function"]["name"] == "echo"
 
 
-# --- Cycle complet Thought -> Action -> Observation -> réponse -------------
+# --- Full cycle Thought -> Action -> Observation -> answer -----------------
 
-def test_un_appel_d_outil_puis_la_reponse_finale(fake):
+def test_one_tool_call_then_the_final_answer(fake):
     fake([
-        [{"thinking": "Je dois "}, {"thinking": "répéter."}, tool_call("echo", {"text": "salut"})],
-        [{"content": "Il a dit salut."}],
+        [{"thinking": "I must "}, {"thinking": "repeat."}, tool_call("echo", {"text": "hi"})],
+        [{"content": "It said hi."}],
     ])
 
     events = run(gateway_with(EchoTool()))
 
     assert events == [
-        Thought(text="Je dois répéter."),
-        ToolCall(id="c1", name="echo", arguments={"text": "salut"}),
-        ToolReturn(id="c1", name="echo", ok=True, content="salut"),
+        Thought(text="I must repeat."),
+        ToolCall(id="c1", name="echo", arguments={"text": "hi"}),
+        ToolReturn(id="c1", name="echo", ok=True, content="hi"),
         Token(text=""),
-        Token(text="Il a dit salut."),
+        Token(text="It said hi."),
         Done(),
     ]
 
 
-def test_le_resultat_de_l_outil_est_renvoye_au_modele(fake):
-    """Sans ça le modèle ne voit jamais l'Observation et reboucle à l'aveugle."""
-    ollama = fake([[tool_call("echo", {"text": "salut"})], [{"content": "fin"}]])
+def test_the_tool_result_is_sent_back_to_the_model(fake):
+    """Without this the model never sees the Observation and loops blindly."""
+    ollama = fake([[tool_call("echo", {"text": "hi"})], [{"content": "end"}]])
 
     run(gateway_with(EchoTool()))
 
@@ -149,14 +149,14 @@ def test_le_resultat_de_l_outil_est_renvoye_au_modele(fake):
     assert second[-2]["tool_calls"][0]["function"]["name"] == "echo"
     assert second[-1] == {
         "role": "tool", "tool_name": "echo", "tool_call_id": "c1",
-        # EV4-OUT-14 : le résultat arrive au modèle enfermé, marqué non fiable.
+        # EV4-OUT-14: the result reaches the model wrapped and marked untrusted.
         "content": ('<tool_output tool="echo" trust="untrusted" suspicious="false">\n'
-                    'salut\n</tool_output>'),
+                    'hi\n</tool_output>'),
     }
 
 
-def test_l_historique_de_l_appelant_n_est_pas_modifie(fake):
-    fake([[tool_call("echo", {"text": "x"})], [{"content": "fin"}]])
+def test_the_caller_history_is_not_modified(fake):
+    fake([[tool_call("echo", {"text": "x"})], [{"content": "end"}]])
     history = [{"role": "user", "content": "question"}]
 
     list(run_agent_turn("http://x", "m", history, gateway_with(EchoTool())))
@@ -164,20 +164,20 @@ def test_l_historique_de_l_appelant_n_est_pas_modifie(fake):
     assert history == [{"role": "user", "content": "question"}]
 
 
-def test_un_id_est_fabrique_si_ollama_n_en_donne_pas(fake):
-    fake([[tool_call("echo", {"text": "x"}, call_id=None)], [{"content": "fin"}]])
+def test_an_id_is_generated_if_ollama_gives_none(fake):
+    fake([[tool_call("echo", {"text": "x"}, call_id=None)], [{"content": "end"}]])
 
     events = run(gateway_with(EchoTool()))
 
-    appel = next(e for e in events if isinstance(e, ToolCall))
-    retour = next(e for e in events if isinstance(e, ToolReturn))
-    assert appel.id and appel.id == retour.id
+    call = next(e for e in events if isinstance(e, ToolCall))
+    ret = next(e for e in events if isinstance(e, ToolReturn))
+    assert call.id and call.id == ret.id
 
 
-# --- Garde-fous ------------------------------------------------------------
+# --- Guardrails ------------------------------------------------------------
 
-def test_la_boucle_s_arrete_a_max_iterations(fake):
-    ollama = fake([[tool_call("echo", {"text": "encore"})]] * MAX_ITERATIONS)
+def test_the_loop_stops_at_max_iterations(fake):
+    ollama = fake([[tool_call("echo", {"text": "again"})]] * MAX_ITERATIONS)
 
     events = run(gateway_with(EchoTool()))
 
@@ -185,9 +185,9 @@ def test_la_boucle_s_arrete_a_max_iterations(fake):
     assert events[-1] == Done(reason="max_iterations")
 
 
-def test_le_nombre_d_etapes_se_regle(fake):
-    """Le nombre maximal d'étapes vient de la configuration (ADR-0057)."""
-    ollama = fake([[tool_call("echo", {"text": "encore"})]] * 3)
+def test_the_step_count_is_configurable(fake):
+    """The maximum step count comes from the configuration (ADR-0057)."""
+    ollama = fake([[tool_call("echo", {"text": "again"})]] * 3)
 
     history = [{"role": "user", "content": "question"}]
     events = list(run_agent_turn("http://x", "m", history, gateway_with(EchoTool()),
@@ -197,48 +197,48 @@ def test_le_nombre_d_etapes_se_regle(fake):
     assert events[-1] == Done(reason="max_iterations")
 
 
-def test_ollama_injoignable_donne_error_puis_done(fake):
-    fake([OllamaError("injoignable")])
+def test_unreachable_ollama_gives_error_then_done(fake):
+    fake([OllamaError("unreachable")])
 
     events = run(gateway_with())
 
-    assert events == [Error(message="injoignable"), Done(reason="error")]
+    assert events == [Error(message="unreachable"), Done(reason="error")]
 
 
-def test_un_outil_inconnu_n_interrompt_pas_le_tour(fake):
-    fake([[tool_call("nexiste_pas", {})], [{"content": "tant pis"}]])
+def test_an_unknown_tool_does_not_stop_the_turn(fake):
+    fake([[tool_call("does_not_exist", {})], [{"content": "never mind"}]])
 
     events = run(gateway_with())
 
-    retour = next(e for e in events if isinstance(e, ToolReturn))
-    assert retour.ok is False
+    ret = next(e for e in events if isinstance(e, ToolReturn))
+    assert ret.ok is False
     assert events[-1] == Done()
 
 
-@pytest.mark.parametrize("arguments", ["{pas du json", "[1, 2]"])
-def test_des_arguments_invalides_ne_sont_pas_executes(fake, arguments):
-    fake([[tool_call("echo", arguments)], [{"content": "fin"}]])
+@pytest.mark.parametrize("arguments", ["{not json", "[1, 2]"])
+def test_invalid_arguments_are_not_executed(fake, arguments):
+    fake([[tool_call("echo", arguments)], [{"content": "end"}]])
 
     events = run(gateway_with(EchoTool()))
 
-    retour = next(e for e in events if isinstance(e, ToolReturn))
-    assert retour.ok is False
+    ret = next(e for e in events if isinstance(e, ToolReturn))
+    assert ret.ok is False
 
 
-def test_des_arguments_en_texte_json_sont_acceptes(fake):
-    fake([[tool_call("echo", '{"text": "salut"}')], [{"content": "fin"}]])
+def test_arguments_as_json_text_are_accepted(fake):
+    fake([[tool_call("echo", '{"text": "hi"}')], [{"content": "end"}]])
 
     events = run(gateway_with(EchoTool()))
 
-    retour = next(e for e in events if isinstance(e, ToolReturn))
-    assert retour.content == "salut"
+    ret = next(e for e in events if isinstance(e, ToolReturn))
+    assert ret.content == "hi"
 
 
-# --- Passerelle d'outils et confirmation ([A3], ADR-0006) -----------------
+# --- Tool gateway and confirmation ([A3], ADR-0006) -------------------------
 
-def test_le_registre_brut_est_refuse():
-    """Brancher le registre sans la passerelle sauterait permissions,
-    garde-fous et confirmation sans que rien d'autre ne casse."""
+def test_the_raw_registry_is_rejected():
+    """Wiring the registry without the gateway would skip permissions,
+    guardrails and confirmation without anything else breaking."""
     registry = ToolRegistry()
     registry.register(EchoTool())
 
@@ -246,43 +246,43 @@ def test_le_registre_brut_est_refuse():
         run(registry)
 
 
-def test_sans_interface_de_confirmation_l_action_risquee_est_refusee(fake):
-    """L'absence de confirmation n'est pas un oui."""
+def test_without_a_confirmation_ui_the_risky_action_is_refused(fake):
+    """No confirmation is not a yes."""
     tool = RiskyTool()
-    fake([[tool_call("run_code", {"code": "print(1)"})], [{"content": "fin"}]])
+    fake([[tool_call("run_code", {"code": "print(1)"})], [{"content": "end"}]])
 
     events = run(gateway_with(tool))
 
     assert tool.executed is False
-    retour = next(e for e in events if isinstance(e, ToolReturn))
-    assert retour.ok is False
+    ret = next(e for e in events if isinstance(e, ToolReturn))
+    assert ret.ok is False
 
 
-def test_un_refus_de_l_utilisateur_bloque_l_action(fake):
+def test_a_user_refusal_blocks_the_action(fake):
     tool = RiskyTool()
-    fake([[tool_call("run_code", {"code": "print(1)"})], [{"content": "fin"}]])
+    fake([[tool_call("run_code", {"code": "print(1)"})], [{"content": "end"}]])
 
     run(gateway_with(tool, confirm=lambda request: False))
 
     assert tool.executed is False
 
 
-def test_une_interface_qui_plante_vaut_un_refus(fake):
-    def confirm_qui_plante(request):
-        raise ConnectionError("client déconnecté")
+def test_a_crashing_ui_counts_as_a_refusal(fake):
+    def confirm_that_crashes(request):
+        raise ConnectionError("client disconnected")
 
     tool = RiskyTool()
-    fake([[tool_call("run_code", {"code": "print(1)"})], [{"content": "fin"}]])
+    fake([[tool_call("run_code", {"code": "print(1)"})], [{"content": "end"}]])
 
-    run(gateway_with(tool, confirm=confirm_qui_plante))
+    run(gateway_with(tool, confirm=confirm_that_crashes))
 
     assert tool.executed is False
 
 
-def test_l_utilisateur_voit_le_code_avant_d_accepter(fake):
+def test_the_user_sees_the_code_before_accepting(fake):
     questions: list[ConfirmationRequest] = []
     tool = RiskyTool()
-    fake([[tool_call("run_code", {"code": "import os\nos.listdir()"})], [{"content": "fin"}]])
+    fake([[tool_call("run_code", {"code": "import os\nos.listdir()"})], [{"content": "end"}]])
 
     run(gateway_with(tool, confirm=lambda request: questions.append(request) or True))
 
@@ -290,16 +290,16 @@ def test_l_utilisateur_voit_le_code_avant_d_accepter(fake):
     assert questions[0].arguments["code"] == "import os\nos.listdir()"
 
 
-def test_un_outil_sans_risque_ne_demande_rien(fake):
+def test_a_riskless_tool_asks_nothing(fake):
     questions = []
-    fake([[tool_call("echo", {"text": "x"})], [{"content": "fin"}]])
+    fake([[tool_call("echo", {"text": "x"})], [{"content": "end"}]])
 
     run(gateway_with(EchoTool(), confirm=questions.append))
 
     assert questions == []
 
 
-# --- Appel d'outil écrit en texte (essai réel du 2026-10-17, ADR-0031) ----------
+# --- Tool call written as text (real trial run on 2026-10-17, ADR-0031) ----------
 
 TEXTUAL_CALL = (
     "<function=run_code>\n<parameter=code>\nprint(1)\n</parameter>\n</function>\n</tool_call>"
@@ -311,9 +311,9 @@ def text(content: str) -> list[dict]:
 
 
 class TypedTool:
-    """Outil dont un paramètre est un entier, pour vérifier la conversion."""
+    """Tool with an integer parameter, to check the conversion."""
     name = "read_file"
-    description = "Lit un fichier."
+    description = "Reads a file."
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {"path": {"type": "string"}, "max_lines": {"type": "integer"}},
@@ -326,64 +326,64 @@ class TypedTool:
 
     def run(self, **kwargs: Any) -> ToolResult:
         self.received = kwargs
-        return ToolResult(ok=True, content="contenu")
+        return ToolResult(ok=True, content="content")
 
 
-def test_un_appel_seul_dans_la_reponse_est_lu_et_passe_par_la_confirmation(fake):
-    """ADR-0031 : le format natif de qwen3-coder, quand Ollama ne l'a pas
-    reconnu, est lu comme un appel — et passe par la passerelle comme les autres."""
+def test_a_lone_call_in_the_answer_is_parsed_and_goes_through_confirmation(fake):
+    """ADR-0031: qwen3-coder's native format, when Ollama did not recognize it,
+    is parsed as a call — and goes through the gateway like any other."""
     risky = RiskyTool()
-    demandes = []
-    fake([text(TEXTUAL_CALL), text("C'est fait.")])
+    requests = []
+    fake([text(TEXTUAL_CALL), text("Done.")])
 
     events = list(run_agent_turn(
         "h", "m", [{"role": "user", "content": "go"}],
-        gateway_with(risky, confirm=lambda req: demandes.append(req) or True),
+        gateway_with(risky, confirm=lambda req: requests.append(req) or True),
     ))
 
     assert risky.executed
-    assert len(demandes) == 1, "l'exécution demande toujours confirmation"
-    appel = next(e for e in events if isinstance(e, ToolCall))
-    assert appel.name == "run_code" and appel.arguments == {"code": "print(1)"}
-    assert any(isinstance(e, Thought) and "lu dans le texte" in e.text for e in events)
+    assert len(requests) == 1, "execution always asks for confirmation"
+    call = next(e for e in events if isinstance(e, ToolCall))
+    assert call.name == "run_code" and call.arguments == {"code": "print(1)"}
+    assert any(isinstance(e, Thought) and "read from the text" in e.text for e in events)
 
 
-def test_un_refus_de_confirmation_s_applique_aussi(fake):
+def test_a_confirmation_refusal_also_applies(fake):
     risky = RiskyTool()
-    fake([text(TEXTUAL_CALL), text("D'accord, je n'exécute rien.")])
+    fake([text(TEXTUAL_CALL), text("Okay, I will not run anything.")])
 
     list(run_agent_turn("h", "m", [{"role": "user", "content": "go"}], gateway_with(risky)))
 
     assert not risky.executed
 
 
-def test_les_valeurs_suivent_le_schema_de_l_outil(fake):
+def test_values_follow_the_tool_schema(fake):
     tool = TypedTool()
     fake([
         text("<function=read_file>\n<parameter=path>\nREADME.md\n</parameter>\n"
              "<parameter=max_lines>\n20\n</parameter>\n</function>"),
-        text("Voilà."),
+        text("There you go."),
     ])
 
-    list(run_agent_turn("h", "m", [{"role": "user", "content": "lis"}], gateway_with(tool)))
+    list(run_agent_turn("h", "m", [{"role": "user", "content": "read"}], gateway_with(tool)))
 
     assert tool.received == {"path": "README.md", "max_lines": 20}
 
 
-def test_plusieurs_appels_seuls_sont_tous_lus(fake):
+def test_several_lone_calls_are_all_parsed(fake):
     tool = TypedTool()
-    appel = "<function=read_file>\n<parameter=path>\n{}\n</parameter>\n</function>"
-    fake([text("<tool_call>\n" + appel.format("a.py") + "\n</tool_call>\n<tool_call>\n"
-               + appel.format("b.py") + "\n</tool_call>"), text("Lus.")])
+    call = "<function=read_file>\n<parameter=path>\n{}\n</parameter>\n</function>"
+    fake([text("<tool_call>\n" + call.format("a.py") + "\n</tool_call>\n<tool_call>\n"
+               + call.format("b.py") + "\n</tool_call>"), text("Read.")])
 
-    events = list(run_agent_turn("h", "m", [{"role": "user", "content": "lis"}],
+    events = list(run_agent_turn("h", "m", [{"role": "user", "content": "read"}],
                                  gateway_with(tool)))
 
     assert [e.arguments["path"] for e in events if isinstance(e, ToolCall)] == ["a.py", "b.py"]
 
 
-def test_un_outil_non_propose_n_est_jamais_execute(fake):
-    """Seuls les outils offerts au modèle peuvent être appelés, même par le texte."""
+def test_a_tool_not_offered_is_never_executed(fake):
+    """Only tools offered to the model can be called, even through text."""
     ollama = fake([text("<function=rm_rf>\n<parameter=path>\n/\n</parameter>\n</function>")] * 3)
 
     events = list(run_agent_turn("h", "m", [{"role": "user", "content": "go"}],
@@ -394,11 +394,11 @@ def test_un_outil_non_propose_n_est_jamais_execute(fake):
     assert len(ollama.calls) == 3
 
 
-def test_un_appel_au_milieu_d_un_texte_n_est_pas_execute(fake):
-    """Un texte qui contient un appel (une page recopiée, une explication) n'est
-    pas lu : seule une réponse qui n'est QUE l'appel l'est."""
+def test_a_call_in_the_middle_of_text_is_not_executed(fake):
+    """Text that contains a call (a copied page, an explanation) is not
+    parsed: only an answer that is NOTHING BUT the call is."""
     risky = RiskyTool()
-    fake([text("Voici ce que la page disait : " + TEXTUAL_CALL)] * 3)
+    fake([text("Here is what the page said: " + TEXTUAL_CALL)] * 3)
 
     list(run_agent_turn("h", "m", [{"role": "user", "content": "go"}],
                         gateway_with(risky, confirm=lambda req: True)))
@@ -406,12 +406,12 @@ def test_un_appel_au_milieu_d_un_texte_n_est_pas_execute(fake):
     assert not risky.executed
 
 
-def test_le_modele_est_relance_s_il_melange_texte_et_appel(fake):
+def test_the_model_is_retried_if_it_mixes_text_and_call(fake):
     risky = RiskyTool()
     ollama = fake([
-        text("Je vais lancer : " + TEXTUAL_CALL),
+        text("I will run: " + TEXTUAL_CALL),
         [tool_call("run_code", {"code": "print(1)"})],
-        text("C'est fait."),
+        text("Done."),
     ])
 
     events = list(run_agent_turn("h", "m", [{"role": "user", "content": "go"}],
@@ -422,8 +422,8 @@ def test_le_modele_est_relance_s_il_melange_texte_et_appel(fake):
     assert isinstance(events[-1], Done) and events[-1].reason == "final_answer"
 
 
-def test_une_reponse_normale_qui_parle_de_xml_n_est_pas_relancee(fake):
-    ollama = fake([text("En XML, une balise s'écrit <balise>valeur</balise>.")])
+def test_a_normal_answer_about_xml_is_not_retried(fake):
+    ollama = fake([text("In XML, a tag is written <tag>value</tag>.")])
 
     events = list(run_agent_turn("h", "m", [{"role": "user", "content": "xml ?"}],
                                  gateway_with(RiskyTool())))
@@ -432,23 +432,23 @@ def test_une_reponse_normale_qui_parle_de_xml_n_est_pas_relancee(fake):
     assert isinstance(events[-1], Done) and events[-1].reason == "final_answer"
 
 
-def test_une_balise_tool_call_vide_apres_la_reponse_ne_fait_pas_echouer_le_tour(fake):
-    """Essai réel du 2026-11-01 : « La tâche est planifiée.<tool_call> », relancé trois
-    fois puis tour en échec, alors que la réponse était bonne."""
-    ollama = fake([text("La tâche « resume-todo » est planifiée.<tool_call>")])
+def test_an_empty_tool_call_tag_after_the_answer_does_not_fail_the_turn(fake):
+    """Real trial run on 2026-11-01: "The task is scheduled.<tool_call>", retried three
+    times then the turn failed, although the answer was correct."""
+    ollama = fake([text("The task \"resume-todo\" is scheduled.<tool_call>")])
 
-    events = list(run_agent_turn("h", "m", [{"role": "user", "content": "planifie"}],
+    events = list(run_agent_turn("h", "m", [{"role": "user", "content": "schedule"}],
                                  gateway_with(RiskyTool())))
 
-    assert len(ollama.calls) == 1  # pas de relance
+    assert len(ollama.calls) == 1  # no retry
     assert isinstance(events[-1], Done) and events[-1].reason == "final_answer"
     assert not any(isinstance(e, Error) for e in events)
 
 
-def test_le_raisonnement_affiche_est_filtre_lui_aussi(fake):
-    """Audit du 2026-11-01 : la réponse était filtrée, pas le raisonnement (thought)."""
-    fake([[{"thinking": "La clé AKIAIOSFODNN7EXAMPLE "}, {"thinking": "est dans .env."},
-           {"content": "Fait."}]])
+def test_the_displayed_reasoning_is_filtered_too(fake):
+    """Audit of 2026-11-01: the answer was filtered, the reasoning (thought) was not."""
+    fake([[{"thinking": "The key AKIAIOSFODNN7EXAMPLE "}, {"thinking": "is in .env."},
+           {"content": "Done."}]])
 
     thought = next(e for e in run(gateway_with()) if isinstance(e, Thought))
 

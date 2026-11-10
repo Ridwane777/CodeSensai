@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 const KEYWORDS = new Set(['def', 'async', 'await', 'return', 'for', 'in', 'if', 'else', 'with', 'as', 'class', 'yield', 'import', 'assert'])
 
-/** Coloration Python minimale : mots-clés, chaînes, nombres, appels de fonction, commentaires. */
+/** Minimal Python highlighting: keywords, strings, numbers, function calls, comments. */
 export function highlight(line: string): ReactNode[] {
   const out: ReactNode[] = []
   const re = /(#.*$)|("[^"]*"?|'[^']*'?)|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_]\w*\b)|(\s+)|(.)/g

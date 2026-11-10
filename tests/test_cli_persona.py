@@ -1,15 +1,15 @@
 """
-Teste A5 (persona) de bout en bout sur le vrai CLI, sans Ollama — ADR-0042
-(le cœur : changer de persona en cours de session) et ADR-0043 (les
-enrichissements : restriction d'outils par persona, routage automatique par
-mots-clés, ajout d'une persona en session).
+Tests A5 (persona) end to end on the real CLI, without Ollama — ADR-0042
+(the core: switching persona mid-session) and ADR-0043 (the extras:
+per-persona tool restriction, automatic keyword routing, adding a persona
+during a session).
 
-Même patron que `tests/test_cli_rag.py` : un faux agent reçoit la passerelle
-et note ce qu'il observe (outils proposés, prompt système, messages envoyés).
+Same pattern as `tests/test_cli_rag.py`: a fake agent receives the gateway
+and records what it sees (offered tools, system prompt, sent messages).
 
-Le test qui compte pour ADR-0042 est `test_persona_use_laisse_lhistorique_intact` :
-c'est le critère principal de la story 2 (« changer de persona sans perdre le
-contexte »).
+The test that matters for ADR-0042 is `test_persona_use_keeps_history_intact`:
+it is the main criterion of story 2 ("switch persona without losing the
+context").
 """
 import builtins
 
@@ -23,24 +23,24 @@ from sensai.knowledge.persona import PersonaStore
 DEUX_PERSONAS = {
     "default": "assistant",
     "profiles": [
-        {"id": "assistant", "name": "Sensai", "role": "assistant", "tone": "neutre",
-         "scope": "le projet"},
-        {"id": "juridique", "name": "Maître Sensai", "role": "assistant juridique",
-         "tone": "formel", "scope": "droit uniquement"},
+        {"id": "assistant", "name": "CodeSensai", "role": "assistant", "tone": "neutral",
+         "scope": "the project"},
+        {"id": "juridique", "name": "Counsel CodeSensai", "role": "legal assistant",
+         "tone": "formal", "scope": "law only"},
     ],
 }
 
 
 @pytest.fixture
 def lancer(tmp_path, monkeypatch):
-    """Lance le CLI ; chaque tour observé note les outils proposés, le prompt
-    système et une copie des messages reçus par le faux agent."""
+    """Run the CLI; each observed turn records the offered tools, the system
+    prompt and a copy of the messages received by the fake agent."""
 
     def _lancer(entrees, *, personas=None, **options):
         settings = {
-            "model": "faux-modele",
+            "model": "fake-model",
             "host": "http://localhost:11434",
-            "system_prompt": "Tu es CodeSensei.",
+            "system_prompt": "You are CodeSensai.",
             "session": None,
             "new_session": False,
             "data_dir": str(tmp_path / "donnees"),
@@ -59,7 +59,7 @@ def lancer(tmp_path, monkeypatch):
                 "systeme": messages[0]["content"],
                 "messages": [dict(m) for m in messages],
             })
-            yield Token(text="D'accord.")
+            yield Token(text="Got it.")
             yield Done()
 
         restantes = iter(entrees)
@@ -79,58 +79,58 @@ def lancer(tmp_path, monkeypatch):
     return _lancer
 
 
-def test_sans_section_personas_aucune_persona_juridique(lancer):
-    observe = lancer(["Bonjour"])
-    assert "assistant juridique" not in observe[0]["systeme"]
+def test_without_personas_section_no_legal_persona(lancer):
+    observe = lancer(["Hello"])
+    assert "legal assistant" not in observe[0]["systeme"]
 
 
-def test_persona_use_change_le_prompt_systeme_au_tour_suivant(lancer):
+def test_persona_use_changes_system_prompt_next_turn(lancer):
     observe = lancer(
-        ["Bonjour", "/persona use juridique", "Et ensuite ?"],
+        ["Hello", "/persona use juridique", "And then?"],
         personas=PersonaStore.from_config(DEUX_PERSONAS),
     )
-    assert len(observe) == 2  # la commande ne va pas au modèle
-    assert "assistant juridique" not in observe[0]["systeme"]
-    assert "assistant juridique" in observe[1]["systeme"]
+    assert len(observe) == 2  # the command does not go to the model
+    assert "legal assistant" not in observe[0]["systeme"]
+    assert "legal assistant" in observe[1]["systeme"]
 
 
-def test_persona_use_laisse_lhistorique_intact(lancer, tmp_path):
-    """Après le changement, le modèle voit toujours tout ce qui a été dit avant,
-    et rien n'est écrit dans la session sauvegardée à propos de la persona."""
+def test_persona_use_keeps_history_intact(lancer, tmp_path):
+    """After the switch, the model still sees everything said before, and
+    nothing about the persona is written to the saved session."""
     observe = lancer(
-        ["première question", "/persona use juridique", "seconde question"],
+        ["first question", "/persona use juridique", "second question"],
         personas=PersonaStore.from_config(DEUX_PERSONAS),
     )
 
-    # Tour 2 : système (nouveau), puis les deux messages du tour 1, puis la
-    # nouvelle question — l'historique n'a pas bougé.
+    # Turn 2: system (new), then the two messages of turn 1, then the new
+    # question — the history has not changed.
     tour2 = observe[1]["messages"]
     assert [m["role"] for m in tour2] == ["system", "user", "assistant", "user"]
-    assert tour2[1]["content"] == "première question"
-    assert tour2[2]["content"] == "D'accord."
-    assert tour2[3]["content"] == "seconde question"
+    assert tour2[1]["content"] == "first question"
+    assert tour2[2]["content"] == "Got it."
+    assert tour2[3]["content"] == "second question"
 
     store = SessionStore(tmp_path / "donnees" / SESSIONS_FILE)
     sauvegardes = store.load(store.list()[0].id)
     assert [(t["role"], t["content"]) for t in sauvegardes] == [
-        ("user", "première question"),
-        ("assistant", "D'accord."),
-        ("user", "seconde question"),
-        ("assistant", "D'accord."),
+        ("user", "first question"),
+        ("assistant", "Got it."),
+        ("user", "second question"),
+        ("assistant", "Got it."),
     ]
 
 
-def test_persona_inconnue_ne_change_rien_au_prompt(lancer):
+def test_unknown_persona_leaves_prompt_unchanged(lancer):
     observe = lancer(
-        ["/persona use inexistante", "Bonjour"],
+        ["/persona use nonexistent", "Hello"],
         personas=PersonaStore.from_config(DEUX_PERSONAS),
     )
-    assert "assistant juridique" not in observe[0]["systeme"]
+    assert "legal assistant" not in observe[0]["systeme"]
 
 
-def test_les_sous_agents_du_cli_recoivent_la_persona_active(lancer, monkeypatch):
-    """`DelegateTool` reçoit le même `system_prompt()` que la boucle du CLI :
-    un sous-agent lancé après `/persona use` hérite donc de la persona active."""
+def test_cli_subagents_get_the_active_persona(lancer, monkeypatch):
+    """`DelegateTool` gets the same `system_prompt()` as the CLI loop, so a
+    subagent started after `/persona use` inherits the active persona."""
     instances = []
 
     class DelegateEspion(cli.DelegateTool):
@@ -140,67 +140,67 @@ def test_les_sous_agents_du_cli_recoivent_la_persona_active(lancer, monkeypatch)
 
     monkeypatch.setattr(cli, "DelegateTool", DelegateEspion)
     lancer(
-        ["/persona use juridique", "Bonjour"],
+        ["/persona use juridique", "Hello"],
         personas=PersonaStore.from_config(DEUX_PERSONAS),
     )
-    assert "assistant juridique" in instances[0]._system(None, None)
+    assert "legal assistant" in instances[0]._system(None, None)
 
 
-def test_persona_sans_restriction_propose_tous_les_outils(lancer):
-    observe = lancer(["Bonjour"])
-    assert "search_codebase" not in observe[0]["outils"]  # rag=False : pas proposé de toute façon
+def test_persona_without_restriction_offers_all_tools(lancer):
+    observe = lancer(["Hello"])
+    assert "search_codebase" not in observe[0]["outils"]  # rag=False: not offered anyway
     assert "run_code" in observe[0]["outils"]
 
 
-def test_persona_avec_outils_restreints_les_retire(lancer):
+def test_persona_with_restricted_tools_removes_them(lancer):
     personas = PersonaStore.from_config({
         "default": "tuteur",
         "profiles": [
-            {"id": "tuteur", "name": "Prof Sensai", "role": "tuteur de maths", "tone": "doux",
+            {"id": "tuteur", "name": "Prof CodeSensai", "role": "math tutor", "tone": "gentle",
              "scope": "maths", "tools": {"disabled": ["run_code"]}},
         ],
     })
-    observe = lancer(["Bonjour"], personas=personas)
+    observe = lancer(["Hello"], personas=personas)
     assert "run_code" not in observe[0]["outils"]
 
 
-def test_persona_use_applique_la_restriction_au_tour_suivant(lancer):
+def test_persona_use_applies_restriction_next_turn(lancer):
     personas = PersonaStore.from_config({
         "default": "assistant",
         "profiles": [
-            {"id": "assistant", "name": "Sensai", "role": "assistant", "tone": "neutre",
-             "scope": "le projet"},
-            {"id": "tuteur", "name": "Prof Sensai", "role": "tuteur de maths", "tone": "doux",
+            {"id": "assistant", "name": "CodeSensai", "role": "assistant", "tone": "neutral",
+             "scope": "the project"},
+            {"id": "tuteur", "name": "Prof CodeSensai", "role": "math tutor", "tone": "gentle",
              "scope": "maths", "tools": {"disabled": ["run_code"]}},
         ],
     })
-    observe = lancer(["/persona use tuteur", "Bonjour"], personas=personas)
-    assert len(observe) == 1  # la commande ne va pas au modèle
+    observe = lancer(["/persona use tuteur", "Hello"], personas=personas)
+    assert len(observe) == 1  # the command does not go to the model
     assert "run_code" not in observe[0]["outils"]
 
 
-def test_persona_choisie_a_la_main_ne_revient_pas_seule(lancer):
-    """Un /persona use explicite n'est jamais défait par l'absence de
-    mot-clé au tour suivant (revue PR #95)."""
+def test_manually_chosen_persona_does_not_revert(lancer):
+    """An explicit /persona use is never undone by a missing keyword on the
+    next turn (PR #95 review)."""
     personas = PersonaStore.from_config({
         "default": "assistant",
         "profiles": [
-            {"id": "assistant", "name": "Sensai", "role": "assistant", "tone": "neutre",
-             "scope": "le projet"},
-            {"id": "juridique", "name": "Maître Sensai", "role": "assistant juridique",
-             "tone": "formel", "scope": "droit uniquement"},
+            {"id": "assistant", "name": "CodeSensai", "role": "assistant", "tone": "neutral",
+             "scope": "the project"},
+            {"id": "juridique", "name": "Counsel CodeSensai", "role": "legal assistant",
+             "tone": "formal", "scope": "law only"},
         ],
     })
     observe = lancer(
-        ["/persona use juridique", "Et sinon, comment ça va ?"], personas=personas
+        ["/persona use juridique", "By the way, how are you?"], personas=personas
     )
-    assert "assistant juridique" in observe[0]["systeme"]
+    assert "legal assistant" in observe[0]["systeme"]
 
 
 TUTEUR_SANS_CODE = {
     "default": "tuteur",
     "profiles": [
-        {"id": "tuteur", "name": "Prof Sensai", "role": "tuteur de maths", "tone": "doux",
+        {"id": "tuteur", "name": "Prof CodeSensai", "role": "math tutor", "tone": "gentle",
          "scope": "maths", "tools": {"disabled": ["run_code"]}},
     ],
 }
@@ -208,8 +208,8 @@ TUTEUR_SANS_CODE = {
 
 @pytest.fixture
 def espions(monkeypatch):
-    """Capture le `DelegateTool` et le `TeamTool` créés par le CLI pour que
-    le test puisse ensuite les faire travailler avec un faux sous-agent."""
+    """Capture the `DelegateTool` and `TeamTool` created by the CLI so the
+    test can then run them with a fake subagent."""
     delegates, teams = [], []
 
     class DelegateEspion(cli.DelegateTool):
@@ -227,40 +227,41 @@ def espions(monkeypatch):
     return delegates, teams
 
 
-def test_delegate_task_refuse_un_outil_desactive_par_la_persona(lancer, espions):
-    """Revue PR #95 : la restriction vaut aussi pour les sous-agents, qui
-    partagent la passerelle du CLI — rien ne le garantissait par un test."""
+def test_delegate_task_refuses_a_tool_disabled_by_persona(lancer, espions):
+    """PR #95 review: the restriction also applies to subagents, which share
+    the CLI gateway — no test guaranteed it."""
     delegates, _ = espions
-    lancer(["Bonjour"], personas=PersonaStore.from_config(TUTEUR_SANS_CODE))
+    lancer(["Hello"], personas=PersonaStore.from_config(TUTEUR_SANS_CODE))
     refus = []
 
     def sous_agent(host, model, messages, tools):
         refus.append(tools.call("run_code", code="print(1)").data.get("error"))
-        yield Token(text="fini")
+        yield Token(text="done")
         yield Done()
 
     delegates[0].run_turn = sous_agent
-    delegates[0].run(task="exécute du code")
+    delegates[0].run(task="run some code")
 
     assert refus == ["disabled"]
 
 
-def test_team_task_refuse_un_outil_desactive_par_la_persona(lancer, espions):
-    """Dans l'équipe, seul le développeur a `run_code` dans son rôle : c'est lui
-    qui rencontre le refus de la passerelle (« disabled »). Les autres rôles
-    sont déjà refusés par leur propre filtre, jamais exécutés."""
+def test_team_task_refuses_a_tool_disabled_by_persona(lancer, espions):
+    """In the team, only the developer has `run_code` in its role: it is the one
+    that hits the gateway refusal ("disabled"). The other roles are already
+    refused by their own filter, never executed."""
     delegates, teams = espions
-    lancer(["Bonjour"], personas=PersonaStore.from_config(TUTEUR_SANS_CODE))
+    lancer(["Hello"], personas=PersonaStore.from_config(TUTEUR_SANS_CODE))
     resultats = []
 
     def sous_agent(host, model, messages, tools):
         resultats.append(tools.call("run_code", code="print(1)"))
-        yield Token(text="VALIDÉ, rien à redire")
+        # "VALIDÉ" is the verdict keyword parsed by team_tool.verdict (still French).
+        yield Token(text="VALIDÉ, nothing to add")
         yield Done()
 
     delegates[0].run_turn = sous_agent
-    teams[0].run(task="écris un script")
+    teams[0].run(task="write a script")
 
-    assert resultats, "au moins un sous-agent de l'équipe a tenté l'outil"
-    assert not any(r.ok for r in resultats), "aucun sous-agent n'a pu exécuter run_code"
+    assert resultats, "at least one team subagent tried the tool"
+    assert not any(r.ok for r in resultats), "no subagent could run run_code"
     assert "disabled" in [r.data.get("error") for r in resultats]

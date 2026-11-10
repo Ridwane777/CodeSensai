@@ -1,20 +1,19 @@
 """
-[X5] Planifier une tâche depuis la conversation, en langage naturel (ADR-0052).
+[X5] Schedule a task from the conversation, in natural language (ADR-0052).
 
-L'agent propose une tâche récurrente (« résume les TODO chaque matin ») ; elle
-n'est enregistrée qu'avec l'accord explicite de l'utilisateur, qui voit le prompt
-exact et la fréquence. Ensuite, c'est `sensai-schedule` (cron ou `loop`) qui
-l'exécute, sans surveillance, avec sa politique habituelle (actions risquées
-refusées).
+The agent proposes a recurring task ("summarize the TODOs every morning"); it
+is only saved with the user's explicit approval, after they see the exact
+prompt and frequency. Then `sensai-schedule` (cron or `loop`) runs it,
+unattended, with its usual policy (risky actions refused).
 
-Garde-fous, parce qu'une tâche planifiée rejoue son prompt chaque jour sans
-personne devant l'écran — le pire cas pour une instruction cachée dans une page
-web ou un fichier lu :
-- risque `write` : la passerelle demande TOUJOURS l'accord (une préférence ne
-  peut pas assouplir ce niveau, `tool_policy.LOOSENABLE`) ;
-- jamais proposé à une tâche planifiée (`sensai-schedule` ne charge que
-  `build_registry`) ni à un sous-agent (`delegate_tool.NEVER_DELEGATED`) ;
-- le prompt est borné et ne peut pas lui-même demander de planifier.
+Guardrails, because a scheduled task replays its prompt every day with nobody
+in front of the screen — the worst case for an instruction hidden in a web page
+or a file that was read:
+- `write` risk: the gateway ALWAYS asks for approval (no preference can
+  loosen this level, `tool_policy.LOOSENABLE`);
+- never offered to a scheduled task (`sensai-schedule` only loads
+  `build_registry`) nor to a sub-agent (`delegate_tool.NEVER_DELEGATED`);
+- the prompt is bounded and cannot itself ask to schedule anything.
 """
 from __future__ import annotations
 
@@ -39,8 +38,8 @@ MAX_PROMPT_CHARS = 2000
 
 
 def normalize_id(raw: str) -> str:
-    """Un identifiant accepté par sensai-schedule (a-z, 0-9, « - », 40 caractères).
-    Essai réel du 2026-11-01 : le modèle proposait « resume_todo », refusé."""
+    """An id accepted by sensai-schedule (a-z, 0-9, "-", 40 characters).
+    Real trial run on 2026-11-01: the model proposed "resume_todo", which was refused."""
     text = unicodedata.normalize("NFKD", str(raw)).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", text).strip("-")[:40].strip("-")
 
@@ -48,22 +47,22 @@ def normalize_id(raw: str) -> str:
 class ScheduleTaskTool:
     name = "schedule_task"
     description = (
-        "Propose une tâche récurrente que l'agent exécutera seul, sans surveillance "
-        "(ex. « chaque matin, résume les TODO »). Utilise-le seulement si l'utilisateur "
-        "demande explicitement de planifier ou de répéter quelque chose. L'utilisateur "
-        "doit accepter ; la tâche est ensuite lancée par sensai-schedule. "
+        "Propose a recurring task that the agent will run on its own, unattended "
+        "(e.g. \"every morning, summarize the TODOs\"). Use it only if the user "
+        "explicitly asks to schedule or repeat something. The user "
+        "must approve; the task is then run by sensai-schedule. "
         "every : 30m, 1h, 1d, 7d…"
     )
-    # Écrit un état durable qui rejouera un prompt sans personne : accord toujours requis.
+    # Writes durable state that will replay a prompt unattended: approval always required.
     risk = "write"
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
         "properties": {
             "id": {"type": "string",
-                   "description": "Identifiant court : minuscules, chiffres et « - »."},
+                   "description": "Short id: lowercase letters, digits and \"-\"."},
             "prompt": {"type": "string",
-                       "description": "La consigne complète, compréhensible sans la conversation."},
-            "every": {"type": "string", "description": "Fréquence : 30m, 1h, 1d, 7d…"},
+                       "description": "Full instruction, clear without the conversation."},
+            "every": {"type": "string", "description": "Frequency: 30m, 1h, 1d, 7d…"},
         },
         "required": ["id", "prompt", "every"],
         "additionalProperties": False,
@@ -73,15 +72,15 @@ class ScheduleTaskTool:
         self.store = TaskStore(Path(data_dir) / "schedule" / TASKS_FILE)
 
     def describe_call(self, **args: Any) -> str:
-        """Ce que l'utilisateur approuve : la tâche telle qu'elle sera rejouée."""
+        """What the user approves: the task exactly as it will be replayed."""
         try:
             every = format_interval(parse_interval(str(args.get("every", ""))))
         except ValueError:
             every = str(args.get("every", ""))
         return (
-            f"Planifier la tâche « {normalize_id(args.get('id', ''))} », toutes les {every}, "
-            "exécutée "
-            "SANS SURVEILLANCE par sensai-schedule (actions risquées refusées) :\n\n"
+            f"Schedule the task \"{normalize_id(args.get('id', ''))}\", every {every}, "
+            "run "
+            "UNATTENDED by sensai-schedule (risky actions refused):\n\n"
             f"{args.get('prompt', '')}"
         )
 
@@ -91,21 +90,21 @@ class ScheduleTaskTool:
             task_id = validate_task_id(normalize_id(kwargs.get("id") or ""))
             interval = parse_interval(str(kwargs.get("every") or ""))
             if not prompt:
-                raise ValueError("Le prompt est vide.")
+                raise ValueError("The prompt is empty.")
             if len(prompt) > MAX_PROMPT_CHARS:
-                raise ValueError(f"Le prompt dépasse {MAX_PROMPT_CHARS} caractères.")
+                raise ValueError(f"The prompt exceeds {MAX_PROMPT_CHARS} characters.")
             if "schedule_task" in prompt or "/schedule" in prompt:
-                raise ValueError("Une tâche planifiée ne peut pas en planifier d'autres.")
+                raise ValueError("A scheduled task cannot schedule other tasks.")
             ensure_private_dir(self.store.path.parent.parent)
             ensure_private_dir(self.store.path.parent)
             self.store.add(Task(id=task_id, prompt=prompt, interval_s=interval))
         except ScheduleStoreError as e:
-            return ToolResult(ok=False, content=f"Fichier des tâches illisible : {e}")
+            return ToolResult(ok=False, content=f"Unreadable task file: {e}")
         except ValueError as e:
-            return ToolResult(ok=False, content=f"Tâche refusée : {e}")
+            return ToolResult(ok=False, content=f"Task refused: {e}")
         return ToolResult(
             ok=True,
-            content=(f"Tâche « {task_id} » planifiée toutes les {format_interval(interval)}. "
-                     "Elle tournera quand sensai-schedule loop (ou run-due par cron) tourne ; "
-                     "dis-le à l'utilisateur."),
+            content=(f"Task \"{task_id}\" scheduled every {format_interval(interval)}. "
+                     "It will run while sensai-schedule loop (or run-due via cron) is running; "
+                     "tell the user."),
         )

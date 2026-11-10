@@ -5,10 +5,10 @@ Issue #56, high priority.
 Catalogue: extend R1 with re-ranking of the retrieved passages, metadata
 filtering, and a relevance score per passage to discard near-matches before
 they enter the context. Depends on R1 ([R1-basic-rag.md](R1-basic-rag.md),
-[ADR-0009](../decisions/0009-rag-sur-la-codebase.md)).
+[ADR-0009](../decisions/0009-rag-over-the-codebase.md)).
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 **Baseline to beat** (R1, [measurements](../performance/R1-rag.md)): on 15
 questions in French about the repository, the right file comes first
@@ -20,10 +20,10 @@ threshold) are settled in the ADR dedicated to R2.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: same RAG scenario as R1: ✅ with both models; the ranking itself is measured in [R2-rag.md](../performance/R2-rag.md).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: same RAG scenario as R1: ✅ with both models; the ranking itself is measured in [R2-rag.md](../performance/R2-rag.md).
 
 ## US-R2-1 — The passage that really answers, first
-> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking a precise question about her code,
 **I want** the search to re-rank the passages found so that the one that really answers the question comes first,
@@ -37,7 +37,7 @@ threshold) are settled in the ADR dedicated to R2.
   crashing.
 
 ## US-R2-2 — Search only where needed
-> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who knows where the answer is,
 **I want** to limit a search to one part of the project (the docs, the code, the tests, a folder),
@@ -50,7 +50,7 @@ threshold) are settled in the ADR dedicated to R2.
 - An unknown filter gives a clear message instead of an empty result.
 
 ## US-R2-3 — Discard the passages that look alike without answering
-> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who relies on the cited passages,
 **I want** each passage to have a relevance score, and the weakest to be discarded before reaching the model,

@@ -1,21 +1,23 @@
 """
-Mesures qui fondent les choix de R1 (Basic RAG) — voir docs/performance/R1-rag.md.
+Measurements behind the R1 (Basic RAG) choices — see docs/performance/R1-rag.md.
 
-Deux mesures indépendantes :
+Two independent measurements:
 
-- `quality` : pour chaque modèle d'embeddings, sur le dépôt Sensai lui-même,
-  combien de questions retrouvent le bon fichier dans les 1, 3, 5 premiers
-  passages ; temps d'indexation et de recherche ; scores des questions sans
-  réponse, pour régler le seuil « rien trouvé ».
-- `search` : vitesse de la recherche par force brute, Python pur contre numpy,
-  sur des vecteurs artificiels de 300 à 100 000 passages.
+- `quality`: for each embedding model, on the CodeSensai repository itself,
+  how many questions find the right file in the first 1, 3, 5 passages;
+  indexing and search time; scores of questions with no answer, to tune the
+  "nothing found" threshold.
+- `search`: speed of brute-force search, pure Python versus numpy, on
+  synthetic vectors from 300 to 100,000 passages.
 
-`--chunker lines` (défaut de la première mesure) découpe en blocs de 40 lignes,
-identiques pour tous les modèles ; `--chunker structure` utilise le vrai
-découpage de `sensai.knowledge.rag` (fonctions, classes, sections), pour
-recalibrer le seuil sur ce qui est livré.
+`--chunker lines` (default of the first measurement) splits into 40-line
+blocks, identical for every model; `--chunker structure` uses the real
+splitting of `sensai.knowledge.rag` (functions, classes, sections), to
+recalibrate the threshold on what ships.
 
-Usage :
+The questions were translated from French after the published measurements.
+
+Usage:
     python scripts/bench_rag.py quality --host http://localhost:11434
     python scripts/bench_rag.py search
 """
@@ -37,8 +39,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 MODELS = ["nomic-embed-text", "qwen3-embedding:0.6b", "bge-m3"]
 
-# Préfixes recommandés par chaque modèle : sans eux, nomic et qwen3-embedding
-# sont désavantagés, et la comparaison ne serait pas loyale.
+# Prefixes recommended by each model: without them, nomic and qwen3-embedding
+# are at a disadvantage and the comparison would not be fair.
 QUERY_PREFIX = {
     "nomic-embed-text": "search_query: ",
     "qwen3-embedding:0.6b": (
@@ -49,42 +51,42 @@ QUERY_PREFIX = {
 }
 DOC_PREFIX = {"nomic-embed-text": "search_document: ", "qwen3-embedding:0.6b": "", "bge-m3": ""}
 
-# Question -> fichiers où se trouve la réponse (un seul suffit).
+# Question -> files containing the answer (any one is enough).
 QUESTIONS: list[tuple[str, list[str]]] = [
-    ("Quel modèle utilise-t-on en développement et lequel pour la démo ?",
-     ["docs/decisions/0004-modele-et-infrastructure.md", "docs/recherche/model-choices.md"]),
-    ("Pourquoi n'utilise-t-on pas LangChain ni LlamaIndex ?",
-     ["docs/decisions/0001-pas-de-framework-llm.md"]),
-    ("Comment choisit-on la session à reprendre au démarrage ?",
-     ["src/sensai/knowledge/memory.py", "docs/decisions/0007-persistance-des-sessions.md"]),
-    ("Où sont supprimées les sessions inactives depuis 30 jours ?",
-     ["src/sensai/knowledge/memory.py", "docs/decisions/0007-persistance-des-sessions.md"]),
-    ("Comment le profil de l'utilisateur est-il ajouté au prompt système ?",
+    ("Which model do we use in development and which one for the demo?",
+     ["docs/decisions/0004-model-and-infrastructure.md", "docs/research/model-choices.md"]),
+    ("Why don't we use LangChain or LlamaIndex?",
+     ["docs/decisions/0001-no-llm-framework.md"]),
+    ("How is the session to resume chosen at startup?",
+     ["src/sensai/knowledge/memory.py", "docs/decisions/0007-session-persistence.md"]),
+    ("Where are sessions inactive for 30 days deleted?",
+     ["src/sensai/knowledge/memory.py", "docs/decisions/0007-session-persistence.md"]),
+    ("How is the user profile added to the system prompt?",
      ["src/sensai/knowledge/memory.py"]),
-    ("Quel contrat chaque outil appelable par l'agent doit-il respecter ?",
-     ["src/sensai/core/tools.py", "docs/decisions/0002-registre-d-outils-partage.md"]),
-    ("Comment la réponse d'Ollama est-elle reçue en streaming ?",
+    ("Which contract must every tool callable by the agent follow?",
+     ["src/sensai/core/tools.py", "docs/decisions/0002-shared-tool-registry.md"]),
+    ("How is the Ollama response received as a stream?",
      ["src/sensai/core/ollama_client.py"]),
-    ("Comment trouve-t-on config.json quand on lance sensai depuis un autre dossier ?",
+    ("How is config.json found when sensai is started from another directory?",
      ["src/sensai/config.py"]),
-    ("Comment doit-on nommer les branches git ?", ["CONTRIBUTING.md"]),
-    ("Qui doit relire une modification du registre d'outils ?",
+    ("How should git branches be named?", ["CONTRIBUTING.md"]),
+    ("Who must review a change to the tool registry?",
      [".github/CODEOWNERS", "CONTRIBUTING.md"]),
-    ("Pourquoi l'interface web ne doit-elle pas réimplémenter l'agent ?",
-     ["docs/decisions/0005-interface-web-facade.md"]),
-    ("Que se passe-t-il si la base des sessions est corrompue ?", ["src/sensai/cli.py"]),
-    ("Quelles données personnelles sont enregistrées sur le disque ?",
-     ["docs/legal/donnees-locales.md"]),
-    ("Combien d'itérations maximum la boucle de raisonnement peut-elle faire ?",
+    ("Why must the web interface not reimplement the agent?",
+     ["docs/decisions/0005-web-interface-facade.md"]),
+    ("What happens if the session database is corrupted?", ["src/sensai/cli.py"]),
+    ("Which personal data is stored on disk?",
+     ["docs/legal/local-data.md"]),
+    ("What is the maximum number of iterations of the reasoning loop?",
      ["src/sensai/core/agent.py"]),
-    ("Quelles commandes lancer avant de demander une relecture ?",
+    ("Which commands should be run before requesting a review?",
      ["CONTRIBUTING.md", ".github/pull_request_template.md"]),
 ]
-# Questions dont la réponse n'est pas dans le dépôt : sert à régler le seuil.
+# Questions whose answer is not in the repository: used to tune the threshold.
 NEGATIVES = [
-    "Où est configuré le broker Kafka ?",
-    "Comment sont traités les paiements Stripe ?",
-    "Quel service envoie les e-mails de confirmation d'inscription ?",
+    "Where is the Kafka broker configured?",
+    "How are Stripe payments processed?",
+    "Which service sends the sign-up confirmation emails?",
 ]
 
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".json", ".toml", ".yml", ".yaml", ""}
@@ -92,13 +94,13 @@ CHUNK_LINES = 40
 OVERLAP = 10
 
 
-# Fichiers qui contiennent les questions elles-mêmes (ce script, ses résultats,
-# son rapport) : les indexer ferait trouver la question au lieu de la réponse.
+# Files that contain the questions themselves (this script, its results, its
+# report): indexing them would find the question instead of the answer.
 EXCLUDED_FROM_CORPUS = ("docs/performance/", "scripts/bench_rag.py")
 
 
 def corpus_files() -> list[Path]:
-    """Fichiers suivis par git, sans les fichiers de la mesure elle-même."""
+    """Files tracked by git, minus the files of the measurement itself."""
     out = subprocess.run(
         ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
     ).stdout.split()
@@ -238,7 +240,7 @@ def bench_search(sizes: list[int], dims: int = 1024, seed: int = 42) -> dict:
             "numpy_ms_median": round(statistics.median(np_times) * 1000, 3),
             "repetitions": reps,
         }
-        print(f"{n:>7} passages : python {results['sizes'][n]['python_ms_median']} ms, "
+        print(f"{n:>7} passages: python {results['sizes'][n]['python_ms_median']} ms, "
               f"numpy {results['sizes'][n]['numpy_ms_median']} ms", flush=True)
     return results
 
@@ -246,16 +248,16 @@ def bench_search(sizes: list[int], dims: int = 1024, seed: int = 42) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mesure", choices=["quality", "search"])
+    parser.add_argument("measure", choices=["quality", "search"])
     parser.add_argument("--host", default="http://localhost:11434")
     parser.add_argument("--models", nargs="+", default=MODELS)
     parser.add_argument("--sizes", nargs="+", type=int, default=[300, 2_000, 20_000, 100_000])
     parser.add_argument("--chunker", choices=["lines", "structure"], default="lines")
-    parser.add_argument("--out", type=Path, help="fichier JSON de résultats")
+    parser.add_argument("--out", type=Path, help="JSON results file")
     args = parser.parse_args()
 
     data = {"machine": machine(), "date": time.strftime("%Y-%m-%d %H:%M")}
-    if args.mesure == "quality":
+    if args.measure == "quality":
         data["quality"] = bench_quality(args.host, args.models, args.chunker)
     else:
         data["search"] = bench_search(args.sizes)

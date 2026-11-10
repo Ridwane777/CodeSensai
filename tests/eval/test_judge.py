@@ -1,9 +1,9 @@
 """
-Teste le juge LLM — feature [EV1], ADR-0019.
+Tests the LLM judge — feature [EV1], ADR-0019.
 
-Le juge est remplacé par des fonctions qui renvoient du texte préparé : aucun
-test ne parle à Ollama. Ce qu'on vérifie, c'est tout ce que le code fait de la
-sortie du modèle (validation, relances, calcul de la fidélité).
+The judge is replaced by functions that return canned text: no test talks to
+Ollama. What we check is everything the code does with the model output
+(validation, retries, faithfulness computation).
 """
 import json
 
@@ -25,7 +25,7 @@ from sensai.eval.judge import (
 from sensai.eval.sources import Passage
 from sensai.knowledge.prompt_versions import PromptStore
 
-PASSAGES = [Passage("S1", "src/a.py", "f renvoie 1.", 1, 3), Passage("S2", "docs/b.md", "g.")]
+PASSAGES = [Passage("S1", "src/a.py", "f returns 1.", 1, 3), Passage("S2", "docs/b.md", "g.")]
 IDS = {"S1", "S2"}
 
 
@@ -34,7 +34,7 @@ def judgment(**override):
         "relevance": 4,
         "coherence": 5,
         "claims": [
-            {"text": "f renvoie 1", "verdict": "SUPPORTED", "sources": ["S1"], "explanation": "ok"}
+            {"text": "f returns 1", "verdict": "SUPPORTED", "sources": ["S1"], "explanation": "ok"}
         ],
     }
     data.update(override)
@@ -45,10 +45,10 @@ def raw(**override):
     return json.dumps(judgment(**override))
 
 
-# --- le prompt rangé dans le registre ---------------------------------------------
+# --- the prompt stored in the registry --------------------------------------------
 
 
-def test_le_prompt_du_juge_est_range_et_le_registre_reste_coherent():
+def test_the_judge_prompt_is_stored_and_the_registry_stays_consistent():
     store = PromptStore(prompts_dir())
 
     assert store.check() == []
@@ -59,26 +59,26 @@ def test_le_prompt_du_juge_est_range_et_le_registre_reste_coherent():
         assert token in prompt.text
 
 
-def test_version_inconnue_du_prompt_leve_keyerror():
+def test_unknown_prompt_version_raises_keyerror():
     with pytest.raises(KeyError):
         load_judge_prompt(PromptStore(prompts_dir()), "v99")
 
 
-def test_build_messages_remplit_les_jetons_sans_reinterpreter_les_accolades():
+def test_build_messages_fills_tokens_without_reinterpreting_braces():
     prompt = 'Q={{QUESTION}} P={{PASSAGES}} A={{ANSWER}} {"relevance": 1}'
 
-    [message] = build_messages(prompt, "q {{ANSWER}}", "réponse {x}", PASSAGES)
+    [message] = build_messages(prompt, "q {{ANSWER}}", "answer {x}", PASSAGES)
 
     assert message["role"] == "user"
-    # La question contient un jeton : il reste tel quel, il n'est pas remplacé à son tour.
-    assert message["content"].startswith("Q=q {{ANSWER}} P=[S1] src/a.py:1-3\nf renvoie 1.")
-    assert message["content"].endswith('A=réponse {x} {"relevance": 1}')
+    # The question contains a token: it stays as is, it is not replaced in turn.
+    assert message["content"].startswith("Q=q {{ANSWER}} P=[S1] src/a.py:1-3\nf returns 1.")
+    assert message["content"].endswith('A=answer {x} {"relevance": 1}')
 
 
-# --- analyse de la sortie ------------------------------------------------------------
+# --- output parsing ------------------------------------------------------------------
 
 
-def test_parse_judgment_valide():
+def test_parse_judgment_valid():
     result = parse_judgment(raw(), IDS)
 
     assert result["relevance"] == 4 and result["coherence"] == 5
@@ -86,14 +86,14 @@ def test_parse_judgment_valide():
     assert result["claims"][0]["flags"] == []
 
 
-def test_parse_judgment_accepte_les_blocs_de_code_et_le_texte_autour():
-    wrapped = f"Voici mon évaluation :\n```json\n{raw()}\n```\nJ'espère que ça aide."
+def test_parse_judgment_accepts_code_blocks_and_surrounding_text():
+    wrapped = f"Here is my evaluation:\n```json\n{raw()}\n```\nHope this helps."
 
     assert parse_judgment(wrapped, IDS)["relevance"] == 4
     assert parse_judgment(f"```\n{raw()}\n```", IDS)["coherence"] == 5
 
 
-def test_parse_judgment_normalise_la_casse_du_verdict():
+def test_parse_judgment_normalizes_verdict_case():
     result = parse_judgment(
         raw(claims=[{"text": "x", "verdict": " unverifiable ", "sources": []}]), IDS
     )
@@ -102,11 +102,11 @@ def test_parse_judgment_normalise_la_casse_du_verdict():
 
 
 @pytest.mark.parametrize("bad", [
-    "pas de JSON du tout",
+    "no JSON at all",
     '{"relevance": 4, "coherence": ',
     "[1, 2, 3]",
 ])
-def test_parse_judgment_refuse_un_json_invalide(bad):
+def test_parse_judgment_rejects_invalid_json(bad):
     with pytest.raises(JudgeOutputError):
         parse_judgment(bad, IDS)
 
@@ -118,18 +118,18 @@ def test_parse_judgment_refuse_un_json_invalide(bad):
     {"coherence": 4.5},
     {"relevance": True},
     {"relevance": None},
-    {"claims": "aucune"},
-    {"claims": [{"text": "x", "verdict": "PEUT-ETRE", "sources": []}]},
+    {"claims": "none"},
+    {"claims": [{"text": "x", "verdict": "MAYBE", "sources": []}]},
     {"claims": [{"verdict": "SUPPORTED", "sources": ["S1"]}]},
-    {"claims": ["pas un objet"]},
+    {"claims": ["not an object"]},
     {"claims": [{"text": "x", "verdict": "SUPPORTED", "sources": "S1"}]},
 ])
-def test_parse_judgment_refuse_un_schema_ou_des_valeurs_invalides(override):
+def test_parse_judgment_rejects_invalid_schema_or_values(override):
     with pytest.raises(JudgeOutputError):
         parse_judgment(raw(**override), IDS)
 
 
-def test_parse_judgment_exige_les_deux_notes_et_la_liste_d_affirmations():
+def test_parse_judgment_requires_both_scores_and_the_claims_list():
     data = judgment()
     del data["claims"]
     with pytest.raises(JudgeOutputError):
@@ -138,7 +138,7 @@ def test_parse_judgment_exige_les_deux_notes_et_la_liste_d_affirmations():
 
 @pytest.mark.parametrize("sources", [[], ["S9"], ["S1", "S9"]])
 @pytest.mark.parametrize("verdict", ["SUPPORTED", "CONTRADICTED"])
-def test_citation_invalide_degrade_le_verdict_en_unverifiable(verdict, sources):
+def test_invalid_citation_downgrades_verdict_to_unverifiable(verdict, sources):
     claims = [{"text": "x", "verdict": verdict, "sources": sources, "explanation": ""}]
 
     claim = parse_judgment(raw(claims=claims), IDS)["claims"][0]
@@ -148,7 +148,7 @@ def test_citation_invalide_degrade_le_verdict_en_unverifiable(verdict, sources):
     assert "citation_invalide" in claim["flags"]
 
 
-def test_unverifiable_sans_source_n_est_pas_une_citation_invalide():
+def test_unverifiable_without_source_is_not_an_invalid_citation():
     claims = [{"text": "x", "verdict": "UNVERIFIABLE", "sources": []}]
 
     claim = parse_judgment(raw(claims=claims), IDS)["claims"][0]
@@ -157,14 +157,14 @@ def test_unverifiable_sans_source_n_est_pas_une_citation_invalide():
     assert "verdict_original" not in claim
 
 
-# --- fidélité -----------------------------------------------------------------------
+# --- faithfulness --------------------------------------------------------------------
 
 
 def claim(verdict):
     return {"verdict": verdict}
 
 
-def test_faithfulness_est_la_part_d_affirmations_soutenues():
+def test_faithfulness_is_the_share_of_supported_claims():
     claims = [claim("SUPPORTED"), claim("SUPPORTED"), claim("CONTRADICTED"), claim("UNVERIFIABLE")]
 
     assert faithfulness(claims) == 0.5
@@ -173,15 +173,15 @@ def test_faithfulness_est_la_part_d_affirmations_soutenues():
     assert faithfulness([claim("SUPPORTED")] + [claim("CONTRADICTED")] * 2) == 0.3333
 
 
-def test_faithfulness_est_nulle_sans_affirmation():
+def test_faithfulness_is_none_without_claims():
     assert faithfulness([]) is None
 
 
-# --- un cas : relances et erreurs ----------------------------------------------------
+# --- one case: retries and errors -----------------------------------------------------
 
 
 class ScriptedJudge:
-    """Renvoie les sorties dans l'ordre et garde les messages reçus."""
+    """Returns the outputs in order and keeps the received messages."""
 
     def __init__(self, *outputs):
         self.outputs = list(outputs)
@@ -196,13 +196,13 @@ class ScriptedJudge:
 
 
 def run_case(fn, max_retries=2, passages=PASSAGES):
-    return judge_case("Que fait f ?", "f renvoie 1.", passages, fn, "Q={{QUESTION}}", max_retries)
+    return judge_case("What does f do?", "f returns 1.", passages, fn, "Q={{QUESTION}}", max_retries)
 
 
-def test_judge_case_reussi_calcule_les_scores_les_citations_et_les_cas_signales():
+def test_successful_judge_case_computes_scores_citations_and_flagged_claims():
     claims = [
-        {"text": "f renvoie 1", "verdict": "SUPPORTED", "sources": ["S1"], "explanation": ""},
-        {"text": "f est lente", "verdict": "UNVERIFIABLE", "sources": [], "explanation": ""},
+        {"text": "f returns 1", "verdict": "SUPPORTED", "sources": ["S1"], "explanation": ""},
+        {"text": "f is slow", "verdict": "UNVERIFIABLE", "sources": [], "explanation": ""},
     ]
 
     result = run_case(ScriptedJudge(raw(claims=claims)))
@@ -212,50 +212,50 @@ def test_judge_case_reussi_calcule_les_scores_les_citations_et_les_cas_signales(
     assert result["claims"][0]["citations"] == [
         {"id": "S1", "source": "src/a.py", "start": 1, "end": 3}
     ]
-    assert [c["text"] for c in result["flagged"]] == ["f est lente"]
+    assert [c["text"] for c in result["flagged"]] == ["f is slow"]
 
 
-def test_sortie_malformee_puis_valide_est_relancee_avec_un_message_correctif():
-    fn = ScriptedJudge("désolé, voici mon avis : plutôt bien", raw())
+def test_malformed_then_valid_output_is_retried_with_a_corrective_message():
+    fn = ScriptedJudge("sorry, here is my opinion: rather good", raw())
 
     result = run_case(fn)
 
     assert result["status"] == "ok" and result["attempts"] == 2
     second = fn.calls[1]
-    assert second[-2] == {"role": "assistant", "content": "désolé, voici mon avis : plutôt bien"}
+    assert second[-2] == {"role": "assistant", "content": "sorry, here is my opinion: rather good"}
     assert second[-1]["role"] == "user" and "JSON" in second[-1]["content"]
-    # Le premier appel n'a pas été modifié après coup.
+    # The first call was not modified afterwards.
     assert len(fn.calls[0]) == 1
 
 
-def test_sortie_malformee_en_continu_donne_judge_error_apres_les_relances():
-    fn = ScriptedJudge("x" * 5000, "non", "toujours non")
+def test_persistently_malformed_output_gives_judge_error_after_retries():
+    fn = ScriptedJudge("x" * 5000, "no", "still no")
 
     result = run_case(fn, max_retries=2)
 
     assert result["status"] == "judge_error"
     assert result["attempts"] == 3 and len(fn.calls) == 3
-    assert "error" in result and result["raw"] == "toujours non"
+    assert "error" in result and result["raw"] == "still no"
     assert "scores" not in result
 
 
-def test_le_texte_brut_conserve_est_tronque():
+def test_the_kept_raw_text_is_truncated():
     result = run_case(ScriptedJudge("x" * 5000), max_retries=0)
 
     assert result["status"] == "judge_error"
     assert len(result["raw"]) == judge_module.RAW_MAX_CHARS
 
 
-def test_ollama_error_donne_judge_error_sans_relance():
-    fn = ScriptedJudge(OllamaError("Impossible de contacter Ollama"))
+def test_ollama_error_gives_judge_error_without_retry():
+    fn = ScriptedJudge(OllamaError("Cannot reach Ollama"))
 
     result = run_case(fn)
 
     assert result["status"] == "judge_error" and result["attempts"] == 1
-    assert "Impossible de contacter Ollama" in result["error"]
+    assert "Cannot reach Ollama" in result["error"]
 
 
-def test_judge_case_sans_passage_garde_les_affirmations_invalides_en_unverifiable():
+def test_judge_case_without_passage_keeps_invalid_claims_unverifiable():
     claims = [{"text": "x", "verdict": "SUPPORTED", "sources": ["S1"], "explanation": ""}]
 
     result = run_case(ScriptedJudge(raw(claims=claims)), passages=[])
@@ -264,7 +264,7 @@ def test_judge_case_sans_passage_garde_les_affirmations_invalides_en_unverifiabl
     assert result["scores"]["faithfulness"] == 0.0
 
 
-# --- le vrai juge, sans réseau ----------------------------------------------------------
+# --- the real judge, no network --------------------------------------------------------
 
 
 class FakeResponse:
@@ -277,11 +277,11 @@ class FakeResponse:
 
     def json(self):
         if self.payload is None:
-            raise ValueError("pas du JSON")
+            raise ValueError("not JSON")
         return self.payload
 
 
-def test_ollama_judge_envoie_la_requete_deterministe(monkeypatch):
+def test_ollama_judge_sends_the_deterministic_request(monkeypatch):
     seen = {}
 
     def fake_post(url, json, timeout):
@@ -304,13 +304,13 @@ def test_ollama_judge_envoie_la_requete_deterministe(monkeypatch):
 
 
 @pytest.mark.parametrize("failure", [
-    requests.exceptions.ConnectionError("refusé"),
-    requests.exceptions.Timeout("lent"),
+    requests.exceptions.ConnectionError("refused"),
+    requests.exceptions.Timeout("slow"),
     FakeResponse(status=404, text="model not found"),
     FakeResponse(payload=None),
-    FakeResponse({"pas_de_message": 1}),
+    FakeResponse({"no_message": 1}),
 ])
-def test_ollama_judge_enveloppe_les_erreurs_dans_ollama_error(monkeypatch, failure):
+def test_ollama_judge_wraps_errors_in_ollama_error(monkeypatch, failure):
     def fake_post(url, json, timeout):
         if isinstance(failure, Exception):
             raise failure
@@ -322,7 +322,7 @@ def test_ollama_judge_enveloppe_les_erreurs_dans_ollama_error(monkeypatch, failu
         ollama_judge("http://h", "m")([])
 
 
-def test_ollama_judge_envoie_num_ctx_en_gardant_la_graine_et_la_temperature(monkeypatch):
+def test_ollama_judge_sends_num_ctx_keeping_seed_and_temperature(monkeypatch):
     seen = {}
 
     def fake_post(url, json, timeout):

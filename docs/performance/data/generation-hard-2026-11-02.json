@@ -45,7 +45,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximum d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.31,
@@ -97,7 +97,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `--exitfirst` (ou `-x`).  \nMais si tu veux **une seule** option, c'est : `-x`.",
+     "text": "The option is: `--tb=short` or more simply `--exitfirst` (or `-x`).  \nBut if you want **a single** option, it's: `-x`.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.93,
@@ -175,7 +175,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.21,
@@ -253,7 +253,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il **réussit** 3 fois sur 4.\n\nLa probabilité qu’il réussisse une fois est :  \n$$\n\\frac{3}{4}\n$$\n\nComme les lancers sont indépendants, la probabilité qu’il réussisse **les 2 fois** est :\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n### Réponse : $\\boxed{\\frac{9}{16}}$",
+     "text": "If a test fails 1 time in 4, it **passes** 3 times in 4.\n\nThe probability that it passes once is:  \n$$\n\\frac{3}{4}\n$$\n\nSince the runs are independent, the probability that it passes **both times** is:\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n### Answer: $\\boxed{\\frac{9}{16}}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 3.43,
@@ -331,7 +331,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximum d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.4,
@@ -383,7 +383,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option de pytest qui arrête la suite dès le premier échec est :\n\n```bash\npytest -x\n```\n\nOu son équivalent complet :\n\n```bash\npytest --exitfirst\n```",
+     "text": "The pytest option that stops the suite at the first failure is:\n\n```bash\npytest -x\n```\n\nOr its long form:\n\n```bash\npytest --exitfirst\n```",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.56,
@@ -461,7 +461,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.1,
@@ -539,7 +539,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.46,
@@ -617,7 +617,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.15,
@@ -669,7 +669,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--exitfirst` ou `-x`",
+     "text": "The option is: `--exitfirst` or `-x`",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.1,
@@ -747,7 +747,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.23,
@@ -825,7 +825,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse une fois est :  \n$$\n\\frac{3}{4}\n$$\n\nComme les lancers sont indépendants, la probabilité qu’il réussisse les 2 fois est :  \n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes once is:  \n$$\n\\frac{3}{4}\n$$\n\nSince the runs are independent, the probability that it passes both times is:  \n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 3.22,
@@ -917,7 +917,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.09,
@@ -969,7 +969,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `-x` (ou `--exitfirst`).  \n\nExemple :\n```bash\npytest -x\n```\nCela arrête l'exécution dès le premier échec.",
+     "text": "The option is: `--tb=short` or more simply `-x` (or `--exitfirst`).  \n\nExemple :\n```bash\npytest -x\n```\nThis stops the run at the first failure.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.71,
@@ -1047,7 +1047,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.02,
@@ -1125,7 +1125,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.48,
@@ -1203,7 +1203,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.93,
@@ -1255,7 +1255,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `-x` (ou `--exitfirst`).  \n\nExemple :\n```bash\npytest -x\n```\nCela arrête l'exécution dès le premier échec.",
+     "text": "The option is: `--tb=short` or more simply `-x` (or `--exitfirst`).  \n\nExemple :\n```bash\npytest -x\n```\nThis stops the run at the first failure.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.53,
@@ -1333,7 +1333,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.06,
@@ -1411,7 +1411,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.25,
@@ -1489,7 +1489,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.05,
@@ -1541,7 +1541,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `-x` (ou `--exitfirst`).  \n\nExemple :\n```bash\npytest -x\n```\nCela arrête l'exécution dès le premier échec.",
+     "text": "The option is: `--tb=short` or more simply `-x` (or `--exitfirst`).  \n\nExemple :\n```bash\npytest -x\n```\nThis stops the run at the first failure.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.25,
@@ -1619,7 +1619,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.21,
@@ -1697,7 +1697,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.55,
@@ -1789,7 +1789,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.95,
@@ -1841,7 +1841,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `-x` (ou `--exitfirst`).  \n\nExemple :  \n```bash\npytest -x\n```",
+     "text": "The option is: `--tb=short` or more simply `-x` (or `--exitfirst`).  \n\nExemple :  \n```bash\npytest -x\n```",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.52,
@@ -1919,7 +1919,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.09,
@@ -1997,7 +1997,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.46,
@@ -2075,7 +2075,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.14,
@@ -2127,7 +2127,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--exitfirst` ou `-x`",
+     "text": "The option is: `--exitfirst` or `-x`",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.22,
@@ -2205,7 +2205,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.2,
@@ -2283,7 +2283,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.56,
@@ -2361,7 +2361,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.96,
@@ -2413,7 +2413,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--exitfirst` ou `-x`",
+     "text": "The option is: `--exitfirst` or `-x`",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.05,
@@ -2491,7 +2491,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.12,
@@ -2569,7 +2569,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.19,
@@ -2661,7 +2661,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.07,
@@ -2713,7 +2713,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option de `pytest` qui arrête la suite des tests au premier échec est :\n\n```bash\npytest -x\n```\n\nOu son équivalent long :\n\n```bash\npytest --exitfirst\n```",
+     "text": "The `pytest` option that stops the test suite at the first failure is:\n\n```bash\npytest -x\n```\n\nOr its long form:\n\n```bash\npytest --exitfirst\n```",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.69,
@@ -2791,7 +2791,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.23,
@@ -2869,7 +2869,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\boxed{\\frac{9}{16}}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\boxed{\\frac{9}{16}}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.55,
@@ -2947,7 +2947,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.15,
@@ -2999,7 +2999,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option de `pytest` qui arrête la suite des tests au premier échec est :\n\n```bash\npytest -x\n```\n\nOu son équivalent complet :\n\n```bash\npytest --exitfirst\n```",
+     "text": "The `pytest` option that stops the test suite at the first failure is:\n\n```bash\npytest -x\n```\n\nOr its long form:\n\n```bash\npytest --exitfirst\n```",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.73,
@@ -3077,7 +3077,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.34,
@@ -3155,7 +3155,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.46,
@@ -3233,7 +3233,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaires pour trouver un élément est proportionnel au logarithme (en base 2) du nombre d'éléments.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the logarithm (base 2) of the number of elements.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.01,
@@ -3285,7 +3285,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `-x` (ou `--exitfirst`).  \nElle arrête l'exécution des tests dès qu'un test échoue.",
+     "text": "The option is: `--tb=short` or more simply `-x` (or `--exitfirst`).  \nIt stops the test run as soon as a test fails.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.65,
@@ -3363,7 +3363,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.06,
@@ -3441,7 +3441,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.35,
@@ -3532,7 +3532,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaires pour trouver un élément est proportionnel au logarithme de la taille de la liste.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the logarithm of the list size.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.02,
@@ -3584,7 +3584,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--tb=short` ou plus simplement `-x` (ou `--exitfirst`).",
+     "text": "The option is: `--tb=short` or more simply `-x` (or `--exitfirst`).",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.35,
@@ -3662,7 +3662,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.13,
@@ -3740,7 +3740,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n**Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.35,
@@ -3818,7 +3818,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximal d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.12,
@@ -3870,7 +3870,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est `--tb=short` ou plus simplement `-x` (ou `--exitfirst`). Elle arrête l'exécution dès le premier échec.",
+     "text": "The option is `--tb=short` or more simply `-x` (or `--exitfirst`). It stops the run at the first failure.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.42,
@@ -3948,7 +3948,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.42,
@@ -4026,7 +4026,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il réussit 3 fois sur 4.\n\nLa probabilité qu’il réussisse les 2 fois de suite est :\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\nRéponse : $\\boxed{\\frac{9}{16}}$",
+     "text": "If a test fails 1 time in 4, it passes 3 times in 4.\n\nThe probability that it passes 2 times in a row is:\n\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\nAnswer: $\\boxed{\\frac{9}{16}}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.45,
@@ -4104,7 +4104,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité d'une recherche dichotomique dans une liste triée de $ n $ éléments est :\n\n$$\nO(\\log n)\n$$\n\nCela signifie que le nombre maximum d'étapes nécessaire pour trouver un élément est proportionnel au logarithme en base 2 de $ n $.",
+     "text": "The complexity of a binary search in a sorted list of $ n $ elements is:\n\n$$\nO(\\log n)\n$$\n\nThis means the maximum number of steps needed to find an element is proportional to the base-2 logarithm of $ n $.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 2.0,
@@ -4156,7 +4156,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "L'option est : `--exitfirst` ou `-x`",
+     "text": "The option is: `--exitfirst` or `-x`",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 0.99,
@@ -4234,7 +4234,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "La complexité moyenne d'une recherche par clé dans un dictionnaire Python est **O(1)**.",
+     "text": "The average complexity of a key lookup in a Python dictionary is **O(1)**.",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 1.11,
@@ -4312,7 +4312,7 @@
     },
     {
      "served_model": "qwen3-coder:30b",
-     "text": "Si un test échoue 1 fois sur 4, alors il **réussit** 3 fois sur 4.\n\nLa probabilité qu’il réussisse une fois est :  \n$$\n\\frac{3}{4}\n$$\n\nPuisqu’on lance le test 2 fois de suite **indépendamment**, la probabilité qu’il réussisse les 2 fois est :\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n✅ **Réponse :** $\\frac{9}{16}$",
+     "text": "If a test fails 1 time in 4, it **passes** 3 times in 4.\n\nThe probability that it passes once is:  \n$$\n\\frac{3}{4}\n$$\n\nSince the test is run 2 times in a row **independently**, the probability that it passes both times is:\n$$\n\\frac{3}{4} \\times \\frac{3}{4} = \\frac{9}{16}\n$$\n\n✅ **Answer:** $\\frac{9}{16}$",
      "timed_out": false,
      "thinking_chars": 0,
      "wall_s": 3.22,

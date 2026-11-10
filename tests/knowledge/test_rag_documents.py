@@ -1,115 +1,115 @@
 """
-Indexation des documents (PDF, Office, EPUB) par le RAG — issue #64, ADR-0034.
+Document indexing (PDF, Office, EPUB) by the RAG — issue #64, ADR-0034.
 
-Comme LlamaIndex, AnythingLLM ou PrivateGPT, le RAG convertit les documents
-à l'indexation. Le convertisseur est simulé ici ; le vrai tourne dans la
-sandbox (tests/execution/sandbox/test_document_sandbox.py).
+Like LlamaIndex, AnythingLLM or PrivateGPT, the RAG converts documents at
+indexing time. The converter is faked here; the real one runs in the sandbox
+(tests/execution/sandbox/test_document_sandbox.py).
 
-Les tests qui comptent le plus :
-- `test_une_question_sans_nommer_le_fichier_trouve_le_document` : c'est le
-  but, retrouver l'exigence du sujet sans savoir qu'elle est dans le PDF.
-- `test_sans_convertisseur_rien_ne_casse` : sans Docker, on revient au
-  comportement de R1 (le document est listé avec un conseil).
+The tests that matter most:
+- `test_a_question_without_naming_the_file_finds_the_document`: this is the
+  goal, finding a requirement without knowing it lives in the PDF.
+- `test_without_converter_nothing_breaks`: without Docker, we fall back to the
+  R1 behavior (the document is listed with advice).
 """
 import pytest
 
 from sensai.execution.sandbox.document_sandbox import ConversionResult
 from sensai.knowledge.rag import RagIndex, scan_files
-from tests.knowledge.test_rag import FauxEmbedder
+from tests.knowledge.test_rag import FakeEmbedder
 
-SUJET = """# Contraintes
-Le projet doit utiliser docker-compose et répondre sur le port 8080.
+REQUIREMENTS = """# Constraints
+The project must use docker-compose and listen on port 8080.
 
-# Livrables
-Au moins deux user stories par feature.
+# Deliverables
+At least two user stories per feature.
 """
 
 
-class FauxConvertisseur:
-    def __init__(self, resultat=None):
-        self.resultat = resultat or ConversionResult(ok=True, text=SUJET)
-        self.appels = []
+class FakeConverter:
+    def __init__(self, result=None):
+        self.result = result or ConversionResult(ok=True, text=REQUIREMENTS)
+        self.calls = []
 
     def __call__(self, path, extension=None):
-        self.appels.append((path.name, extension))
-        return self.resultat
+        self.calls.append((path.name, extension))
+        return self.result
 
 
 @pytest.fixture
-def projet(tmp_path):
-    racine = tmp_path / "projet"
-    racine.mkdir()
-    (racine / "main.py").write_text("def main():\n    return 0\n", encoding="utf-8")
-    (racine / "sujet.pdf").write_bytes(b"%PDF-1.7\n\x00binaire")
-    return racine
+def project(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / "main.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (root / "requirements.pdf").write_bytes(b"%PDF-1.7\n\x00binary")
+    return root
 
 
-def index_avec(tmp_path, convertisseur):
-    return RagIndex(tmp_path / "rag.db", project="p", embed=FauxEmbedder(),
-                    converter=convertisseur)
+def index_with(tmp_path, converter):
+    return RagIndex(tmp_path / "rag.db", project="p", embed=FakeEmbedder(),
+                    converter=converter)
 
 
-def test_le_scan_reconnait_les_documents(projet):
-    resultat = scan_files(projet)
-    assert [p.name for p in resultat.documents] == ["sujet.pdf"]
-    assert all(p.name != "sujet.pdf" for p in resultat.files)
+def test_scan_recognizes_documents(project):
+    result = scan_files(project)
+    assert [p.name for p in result.documents] == ["requirements.pdf"]
+    assert all(p.name != "requirements.pdf" for p in result.files)
 
 
-def test_une_question_sans_nommer_le_fichier_trouve_le_document(tmp_path, projet):
-    index = index_avec(tmp_path, FauxConvertisseur())
-    rapport = index.update(projet)
-    assert rapport.files_indexed == 2 and rapport.unsupported == []
-    passages = index.search("combien de user stories par feature ?", min_score=0.0)
-    assert passages[0]["source"] == "sujet.pdf"
-    assert "deux user stories" in passages[0]["text"]
+def test_a_question_without_naming_the_file_finds_the_document(tmp_path, project):
+    index = index_with(tmp_path, FakeConverter())
+    report = index.update(project)
+    assert report.files_indexed == 2 and report.unsupported == []
+    passages = index.search("how many user stories per feature?", min_score=0.0)
+    assert passages[0]["source"] == "requirements.pdf"
+    assert "two user stories" in passages[0]["text"]
 
 
-def test_le_convertisseur_recoit_l_extension(tmp_path, projet):
-    convertisseur = FauxConvertisseur()
-    index_avec(tmp_path, convertisseur).update(projet)
-    assert convertisseur.appels == [("sujet.pdf", ".pdf")]
+def test_converter_receives_the_extension(tmp_path, project):
+    converter = FakeConverter()
+    index_with(tmp_path, converter).update(project)
+    assert converter.calls == [("requirements.pdf", ".pdf")]
 
 
-def test_un_document_n_est_converti_qu_une_fois(tmp_path, projet):
-    convertisseur = FauxConvertisseur()
-    index = index_avec(tmp_path, convertisseur)
-    index.update(projet)
-    index.update(projet)
-    assert len(convertisseur.appels) == 1
-    (projet / "sujet.pdf").write_bytes(b"%PDF-1.7\n\x00nouvelle version")
-    index.update(projet)
-    assert len(convertisseur.appels) == 2
+def test_a_document_is_converted_only_once(tmp_path, project):
+    converter = FakeConverter()
+    index = index_with(tmp_path, converter)
+    index.update(project)
+    index.update(project)
+    assert len(converter.calls) == 1
+    (project / "requirements.pdf").write_bytes(b"%PDF-1.7\n\x00new version")
+    index.update(project)
+    assert len(converter.calls) == 2
 
 
-def test_l_image_absente_est_signalee_et_reessayee(tmp_path, projet):
-    convertisseur = FauxConvertisseur(ConversionResult(ok=False, error="image_missing"))
-    index = index_avec(tmp_path, convertisseur)
-    rapport = index.update(projet)
-    conseils = {p.name: c for p, c in rapport.unsupported}
-    assert "docker build -t sensai-docs" in conseils["sujet.pdf"]
-    assert rapport.files_indexed == 1
-    index.update(projet)
-    assert len(convertisseur.appels) == 2, "le document doit être réessayé"
+def test_missing_image_is_reported_and_retried(tmp_path, project):
+    converter = FakeConverter(ConversionResult(ok=False, error="image_missing"))
+    index = index_with(tmp_path, converter)
+    report = index.update(project)
+    advice = {p.name: c for p, c in report.unsupported}
+    assert "docker build -t sensai-docs" in advice["requirements.pdf"]
+    assert report.files_indexed == 1
+    index.update(project)
+    assert len(converter.calls) == 2, "the document must be retried"
 
 
-def test_un_pdf_scanne_conseille_l_ocr(tmp_path, projet):
-    convertisseur = FauxConvertisseur(ConversionResult(ok=False, error="empty"))
-    rapport = index_avec(tmp_path, convertisseur).update(projet)
-    assert "ocrmypdf" in dict((p.name, c) for p, c in rapport.unsupported)["sujet.pdf"]
+def test_a_scanned_pdf_suggests_ocr(tmp_path, project):
+    converter = FakeConverter(ConversionResult(ok=False, error="empty"))
+    report = index_with(tmp_path, converter).update(project)
+    assert "ocrmypdf" in dict((p.name, c) for p, c in report.unsupported)["requirements.pdf"]
 
 
-def test_sans_convertisseur_rien_ne_casse(tmp_path, projet):
-    rapport = index_avec(tmp_path, None).update(projet)
-    conseils = {p.name: c for p, c in rapport.unsupported}
-    assert "pdf" in conseils["sujet.pdf"].lower()
-    assert rapport.files_indexed == 1
+def test_without_converter_nothing_breaks(tmp_path, project):
+    report = index_with(tmp_path, None).update(project)
+    advice = {p.name: c for p, c in report.unsupported}
+    assert "pdf" in advice["requirements.pdf"].lower()
+    assert report.files_indexed == 1
 
 
-def test_un_document_devenu_illisible_est_retire(tmp_path, projet):
-    index = index_avec(tmp_path, FauxConvertisseur())
-    index.update(projet)
-    index.converter = FauxConvertisseur(ConversionResult(ok=False, error="failed"))
-    (projet / "sujet.pdf").write_bytes(b"%PDF-1.7\n\x00abime")
-    index.update(projet)
+def test_a_document_that_became_unreadable_is_removed(tmp_path, project):
+    index = index_with(tmp_path, FakeConverter())
+    index.update(project)
+    index.converter = FakeConverter(ConversionResult(ok=False, error="failed"))
+    (project / "requirements.pdf").write_bytes(b"%PDF-1.7\n\x00damaged")
+    index.update(project)
     sources = {h["source"] for h in index.search("user stories", min_score=0.0)}
-    assert "sujet.pdf" not in sources, "un texte périmé ne doit pas rester cité"
+    assert "requirements.pdf" not in sources, "stale text must not stay cited"

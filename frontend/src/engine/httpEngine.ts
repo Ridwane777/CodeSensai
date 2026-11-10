@@ -1,12 +1,12 @@
 /**
- * Moteur réel : parle au serveur `sensai-web` (ADR-0035), même interface que MockEngine.
+ * Real engine: talks to the `sensai-web` server (ADR-0035), same interface as MockEngine.
  *
- * - Un tour = `POST /api/sessions/{id}/messages`, qui répond par un flux SSE lu avec `fetch`
- *   (ADR-0022) ; le flux du lot A est traduit par `WireAdapter`.
- * - Toutes les requêtes portent `Authorization: Bearer <jeton>` (ADR-0023).
- * - Une branche (modifier un message, X2) est une nouvelle session côté serveur, créée par
- *   `POST /fork` avec l'historique jusqu'au message modifié (ADR-0024).
- * - Ne lève jamais : une panne devient un événement `error`, et le tour se termine par `done`.
+ * - A turn = `POST /api/sessions/{id}/messages`, which answers with an SSE stream read with `fetch`
+ *   (ADR-0022); the Workstream A stream is translated by `WireAdapter`.
+ * - Every request carries `Authorization: Bearer <token>` (ADR-0023).
+ * - A branch (editing a message, X2) is a new server-side session, created by
+ *   `POST /fork` with the history up to the edited message (ADR-0024).
+ * - Never throws: a failure becomes an `error` event, and the turn ends with `done`.
  */
 import type {
   AdversarialRun,
@@ -30,7 +30,7 @@ import type { EngineEvent, UserMessage } from '../contract/events'
 import { rememberPersonaNames } from '../ui/personas'
 import { WireAdapter } from './wire'
 
-/** Recompose les événements `data: {...}` découpés arbitrairement entre les morceaux reçus. */
+/** Reassembles `data: {...}` events split arbitrarily across received chunks. */
 export class SseParser {
   private buffer = ''
 
@@ -47,7 +47,7 @@ export class SseParser {
           if (parsed && typeof parsed === 'object' && typeof (parsed as { type?: unknown }).type === 'string')
             events.push(parsed as Record<string, unknown>)
         } catch {
-          /* ligne invalide : ignorée */
+          /* invalid line: ignored */
         }
       }
     }
@@ -57,19 +57,19 @@ export class SseParser {
 
 export interface HttpEngineOptions {
   token: string
-  /** '' : même origine (l'interface servie par sensai-web). */
+  /** '': same origin (the UI served by sensai-web). */
   baseUrl?: string
   fetchFn?: typeof fetch
   now?: () => number
-  /** Appelé quand le serveur refuse le jeton : l'interface le redemande. */
+  /** Called when the server rejects the token: the UI asks for it again. */
   onUnauthorized?: () => void
-  /** Délai laissé au serveur pour terminer un tour interrompu avant de couper le flux. */
+  /** Time given to the server to finish an interrupted turn before cutting the stream. */
   interruptGraceMs?: number
 }
 
 interface Branch {
   sessionId: string | null
-  /** Messages déjà enregistrés côté serveur dans cette branche. */
+  /** Messages already saved server-side in this branch. */
   persisted: number
 }
 
@@ -162,7 +162,7 @@ export class HttpEngine implements Engine {
   private branches = new Map<string, Branch>([['main', { sessionId: null, persisted: 0 }]])
   private branch = 'main'
   private branchCount = 0
-  /** Message de l'interface -> sa branche et sa place dans l'historique du serveur. */
+  /** UI message -> its branch and its position in the server history. */
   private positions = new Map<string, { branch: string; at: number }>()
   private current: Turn | null = null
   private turns = 0
@@ -195,7 +195,7 @@ export class HttpEngine implements Engine {
     this.emit({ type: 'error', message })
   }
 
-  /** Une requête qui ne lève jamais : null si le réseau ou le jeton a échoué (déjà signalé). */
+  /** A request that never throws: null if the network or the token failed (already reported). */
   private async request(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<Response | null> {
     let res: Response
     try {
@@ -207,11 +207,11 @@ export class HttpEngine implements Engine {
       })
     } catch (err) {
       if ((err as { name?: string }).name !== 'AbortError')
-        this.fail(`Serveur injoignable : ${(err as Error).message}`)
+        this.fail(`Server unreachable: ${(err as Error).message}`)
       return null
     }
     if (res.status === 401) {
-      this.fail('Jeton refusé par le serveur : collez le jeton affiché au démarrage de sensai-web.')
+      this.fail('Token rejected by the server: paste the token printed when sensai-web started.')
       this.opts.onUnauthorized?.()
       return null
     }
@@ -219,12 +219,12 @@ export class HttpEngine implements Engine {
   }
 
   private async failFrom(res: Response) {
-    let message = `Réponse inattendue du serveur (${res.status})`
+    let message = `Unexpected server response (${res.status})`
     try {
       const body = (await res.json()) as { error?: string; details?: string }
       if (body.error) message = body.details ? `${body.error} — ${body.details}` : body.error
     } catch {
-      /* corps illisible : message générique */
+      /* unreadable body: generic message */
     }
     this.fail(message)
   }
@@ -243,20 +243,20 @@ export class HttpEngine implements Engine {
     return branch.sessionId
   }
 
-  // --- Un tour -----------------------------------------------------------------------------
+  // --- A turn ------------------------------------------------------------------------------
 
   send(msg: UserMessage): void {
     const text = msg.text.trim()
     if (!text) return
     if (this.current) {
-      this.fail('Un tour est déjà en cours : attendez la réponse ou interrompez-la.')
+      this.fail('A turn is already running: wait for the answer or interrupt it.')
       return
     }
     let question = text
     let skipCache = false
     if (text === '/again') {
       if (!this.lastQuestion) {
-        this.fail('Aucune question à redemander.')
+        this.fail('No question to ask again.')
         return
       }
       question = this.lastQuestion
@@ -295,9 +295,9 @@ export class HttpEngine implements Engine {
       const parser = new SseParser()
       const decoder = new TextDecoder()
       const reader = res.body.getReader()
-      // Le serveur envoie `done` puis enregistre la conversation et libère la session avant de fermer
-      // le flux : le tour ne se termine qu'à la fermeture, sinon la liste des conversations se relit
-      // trop tôt et un message envoyé aussitôt reçoit 409 « tour en cours ».
+      // The server sends `done`, then saves the conversation and releases the session before closing
+      // the stream: the turn only ends on close, otherwise the conversation list reloads too early
+      // and a message sent right away gets 409 "turn in progress".
       let doneInterrupted: boolean | null = null
       try {
         for (;;) {
@@ -311,10 +311,10 @@ export class HttpEngine implements Engine {
           }
         }
       } catch (err) {
-        if ((err as { name?: string }).name !== 'AbortError' && !turn.ended) this.fail('Flux interrompu par le serveur.')
+        if ((err as { name?: string }).name !== 'AbortError' && !turn.ended) this.fail('Stream interrupted by the server.')
       }
       if (adapter.doneReason === null && !turn.ended && !turn.controller.signal.aborted)
-        this.fail('Le serveur a fermé le flux avant la fin du tour.')
+        this.fail('The server closed the stream before the turn ended.')
       if (adapter.doneReason === 'final_answer') {
         const branch = this.branches.get(branchName)
         if (branch) branch.persisted += 2
@@ -331,9 +331,9 @@ export class HttpEngine implements Engine {
     const turn = this.current
     if (!turn) return
     const sessionId = this.branches.get(this.branch)?.sessionId
-    // Les appels de contrôle n'utilisent jamais le signal du flux, sinon ils partiraient déjà annulés.
+    // Control calls never use the stream signal, otherwise they would start already aborted.
     if (sessionId) void this.request('POST', `/api/sessions/${sessionId}/interrupt`)
-    // Le serveur termine le tour par `done interrupted` ; s'il ne répond pas, on coupe le flux.
+    // The server ends the turn with `done interrupted`; if it does not answer, cut the stream.
     setTimeout(() => {
       if (this.current === turn && !turn.ended) {
         turn.controller.abort()
@@ -347,7 +347,7 @@ export class HttpEngine implements Engine {
     if (!sessionId) return
     void (async () => {
       const res = await this.request('POST', `/api/sessions/${sessionId}/confirm`, { confirm_id: requestId, approved })
-      if (res && res.status === 404) this.fail("Cette demande a expiré : l'action n'a pas été exécutée.")
+      if (res && res.status === 404) this.fail('This request expired: the action was not run.')
       else if (res && !res.ok) await this.failFrom(res)
     })()
   }
@@ -357,18 +357,18 @@ export class HttpEngine implements Engine {
     if (!sessionId) return
     void (async () => {
       const res = await this.request('POST', `/api/sessions/${sessionId}/answer`, { question_id: requestId, values })
-      if (res && res.status === 404) this.fail("Cette question a expiré : l'agent a continué sans votre réponse.")
+      if (res && res.status === 404) this.fail('This question expired: the agent went on without your answer.')
       else if (res && !res.ok) await this.failFrom(res)
     })()
   }
 
-  // --- Partage (X3) ---------------------------------------------------------------------------
+  // --- Sharing (X3) -------------------------------------------------------------------------
 
-  /** Publie la conversation de la branche affichée ; null si rien à partager ou en cas d'échec (signalé). */
+  /** Publishes the conversation of the displayed branch; null if nothing to share or on failure (reported). */
   async share(): Promise<SharedLink | null> {
     const sessionId = this.branches.get(this.branch)?.sessionId
     if (!sessionId) {
-      this.fail("Rien à partager : la conversation n'a encore aucun message.")
+      this.fail('Nothing to share: the conversation has no messages yet.')
       return null
     }
     const res = await this.request('POST', `/api/sessions/${sessionId}/share`)
@@ -388,11 +388,11 @@ export class HttpEngine implements Engine {
     return Boolean(res?.ok)
   }
 
-  /** Export filtré des secrets par le serveur, pour la conversation de la branche affichée. */
+  /** Secret-filtered export by the server, for the conversation of the displayed branch. */
   async exportSession(format: 'json' | 'md'): Promise<string | null> {
     const sessionId = this.branches.get(this.branch)?.sessionId
     if (!sessionId) {
-      this.fail("Rien à exporter : la conversation n'a encore aucun message.")
+      this.fail('Nothing to export: the conversation has no messages yet.')
       return null
     }
     const res = await this.request('GET', `/api/sessions/${encodeURIComponent(sessionId)}/export?format=${format}`)
@@ -404,9 +404,9 @@ export class HttpEngine implements Engine {
     return res.text()
   }
 
-  // --- Conversations passées (#44) ---------------------------------------------------------
+  // --- Past conversations (#44) ----------------------------------------------------------
 
-  // --- Profil et faits (M1, M3) ----------------------------------------------------------
+  // --- Profile and facts (M1, M3) --------------------------------------------------------
 
   private async json<T>(method: string, path: string, body?: unknown): Promise<T | null> {
     const res = await this.request(method, path, body)
@@ -451,7 +451,7 @@ export class HttpEngine implements Engine {
   async evaluate(): Promise<Evaluation | null> {
     const sessionId = this.branches.get(this.branch)?.sessionId
     if (!sessionId) {
-      this.fail("Rien à évaluer : la conversation n'a encore aucune réponse.")
+      this.fail('Nothing to evaluate: the conversation has no answers yet.')
       return null
     }
     const body = await this.json<{ scores: { relevance: number; coherence: number; faithfulness: number | null }; passages: number }>(
@@ -461,7 +461,7 @@ export class HttpEngine implements Engine {
     return body ? { ...body.scores, passages: body.passages } : null
   }
 
-  // --- Corpus adversarial (EV4) et journal (EV3) -----------------------------------------
+  // --- Adversarial corpus (EV4) and log (EV3) --------------------------------------------
 
   async adversarialResults(): Promise<AdversarialRun | null> {
     const body = await this.json<Record<string, unknown>>('GET', '/api/quality/adversarial')
@@ -507,7 +507,7 @@ export class HttpEngine implements Engine {
 
   newConversation(): boolean {
     if (this.current) {
-      this.fail('Un tour est déjà en cours : attendez la réponse ou interrompez-la.')
+      this.fail('A turn is already running: wait for the answer or interrupt it.')
       return false
     }
     this.branches = new Map([['main', { sessionId: null, persisted: 0 }]])
@@ -529,7 +529,7 @@ export class HttpEngine implements Engine {
       await this.failFrom(res)
       return false
     }
-    // La conversation affichée vient d'être supprimée : on repart d'une conversation vide.
+    // The displayed conversation was just deleted: start over from an empty conversation.
     if ([...this.branches.values()].some((b) => b.sessionId === id)) this.newConversation()
     return true
   }
@@ -547,7 +547,7 @@ export class HttpEngine implements Engine {
 
   async openSession(id: string): Promise<PastMessage[] | null> {
     if (this.current) {
-      this.fail('Un tour est déjà en cours : attendez la réponse ou interrompez-la.')
+      this.fail('A turn is already running: wait for the answer or interrupt it.')
       return null
     }
     const res = await this.request('GET', `/api/sessions/${encodeURIComponent(id)}`)
@@ -557,7 +557,7 @@ export class HttpEngine implements Engine {
       return null
     }
     const { messages } = (await res.json()) as { messages: { role?: string; content?: unknown }[] }
-    // La conversation rouverte devient la branche principale ; les branches d'avant sont oubliées.
+    // The reopened conversation becomes the main branch; previous branches are dropped.
     this.branches = new Map([['main', { sessionId: id, persisted: messages.length }]])
     this.branch = 'main'
     this.branchCount = 0
@@ -580,11 +580,11 @@ export class HttpEngine implements Engine {
     const clean = text.trim()
     const pos = this.positions.get(id)
     if (!pos || !clean) {
-      this.fail(`Message introuvable ou vide : ${id}`)
+      this.fail(`Message not found or empty: ${id}`)
       return null
     }
     if (this.current) {
-      this.fail('Un tour est déjà en cours : attendez la réponse ou interrompez-la.')
+      this.fail('A turn is already running: wait for the answer or interrupt it.')
       return null
     }
     const parent = this.branches.get(pos.branch)
@@ -601,8 +601,8 @@ export class HttpEngine implements Engine {
           branch.sessionId = ((await res.json()) as { session_id: string }).session_id
         } else {
           if (res && !res.ok) await this.failFrom(res)
-          if (branch) branch.persisted = 0 // repart sans historique, et le dit
-          this.fail("La branche n'a pas pu reprendre l'historique : elle repart d'une conversation vide.")
+          if (branch) branch.persisted = 0 // restarts without history, and says so
+          this.fail('The branch could not restore the history: it starts from an empty conversation.')
         }
       }
       await this.run(name, clean, false)
@@ -618,7 +618,7 @@ export class HttpEngine implements Engine {
     void this.setPersona(id)
   }
 
-  // --- Personas, par conversation (A5, lot A ; ADR-0054) ----------------------------------
+  // --- Personas, per conversation (A5, Workstream A; ADR-0054)-------------------------------
 
   async getFewshot(): Promise<FewshotInfo | null> {
     const b = await this.json<Record<string, unknown>>('GET', '/api/fewshot')
@@ -642,7 +642,7 @@ export class HttpEngine implements Engine {
 
   async getPersona(): Promise<PersonaInfo | null> {
     const sessionId = this.currentSession()
-    // Conversation pas encore créée : la persona par défaut de config.json.
+    // Conversation not created yet: the default persona from config.json.
     const persona = sessionId
       ? await this.json<Record<string, unknown>>('GET', `/api/sessions/${encodeURIComponent(sessionId)}/persona`).then(
           (p) => (p ? toPersona(p) : null),
@@ -657,7 +657,7 @@ export class HttpEngine implements Engine {
 
   async setPersona(id: string): Promise<PersonaInfo | null> {
     if (this.current) {
-      this.fail('Un tour est déjà en cours : attendez la réponse pour changer de persona.')
+      this.fail('A turn is already running: wait for the answer before changing persona.')
       return null
     }
     const sessionId = await this.sessionOf(this.branch)
@@ -672,7 +672,7 @@ export class HttpEngine implements Engine {
     return persona
   }
 
-  // --- Versions de prompts, en lecture (A4, lot A ; ADR-0055) -----------------------------
+  // --- Prompt versions, read-only (A4, Workstream A; ADR-0055) ---------------------------
 
   listPrompts(): Promise<PromptEntry[] | null> {
     return this.json<PromptEntry[]>('GET', '/api/prompts')
@@ -699,7 +699,7 @@ export class HttpEngine implements Engine {
 
   async setPromptTrial(version: string | null): Promise<PromptTrial | null> {
     if (this.current) {
-      this.fail('Un tour est déjà en cours : attendez la réponse pour changer de prompt.')
+      this.fail('A turn is already running: wait for the answer before changing prompt.')
       return null
     }
     const sessionId = await this.sessionOf(this.branch)

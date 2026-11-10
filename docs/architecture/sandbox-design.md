@@ -2,7 +2,7 @@
 
 ## 1. What the sandbox is
 
-The goal of feature [T2] is to give the CodeSensei agent a safe place to run the code it writes. The agent cannot be trusted to write code that is harmless. It can contain bugs, infinite loops, or destructive commands. If that code ran on the host machine, it could delete files, read secrets, or hang the server.
+The goal of feature [T2] is to give the CodeSensai agent a safe place to run the code it writes. The agent cannot be trusted to write code that is harmless. It can contain bugs, infinite loops, or destructive commands. If that code ran on the host machine, it could delete files, read secrets, or hang the server.
 
 The sandbox solves this: the code runs in a throw-away environment that is cut off from everything that matters. The agent gets back what happened (output, error, traceback) and can fix its own code.
 
@@ -92,5 +92,5 @@ Stronger options exist (gVisor or Firecracker microVMs) but they are heavier to 
 ## 6. Limits to keep in mind
 
 - Merged in #8: the code lives in `src/sensai/execution/sandbox/` and is described in [sandbox.md](sandbox.md). Its first version lived on the branch `feat/sandbox-execution` (see [sandbox-walkthrough.md](sandbox-walkthrough.md), kept for history).
-- The self-correction loop is the agent's own loop (`core/agent.py`): the model reads the traceback returned by `run_code` and retries. Checked with `qwen3-coder:30b` on 2026-10-14 ([essai-2026-10-14.md](../performance/essais/essai-2026-10-14.md)).
+- The self-correction loop is the agent's own loop (`core/agent.py`): the model reads the traceback returned by `run_code` and retries. Checked with `qwen3-coder:30b` on 2026-10-14 ([trial-2026-10-14.md](../performance/trials/trial-2026-10-14.md)).
 - Code close to the 100 KB cap is not tested against the operating system's single-argument size limit (about 128 KB on Linux).

@@ -1,4 +1,4 @@
-"""Teste les modes de permission et les préférences d'outils."""
+"""Tests permission modes and tool preferences."""
 import json
 
 import pytest
@@ -30,7 +30,7 @@ def test_risk_is_read_from_the_tool():
 
 @pytest.mark.parametrize("tool", [_Undeclared(), _Garbage()])
 def test_missing_or_invalid_risk_is_treated_as_execute(tool):
-    # Échec fermé : un outil sans risque déclaré ne doit pas passer pour sûr.
+    # Fail closed: a tool with no declared risk must not be treated as safe.
     assert risk_of(tool) is Risk.EXECUTE
 
 
@@ -62,7 +62,7 @@ def test_preferences_can_loosen_read_and_network():
 
 @pytest.mark.parametrize("risk", [Risk.WRITE, Risk.EXECUTE])
 def test_preferences_cannot_loosen_write_or_execute(risk):
-    # Ce test échoue si on retire le plancher : "allow" désactiverait A3.
+    # This test fails if the floor is removed: "allow" would disable A3.
     prefs = ToolPreferences(modes={"t": Mode.ALLOW})
     assert effective_mode("t", risk, prefs) is Mode.ASK
 
@@ -93,7 +93,7 @@ def test_from_dict_empty_gives_defaults():
 @pytest.mark.parametrize(
     "bad",
     [
-        {"disable": ["x"]},  # faute de frappe sur la clé
+        {"disable": ["x"]},  # typo in the key
         {"modes": {"x": "autoriser"}},
         {"modes": ["x"]},
         {"disabled": "x"},
@@ -121,8 +121,8 @@ def test_confirm_after_untrusted_is_off_by_default():
 
 
 def test_delai_des_sous_agents_garde_le_defaut_et_se_regle():
-    """Essai du 2026-11-06 sur CPU : 120 s ne laissent pas un seul appel au modèle
-    au sous-agent ; le délai se règle, le défaut reste celui de l'outil."""
+    """Trial run of 2026-11-06 on CPU: 120 s does not leave the sub-agent a single
+    model call; the timeout is configurable, the default stays the tool's own."""
     from sensai.tools.delegate_tool import DELEGATION_TIMEOUT_S
 
     assert ToolPreferences.from_dict({}).delegation_timeout_s == DELEGATION_TIMEOUT_S == 120.0

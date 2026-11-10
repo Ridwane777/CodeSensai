@@ -3,7 +3,7 @@ export interface Clock {
   clearTimeout: (id: ReturnType<typeof setTimeout>) => void
 }
 
-/** Délègue aux globaux à chaque appel, pour rester compatible avec les faux timers des tests. */
+/** Delegates to the globals on every call, to stay compatible with the tests' fake timers. */
 export const realClock: Clock = {
   setTimeout: (fn, ms) => setTimeout(fn, ms),
   clearTimeout: (id) => clearTimeout(id),

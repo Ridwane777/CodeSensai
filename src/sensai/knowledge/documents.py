@@ -1,14 +1,14 @@
 """
-[Lot C — Ridwane] Reconnaître le format d'un fichier et dire comment le lire — issue #64.
+[Workstream C — Ridwane] Detect a file's format and say how to read it — issue #64.
 
-ADR-0034, niveaux 1 et 4 : le type vient du contenu (octets magiques), pas de
-l'extension. Un format de document connu (`CONVERTIBLE`) est converti en
-texte dans la sandbox (`execution/sandbox/document_sandbox.py`) ; pour tout le
-reste, `unreadable_message` nomme le type et donne la marche à suivre, pour
-que le modèle n'invente jamais le contenu.
+ADR-0034, levels 1 and 4: the type comes from the content (magic bytes), not
+the extension. A known document format (`CONVERTIBLE`) is converted to text
+in the sandbox (`execution/sandbox/document_sandbox.py`); for everything else,
+`unreadable_message` names the type and gives the steps to follow, so the
+model never invents the content.
 
-Les messages sont en anglais, comme le reste de ce que `read_file` renvoie au
-modèle.
+Messages are in English, like the rest of what `read_file` returns to the
+model.
 """
 from __future__ import annotations
 
@@ -18,8 +18,8 @@ from pathlib import Path
 
 import puremagic
 
-# Formats que MarkItDown convertit en texte (extras installés dans l'image
-# sensai-docs : docker/docs/Dockerfile).
+# Formats MarkItDown converts to text (extras installed in the sensai-docs
+# image: docker/docs/Dockerfile).
 CONVERTIBLE = frozenset({"pdf", "docx", "pptx", "xlsx", "xls", "msg", "epub", "zip"})
 
 LABELS = {
@@ -35,11 +35,11 @@ LABELS = {
     "ppt": "PowerPoint 97-2003 presentation",
 }
 
-# Extension donnée au fichier dans le conteneur : MarkItDown s'en sert pour
-# choisir son convertisseur.
+# Extension given to the file in the container: MarkItDown uses it to pick
+# its converter.
 EXTENSIONS = {kind: f".{kind}" for kind in CONVERTIBLE}
 
-# Marche à suivre sans le convertisseur, par type.
+# Steps to follow without the converter, per type.
 MANUAL = {
     "pdf": "convert it with `pdftotext {name} {stem}.txt` (poppler-utils), then read {stem}.txt",
     "docx": "convert it with `pandoc {name} -o {stem}.md`, or save it as .txt",
@@ -53,19 +53,19 @@ MANUAL = {
     "zip": "extract it (`unzip {name}`) and read the files inside",
 }
 
-# Images matricielles : celles qu'un OCR peut lire. puremagic range aussi des
-# dessins vectoriels ou CAO sous image/ (AutoCAD : image/x-dwg).
+# Raster images: the ones OCR can read. puremagic also files vector or CAD
+# drawings under image/ (AutoCAD: image/x-dwg).
 RASTER_IMAGES = frozenset({"image/png", "image/jpeg", "image/gif", "image/bmp",
                            "image/tiff", "image/webp"})
 
-_OLE = bytes.fromhex("d0cf11e0a1b11ae1")  # conteneur des formats Office 97-2003 et .msg
+_OLE = bytes.fromhex("d0cf11e0a1b11ae1")  # container of Office 97-2003 formats and .msg
 _OLE_KINDS = {".xls": "xls", ".msg": "msg", ".doc": "doc", ".ppt": "ppt"}
 
 
 @dataclass(frozen=True)
 class FileKind:
-    kind: str    # "pdf", "docx", …, "image", "audio", "video", "other" ou "unknown"
-    label: str   # description lisible : « PDF », « Generic AutoCAD drawing »
+    kind: str    # "pdf", "docx", …, "image", "audio", "video", "other" or "unknown"
+    label: str   # readable description: "PDF", "Generic AutoCAD drawing"
     mime: str = ""
 
 
@@ -84,7 +84,7 @@ def _zip_kind(path: Path) -> str:
 
 
 def identify(path: Path) -> FileKind:
-    """Le type de `path`, d'après ses premiers octets (et la liste d'une archive ZIP)."""
+    """The type of `path`, from its first bytes (and a ZIP archive's listing)."""
     with open(path, "rb") as handle:
         head = handle.read(8192)
     if head.startswith(b"%PDF-"):
@@ -113,17 +113,17 @@ def identify(path: Path) -> FileKind:
 
 
 def looks_binary(path: Path) -> bool:
-    """Un octet nul dans les 8 premiers Ko : du binaire, même s'il se décode en
-    UTF-8 (critère de Git)."""
+    """A null byte in the first 8 KB means binary, even if it decodes as UTF-8
+    (Git's criterion)."""
     with open(path, "rb") as handle:
         return b"\x00" in handle.read(8192)
 
 
 def unreadable_message(path: Path, kind: FileKind, reason: str | None = None) -> str:
-    """Ce que le modèle reçoit quand il ne peut pas lire le contenu (niveau 4).
+    """What the model receives when it cannot read the content (level 4).
 
-    `reason` : pourquoi la conversion n'a pas donné de texte (`image_missing`,
-    `empty`, `timeout`…), ou None si le format n'est pas convertible.
+    `reason`: why conversion produced no text (`image_missing`, `empty`,
+    `timeout`…), or None if the format is not convertible.
     """
     try:
         size = path.stat().st_size

@@ -1,8 +1,8 @@
 # Sandbox: running code and searching the web in disposable containers
 
-Feature [T2]. Decisions: [ADR-0012](../decisions/0012-sandbox-docker-chromium.md), search engine:
-[ADR-0014](../decisions/0014-moteur-de-recherche-bing.md) (Bing), then
-[ADR-0040](../decisions/0040-recherche-web-duckduckgo-et-repli-bing.md) (DuckDuckGo HTML first, Bing as fallback).
+Feature [T2]. Decisions: [ADR-0012](../decisions/0012-docker-chromium-sandbox.md), search engine:
+[ADR-0014](../decisions/0014-bing-search-engine.md) (Bing), then
+[ADR-0040](../decisions/0040-duckduckgo-web-search-with-bing-fallback.md) (DuckDuckGo HTML first, Bing as fallback).
 Tool contract the two tools follow: [tool-contract.md](tool-contract.md).
 
 The agent has two ways to touch the outside world, and they are kept apart:

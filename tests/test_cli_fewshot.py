@@ -1,8 +1,8 @@
 """
-Teste A7 (few-shot automatique) de bout en bout sur le vrai CLI, sans Ollama.
+Tests A7 (automatic few-shot) end to end on the real CLI, without Ollama.
 
-Même patron que `tests/test_cli_rag.py` : un faux `stream_chat` note les
-messages reçus, et `FauxEmbedder` (sac de mots haché) remplace les embeddings.
+Same pattern as `tests/test_cli_rag.py`: a fake `stream_chat` records the
+messages it receives, and `FakeEmbedder` (hashed bag of words) replaces the embeddings.
 """
 import builtins
 
@@ -10,7 +10,7 @@ import pytest
 
 from sensai import cli
 from sensai.knowledge.rag import EmbeddingError
-from tests.knowledge.test_rag import FauxEmbedder
+from tests.knowledge.test_rag import FakeEmbedder
 from tests.test_cli_rag import lancer as lancer_avec_rag  # noqa: F401  (fixture)
 from tests.test_cli_rag import projet  # noqa: F401  (fixture)
 
@@ -19,8 +19,8 @@ from tests.test_cli_rag import projet  # noqa: F401  (fixture)
 def exemples(tmp_path):
     path = tmp_path / "exemples.jsonl"
     path.write_text(
-        '{"id": "1", "question": "Explique la fonction verifier_token",'
-        ' "answer": "Elle compare le jeton reçu au secret attendu."}\n',
+        '{"id": "1", "question": "Explain the verifier_token function",'
+        ' "answer": "It compares the received token with the expected secret."}\n',
         encoding="utf-8",
     )
     return path
@@ -30,9 +30,9 @@ def exemples(tmp_path):
 def lancer(tmp_path, monkeypatch):
     def _lancer(entrees, *, embedder=None, **options):
         settings = {
-            "model": "faux-modele",
+            "model": "fake-model",
             "host": "http://localhost:11434",
-            "system_prompt": "Tu es CodeSensei.",
+            "system_prompt": "You are CodeSensai.",
             "session": None,
             "new_session": False,
             "data_dir": str(tmp_path / "donnees"),
@@ -43,12 +43,12 @@ def lancer(tmp_path, monkeypatch):
             "fewshot_min_score": 0.1,
         }
         settings.update(options)
-        embedder = embedder or FauxEmbedder()
+        embedder = embedder or FakeEmbedder()
         envoyes = []
 
         def faux_stream_chat(host, model, messages):
             envoyes.append([dict(m) for m in messages])
-            yield "D'accord."
+            yield "Got it."
 
         restantes = iter(entrees)
 
@@ -68,48 +68,48 @@ def lancer(tmp_path, monkeypatch):
     return _lancer
 
 
-def test_question_proche_recoit_lexemple(lancer, exemples):
+def test_close_question_gets_the_example(lancer, exemples):
     envoyes = lancer(
-        ["Comment marche la fonction verifier_token ?"],
+        ["How does the verifier_token function work?"],
         fewshot_examples=str(exemples),
     )
     question = envoyes[0][-1]["content"]
-    assert "Elle compare le jeton reçu au secret attendu" in question
-    assert "Comment marche la fonction verifier_token ?" in question
+    assert "It compares the received token with the expected secret" in question
+    assert "How does the verifier_token function work?" in question
 
 
-def test_question_sans_rapport_ne_recoit_rien(lancer, exemples):
+def test_unrelated_question_gets_nothing(lancer, exemples):
     envoyes = lancer(
-        ["Une question sans aucun rapport avec les exemples"],
+        ["A question unrelated to the examples"],
         fewshot_examples=str(exemples), fewshot_min_score=0.99,
     )
     question = envoyes[0][-1]["content"]
-    assert "Elle compare le jeton reçu au secret attendu" not in question
+    assert "It compares the received token with the expected secret" not in question
 
 
-def test_sans_fichier_configure_rien_n_est_ajoute(lancer):
-    envoyes = lancer(["Bonjour"])
-    assert envoyes[0][-1]["content"] == "Bonjour"
+def test_no_configured_file_adds_nothing(lancer):
+    envoyes = lancer(["Hello"])
+    assert envoyes[0][-1]["content"] == "Hello"
 
 
-def test_fichier_introuvable_n_empeche_pas_la_conversation(lancer, tmp_path, capsys):
-    envoyes = lancer(["Bonjour"], fewshot_examples=str(tmp_path / "absent.jsonl"))
-    assert envoyes[0][-1]["content"] == "Bonjour"
+def test_missing_file_does_not_prevent_conversation(lancer, tmp_path, capsys):
+    envoyes = lancer(["Hello"], fewshot_examples=str(tmp_path / "absent.jsonl"))
+    assert envoyes[0][-1]["content"] == "Hello"
     assert "few-shot" in capsys.readouterr().out
 
 
-def test_secret_dans_un_exemple_est_masque(lancer, tmp_path):
-    """Revue PR #96 : le fichier d'exemples peut venir d'une vraie session,
-    avec un secret dans la réponse enregistrée — il ne doit jamais partir en
-    clair au modèle, comme pour les passages du RAG (EV2)."""
+def test_secret_in_an_example_is_masked(lancer, tmp_path):
+    """PR #96 review: the examples file may come from a real session, with a
+    secret in the recorded answer — it must never reach the model in clear
+    text, as with RAG passages (EV2)."""
     path = tmp_path / "exemples_secret.jsonl"
     path.write_text(
-        '{"id": "1", "question": "Explique la fonction verifier_token",'
-        ' "answer": "Utilise ghp_abcdefghijklmnopqrstuvwxyz0123456789 pour authentifier."}\n',
+        '{"id": "1", "question": "Explain the verifier_token function",'
+        ' "answer": "Use ghp_abcdefghijklmnopqrstuvwxyz0123456789 to authenticate."}\n',
         encoding="utf-8",
     )
     envoyes = lancer(
-        ["Comment marche la fonction verifier_token ?"],
+        ["How does the verifier_token function work?"],
         fewshot_examples=str(path), fewshot_min_score=0.1,
     )
     question = envoyes[0][-1]["content"]
@@ -117,21 +117,21 @@ def test_secret_dans_un_exemple_est_masque(lancer, tmp_path):
     assert "REDACTED" in question
 
 
-def test_rag_et_fewshot_coexistent_dans_le_meme_message(lancer_avec_rag, exemples):  # noqa: F811
-    """Revue PR #96 : les deux blocs peuvent s'ajouter à la même question
-    sans se piétiner (ADR-0044)."""
+def test_rag_and_fewshot_coexist_in_the_same_message(lancer_avec_rag, exemples):  # noqa: F811
+    """PR #96 review: both blocks can be added to the same question without
+    stepping on each other (ADR-0044)."""
     envoyes, _ = lancer_avec_rag(
-        ["Comment marche la fonction verifier_token ?"],
+        ["How does the verifier_token function work?"],
         fewshot_examples=str(exemples), fewshot_min_score=0.1,
     )
     question = envoyes[0][-1]["content"]
-    assert "Elle compare le jeton reçu au secret attendu" in question  # le few-shot
-    assert "src/auth.py" in question  # le RAG
+    assert "It compares the received token with the expected secret" in question  # the few-shot
+    assert "src/auth.py" in question  # the RAG
 
 
-def test_perte_d_ollama_en_cours_de_session_desactive_le_fewshot(lancer, exemples, capsys):
-    """Revue PR #96 : si Ollama tombe après le chargement initial, le
-    few-shot se désactive pour la suite au lieu de planter le tour."""
+def test_losing_ollama_mid_session_disables_fewshot(lancer, exemples, capsys):
+    """PR #96 review: if Ollama goes down after the initial load, few-shot is
+    disabled from then on instead of crashing the turn."""
 
     class EmbedderInstable:
         def __init__(self):
@@ -140,12 +140,12 @@ def test_perte_d_ollama_en_cours_de_session_desactive_le_fewshot(lancer, exemple
         def __call__(self, textes):
             self.appels += 1
             if self.appels == 1:
-                return FauxEmbedder()(textes)  # le chargement initial réussit
-            raise EmbeddingError("injoignable")  # plus aucune question ne peut matcher
+                return FakeEmbedder()(textes)  # the initial load succeeds
+            raise EmbeddingError("unreachable")  # no question can match anymore
 
     envoyes = lancer(
-        ["première question", "deuxième question"],
+        ["first question", "second question"],
         fewshot_examples=str(exemples), embedder=EmbedderInstable(),
     )
-    assert len(envoyes) == 2, "la session continue malgré la panne"
-    assert "deuxième question" == envoyes[1][-1]["content"]
+    assert len(envoyes) == 2, "the session goes on despite the outage"
+    assert "second question" == envoyes[1][-1]["content"]

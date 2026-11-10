@@ -1,9 +1,9 @@
 """
-Teste le budget de tokens et la compression par résumé glissant — feature
+Tests the token budget and rolling-summary compression — feature
 [M2], ADR-0045.
 
-`stream_chat_messages` est remplacé par un faux résumeur : aucun appel
-réseau, le test contrôle exactement ce que le modèle « répond ».
+`stream_chat_messages` is replaced by a fake summarizer: no network call,
+the test controls exactly what the model "answers".
 """
 import pytest
 
@@ -22,167 +22,167 @@ def _turn(role, content):
     return {"role": role, "content": content}
 
 
-def test_count_tokens_approxime_quatre_caracteres_par_token():
+def test_count_tokens_approximates_four_chars_per_token():
     assert count_tokens("a" * 40) == 10
-    assert count_tokens("") == 1  # jamais zéro : un texte vide compte quand même
+    assert count_tokens("") == 1  # never zero: an empty text still counts
 
 
-def test_budget_from_num_ctx_retire_la_marge_de_reponse():
+def test_budget_from_num_ctx_removes_the_answer_margin():
     assert budget_from_num_ctx(8000) == 8000 - compression.RESPONSE_MARGIN_TOKENS
 
 
-def test_sous_le_budget_rien_ne_change():
-    messages = [_turn("system", "consigne"), _turn("user", "courte question")]
-    resultat, compresse = compress_messages("host", "modele", messages, max_tokens=1000)
+def test_under_budget_nothing_changes():
+    messages = [_turn("system", "instruction"), _turn("user", "short question")]
+    resultat, compresse = compress_messages("host", "model", messages, max_tokens=1000)
     assert resultat == messages
     assert compresse is False
 
 
-def test_peu_de_tours_meme_au_dessus_du_budget_ne_declenche_rien():
-    # keep_recent par défaut (6) >= le nombre de tours : rien à résumer.
+def test_few_turns_even_over_budget_trigger_nothing():
+    # default keep_recent (6) >= number of turns: nothing to summarize.
     messages = [_turn("user", "x" * 100), _turn("assistant", "y" * 100)]
-    resultat, compresse = compress_messages("host", "modele", messages, max_tokens=1)
+    resultat, compresse = compress_messages("host", "model", messages, max_tokens=1)
     assert resultat == messages
     assert compresse is False
 
 
-def test_au_dessus_du_budget_resume_les_plus_anciens(monkeypatch):
+def test_over_budget_summarizes_the_oldest(monkeypatch):
     def faux_stream(host, model, messages, options=None):
-        yield {"content": "résumé compact"}
+        yield {"content": "compact summary"}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
 
-    anciens = [_turn("user" if i % 2 == 0 else "assistant", f"tour {i}" * 20) for i in range(10)]
-    recents = [_turn("user", "question récente"), _turn("assistant", "réponse récente")]
-    messages = [_turn("system", "consigne"), *anciens, *recents]
+    anciens = [_turn("user" if i % 2 == 0 else "assistant", f"turn {i}" * 20) for i in range(10)]
+    recents = [_turn("user", "recent question"), _turn("assistant", "recent answer")]
+    messages = [_turn("system", "instruction"), *anciens, *recents]
 
     resultat, compresse = compress_messages(
-        "host", "modele", messages, max_tokens=1, keep_recent=2
+        "host", "model", messages, max_tokens=1, keep_recent=2
     )
     assert compresse is True
-    assert len(resultat) == 1 + len(recents)  # un seul message système, puis les tours récents
+    assert len(resultat) == 1 + len(recents)  # a single system message, then the recent turns
     assert resultat[0]["role"] == "system"
-    assert "consigne" in resultat[0]["content"]
-    assert "résumé compact" in resultat[0]["content"]
+    assert "instruction" in resultat[0]["content"]
+    assert "compact summary" in resultat[0]["content"]
     assert resultat[-2:] == recents
 
 
-def test_alternance_user_assistant_respectee_apres_compression(monkeypatch):
-    """Revue PR #97 : le résumé fond dans le système, jamais un second
-    message `user` d'affilée avec le premier tour gardé."""
+def test_user_assistant_alternation_kept_after_compression(monkeypatch):
+    """PR #97 review: the summary is merged into the system message, never a
+    second `user` message right before the first kept turn."""
     def faux_stream(host, model, messages, options=None):
-        yield {"content": "résumé"}
+        yield {"content": "summary"}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
 
     anciens = [_turn("user" if i % 2 == 0 else "assistant", "x" * 50) for i in range(8)]
-    recents = [_turn("user", "une question"), _turn("assistant", "une réponse")]
-    messages = [_turn("system", "consigne"), *anciens, *recents]
+    recents = [_turn("user", "a question"), _turn("assistant", "an answer")]
+    messages = [_turn("system", "instruction"), *anciens, *recents]
 
-    resultat, _ = compress_messages("host", "modele", messages, max_tokens=1, keep_recent=2)
+    resultat, _ = compress_messages("host", "model", messages, max_tokens=1, keep_recent=2)
     roles = [m["role"] for m in resultat]
     assert roles == ["system", "user", "assistant"]
 
 
-def test_un_seul_message_plus_gros_que_le_budget_part_sans_avertir(monkeypatch):
-    """Rien à résumer (un seul tour, en dessous de keep_recent) : le message
-    part tel quel, même hors budget — pas de boucle infinie ni d'erreur."""
+def test_single_message_bigger_than_budget_is_sent_silently(monkeypatch):
+    """Nothing to summarize (a single turn, below keep_recent): the message is
+    sent as is, even over budget — no infinite loop, no error."""
     def faux_stream(host, model, messages, options=None):
-        pytest.fail("ne doit jamais être appelé : rien à résumer")
+        pytest.fail("must never be called: nothing to summarize")
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
 
-    messages = [_turn("system", "consigne"), _turn("user", "x" * 1_000_000)]
+    messages = [_turn("system", "instruction"), _turn("user", "x" * 1_000_000)]
     resultat, compresse = compress_messages(
-        "host", "modele", messages, max_tokens=1, keep_recent=6
+        "host", "model", messages, max_tokens=1, keep_recent=6
     )
     assert resultat == messages
     assert compresse is False
 
 
-def test_les_tours_recents_restent_intacts_apres_compression(monkeypatch):
+def test_recent_turns_stay_intact_after_compression(monkeypatch):
     def faux_stream(host, model, messages, options=None):
-        yield {"content": "résumé"}
+        yield {"content": "summary"}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
 
     anciens = [_turn("user" if i % 2 == 0 else "assistant", "x" * 50) for i in range(8)]
-    recents = [_turn("user", "une vraie question précise")]
+    recents = [_turn("user", "a real, precise question")]
     messages = [*anciens, *recents]
 
-    resultat, _ = compress_messages("host", "modele", messages, max_tokens=1, keep_recent=1)
-    assert resultat[-1] == _turn("user", "une vraie question précise")
+    resultat, _ = compress_messages("host", "model", messages, max_tokens=1, keep_recent=1)
+    assert resultat[-1] == _turn("user", "a real, precise question")
 
 
-def test_ollama_indisponible_leve_compressionerror(monkeypatch):
+def test_ollama_unavailable_raises_compressionerror(monkeypatch):
     def faux_stream(host, model, messages, options=None):
-        raise OllamaError("injoignable")
+        raise OllamaError("unreachable")
         yield  # pragma: no cover
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
-    with pytest.raises(CompressionError, match="injoignable"):
-        summarize("host", "modele", [_turn("user", "a"), _turn("assistant", "b")])
+    with pytest.raises(CompressionError, match="unreachable"):
+        summarize("host", "model", [_turn("user", "a"), _turn("assistant", "b")])
 
 
-def test_reponse_vide_leve_compressionerror(monkeypatch):
+def test_empty_answer_raises_compressionerror(monkeypatch):
     def faux_stream(host, model, messages, options=None):
         yield {"content": ""}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
-    with pytest.raises(CompressionError, match="aucun résumé"):
-        summarize("host", "modele", [_turn("user", "a")])
+    with pytest.raises(CompressionError, match="no summary"):
+        summarize("host", "model", [_turn("user", "a")])
 
 
-def test_summarize_passe_num_ctx_en_options(monkeypatch):
+def test_summarize_passes_num_ctx_in_options(monkeypatch):
     recu = {}
 
     def faux_stream(host, model, messages, options=None):
         recu["options"] = options
-        yield {"content": "résumé"}
+        yield {"content": "summary"}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
-    summarize("host", "modele", [_turn("user", "a")], num_ctx=8192)
+    summarize("host", "model", [_turn("user", "a")], num_ctx=8192)
     assert recu["options"] == {"num_ctx": 8192}
 
 
-def test_summarize_borne_lentree_a_num_ctx(monkeypatch):
-    """Revue PR #97 : résumer des tours eux-mêmes trop gros pour num_ctx ne
-    doit pas se faire tronquer en silence par Ollama — on les borne nous-mêmes."""
+def test_summarize_caps_input_to_num_ctx(monkeypatch):
+    """PR #97 review: summarizing turns that are themselves too big for num_ctx
+    must not be silently truncated by Ollama — we cap them ourselves."""
     recu = {}
 
     def faux_stream(host, model, messages, options=None):
         recu["transcript"] = messages[-1]["content"]
-        yield {"content": "résumé"}
+        yield {"content": "summary"}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
     enormes_tours = [_turn("user", "x" * 100_000)]
-    summarize("host", "modele", enormes_tours, num_ctx=1000)
+    summarize("host", "model", enormes_tours, num_ctx=1000)
     limite = budget_from_num_ctx(1000) * compression.CHARS_PER_TOKEN
-    assert len(recu["transcript"]) <= limite + len("[…début tronqué, trop ancien "
-                                                     "pour entrer dans le contexte…]\n")
+    assert len(recu["transcript"]) <= limite + len("[…beginning truncated, too old "
+                                                     "to fit in the context…]\n")
 
 
-def test_resolve_budget_prefere_le_reglage_explicite():
+def test_resolve_budget_prefers_the_explicit_setting():
     assert compression.resolve_budget(100, 4096) == 100
 
 
-def test_resolve_budget_derive_de_num_ctx_sinon():
+def test_resolve_budget_derives_from_num_ctx_otherwise():
     assert compression.resolve_budget(None, 4096) == budget_from_num_ctx(4096)
     defaut = budget_from_num_ctx(compression.DEFAULT_NUM_CTX)
     assert compression.resolve_budget(None, None) == defaut
 
 
-def test_compress_messages_sans_budget_explicite_suit_num_ctx(monkeypatch):
-    """Un seul défaut (revue PR #97) : sans `max_tokens`, la limite est celle de
-    `num_ctx` moins la marge — plus de constante 8000 qui contredit le reste."""
+def test_compress_messages_without_explicit_budget_follows_num_ctx(monkeypatch):
+    """A single default (PR #97 review): without `max_tokens`, the limit is
+    `num_ctx` minus the margin — no more 8000 constant contradicting the rest."""
     def faux_stream(host, model, messages, options=None):
-        yield {"content": "résumé"}
+        yield {"content": "summary"}
 
     monkeypatch.setattr(compression, "stream_chat_messages", faux_stream)
-    # num_ctx minuscule : le budget dérivé vaut 1 token, tout dépasse.
+    # tiny num_ctx: the derived budget is 1 token, everything overflows.
     messages = [_turn("user" if i % 2 == 0 else "assistant", "x" * 400) for i in range(10)]
-    _, compresse = compress_messages("host", "modele", messages, keep_recent=2, num_ctx=1)
+    _, compresse = compress_messages("host", "model", messages, keep_recent=2, num_ctx=1)
     assert compresse is True
-    # num_ctx large : le même historique tient largement.
-    _, compresse = compress_messages("host", "modele", messages, keep_recent=2, num_ctx=32768)
+    # large num_ctx: the same history fits easily.
+    _, compresse = compress_messages("host", "model", messages, keep_recent=2, num_ctx=32768)
     assert compresse is False

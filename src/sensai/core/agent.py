@@ -1,20 +1,20 @@
 """
-Boucle de raisonnement de l'agent — feature [A1] Reasoning Loops (ReAct).
+Agent reasoning loop — feature [A1] Reasoning Loops (ReAct).
 
-Le cycle Thought -> Action -> Observation s'appuie sur le tool calling natif
-d'Ollama (ADR-0003) : la liste des outils part dans le champ `tools` de la
-requête, et la décision d'agir se lit dans `message.tool_calls`, déjà
-structuré par Ollama. Le texte écrit par le modèle n'est JAMAIS interprété
-comme une commande : il est affiché, pas exécuté.
+The Thought -> Action -> Observation cycle relies on Ollama's native tool
+calling (ADR-0003): the tool list goes in the request's `tools` field, and the
+decision to act is read from `message.tool_calls`, already structured by
+Ollama. Text written by the model is NEVER interpreted as a command: it is
+displayed, not executed.
 
-Un tour émet des ÉVÉNEMENTS (core/events.py), pas du texte : voir ADR-0005
-et docs/architecture/web/api-contract.md.
+A turn emits EVENTS (core/events.py), not text: see ADR-0005 and
+docs/architecture/web/api-contract.md.
 
-L'agent n'exécute jamais un outil lui-même : il passe par la passerelle
-d'outils du Lot B (execution/gateway.py, ADR-0006), qui applique permissions,
-validation, garde-fous et confirmation avant action risquée. Ce module ne
-l'importe pas — c'est l'interface qui la construit et la lui donne — pour
-que le cœur ne dépende pas du Lot B.
+The agent never runs a tool itself: it goes through Workstream B's tool
+gateway (execution/gateway.py, ADR-0006), which applies permissions,
+validation, guardrails and confirmation before risky actions. This module does
+not import it — the interface builds it and hands it over — so that the core
+does not depend on Workstream B.
 """
 from __future__ import annotations
 
@@ -29,31 +29,31 @@ from .events import Done, Error, Event, Thought, Token, ToolCall, ToolReturn
 from .ollama_client import OllamaError, stream_chat_messages
 from .tools import ToolRegistry, ToolResult
 
-# Appel d'outil écrit dans le texte au lieu du champ `tool_calls` : qwen3-coder
-# oublie parfois la balise <tool_call> d'ouverture, et Ollama ne reconnaît
-# alors pas l'appel. Mesuré le 2026-10-17 : environ 3 réponses sur 10 sur une
-# demande comme « retiens que… », avec ou sans notre prompt. Si la réponse
-# n'est que des appels, on les lit (ADR-0031) ; sinon rien n'est exécuté et on
-# redemande la même chose sans garder la réponse ratée : la lui renvoyer
-# l'incite à la recopier (constaté pendant l'essai).
+# Tool call written in the text instead of the `tool_calls` field: qwen3-coder
+# sometimes forgets the opening <tool_call> tag, and Ollama then does not
+# recognize the call. Measured on 2026-10-17: about 3 replies in 10 on a request
+# like "remember that…", with or without our prompt. If the reply is nothing
+# but calls, we read them (ADR-0031); otherwise nothing runs and we ask again
+# without keeping the failed reply: sending it back makes the model copy it
+# (observed during the trial run).
 TEXTUAL_TOOL_CALL = re.compile(r"<function=[A-Za-z_][\w.-]*>|<tool_call>")
 MAX_TEXTUAL_CALL_RETRIES = 2
 _STRAY_TAGS = re.compile(r"</?tool_call>")
-# ADR-0031 : quand la réponse n'est QUE des appels au format natif de
-# qwen3-coder, on les lit et ils suivent le chemin normal (passerelle,
-# garde-fous, confirmation). Un appel mêlé à du texte n'est jamais lu.
+# ADR-0031: when the reply is ONLY calls in qwen3-coder's native format,
+# we read them and they follow the normal path (gateway, guardrails,
+# confirmation). A call mixed with text is never read.
 _CALL = re.compile(
     r"\s*(?:<tool_call>\s*)?<function=([A-Za-z_][\w.-]*)>(.*?)</function>\s*(?:</tool_call>)?\s*",
     re.S,
 )
 _PARAM = re.compile(r"\s*<parameter=([A-Za-z_][\w.-]*)>\n?(.*?)\n?</parameter>\s*", re.S)
-MAX_ITERATIONS = 6  # garde-fou anti-boucle infinie : nombre maximal d'appels au modèle par tour
+MAX_ITERATIONS = 6  # anti-infinite-loop guardrail: maximum number of model calls per turn
 
 
 
 class ToolCaller(Protocol):
-    """Ce dont l'agent a besoin pour utiliser des outils : en pratique la
-    ToolGateway (execution/gateway.py), jamais le ToolRegistry brut."""
+    """What the agent needs to use tools: in practice the ToolGateway
+    (execution/gateway.py), never the raw ToolRegistry."""
 
     def describe_all(self) -> list[dict[str, Any]]: ...
 
@@ -61,10 +61,10 @@ class ToolCaller(Protocol):
 
 
 def ollama_tools(tools: ToolCaller) -> list[dict[str, Any]]:
-    """Met les descriptions des outils au format du champ `tools` d'Ollama.
+    """Put tool descriptions in the format of Ollama's `tools` field.
 
-    L'enveloppe {"type": "function", ...} est un détail de l'API Ollama :
-    elle reste ici, pour que le contrat Tool (ADR-0002) n'en dépende pas.
+    The {"type": "function", ...} envelope is an Ollama API detail: it stays
+    here, so the Tool contract (ADR-0002) does not depend on it.
     """
     return [{"type": "function", "function": d} for d in tools.describe_all()]
 
@@ -78,36 +78,34 @@ def run_agent_turn(
     max_iterations: int | None = None,
 ) -> Iterator[Event]:
     """
-    Joue un tour d'agent et émet ce qui s'y passe, au fil de l'eau.
+    Play one agent turn and emit what happens, as it happens.
 
-    À chaque itération : on appelle le modèle ; s'il demande des outils, on
-    les exécute, on lui renvoie les résultats et on recommence ; sinon sa
-    réponse est la réponse finale. Au-delà de `max_iterations` appels au modèle
-    (MAX_ITERATIONS par défaut), le tour s'arrête avec Done(reason="max_iterations").
+    On each iteration: call the model; if it asks for tools, run them, send
+    the results back and loop; otherwise its reply is the final answer. Beyond
+    `max_iterations` model calls (MAX_ITERATIONS by default), the turn stops
+    with Done(reason="max_iterations").
 
-    `messages` n'est pas modifié : les échanges internes du tour (appels
-    d'outils, résultats) restent dans une copie. C'est l'appelant qui décide
-    de ce qu'il garde dans son historique.
+    `messages` is not modified: the turn's internal exchanges (tool calls,
+    results) stay in a copy. The caller decides what it keeps in its history.
 
-    `tools` est la passerelle d'outils. La confirmation avant action risquée
-    est branchée dessus par l'interface, pas passée ici.
+    `tools` is the tool gateway. Confirmation before risky actions is wired
+    onto it by the interface, not passed here.
 
-    `num_ctx` (M2, ADR-0045) : sans lui, Ollama tronque l'historique en
-    silence à sa propre limite par défaut, avant même que le budget suivi
-    par cli.py ait eu l'occasion de résumer quoi que ce soit. `None` laisse
-    Ollama décider (compatibilité : la plupart des appelants ne le passent
-    pas).
+    `num_ctx` (M2, ADR-0045): without it, Ollama silently truncates the
+    history at its own default limit, before the budget tracked by cli.py
+    has had a chance to summarize anything. `None` lets Ollama decide
+    (compatibility: most callers do not pass it).
     """
     options = {"num_ctx": num_ctx} if num_ctx else None
-    # Nombre maximal d'appels au modèle par tour : réglable (`max_iterations` dans
-    # config.json, --max-iterations), MAX_ITERATIONS par défaut.
+    # Maximum model calls per turn: configurable (`max_iterations` in
+    # config.json, --max-iterations), MAX_ITERATIONS by default.
     limit = max_iterations or MAX_ITERATIONS
-    # Le registre brut a les mêmes méthodes que la passerelle : sans ce
-    # refus explicite, le brancher par erreur exécuterait les outils sans
-    # permissions, garde-fous ni confirmation, et sans que rien ne casse.
+    # The raw registry has the same methods as the gateway: without this
+    # explicit refusal, wiring it by mistake would run tools without
+    # permissions, guardrails or confirmation, and nothing would break.
     if isinstance(tools, ToolRegistry):
         raise TypeError(
-            "run_agent_turn attend la ToolGateway (ADR-0006), pas le ToolRegistry brut."
+            "run_agent_turn expects the ToolGateway (ADR-0006), not the raw ToolRegistry."
         )
     messages = list(messages)
     offered = ollama_tools(tools)
@@ -118,8 +116,8 @@ def run_agent_turn(
         content: list[str] = []
         thinking: list[str] = []
         tool_calls: list[dict[str, Any]] = []
-        # EV2 : la réponse affichée et enregistrée passe par filter_output, ligne
-        # par ligne ; le modèle, lui, garde son propre texte dans `messages`.
+        # EV2: the displayed and stored reply goes through filter_output, line
+        # by line; the model keeps its own text in `messages`.
         redactor = StreamRedactor()
 
         try:
@@ -128,14 +126,14 @@ def run_agent_turn(
                 if message.get("thinking"):
                     thinking.append(message["thinking"])
                 if message.get("content"):
-                    # Le raisonnement précède la réponse : on le livre d'un
-                    # bloc dès que la réponse commence, plutôt que mot à mot
-                    # — un Thought par mot serait illisible dans les deux
+                    # Reasoning comes before the reply: deliver it as one
+                    # block as soon as the reply starts, rather than word by
+                    # word — one Thought per word would be unreadable in both
                     # interfaces.
                     yield from _flush_thought(thinking)
                     content.append(message["content"])
-                    # Émis même vide : chaque morceau reste un point où le tour peut
-                    # être interrompu (Échap, « Arrêter »), sans attendre la fin de ligne.
+                    # Emitted even when empty: each chunk stays a point where the turn
+                    # can be interrupted (Esc, "Stop"), without waiting for end of line.
                     yield Token(text=redactor.feed(message["content"]))
                 tool_calls.extend(message.get("tool_calls") or [])
         except OllamaError as e:
@@ -154,32 +152,32 @@ def run_agent_turn(
                 yield Done()
                 return
             if "<function=" not in reply and _STRAY_TAGS.sub("", reply).strip():
-                # Une balise <tool_call> vide après une vraie réponse : rien à exécuter.
-                # Essai réel du 2026-11-01 : relancé trois fois, le tour finissait en
-                # échec alors que la réponse (et l'outil appelé avant) étaient bons.
+                # An empty <tool_call> tag after a real reply: nothing to run.
+                # Real trial run on 2026-11-01: retried three times, the turn ended in
+                # failure although the reply (and the tool called before) were fine.
                 yield Done()
                 return
             tool_calls = _read_textual_calls(reply, schemas)
             if tool_calls:
-                yield Thought(text="Appel d'outil lu dans le texte (non reconnu par Ollama).")
+                yield Thought(text="Tool call read from the text (not recognized by Ollama).")
                 content = []
         if not tool_calls:
             if textual_retries >= MAX_TEXTUAL_CALL_RETRIES or iteration == limit - 1:
-                # Toujours illisible après les relances : on arrête plutôt que de laisser le modèle
-                # affirmer une action qui n'a pas eu lieu.
+                # Still unreadable after retries: stop rather than let the model
+                # claim an action that did not happen.
                 yield Error(message=(
-                    "Le modèle a écrit un appel d'outil dans le texte au lieu de "
-                    "l'appeler : il n'a pas été exécuté. Reformule la demande."
+                    "The model wrote a tool call in its text instead of "
+                    "calling it: it was not executed. Rephrase the request."
                 ))
                 yield Done(reason="error")
                 return
             textual_retries += 1
-            yield Thought(text="Appel d'outil écrit en texte, non exécuté : nouvel essai.")
+            yield Thought(text="Tool call written as text, not executed: retrying.")
             continue
 
-        # Ollama a besoin de revoir sa propre demande d'outils avant les
-        # résultats : sans ce message, les réponses `role: "tool"` qui
-        # suivent ne se rattachent à rien.
+        # Ollama needs to see its own tool request again before the results:
+        # without this message, the following `role: "tool"` replies are not
+        # attached to anything.
         messages.append(
             {"role": "assistant", "content": "".join(content), "tool_calls": tool_calls}
         )
@@ -187,25 +185,24 @@ def run_agent_turn(
         for index, call in enumerate(tool_calls):
             function = call.get("function") or {}
             name = function.get("name", "")
-            # Ollama fournit un id ; s'il manque, on en fabrique un unique
-            # dans le tour — l'interface en a besoin pour relier l'appel à
-            # son résultat.
+            # Ollama provides an id; if it is missing, make one unique within
+            # the turn — the interface needs it to link the call to its result.
             call_id = call.get("id") or f"{iteration}-{index}"
             arguments, problem = _parse_arguments(function.get("arguments"))
 
             yield ToolCall(id=call_id, name=name, arguments=arguments)
             if problem:
-                # Revient au modèle comme une observation, pour qu'il corrige
-                # son appel : ce n'est pas une erreur du tour.
+                # Goes back to the model as an observation, so it fixes its
+                # call: this is not a turn error.
                 result = ToolResult(ok=False, content=problem)
             else:
                 result = tools.call(name, **arguments)
             yield ToolReturn(id=call_id, name=name, ok=result.ok, content=result.content)
 
-            # Le modèle reçoit le résultat enfermé dans <tool_output trust="untrusted">
-            # (EV4-OUT-14) : une page web ou un fichier lu peut contenir des
-            # instructions, et le prompt système (date_block) dit de ne pas les suivre.
-            # L'interface, elle, affiche le résultat tel quel (ToolReturn ci-dessus).
+            # The model receives the result wrapped in <tool_output trust="untrusted">
+            # (EV4-OUT-14): a web page or a file read may contain instructions,
+            # and the system prompt (date_block) says not to follow them.
+            # The interface displays the result as is (ToolReturn above).
             messages.append(
                 {
                     "role": "tool",
@@ -219,10 +216,10 @@ def run_agent_turn(
 
 
 def _read_textual_calls(reply: str, schemas: dict[str, dict]) -> list[dict[str, Any]]:
-    """Appels écrits au format natif de qwen3-coder, si la réponse n'est QUE ça.
+    """Calls written in qwen3-coder's native format, if the reply is ONLY that.
 
-    Renvoie [] si la réponse contient autre chose, si un appel est mal formé
-    ou vise un outil non proposé : rien n'est alors exécuté (ADR-0031).
+    Returns [] if the reply contains anything else, if a call is malformed or
+    targets a tool that was not offered: nothing runs then (ADR-0031).
     """
     calls, position = [], 0
     for match in _CALL.finditer(reply):
@@ -245,8 +242,8 @@ def _read_textual_calls(reply: str, schemas: dict[str, dict]) -> list[dict[str, 
 
 
 def _typed(raw: str, schema: dict, key: str) -> Any:
-    """Convertit une valeur lue dans le texte selon le type attendu par l'outil ;
-    en cas de doute, la laisse en texte (la passerelle validera)."""
+    """Convert a value read from the text to the type the tool expects;
+    when in doubt, leave it as text (the gateway will validate)."""
     kind = ((schema.get("properties") or {}).get(key) or {}).get("type")
     try:
         if kind == "integer":
@@ -261,10 +258,10 @@ def _typed(raw: str, schema: dict, key: str) -> Any:
 
 
 def _flush_thought(thinking: list[str]) -> Iterator[Thought]:
-    """Émet le raisonnement accumulé en un seul Thought, puis vide le tampon.
+    """Emit the accumulated reasoning as a single Thought, then clear the buffer.
 
-    Filtré comme la réponse (EV2, ADR-0058) : il est affiché et enregistré lui aussi.
-    Livré d'un bloc, il peut l'être en entier, sans attendre des fins de ligne."""
+    Filtered like the reply (EV2, ADR-0058): it is displayed and stored too.
+    Delivered as one block, it can be filtered whole, without waiting for line ends."""
     text = filter_output("".join(thinking).strip())
     thinking.clear()
     if text:
@@ -272,11 +269,11 @@ def _flush_thought(thinking: list[str]) -> Iterator[Thought]:
 
 
 def _parse_arguments(raw: Any) -> tuple[dict[str, Any], str | None]:
-    """Valide les arguments d'un appel d'outil.
+    """Validate a tool call's arguments.
 
-    Ollama les renvoie normalement déjà désérialisés, mais c'est le modèle
-    qui les écrit : on ne leur fait pas confiance. Retourne
-    (arguments, problème) — un problème non nul empêche l'exécution.
+    Ollama normally returns them already deserialized, but the model writes
+    them: they are not trusted. Returns (arguments, problem) — a non-null
+    problem prevents execution.
     """
     if raw is None:
         return {}, None
@@ -284,7 +281,7 @@ def _parse_arguments(raw: Any) -> tuple[dict[str, Any], str | None]:
         try:
             raw = json.loads(raw)
         except json.JSONDecodeError:
-            return {}, "Arguments illisibles : ce n'est pas du JSON valide."
+            return {}, "Unreadable arguments: not valid JSON."
     if not isinstance(raw, dict):
-        return {}, "Arguments invalides : un objet JSON était attendu."
+        return {}, "Invalid arguments: a JSON object was expected."
     return raw, None

@@ -1,12 +1,12 @@
 # A1 — Reasoning loop (ReAct)
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: read `stats.py` and explain `moyenne`: qwen3:8b on the laptop CPU ✅ (8 min 26); qwen3-coder:30b on a GPU ✅ (file read and right answer; the first run was marked failed by the script's check, then 3 of 3 once fixed, 5–7 s).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: read `stats.py` and explain `moyenne`: qwen3:8b on the laptop CPU ✅ (8 min 26); qwen3-coder:30b on a GPU ✅ (file read and right answer; the first run was marked failed by the script's check, then 3 of 3 once fixed, 5–7 s).
 
 ## User Story 1: Debug a failing test by exploring the code
-> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who took over an unfamiliar code base**, I want the agent to **explore the project, read the code and the error traces to find the root cause**, so that **I can fix the bug without reading every file by hand**.
 
@@ -18,7 +18,7 @@ As **Camille, the developer who took over an unfamiliar code base**, I want the 
 - The answer includes the cause of the bug and a suggested fix
 
 ## User Story 2: Generate code from a vague requirement
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, handed a vague requirement by her lead**, I want the agent to **clarify an imprecise requirement by asking questions, look for similar examples, then generate the code**, so that **I can start developing without a clarification meeting**.
 
@@ -33,7 +33,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 ---
 
 ## US-A1-3 — Choose how long the agent may search before it stops
-> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, the developer whose agent sometimes needs more than a few steps to find a bug,
@@ -42,11 +42,11 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 
 **Acceptance criteria:**
 - `max_iterations` in `config.json` (or `--max-iterations`) sets the limit; the default is 6; a value outside 1 to 50 is refused at start-up.
-- When the limit is reached without a final answer, the turn ends with `max_iterations` and the CLI says "[Arrêt] Nombre maximal d'étapes atteint sans réponse finale." instead of showing an empty answer.
+- When the limit is reached without a final answer, the turn ends with `max_iterations` and the CLI says "[Stopped] Maximum number of steps reached without a final answer." instead of showing an empty answer.
 - The same setting applies in `sensai-web` and in scheduled tasks.
 
 ## US-A1-4 — A tool call written as text is not silently lost
-> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
 **As** Camille, whose local model sometimes writes its tool call as text instead of using Ollama's `tool_calls` field,
@@ -67,7 +67,7 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| Story 1 Debug a failing test | ◐ | `core/agent.py` (`run_agent_turn`) | `tests/core/test_agent.py` (`test_un_appel_d_outil_puis_la_reponse_finale`, `test_le_resultat_de_l_outil_est_renvoye_au_modele`, `test_la_boucle_s_arrete_a_max_iterations`) | The loop criteria (tools without human action, result sent back, bounded stop) are proved. "Tries another query" and "the answer gives the cause and a fix" depend on the model: no automated test |
+| Story 1 Debug a failing test | ◐ | `core/agent.py` (`run_agent_turn`) | `tests/core/test_agent.py` (`test_one_tool_call_then_the_final_answer`, `test_the_tool_result_is_sent_back_to_the_model`, `test_the_loop_stops_at_max_iterations`) | The loop criteria (tools without human action, result sent back, bounded stop) are proved. "Tries another query" and "the answer gives the cause and a fix" depend on the model: no automated test |
 | Story 2 Code from a vague requirement | ◐ | `tools/ask_user_tool.py`, `tools/rag_tool.py` | `tests/tools/test_ask_user_tool.py`, `tests/tools/test_rag_tool.py` | The tools exist (ask a question, search the project); following the project's conventions and proposing tests is model behaviour, not proved by a test |
-| US-A1-3 Step limit (new) | ✅ | `config.py` (`max_iterations`), `core/agent.py`, `cli.py`, `web/runtime.py` | `tests/core/test_agent.py::test_le_nombre_d_etapes_se_regle`, `tests/core/test_events.py::test_un_arret_sur_max_iterations_est_signale`, `tests/test_config.py::test_parametres_de_generation_par_defaut_et_surcharges`, `tests/test_config.py::test_lecteurs_pour_schedule_et_eval`, `tests/scheduling/test_runner.py::test_max_iterations_is_recorded` |  |
-| US-A1-4 Text tool calls (new) | ✅ | `core/agent.py` (`_read_textual_calls`) | `tests/core/test_agent.py` (`test_un_appel_seul_dans_la_reponse_est_lu_et_passe_par_la_confirmation`, `test_un_outil_non_propose_n_est_jamais_execute`, `test_un_appel_au_milieu_d_un_texte_n_est_pas_execute`, `test_le_modele_est_relance_s_il_melange_texte_et_appel`) |  |
+| US-A1-3 Step limit (new) | ✅ | `config.py` (`max_iterations`), `core/agent.py`, `cli.py`, `web/runtime.py` | `tests/core/test_agent.py::test_the_step_count_is_configurable`, `tests/core/test_events.py::test_a_stop_at_max_iterations_is_reported`, `tests/test_config.py::test_generation_parameters_defaults_and_overrides`, `tests/test_config.py::test_readers_for_schedule_and_eval`, `tests/scheduling/test_runner.py::test_max_iterations_is_recorded` |  |
+| US-A1-4 Text tool calls (new) | ✅ | `core/agent.py` (`_read_textual_calls`) | `tests/core/test_agent.py` (`test_a_lone_call_in_the_answer_is_parsed_and_goes_through_confirmation`, `test_a_tool_not_offered_is_never_executed`, `test_a_call_in_the_middle_of_text_is_not_executed`, `test_the_model_is_retried_if_it_mixes_text_and_call`) |  |

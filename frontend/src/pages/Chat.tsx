@@ -21,12 +21,12 @@ function readPanel(): boolean {
 }
 
 /**
- * La conversation prend toute la largeur utile ; le panneau Artefact / Sources est replié par défaut
- * et s'ouvre à la demande, pour ne pas tout montrer d'un coup (frictions du 2026-10-31).
+ * The conversation takes the full usable width; the Artifact / Sources panel is collapsed by default
+ * and opens on demand, so as not to show everything at once (friction notes from 2026-10-31).
  */
 export default function Chat() {
   const { state, listPersonas, setPromptTrial } = useEngine()
-  // Serveur réel : le sélecteur n'apparaît que si sensai-web expose les personas (A5, ADR-0054).
+  // Real server: the switcher only appears if sensai-web exposes the personas (A5, ADR-0054).
   const live = useConnection()?.mode === 'live'
   const showPersonas = !live || Boolean(listPersonas)
   const [panel, setPanel] = useState(readPanel)
@@ -40,7 +40,7 @@ export default function Chat() {
       try {
         localStorage.setItem(PANEL_KEY, open ? 'closed' : 'open')
       } catch {
-        /* stockage indisponible : le choix ne sera pas retenu */
+        /* storage unavailable: the choice will not be remembered */
       }
       return !open
     })
@@ -53,15 +53,15 @@ export default function Chat() {
           {showPersonas && <PersonaSwitcher persona={state.persona} />}
           {state.promptTrial && (
             <span data-testid="prompt-trial-badge" className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-bold">
-              prompt system {state.promptTrial} (essai)
+              system prompt {state.promptTrial} (trial run)
               {setPromptTrial && (
                 <button
                   type="button"
                   onClick={() => void setPromptTrial(null)}
-                  aria-label="Revenir à la version active du prompt"
+                  aria-label="Back to the active prompt version"
                   className="rounded-full border border-line px-2 py-0.5 font-semibold hover:border-accent"
                 >
-                  revenir à l&apos;active
+                  back to active
                 </button>
               )}
             </span>
@@ -71,10 +71,10 @@ export default function Chat() {
             type="button"
             onClick={toggle}
             aria-pressed={panel}
-            aria-label={panel ? 'Masquer le panneau Artefact et Sources' : 'Afficher le panneau Artefact et Sources'}
+            aria-label={panel ? 'Hide the Artifact and Sources panel' : 'Show the Artifact and Sources panel'}
             className="relative rounded-full border border-line px-3 py-1.5 text-sm font-medium text-muted transition-colors duration-200 hover:border-accent hover:text-ink"
           >
-            {panel ? 'Masquer le panneau' : 'Artefact · Sources'}
+            {panel ? 'Hide the panel' : 'Artifact · Sources'}
             {!panel && hasPanelContent && (
               <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent" aria-hidden="true" />
             )}
@@ -96,7 +96,7 @@ export default function Chat() {
         </div>
       </div>
       {panel && (
-        // Un seul panneau : tiroir par-dessus la conversation sur petit écran, colonne à droite sur grand écran.
+        // A single panel: a drawer over the conversation on small screens, a right-hand column on large screens.
         <div
           className="fixed inset-0 z-50 flex justify-end bg-black/50 lg:static lg:z-auto lg:block lg:w-[24rem] lg:shrink-0 lg:bg-transparent lg:pt-3"
           onClick={toggle}

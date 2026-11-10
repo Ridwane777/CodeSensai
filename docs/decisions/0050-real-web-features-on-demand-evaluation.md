@@ -2,8 +2,8 @@
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D — to be confirmed by the team
-- **Lot concerned**: D (`src/sensai/web/runtime.py`, `src/sensai/web/server.py`, `frontend/src/engine/wire.ts`, `frontend/src/pages/Quality.tsx`, `frontend/src/pages/Planning.tsx`)
+- **Deciders**: Ridwane (Workstream C), on behalf of Workstream D — to be confirmed by the team
+- **Workstream**: D (`src/sensai/web/runtime.py`, `src/sensai/web/server.py`, `frontend/src/engine/wire.ts`, `frontend/src/pages/Quality.tsx`, `frontend/src/pages/Planning.tsx`)
 
 ## Context
 
@@ -20,7 +20,7 @@ running background jobs inside the web server.
 
 | Option | Pros | Cons |
 | --- | --- | --- |
-| **New SSE events in the turn stream** (chosen): `usage`, `compression`, `artifact_patch`, `subagent_step` | Same channel as the other events ([ADR-0022](0022-transport-sse-et-modele-d-execution.md)); shown live; no extra request | More event types to keep in sync between `runtime.py` and `wire.ts` |
+| **New SSE events in the turn stream** (chosen): `usage`, `compression`, `artifact_patch`, `subagent_step` | Same channel as the other events ([ADR-0022](0022-sse-transport-and-execution-model.md)); shown live; no extra request | More event types to keep in sync between `runtime.py` and `wire.ts` |
 | Polling routes (`GET /usage`, `GET /state` after each turn) | Simple server side | Not live; extra requests; sub-agent steps lost between two polls |
 
 **Evaluation of an answer (EV1)**
@@ -28,7 +28,7 @@ running background jobs inside the web server.
 | Option | Pros | Cons |
 | --- | --- | --- |
 | Judge every turn automatically | Scores always there | One more model call per answer: roughly doubles the answer time with a local model |
-| **On demand: "Évaluer la dernière réponse"** (chosen), `POST /api/sessions/{id}/evaluate` | Costs nothing until asked; same judge as `sensai-eval` | The user must click; one model call per evaluation |
+| **On demand: "Evaluate the latest answer"** (chosen), `POST /api/sessions/{id}/evaluate` | Costs nothing until asked; same judge as `sensai-eval` | The user must click; one model call per evaluation |
 | Terminal only (`sensai-eval`) | No web code | The Quality page stays demo data |
 
 **Scheduled tasks (X5)**

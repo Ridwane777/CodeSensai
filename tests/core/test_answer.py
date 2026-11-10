@@ -1,6 +1,6 @@
-"""Le texte enregistré d'une réponse.
+"""The stored text of an answer.
 
-Essai réel du 2026-11-01 : morceaux collés, réponse réécrite.
+Real trial run on 2026-11-01: chunks glued together, answer rewritten.
 """
 from sensai.core.answer import AnswerBuilder
 
@@ -15,43 +15,43 @@ def build(*parts):
     return b.text()
 
 
-def test_un_seul_morceau_reste_tel_quel():
+def test_a_single_chunk_is_kept_as_is():
     assert build("Bon", "jour.") == "Bonjour."
 
 
-def test_les_morceaux_separes_par_un_outil_deviennent_des_paragraphes():
-    assert build("Je lis le fichier.", None, "Le fichier contient deux lignes.") == \
-        "Je lis le fichier.\n\nLe fichier contient deux lignes."
+def test_chunks_separated_by_a_tool_become_paragraphs():
+    assert build("I am reading the file.", None, "The file contains two lines.") == \
+        "I am reading the file.\n\nThe file contains two lines."
 
 
-def test_une_reponse_reecrite_apres_un_outil_n_apparait_qu_une_fois():
-    answer = "Le fichier deploiement.txt indique la région eu-west-3."
-    assert build(answer, None, answer + " Aucun fait enregistré.") == \
-        answer + " Aucun fait enregistré."
+def test_an_answer_rewritten_after_a_tool_appears_only_once():
+    answer = "The file deploiement.txt states the region eu-west-3."
+    assert build(answer, None, answer + " No fact stored.") == \
+        answer + " No fact stored."
 
 
-def test_un_debut_court_identique_n_est_pas_pris_pour_une_repetition():
-    assert build("D'accord.", None, "D'accord. Voici la suite.") == \
-        "D'accord.\n\nD'accord. Voici la suite."
+def test_a_short_identical_opening_is_not_taken_for_a_repeat():
+    assert build("Okay.", None, "Okay. Here is the rest.") == \
+        "Okay.\n\nOkay. Here is the rest."
 
 
-def test_rien_que_des_outils_donne_une_reponse_vide():
+def test_only_tools_gives_an_empty_answer():
     assert build(None, None) == ""
 
 
-def test_une_balise_tool_call_vide_est_retiree_du_texte_enregistre():
-    assert build("La tâche est planifiée.<tool_call>") == "La tâche est planifiée."
+def test_an_empty_tool_call_tag_is_removed_from_the_stored_text():
+    assert build("The task is scheduled.<tool_call>") == "The task is scheduled."
 
 
-def test_une_reponse_reformulee_apres_un_outil_n_apparait_qu_une_fois():
-    """Essai réel du 2026-11-01 après-midi : même phrase, un verbe changé."""
+def test_an_answer_rephrased_after_a_tool_appears_only_once():
+    """Real trial run on the afternoon of 2026-11-01: same sentence, one verb changed."""
     first = "The function `moyenne` is located in the file `stats.py`, starting at line 4."
     second = "The function `moyenne` is defined in the file `stats.py`, starting at line 4."
     assert build(first, None, second) == second
 
 
-def test_une_annonce_avant_l_outil_n_est_pas_prise_pour_une_reformulation():
-    assert build("Je vais lire le fichier stats.py pour vérifier.", None,
-                 "La fonction moyenne divise la somme des notes par leur nombre.") == \
-        "Je vais lire le fichier stats.py pour vérifier.\n\n" \
-        "La fonction moyenne divise la somme des notes par leur nombre."
+def test_an_announcement_before_the_tool_is_not_taken_for_a_rephrasing():
+    assert build("I will read the file stats.py to check.", None,
+                 "The function moyenne divides the sum of the values by their count.") == \
+        "I will read the file stats.py to check.\n\n" \
+        "The function moyenne divides the sum of the values by their count."

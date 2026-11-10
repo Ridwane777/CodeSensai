@@ -1,18 +1,18 @@
 # User stories — [T5] Structured Output
 
-Decision: [ADR-0036](../decisions/0036-sortie-structuree-format-json-schema.md).
+Decision: [ADR-0036](../decisions/0036-structured-output-json-schema-format.md).
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)), who wants
+([persona-and-scenario.md](../design/persona-and-scenario.md)), who wants
 the agent to return a result that a script can read directly (for example to
 feed it into another tool), without extracting the information from free text.
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/structured` on the project: ❌ with qwen3:8b; qwen3-coder:30b 0 of 4 with RAG off (no way to list files, backlog #25), 1 of 3 with RAG on. Cause found: typed first, `/structured` ran before the project index was opened, so the search answered "projet non indexé" and the agent guessed file names. Fixed the same day (`ensure_rag_index()` in `cli.py`, test in `tests/test_cli_rag.py`); after the fix qwen3-coder:30b with RAG on: ✅ 3 of 3, `{"fonction": "moyenne", "fichier": "stats.py"}`, 17–24 s; with RAG off once `list_files` was added (ADR-0059): ✅ 3 of 3, 10–12 s. qwen3:8b after the fix, RAG on: ❌, it called no tool and named one of its own MCP tools.
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/structured` on the project: ❌ with qwen3:8b; qwen3-coder:30b 0 of 4 with RAG off (no way to list files, backlog #25), 1 of 3 with RAG on. Cause found: typed first, `/structured` ran before the project index was opened, so the search answered "project not indexed" and the agent guessed file names. Fixed the same day (`ensure_rag_index()` in `cli.py`, test in `tests/test_cli_rag.py`); after the fix qwen3-coder:30b with RAG on: ✅ 3 of 3, `{"fonction": "moyenne", "fichier": "stats.py"}`, 17–24 s; with RAG off once `list_files` was added (ADR-0059): ✅ 3 of 3, 10–12 s. qwen3:8b after the fix, RAG on: ❌, it called no tool and named one of its own MCP tools.
 
 ## US-T5-1 — Get an answer that follows a given schema
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who will consume the answer in a script,
 **I want** to ask for a JSON answer that matches a schema I provide,
@@ -28,7 +28,7 @@ guessing where each field is.
   a prose description of the JSON.
 
 ## US-T5-2 — Be clearly warned when the constraint cannot be met
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who uses `/structured` in a script,
 **I want** an explicit error message if the schema is unreadable or if
@@ -47,7 +47,7 @@ receiving a truncated object without knowing it.
   structured result.
 
 ## US-T5-3 — A structured answer about the real project
-> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks for a JSON about her code,
 **I want** the answer to rely on the project's files,
@@ -76,4 +76,4 @@ Each story checked against the code and the automated tests (not against earlier
 | --- | --- | --- | --- | --- |
 | US-T5-1 | ✅ | `core/structured.py` | `tests/core/test_structured.py` (`passe_le_schema_dans_le_champ_format`, `renvoie_le_json_parse`) |  |
 | US-T5-2 | ✅ | `core/structured.py` | `tests/core/test_structured.py` (`json_invalide_leve_une_erreur_explicite`, `schema_mal_forme_est_signale`) |  |
-| US-T5-3 | ✅ | `core/structured.py` | `tests/core/test_structured.py::test_avec_gather_la_reponse_de_l_agent_sert_de_source`, `tests/test_cli_rag.py::test_structured_s_appuie_sur_ce_que_l_agent_a_trouve` | A wrong judgement was seen once with the real model ([backlog](../backlog.md) #16) |
+| US-T5-3 | ✅ | `core/structured.py` | `tests/core/test_structured.py::test_with_gather_the_agent_answer_is_the_source`, `tests/test_cli_rag.py::test_structured_s_appuie_sur_ce_que_l_agent_a_trouve` | A wrong judgement was seen once with the real model ([backlog](../backlog.md) #16) |

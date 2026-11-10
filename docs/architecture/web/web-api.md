@@ -1,6 +1,6 @@
-# Web API (Lot D, web interface)
+# Web API (Workstream D, web interface)
 
-**For Lot D: the implementation contract of the web server, and the reference
+**For Workstream D: the implementation contract of the web server, and the reference
 for its HTTP API as it exists in `src/sensai/web/server.py`.**
 
 Part I lists the Python APIs the server builds on. Part II lists every HTTP
@@ -49,8 +49,8 @@ registry = ToolRegistry()
 gateway = ToolGateway(registry, confirm=my_confirmer)
 
 messages = [
-    {"role": "system", "content": "Tu es CodeSensei."},
-    {"role": "user", "content": "Aide-moi à déboguer ce code."},
+    {"role": "system", "content": "You are CodeSensai."},
+    {"role": "user", "content": "Help me debug this code."},
 ]
 
 for event in run_agent_turn("http://localhost:11434", "qwen3:8b", messages, gateway):
@@ -173,11 +173,11 @@ from sensai.core.events import (
     Event, to_wire,
 )
 
-Token(text="La réponse ")                              # piece of the final answer
-Thought(text="Je dois chercher le fichier de config")  # reasoning before acting
+Token(text="The answer ")                              # piece of the final answer
+Thought(text="I need to find the config file")  # reasoning before acting
 ToolCall(id="tool_1", name="search_codebase", arguments={"query": "config.yaml"})
-ToolReturn(id="tool_1", name="search_codebase", ok=True, content="Trouvé 3 fichiers...")
-Error(message="Ollama injoignable")                    # the turn is lost
+ToolReturn(id="tool_1", name="search_codebase", ok=True, content="Found 3 files...")
+Error(message="Ollama unreachable")                    # the turn is lost
 Done(reason="final_answer")                            # always last; or "error", "max_iterations"
 
 to_wire(Token(text="..."))  # -> {"type": "token", "text": "..."}
@@ -215,7 +215,7 @@ authorises. For `write_file`, `summary` contains the exact path and, when a
 file is replaced, a unified diff (the web interface colours it).
 
 **Do not rewrite this confirmer by hand: use `WebConfirmationBroker`**
-(`sensai.execution.web_confirmation`, [ADR-0015](../../decisions/0015-confirmation-web-synchrone.md)).
+(`sensai.execution.web_confirmation`, [ADR-0015](../../decisions/0015-synchronous-web-confirmation.md)).
 It is thread-safe, does not depend on a web framework, and already applies
 these rules:
 
@@ -261,7 +261,7 @@ unanswered.
 from sensai.core.history import History
 
 history = History(
-    system_prompt="Tu es CodeSensei, expert en Python.",
+    system_prompt="Tu es CodeSensai, expert en Python.",
     turns=[],  # previous turns, when resuming a session
 )
 
@@ -310,10 +310,10 @@ Other keys exist (`tool_preferences`, `mcp_servers`, `personas`, `cache`,
 
 The server is `create_app(runtime, *, token, allowed_origins=(), frontend_dir=None)`
 in `sensai.web.server`, started by the `sensai-web` command
-(`sensai.web.cli`). Decisions: [ADR-0022](../../decisions/0022-transport-sse-et-modele-d-execution.md)
-(one turn = one SSE stream), [ADR-0023](../../decisions/0023-acces-a-l-api-web.md)
-(token, local listening, closed CORS), [ADR-0024](../../decisions/0024-extensions-du-contrat-web.md)
-(contract extensions), [ADR-0035](../../decisions/0035-serveur-web-reel.md)
+(`sensai.web.cli`). Decisions: [ADR-0022](../../decisions/0022-sse-transport-and-execution-model.md)
+(one turn = one SSE stream), [ADR-0023](../../decisions/0023-web-api-access.md)
+(token, local listening, closed CORS), [ADR-0024](../../decisions/0024-web-contract-extensions.md)
+(contract extensions), [ADR-0035](../../decisions/0035-real-web-server.md)
 (real server).
 
 ### Authentication and transport
@@ -336,7 +336,7 @@ in `sensai.web.server`, started by the `sensai-web` command
 Every API error has this body:
 
 ```json
-{"error": "Session introuvable", "code": "SESSION_NOT_FOUND", "details": "La session abc123 n'existe pas ou a été purgée"}
+{"error": "Session not found", "code": "SESSION_NOT_FOUND", "details": "Session abc123 does not exist or was purged"}
 ```
 
 Common codes:
@@ -398,11 +398,11 @@ Routes 21 to 25 and the `usage`, `compression`, `artifact_patch`,
 Proposed). Tested with pytest (scripted model) and vitest, not with the real
 model.
 
-Routes 26 to 29 were added on 2026-11-01 (EV4 corpus, Lot B; EV3 journal,
-Lot D, [ADR-0053](../../decisions/0053-server-side-turn-journal.md), Proposed),
+Routes 26 to 29 were added on 2026-11-01 (EV4 corpus, Workstream B; EV3 journal,
+Workstream D, [ADR-0053](../../decisions/0053-server-side-turn-journal.md), Proposed),
 and `subagent_step` gained `duration_ms`. Checked with `qwen3-coder:30b`, in the
 API and the browser (2026-11-01). Routes 30 to 37 (A5 personas and A4 prompt
-versions, Lot A, [ADR-0054](../../decisions/0054-personas-in-the-web.md) and
+versions, Workstream A, [ADR-0054](../../decisions/0054-personas-in-the-web.md) and
 [ADR-0055](../../decisions/0055-prompt-versions-in-the-web.md), Proposed) were added
 the same day and checked with the real model.
 
@@ -427,7 +427,7 @@ Deliberately without details.
   "rag": true,
   "rerank": true,
   "cache": true,
-  "notices": ["Recherche dans le projet désactivée : ..."]
+  "notices": ["Project search disabled: ..."]
 }
 ```
 
@@ -490,7 +490,7 @@ turn journal (EV3, since 2026-11-01). No body. Errors:
 the deleted text stays in the SQLite file's free pages until the next
 `VACUUM` (the retention purge runs one). Fixed on 2026-10-29: `delete` now
 runs `VACUUM` (`_vacuum()`, shared with `purge`); checked by
-`tests/knowledge/test_memory.py::test_supprimer_une_session_efface_aussi_son_texte_du_fichier`.
+`tests/knowledge/test_memory.py::test_deleting_a_session_also_erases_its_text_from_the_file`.
 
 #### 8. `GET /api/sessions/{session_id}/export?format=json|md` → 200
 
@@ -499,7 +499,7 @@ defaults to `json`; any other value gives 400 `INVALID_REQUEST`.
 
 - `json`: `{"session_id", "messages": [{"role", "content"}]}`, header
   `Content-Disposition: attachment; filename="codesensei-<id>.json"`.
-- `md`: `text/markdown`, one `## Vous` / `## CodeSensei` section per
+- `md`: `text/markdown`, one `## Vous` / `## CodeSensai` section per
   message, file `codesensei-<id>.md`.
 
 PDF export is done in the browser. Errors: 404 `SESSION_NOT_FOUND`.
@@ -523,7 +523,7 @@ Errors: 400 `EMPTY_SESSION` (no message yet); 404 `SESSION_NOT_FOUND`.
 #### 10. `POST /api/shares/{token}/revoke` → 204
 
 No body. Errors: 404 `SHARE_NOT_FOUND`. The Export page calls it from the
-"Révoquer le lien" button (since 2026-10-31). Expired links are purged when
+"Revoke link" button (since 2026-10-31). Expired links are purged when
 the server starts.
 
 #### 11. `GET /share/{token}` (no API token) → 200 HTML
@@ -543,11 +543,11 @@ without saying which case. Reachable only by whoever can reach `sensai-web`
 #### 12. `POST /api/sessions/{session_id}/messages` → 200 SSE
 
 ```json
-{"content": "Pourquoi ce test échoue ?", "skip_cache": false}
+{"content": "Why does this test fail?", "skip_cache": false}
 ```
 
 `skip_cache` (strict boolean, default `false`) asks the model again without
-the answer cache (A6); the interface sets it for `/again` and "↻ Régénérer".
+the answer cache (A6); the interface sets it for `/again` and "↻ Regenerate".
 
 Response: `Content-Type: text/event-stream`, headers `Cache-Control: no-cache`
 and `X-Accel-Buffering: no`. Each event is a line `data: <JSON>` followed by
@@ -574,7 +574,7 @@ data: {"type":"confirm_request","id":"c1","confirm_id":"c1","tool":"execute_code
 
 data: {"type":"tool_return","id":"tool_1","name":"execute_code","ok":true,"content":"FAILED test_login.py::test_admin_login"}
 
-data: {"type":"token","text":"Le test échoue car la fixture n'est pas appliquée."}
+data: {"type":"token","text":"The test fails because the fixture is not applied."}
 
 data: {"type":"done","reason":"final_answer"}
 ```
@@ -688,7 +688,7 @@ because the server only allows `GET` and `POST` (CORS).
 
 No body. Judges the **last answer** of the conversation with the
 `sensai-eval` judge. It costs one more model call, so it runs **on demand
-only** (the Quality page button "Évaluer la dernière réponse"), never at
+only** (the Quality page button "Evaluate the last answer"), never at
 every turn: that would roughly double the answer time.
 
 ```json
@@ -730,7 +730,7 @@ Error: 404 `TASK_NOT_FOUND`.
 Body `{"enabled": false}` (strict boolean): pauses or resumes the task.
 Error: 404 `TASK_NOT_FOUND`.
 
-### Adversarial corpus (EV4, Lot B)
+### Adversarial corpus (EV4, Workstream B)
 
 The corpus is `src/sensai/eval/adversarial.py`, the same one as
 `tests/adversarial/` and `scripts/adversarial_run.py`. It **never calls the
@@ -762,7 +762,7 @@ Errors: 409 `ALREADY_RUNNING` while a run is in progress; 500
 symlink support, browser Dockerfile missing) are reported with the verdict
 `IGNORÉ`, like the script.
 
-### Turn journal (EV3, Lot D)
+### Turn journal (EV3, Workstream D)
 
 Stored in `<data_dir>/journal.db` by the web server and the CLI
 ([ADR-0053](../../decisions/0053-server-side-turn-journal.md)). Errors for both
@@ -799,7 +799,7 @@ empty list.
 Over the turns started in the last `days` days (1-3650), all conversations and
 both interfaces. Durations are wall-clock: a tool's includes the user's
 confirmation time.
-### Personas (A5, Lot A — [ADR-0054](../../decisions/0054-personas-in-the-web.md))
+### Personas (A5, Workstream A — [ADR-0054](../../decisions/0054-personas-in-the-web.md))
 
 Added on 2026-11-01. The persona is chosen **per conversation** and held in
 server memory (not saved in `sessions.db`, not restored after a restart). A
@@ -824,7 +824,7 @@ already disabled by `config.json` (main agent and sub-agents), and the answer
 cache is skipped if it disables tools. Errors: 404 `SESSION_NOT_FOUND`, 404
 `PERSONA_NOT_FOUND`, 409 `TURN_IN_PROGRESS`.
 
-### Prompt versions (A4, Lot A — [ADR-0055](../../decisions/0055-prompt-versions-in-the-web.md))
+### Prompt versions (A4, Workstream A — [ADR-0055](../../decisions/0055-prompt-versions-in-the-web.md))
 
 Added on 2026-11-01. **Read-only on the registry** (`prompts/versions.json`):
 the web server never saves a version nor moves the active bookmark; that
@@ -895,7 +895,7 @@ this is what it does:
 
 ---
 
-## Part IV: Checklist for Lot D
+## Part IV: Checklist for Workstream D
 
 - [x] HTTP routes implemented (37 routes, Part II; 18, then 20, then 25, until 2026-11-01)
 - [x] SSE opened and closed correctly (closed after `done`, cancel on disconnect)
@@ -904,7 +904,7 @@ this is what it does:
 - [x] Python events serialised to JSON (`to_wire` plus web-only events)
 - [x] History saved and loaded (SQLite, `SessionStore`)
 - [x] Error handling (Ollama unreachable → `error` + `done`)
-- [x] Integration tests with Lot A (pytest with a scripted model; not run against the real model)
+- [x] Integration tests with Workstream A (pytest with a scripted model; not run against the real model)
 
 ---
 
@@ -915,7 +915,7 @@ this is what it does:
 - `sensai.core.agent.run_agent_turn`: source of truth for the loop
 - `sensai.core.events`: the core events
 - `sensai.execution.gateway.ToolGateway`: secure gateway
-- `sensai.execution.web_confirmation.WebConfirmationBroker`: confirmation from the browser ([ADR-0015](../../decisions/0015-confirmation-web-synchrone.md))
+- `sensai.execution.web_confirmation.WebConfirmationBroker`: confirmation from the browser ([ADR-0015](../../decisions/0015-synchronous-web-confirmation.md))
 - `sensai.web.questions.WebQuestionBroker`: questions from the agent ([ADR-0046](../../decisions/0046-ask-user-tool.md))
 - `docs/architecture/web/api-contract.md`: high-level contract (this doc refines it)
 - `docs/architecture/tool-contract.md`: how to declare a tool

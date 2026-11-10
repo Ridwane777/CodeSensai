@@ -1,8 +1,8 @@
 """
-Teste l'outil `update_state` — feature [M4], ADR-0029.
+Tests the `update_state` tool — feature [M4], ADR-0029.
 
-`test_declare_le_risque_ecriture` protège A3 : sans lui, une injection de
-prompt pourrait faire écrire l'agent dans SENSAI.md sans confirmation.
+`test_declares_write_risk` protects A3: without it, a prompt injection
+could make the agent write to SENSAI.md without confirmation.
 """
 from sensai.core.tools import ToolRegistry
 from sensai.execution.gateway import ToolGateway
@@ -11,55 +11,55 @@ from sensai.knowledge.state_document import StateDocument
 from sensai.tools.state_tool import UpdateStateTool
 
 
-def outil(tmp_path):
-    projet = tmp_path / "projet"
-    projet.mkdir()
-    return UpdateStateTool(StateDocument(projet, tmp_path / "journal.jsonl"))
+def make_tool(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    return UpdateStateTool(StateDocument(project, tmp_path / "journal.jsonl"))
 
 
-def test_declare_le_risque_ecriture(tmp_path):
-    assert risk_of(outil(tmp_path)) is Risk.WRITE
+def test_declares_write_risk(tmp_path):
+    assert risk_of(make_tool(tmp_path)) is Risk.WRITE
 
 
-def test_met_a_jour_et_renvoie_le_diff(tmp_path):
-    t = outil(tmp_path)
+def test_updates_and_returns_the_diff(tmp_path):
+    t = make_tool(tmp_path)
 
-    resultat = t.run(section="En cours", action="replace", content="- M4")
+    result = t.run(section="In progress", action="replace", content="- M4")
 
-    assert resultat.ok
-    assert "+- M4" in resultat.content
+    assert result.ok
+    assert "+- M4" in result.content
     assert "- M4" in t.document.path.read_text(encoding="utf-8")
 
 
-def test_erreur_renvoyee_proprement_jamais_d_exception(tmp_path):
-    t = outil(tmp_path)
+def test_error_returned_cleanly_never_raised(tmp_path):
+    t = make_tool(tmp_path)
 
-    resultat = t.run(section="Roadmap", action="append", content="- x")
+    result = t.run(section="Roadmap", action="append", content="- x")
 
-    assert not resultat.ok
-    assert "En cours" in resultat.content
+    assert not result.ok
+    assert "In progress" in result.content
 
 
-def test_la_confirmation_montre_l_avant_et_l_apres(tmp_path):
-    """US-M4-3 : ce que l'utilisateur approuve, c'est le changement lui-même."""
-    t = outil(tmp_path)
-    t.run(section="En cours", action="replace", content="- R2")
+def test_confirmation_shows_before_and_after(tmp_path):
+    """US-M4-3: what the user approves is the change itself."""
+    t = make_tool(tmp_path)
+    t.run(section="In progress", action="replace", content="- R2")
 
-    plan = t.describe_call(section="En cours", action="replace", content="- M4")
+    plan = t.describe_call(section="In progress", action="replace", content="- M4")
 
     assert "-- R2" in plan and "+- M4" in plan
 
 
-def test_la_passerelle_demande_confirmation_et_un_refus_ne_change_rien(tmp_path):
-    t = outil(tmp_path)
+def test_gateway_asks_confirmation_and_refusal_changes_nothing(tmp_path):
+    t = make_tool(tmp_path)
     registry = ToolRegistry()
     registry.register(t)
-    demandes = []
-    passerelle = ToolGateway(registry, confirm=lambda req: demandes.append(req) or False)
+    requests = []
+    gateway = ToolGateway(registry, confirm=lambda req: requests.append(req) or False)
 
-    resultat = passerelle.call("update_state", section="Fait", action="append", content="- x")
+    result = gateway.call("update_state", section="Done", action="append", content="- x")
 
-    assert len(demandes) == 1
-    assert "+- x" in demandes[0].summary
-    assert not resultat.ok
+    assert len(requests) == 1
+    assert "+- x" in requests[0].summary
+    assert not result.ok
     assert not t.document.path.exists()

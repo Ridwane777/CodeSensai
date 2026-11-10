@@ -1,7 +1,7 @@
-"""Teste l'équipe `team_task` — feature [A2], ADR-0038.
+"""Tests the `team_task` team — feature [A2], ADR-0038.
 
-Les sous-agents sont de faux tours (pas d'Ollama) : chacun répond selon son
-rôle, reconnu à ses consignes dans le message système.
+The sub-agents are fake turns (no Ollama): each answers according to its role,
+recognized by its instructions in the system message.
 """
 import itertools
 
@@ -13,7 +13,7 @@ from sensai.tools.team_tool import TeamTool, verdict
 
 
 def team(answers, notes=None):
-    """Une équipe dont chaque rôle répond, dans l'ordre, par les textes donnés."""
+    """A team where each role answers, in order, with the given texts."""
     queues = {role: iter(texts) for role, texts in answers.items()}
     received = []
 
@@ -27,226 +27,229 @@ def team(answers, notes=None):
     return TeamTool(delegate, notify=(notes.append if notes is not None else None)), received
 
 
-def test_declare_le_risque_execute():
+def test_declares_execute_risk():
     assert risk_of(TeamTool(DelegateTool("h", "m", tools=None))) is Risk.EXECUTE
 
 
-def test_le_travail_passe_de_l_explorateur_au_developpeur_puis_au_relecteur():
-    outil, received = team({
-        "explorateur": ["RAPPORT-EXPLO"],
-        "developpeur": ["CODE-DEV"],
-        "relecteur": ["VALIDÉ, rien à redire"],
+def test_work_goes_from_explorer_to_developer_then_reviewer():
+    tool, received = team({
+        "explorateur": ["EXPLORER-REPORT"],
+        "developpeur": ["DEV-CODE"],
+        "relecteur": ["APPROVED, nothing to add"],
     })
 
-    result = outil.run(task="ajoute une fonction")
+    result = tool.run(task="add a function")
 
     assert [r for r, _ in received] == ["explorateur", "developpeur", "relecteur"]
-    assert "RAPPORT-EXPLO" in received[1][1]  # le développeur reçoit le rapport
-    assert "CODE-DEV" in received[2][1]  # le relecteur reçoit le travail
+    assert "EXPLORER-REPORT" in received[1][1]  # the developer receives the report
+    assert "DEV-CODE" in received[2][1]  # the reviewer receives the work
     assert result.ok
     assert result.content.startswith(
-        "Chemin : explorateur → developpeur → relecteur ; verdict du relecteur : validé."
+        "Path: explorateur → developpeur → relecteur; reviewer verdict: approved."
     )
 
 
-def test_a_corriger_renvoie_au_developpeur_avec_la_critique_une_seule_fois():
-    outil, received = team({
-        "explorateur": ["RAPPORT"],
+def test_needs_fix_sends_back_to_developer_with_critique_only_once():
+    tool, received = team({
+        "explorateur": ["REPORT"],
         "developpeur": ["V1", "V2"],
-        "relecteur": ["À CORRIGER : il manque le test", "À CORRIGER : encore"],
+        "relecteur": ["NEEDS FIX: the test is missing", "NEEDS FIX: again"],
     })
 
-    result = outil.run(task="t")
+    result = tool.run(task="t")
 
     assert [r for r, _ in received] == [
         "explorateur", "developpeur", "relecteur", "developpeur", "relecteur"]
-    assert "il manque le test" in received[3][1] and "V1" in received[3][1]
-    # la chaîne est allée au bout : un résultat (pas une panne) que l'agent transmet
-    assert result.ok and "verdict du relecteur : à corriger" in result.content
-    assert "ne relance pas l'équipe" in result.content
+    assert "the test is missing" in received[3][1] and "V1" in received[3][1]
+    # the chain went all the way: a result (not a failure) the agent passes on
+    assert result.ok and "reviewer verdict: needs fix" in result.content
+    assert "do not restart the team" in result.content
 
 
-def test_chaque_relais_est_annonce():
+def test_each_handoff_is_announced():
     notes = []
-    outil, _ = team({"explorateur": ["r"], "developpeur": ["c"], "relecteur": ["VALIDÉ"]}, notes)
+    tool, _ = team({"explorateur": ["r"], "developpeur": ["c"], "relecteur": ["APPROVED"]}, notes)
 
-    outil.run(task="t")
+    tool.run(task="t")
 
-    assert notes == ["équipe : explorateur au travail", "relais : explorateur → developpeur",
-                     "relais : developpeur → relecteur"]
+    assert notes == ["team: explorateur at work", "handoff: explorateur → developpeur",
+                     "handoff: developpeur → relecteur"]
 
 
-def test_la_chaine_s_arrete_et_le_dit_quand_le_temps_manque(monkeypatch):
-    # départ à 0 ; quand vient le tour du relecteur, il reste moins de MIN_STEP_S
+def test_the_chain_stops_and_says_so_when_time_runs_out(monkeypatch):
+    # start at 0; when the reviewer turn comes, less than MIN_STEP_S is left
     budget = team_tool.DELEGATION_TIMEOUT_S - team_tool.STOP_MARGIN_S
     clock = itertools.chain([0.0, 1.0, 2.0, 3.0, 4.0], itertools.repeat(budget - 1))
     now = lambda: next(clock)  # noqa: E731
     monkeypatch.setattr(team_tool.time, "monotonic", now)
     monkeypatch.setattr("sensai.tools.delegate_tool.time.monotonic", now)
-    outil, received = team({"explorateur": ["r"], "developpeur": ["c"], "relecteur": ["VALIDÉ"]})
+    tool, received = team({"explorateur": ["r"], "developpeur": ["c"], "relecteur": ["APPROVED"]})
 
-    result = outil.run(task="t")
+    result = tool.run(task="t")
 
     assert "relecteur" not in [r for r, _ in received]
-    assert not result.ok and "faute de temps avant le relecteur" in result.content
+    assert not result.ok and "for lack of time before the reviewer" in result.content
 
 
-def test_un_sous_agent_ne_lance_pas_d_equipe():
-    outil, received = team({})
+def test_a_sub_agent_does_not_start_a_team():
+    tool, received = team({})
     token = _depth.set(1)
     try:
-        result = outil.run(task="t")
+        result = tool.run(task="t")
     finally:
         _depth.reset(token)
     assert not result.ok and received == []
 
 
-def test_tache_vide_refusee():
-    outil, received = team({})
-    assert not outil.run(task="  ").ok and received == []
+def test_empty_task_rejected():
+    tool, received = team({})
+    assert not tool.run(task="  ").ok and received == []
 
 
 def test_verdict():
-    assert verdict("VALIDÉ : correct") == "validé"
-    assert verdict("**Validé**") == "validé"
-    assert verdict("À CORRIGER\n- bug") == "à corriger"
-    assert verdict("a corriger : x") == "à corriger"
-    assert verdict("Le code me semble bon") == "illisible"
+    assert verdict("APPROVED: correct") == "approved"
+    assert verdict("**Approved**") == "approved"
+    assert verdict("NEEDS FIX\n- bug") == "needs fix"
+    assert verdict("needs fix: x") == "needs fix"
+    assert verdict("The code looks fine to me") == "unreadable"
+    # French answers stay accepted (the model may reply in the user language).
+    assert verdict("VALIDÉ : correct") == "approved"
+    assert verdict("À CORRIGER\n- bug") == "needs fix"
 
 
-def test_on_handoff_recoit_chaque_role_qui_prend_la_main():
-    """X1 : le web transforme ces appels en événements `agent_handoff`."""
+def test_on_handoff_receives_each_role_taking_over():
+    """X1: the web turns these calls into `agent_handoff` events."""
     from sensai.core.tools import ToolResult
 
-    class Delegue:
-        def delegate(self, consigne, *, role, deadline, on_call):
-            return ToolResult(ok=True, content="VALIDÉ." if role == "relecteur" else "ok")
+    class FakeDelegate:
+        def delegate(self, instruction, *, role, deadline, on_call):
+            return ToolResult(ok=True, content="APPROVED." if role == "relecteur" else "ok")
 
     roles = []
-    TeamTool(Delegue(), on_handoff=roles.append).run(task="Corrige")
+    TeamTool(FakeDelegate(), on_handoff=roles.append).run(task="Fix it")
     assert roles == ["explorateur", "developpeur", "relecteur"]
 
 
-def test_misplaced_repere_un_fichier_cree_au_mauvais_endroit():
-    """Essai du 2026-11-01 : « ajoute mediane à stats.py » → src/sensai/stats.py créé."""
+def test_misplaced_detects_a_file_created_in_the_wrong_place():
+    """Trial run of 2026-11-01: "add mediane to stats.py" → src/sensai/stats.py created."""
     from sensai.tools.team_tool import misplaced, named_files
 
-    task = "Ajoute à stats.py une fonction mediane(notes)."
+    task = "Add a mediane(notes) function to stats.py."
     assert named_files(task) == {"stats.py"}
     assert misplaced(task, {"src/sensai/stats.py"}) == [("src/sensai/stats.py", "stats.py")]
-    assert misplaced(task, {"stats.py"}) == []          # le bon fichier
+    assert misplaced(task, {"stats.py"}) == []          # the right file
     assert misplaced(task, {"./stats.py"}) == []
-    assert misplaced(task, {"tests/test_stats.py"}) == []  # autre nom : rien à redire
-    assert misplaced("Crée src/app/main.py", {"src/app/main.py"}) == []
+    assert misplaced(task, {"tests/test_stats.py"}) == []  # different name: nothing to flag
+    assert misplaced("Create src/app/main.py", {"src/app/main.py"}) == []
 
 
-def test_un_fichier_cree_au_mauvais_endroit_est_renvoye_sans_relecture():
+def test_a_file_created_in_the_wrong_place_is_sent_back_without_review():
     from sensai.core.tools import ToolResult
 
     calls = []
 
-    class Delegue:
-        def delegate(self, consigne, *, role, deadline, on_call):
+    class FakeDelegate:
+        def delegate(self, instruction, *, role, deadline, on_call):
             calls.append(role)
             if role == "developpeur":
                 path = "src/sensai/stats.py" if calls.count("developpeur") == 1 else "stats.py"
                 verb = "Created" if path != "stats.py" else "Replaced"
                 on_call("write_file", {"path": path, "content": "def mediane(n): ..."},
                         ToolResult(ok=True, content=f"{verb} {path}"))
-            return ToolResult(ok=True, content="VALIDÉ." if role == "relecteur" else "fait")
+            return ToolResult(ok=True, content="APPROVED." if role == "relecteur" else "done")
 
-    result = TeamTool(Delegue()).run(task="Ajoute à stats.py une fonction mediane(notes).")
-    # 1er essai renvoyé sans relecteur ; la correction écrit stats.py ; puis le relecteur juge.
+    result = TeamTool(FakeDelegate()).run(task="Add a mediane(notes) function to stats.py.")
+    # 1st attempt sent back without reviewer; the fix writes stats.py; then the reviewer judges.
     assert calls == ["explorateur", "developpeur", "developpeur", "relecteur"]
-    assert "validé" in result.content and "mauvais endroit" not in result.content
+    assert "approved" in result.content and "wrong place" not in result.content
 
 
-def test_un_fichier_toujours_mal_place_n_est_jamais_valide():
+def test_a_file_still_misplaced_is_never_approved():
     from sensai.core.tools import ToolResult
 
-    class Delegue:
-        def delegate(self, consigne, *, role, deadline, on_call):
+    class FakeDelegate:
+        def delegate(self, instruction, *, role, deadline, on_call):
             if role == "developpeur":
                 on_call("write_file", {"path": "src/sensai/stats.py", "content": "x"},
                         ToolResult(ok=True, content="Created src/sensai/stats.py"))
-            return ToolResult(ok=True, content="VALIDÉ." if role == "relecteur" else "fait")
+            return ToolResult(ok=True, content="APPROVED." if role == "relecteur" else "done")
 
-    result = TeamTool(Delegue()).run(task="Ajoute à stats.py une fonction mediane(notes).")
-    assert "mauvais endroit" in result.content and "stats.py" in result.content
-    assert "verdict du relecteur : validé" not in result.content
+    result = TeamTool(FakeDelegate()).run(task="Add a mediane(notes) function to stats.py.")
+    assert "wrong place" in result.content and "stats.py" in result.content
+    assert "reviewer verdict: approved" not in result.content
 
 
-# --- Les tests du projet comme verdict (ADR-0056, point 3) --------------------------
+# --- Project tests as the verdict (ADR-0056, point 3) ------------------------------
 
 def team_with_tests(answers, results, writes=True):
-    """Une équipe dont le verdict vient d'un faux lanceur de tests du projet ; le
-    développeur écrit stats.py à chaque passage (sauf `writes=False`)."""
+    """A team whose verdict comes from a fake project test runner; the
+    developer writes stats.py on every pass (unless `writes=False`)."""
     from sensai.core.tools import ToolResult
 
     queues = {role: iter(texts) for role, texts in answers.items()}
     received = []
 
-    class Delegue:
-        def delegate(self, consigne, *, role, deadline, on_call):
-            received.append((role, consigne))
+    class FakeDelegate:
+        def delegate(self, instruction, *, role, deadline, on_call):
+            received.append((role, instruction))
             text = next(queues[role])
             if role == "developpeur" and writes:
                 on_call("write_file", {"path": "stats.py", "content": text},
                         ToolResult(ok=True, content="Replaced stats.py"))
             return ToolResult(ok=True, content=text)
 
-    outil = TeamTool(Delegue())
+    tool = TeamTool(FakeDelegate())
     runs = iter(results)
-    outil.test_runner = lambda: next(runs)
-    return outil, received
+    tool.test_runner = lambda: next(runs)
+    return tool, received
 
 
-def test_sans_fichier_modifie_les_tests_ne_valident_pas():
-    """Essai du 2026-11-06 : l'écriture du développeur est refusée, le projet n'a pas
-    changé, ses tests passent… et l'équipe annonçait « validé »."""
-    lances = []
-    outil, received = team_with_tests({"explorateur": ["R"], "developpeur": ["V1", "V2"]},
+def test_without_a_modified_file_tests_do_not_approve():
+    """Trial run of 2026-11-06: the developer write is refused, the project has not
+    changed, its tests pass... and the team announced "approved"."""
+    runs_made = []
+    tool, received = team_with_tests({"explorateur": ["R"], "developpeur": ["V1", "V2"]},
                                       [], writes=False)
-    outil.test_runner = lambda: lances.append(1) or (True, "1 passed")
+    tool.test_runner = lambda: runs_made.append(1) or (True, "1 passed")
 
-    result = outil.run(task="moyenne([]) doit lever ValueError")
+    result = tool.run(task="moyenne([]) must raise ValueError")
 
-    assert lances == [], "les tests d'un projet inchangé ne sont pas lancés"
+    assert runs_made == [], "the tests of an unchanged project are not run"
     assert [r for r, _ in received] == ["explorateur", "developpeur", "developpeur"]
-    assert "Aucun fichier n'a été modifié" in received[2][1]
-    assert "validé" not in result.content
-    assert "aucun fichier modifié" in result.content
+    assert "No file was modified" in received[2][1]
+    assert "approved" not in result.content
+    assert "no file modified" in result.content
 
 
-def test_des_tests_qui_passent_valident_sans_relecteur():
-    outil, received = team_with_tests({"explorateur": ["R"], "developpeur": ["CODE"]},
+def test_passing_tests_approve_without_reviewer():
+    tool, received = team_with_tests({"explorateur": ["R"], "developpeur": ["CODE"]},
                                       [(True, "3 passed")])
 
-    result = outil.run(task="ajoute mediane")
+    result = tool.run(task="add mediane")
 
     assert [r for r, _ in received] == ["explorateur", "developpeur"]
-    assert "verdict des tests du projet : validé" in result.content
+    assert "project tests verdict: approved" in result.content
     assert "3 passed" in result.content
 
 
-def test_des_tests_qui_echouent_renvoient_la_sortie_au_developpeur():
-    outil, received = team_with_tests({"explorateur": ["R"], "developpeur": ["V1", "V2"]},
+def test_failing_tests_send_the_output_back_to_the_developer():
+    tool, received = team_with_tests({"explorateur": ["R"], "developpeur": ["V1", "V2"]},
                                       [(False, "FAILED test_stats.py::test_mediane"),
                                        (True, "4 passed")])
 
-    result = outil.run(task="ajoute mediane")
+    result = tool.run(task="add mediane")
 
     assert [r for r, _ in received] == ["explorateur", "developpeur", "developpeur"]
     assert "FAILED test_stats.py::test_mediane" in received[2][1]
-    assert "verdict des tests du projet : validé" in result.content
+    assert "project tests verdict: approved" in result.content
 
 
-def test_le_lanceur_reel_lance_pytest_dans_le_projet(tmp_path, monkeypatch):
+def test_the_real_runner_runs_pytest_in_the_project(tmp_path, monkeypatch):
     from sensai.tools.project_tests import project_test_runner
 
     monkeypatch.delenv("SENSAI_NO_PROJECT_TESTS", raising=False)
 
-    assert project_test_runner(tmp_path) is None  # pas de tests : le relecteur garde la main
+    assert project_test_runner(tmp_path) is None  # no tests: the reviewer stays in charge
     (tmp_path / "test_ok.py").write_text("def test_un():\n    assert 1 + 1 == 2\n")
     passed, output = project_test_runner(tmp_path)()
     assert passed and "1 passed" in output
@@ -255,15 +258,15 @@ def test_le_lanceur_reel_lance_pytest_dans_le_projet(tmp_path, monkeypatch):
     assert not passed and "failed" in output
 
 
-def test_les_tests_lances_par_l_equipe_ne_relancent_pas_d_equipe(tmp_path, monkeypatch):
-    """Vu le 2026-11-02 : sans garde, chaque niveau de pytest relançait une équipe qui
-    relançait pytest. Le pytest de l'équipe reçoit SENSAI_NO_PROJECT_TESTS."""
+def test_tests_run_by_the_team_do_not_start_another_team(tmp_path, monkeypatch):
+    """Seen on 2026-11-02: without a guard, each pytest level restarted a team that
+    restarted pytest. The team pytest receives SENSAI_NO_PROJECT_TESTS."""
     from sensai.tools.project_tests import project_test_runner
 
     monkeypatch.delenv("SENSAI_NO_PROJECT_TESTS", raising=False)
     (tmp_path / "test_env.py").write_text(
         "import os\n\n"
-        "def test_garde():\n"
+        "def test_guard():\n"
         "    assert os.environ.get('SENSAI_NO_PROJECT_TESTS') == '1'\n")
     passed, output = project_test_runner(tmp_path)()
     assert passed, output

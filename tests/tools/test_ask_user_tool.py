@@ -1,6 +1,6 @@
 """
-L'outil `ask_user` (X4, ADR-0046) : validation du formulaire, des réponses, et
-version terminal. Le parcours web est dans tests/web/test_questions.py.
+The `ask_user` tool (X4, ADR-0046): validation of the form, of the answers, and
+the terminal version. The web flow is in tests/web/test_questions.py.
 """
 import json
 
@@ -16,19 +16,19 @@ from sensai.tools.ask_user_tool import (
 )
 
 FIELDS = [
-    {"id": "nom", "kind": "text", "label": "Nom du module"},
+    {"id": "name", "kind": "text", "label": "Module name"},
     {"id": "style", "kind": "choice", "label": "Style", "options": ["pytest", "unittest"]},
-    {"id": "docs", "kind": "toggle", "label": "Ajouter la doc ?"},
+    {"id": "docs", "kind": "toggle", "label": "Add docs?"},
 ]
 
 
-def test_un_formulaire_valide_est_accepte():
-    q = parse_question("Quelques précisions", FIELDS)
-    assert q.title == "Quelques précisions"
+def test_a_valid_form_is_accepted():
+    q = parse_question("A few details", FIELDS)
+    assert q.title == "A few details"
     assert [f["kind"] for f in q.fields] == ["text", "choice", "toggle"]
 
 
-def test_le_type_par_defaut_est_un_texte():
+def test_default_kind_is_text():
     q = parse_question("?", [{"id": "a", "label": "A"}])
     assert q.fields[0]["kind"] == "text"
 
@@ -36,74 +36,74 @@ def test_le_type_par_defaut_est_un_texte():
 @pytest.mark.parametrize("title, fields", [
     ("", FIELDS),
     ("?", []),
-    ("?", "pas une liste"),
-    ("?", [{"id": "a", "label": "A"}] * 2),  # identifiant en double
+    ("?", "not a list"),
+    ("?", [{"id": "a", "label": "A"}] * 2),  # duplicate id
     ("?", [{"id": "a", "kind": "date", "label": "A"}]),
-    ("?", [{"id": "a", "kind": "choice", "label": "A", "options": ["seul"]}]),
+    ("?", [{"id": "a", "kind": "choice", "label": "A", "options": ["only"]}]),
     ("?", [{"id": "a", "kind": "choice", "label": "A", "options": ["x", "x"]}]),
     ("?", [{"id": "a", "label": ""}]),
     ("?", [{"id": f"f{i}", "label": "L"} for i in range(MAX_FIELDS + 1)]),
     ("x" * 201, FIELDS),
 ])
-def test_un_formulaire_invalide_est_refuse(title, fields):
+def test_an_invalid_form_is_rejected(title, fields):
     with pytest.raises(FormError):
         parse_question(title, fields)
 
 
-def test_des_reponses_valides_sont_acceptees():
+def test_valid_answers_are_accepted():
     q = parse_question("?", FIELDS)
-    values = {"nom": " outils ", "style": "pytest", "docs": False}
-    assert check_answers(q, values) == {"nom": "outils", "style": "pytest", "docs": False}
+    values = {"name": " tools ", "style": "pytest", "docs": False}
+    assert check_answers(q, values) == {"name": "tools", "style": "pytest", "docs": False}
 
 
 @pytest.mark.parametrize("values", [
-    {"nom": "a", "style": "pytest"},                       # réponse manquante
-    {"nom": "a", "style": "pytest", "docs": True, "x": 1},  # champ inconnu
-    {"nom": "a", "style": "nose", "docs": True},           # choix absent
-    {"nom": "a", "style": "pytest", "docs": "oui"},        # pas un booléen
-    {"nom": "  ", "style": "pytest", "docs": True},        # texte vide
-    {"nom": 3, "style": "pytest", "docs": True},           # pas un texte
-    ["pas", "un", "objet"],
+    {"name": "a", "style": "pytest"},                       # missing answer
+    {"name": "a", "style": "pytest", "docs": True, "x": 1},  # unknown field
+    {"name": "a", "style": "nose", "docs": True},           # choice not offered
+    {"name": "a", "style": "pytest", "docs": "yes"},        # not a boolean
+    {"name": "  ", "style": "pytest", "docs": True},        # empty text
+    {"name": 3, "style": "pytest", "docs": True},           # not a string
+    ["not", "an", "object"],
 ])
-def test_des_reponses_invalides_sont_refusees(values):
+def test_invalid_answers_are_rejected(values):
     with pytest.raises(FormError):
         check_answers(parse_question("?", FIELDS), values)
 
 
-def test_l_outil_renvoie_les_reponses_au_modele():
-    tool = AskUserTool(lambda q: {"nom": "outils"})
-    result = tool.run(title="?", fields=[{"id": "nom", "label": "Nom"}])
+def test_the_tool_returns_the_answers_to_the_model():
+    tool = AskUserTool(lambda q: {"name": "tools"})
+    result = tool.run(title="?", fields=[{"id": "name", "label": "Name"}])
     assert result.ok
-    assert json.loads(result.content.split(" : ", 1)[1]) == {"nom": "outils"}
+    assert json.loads(result.content.split(": ", 1)[1]) == {"name": "tools"}
 
 
-def test_sans_reponse_l_outil_echoue_et_le_dit():
+def test_without_an_answer_the_tool_fails_and_says_so():
     result = AskUserTool(lambda q: None).run(title="?", fields=[{"id": "a", "label": "A"}])
-    assert not result.ok and "pas répondu" in result.content
+    assert not result.ok and "did not answer" in result.content
 
 
-def test_sans_interface_personne_ne_peut_repondre():
+def test_without_an_interface_nobody_can_answer():
     result = AskUserTool(None).run(title="?", fields=[{"id": "a", "label": "A"}])
-    assert not result.ok and "Aucune personne" in result.content
+    assert not result.ok and "Nobody can answer" in result.content
 
 
-def test_un_formulaire_invalide_ne_sollicite_personne():
+def test_an_invalid_form_asks_nobody():
     asked = []
     result = AskUserTool(asked.append).run(title="?", fields=[])
-    assert not result.ok and "Formulaire invalide" in result.content and asked == []
+    assert not result.ok and "Invalid form" in result.content and asked == []
 
 
-def test_le_terminal_pose_chaque_question():
-    # Un texte vide puis un mauvais numéro : redemandés.
-    answers = iter(["", "outils", "9", "2", "o"])
+def test_the_terminal_asks_each_question():
+    # An empty text then a wrong number: asked again.
+    answers = iter(["", "tools", "9", "2", "y"])
     shown = []
     ask = terminal_asker(read=lambda prompt: next(answers), show=shown.append)
-    values = ask(parse_question("Précisions", FIELDS))
-    assert values == {"nom": "outils", "style": "unittest", "docs": True}
-    assert any("Précisions" in line for line in shown)
+    values = ask(parse_question("Details", FIELDS))
+    assert values == {"name": "tools", "style": "unittest", "docs": True}
+    assert any("Details" in line for line in shown)
 
 
-def test_ctrl_d_dans_le_terminal_c_est_pas_de_reponse():
+def test_ctrl_d_in_the_terminal_means_no_answer():
     def eof(prompt):
         raise EOFError
     assert terminal_asker(read=eof, show=lambda s: None)(parse_question("?", FIELDS)) is None

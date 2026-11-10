@@ -8,7 +8,7 @@
 ## Context
 
 Personas (A5, Lot A) work in the CLI: profiles read from `config.json`
-([ADR-0042](0042-personas-configurables.md)), switched with `/persona use`,
+([ADR-0042](0042-configurable-personas.md)), switched with `/persona use`,
 with keyword routing, per-persona disabled tools and session-only personas
 ([ADR-0043](0043-persona-enhancements.md)). The web server did not read them:
 the "Agent actif" selector only changed the displayed name, and it was hidden

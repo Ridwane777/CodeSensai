@@ -1,7 +1,7 @@
 """
-Teste le broker de confirmation web (A3, issue #47) : seul `True` autorise, tout
-le reste (délai, fermeture, panne, mauvais identifiant) refuse, et rien ne reste
-en attente. Les attentes passent par des Event, pas par des sleep.
+Tests the web confirmation broker (A3, issue #47): only `True` authorizes, everything
+else (timeout, close, failure, wrong id) refuses, and nothing is left pending.
+Waits use Events, not sleeps.
 """
 import threading
 from typing import Any, ClassVar
@@ -13,14 +13,14 @@ from sensai.execution.gateway import REFUSED, ConfirmationRequest, ToolGateway
 from sensai.execution.tool_policy import Risk, ToolPreferences
 from sensai.execution.web_confirmation import WebConfirmationBroker
 
-WAIT = 2.0  # borne de sécurité des attentes : un test qui l'atteint a échoué
+WAIT = 2.0  # safety bound on waits: a test that reaches it has failed
 
 
 def make_request(timeout_s: float = 0.3, **overrides: Any) -> ConfirmationRequest:
     base: dict[str, Any] = {
         "tool": "run_code",
         "risk": Risk.EXECUTE,
-        "summary": "Exécuter print(1)",
+        "summary": "Run print(1)",
         "arguments": {"code": "print(1)"},
         "timeout_s": timeout_s,
     }
@@ -29,7 +29,7 @@ def make_request(timeout_s: float = 0.3, **overrides: Any) -> ConfirmationReques
 
 
 class Recorder:
-    """`emit` de test : garde les messages et signale le premier."""
+    """Test `emit`: keeps the messages and signals the first one."""
 
     def __init__(self) -> None:
         self.messages: list[dict] = []
@@ -55,7 +55,7 @@ def ask_async(broker: WebConfirmationBroker, request: ConfirmationRequest):
 
 def join(thread: threading.Thread) -> None:
     thread.join(WAIT)
-    assert not thread.is_alive(), "le confirmeur est resté bloqué"
+    assert not thread.is_alive(), "the confirmer stayed blocked"
 
 
 # -- charge utile ----------------------------------------------------------------
@@ -72,7 +72,7 @@ def test_emitted_payload_is_exactly_the_documented_one():
             "id": "confirm_abc",
             "tool": "run_code",
             "risk": "execute",
-            "summary": "Exécuter print(1)",
+            "summary": "Run print(1)",
             "arguments": {"code": "print(1)"},
             "timeout_s": 1.5,
         }
@@ -100,7 +100,7 @@ def test_confirmer_and_make_confirmer_are_the_same_callable():
     assert broker.make_confirmer() == broker.confirmer
 
 
-# -- réponses ----------------------------------------------------------------------
+# -- responses --------------------------------------------------------------------
 
 
 def test_true_approves():
@@ -120,7 +120,7 @@ def test_anything_but_literal_true_refuses(answer):
     broker = WebConfirmationBroker(rec)
     thread, box = ask_async(broker, make_request())
     assert rec.first.wait(WAIT)
-    # La réponse est bien prise en compte (True), mais elle vaut refus.
+    # The response is taken into account (True), but counts as a refusal.
     assert broker.resolve(rec.messages[0]["id"], answer) is True
     join(thread)
     assert box == [False]
@@ -131,7 +131,7 @@ def test_timeout_refuses_and_leaves_nothing_pending():
     broker = WebConfirmationBroker(lambda m: None, id_factory=lambda: "confirm_t")
     assert broker.confirmer(make_request(timeout_s=0.05)) is False
     assert broker.pending_ids() == []
-    # Une réponse tardive n'a plus rien à réveiller.
+    # A late response has nothing left to wake up.
     assert broker.resolve("confirm_t", True) is False
 
 
@@ -168,7 +168,7 @@ def test_duplicate_answer_first_one_wins():
     assert rec.first.wait(WAIT)
     confirm_id = rec.messages[0]["id"]
     assert broker.resolve(confirm_id, False) is True
-    assert broker.resolve(confirm_id, True) is False  # trop tard : la première gagne
+    assert broker.resolve(confirm_id, True) is False  # too late: the first one wins
     join(thread)
     assert box == [False]
 
@@ -185,10 +185,10 @@ def test_late_answer_after_timeout_is_ignored():
 
 def test_emit_raising_refuses_and_cleans_up():
     def boom(message: dict) -> None:
-        raise RuntimeError("SSE fermé")
+        raise RuntimeError("SSE closed")
 
     broker = WebConfirmationBroker(boom, id_factory=lambda: "confirm_x")
-    assert broker.confirmer(make_request(timeout_s=WAIT)) is False  # immédiat, pas d'attente
+    assert broker.confirmer(make_request(timeout_s=WAIT)) is False  # immediate, no wait
     assert broker.pending_ids() == []
     assert broker.resolve("confirm_x", True) is False
 
@@ -218,8 +218,8 @@ def test_emit_that_answers_synchronously_does_not_deadlock():
     holder: dict[str, WebConfirmationBroker] = {}
 
     def auto_approve(message: dict) -> None:
-        # Appelé depuis le thread de l'agent : resolve prend le verrou, qui ne
-        # doit donc pas être tenu pendant emit.
+        # Called from the agent thread: resolve takes the lock, so it must
+        # not be held during emit.
         assert holder["broker"].resolve(message["id"], True) is True
 
     broker = WebConfirmationBroker(auto_approve)
@@ -249,7 +249,7 @@ def test_requests_after_close_refuse_immediately_without_emit():
     rec = Recorder()
     broker = WebConfirmationBroker(rec)
     broker.close()
-    assert broker.confirmer(make_request(timeout_s=WAIT)) is False  # immédiat
+    assert broker.confirmer(make_request(timeout_s=WAIT)) is False  # immediate
     assert rec.messages == []
     assert broker.pending_ids() == []
 
@@ -276,7 +276,7 @@ def test_two_concurrent_requests_are_independent():
     assert broker.resolve(by_tool["write_file"], False) is True
     join(t2)
     assert b2 == [False]
-    assert t1.is_alive()  # la première attend toujours
+    assert t1.is_alive()  # the first one is still waiting
     assert broker.pending_ids() == [by_tool["run_code"]]
 
     assert broker.resolve(by_tool["run_code"], True) is True
@@ -285,7 +285,7 @@ def test_two_concurrent_requests_are_independent():
     assert broker.pending_ids() == []
 
 
-# -- intégration avec la passerelle ------------------------------------------
+# -- integration with the gateway --------------------------------------------
 
 
 class CountingTool:
@@ -320,13 +320,13 @@ def make_gateway(emit, timeout_s: float = 0.3):
 
 
 def wait_until_nothing_pending(broker: WebConfirmationBroker) -> None:
-    """Le thread d'attente de la passerelle peut survivre quelques ms à son délai."""
+    """The gateway wait thread may outlive its timeout by a few ms."""
     done = threading.Event()
     for _ in range(int(WAIT / 0.01)):
         if not broker.pending_ids():
             return
         done.wait(0.01)
-    raise AssertionError(f"demandes restées en attente : {broker.pending_ids()}")
+    raise AssertionError(f"requests left pending: {broker.pending_ids()}")
 
 
 def call_in_thread(gateway: ToolGateway):
@@ -338,7 +338,7 @@ def test_gateway_approve_runs_the_tool_once():
     tool, broker, gateway = make_gateway(rec, timeout_s=WAIT)
     thread, box = call_in_thread(gateway)
     assert rec.first.wait(WAIT)
-    assert tool.runs == 0  # rien ne tourne avant la réponse
+    assert tool.runs == 0  # nothing runs before the response
     assert broker.resolve(rec.messages[0]["id"], True) is True
     join(thread)
     assert box[0].ok is True

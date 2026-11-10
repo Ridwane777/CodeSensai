@@ -1,43 +1,43 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { renderInline, renderRich } from '../src/features/chat/markdown'
 
-test('titres, listes à puces et numérotées, citations et paragraphes', () => {
-  const { container } = render(<div>{renderRich('## Plan\n- un\n- deux\n\n1. a\n2. b\n> attention\n\nFin.')}</div>)
+test('headings, bulleted and numbered lists, quotes and paragraphs', () => {
+  const { container } = render(<div>{renderRich('## Plan\n- one\n- two\n\n1. a\n2. b\n> warning\n\nEnd.')}</div>)
   expect(screen.getByRole('heading', { name: 'Plan' })).toBeInTheDocument()
   expect(container.querySelectorAll('ul li')).toHaveLength(2)
   expect(container.querySelectorAll('ol li')).toHaveLength(2)
-  expect(container.querySelector('blockquote')?.textContent).toBe('attention')
-  expect(container.textContent).toContain('Fin.')
+  expect(container.querySelector('blockquote')?.textContent).toBe('warning')
+  expect(container.textContent).toContain('End.')
 })
 
-test('un lien http(s) est cliquable et ouvre un nouvel onglet ; un lien javascript: reste du texte', () => {
-  const { container } = render(<p>{renderInline('[doc](https://docs.pytest.org) et [piège](javascript:alert(1))')}</p>)
+test('an http(s) link is clickable and opens a new tab; a javascript: link stays text', () => {
+  const { container } = render(<p>{renderInline('[doc](https://docs.pytest.org) and [trap](javascript:alert(1))')}</p>)
   const links = container.querySelectorAll('a')
   expect(links).toHaveLength(1)
   expect(links[0].getAttribute('href')).toBe('https://docs.pytest.org')
   expect(links[0].getAttribute('rel')).toContain('noopener')
-  expect(container.textContent).toContain('piège')
+  expect(container.textContent).toContain('trap')
 })
 
-test("l'italique ne prend pas les puces ni les multiplications", () => {
-  const { container } = render(<p>{renderInline('un *mot* et 2*3*4')}</p>)
+test("italics do not catch bullets or multiplications", () => {
+  const { container } = render(<p>{renderInline('a *word* and 2*3*4')}</p>)
   expect(container.querySelectorAll('em')).toHaveLength(1)
-  expect(container.querySelector('em')?.textContent).toBe('mot')
+  expect(container.querySelector('em')?.textContent).toBe('word')
 })
 
-test('un bloc de code Python est coloré et le bouton Copier copie le code brut', async () => {
+test('a Python code block is highlighted and the Copy button copies the raw code', async () => {
   const writeText = vi.fn(async () => {})
   Object.assign(navigator, { clipboard: { writeText } })
   const { container } = render(<div>{renderRich('```python\ndef f():\n    return 1\n```')}</div>)
   expect(container.querySelector('pre code span')).not.toBeNull()
   expect(container.querySelector('pre code')?.textContent).toBe('def f():\n    return 1')
-  fireEvent.click(screen.getByRole('button', { name: 'Copier le code' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
   expect(writeText).toHaveBeenCalledWith('def f():\n    return 1')
-  expect(await screen.findByText('✓ Copié')).toBeInTheDocument()
+  expect(await screen.findByText('✓ Copied')).toBeInTheDocument()
 })
 
-test('le HTML écrit par le modèle reste du texte', () => {
-  const { container } = render(<div>{renderRich('<img src=x onerror=alert(1)> **gras**')}</div>)
+test('HTML written by the model stays text', () => {
+  const { container } = render(<div>{renderRich('<img src=x onerror=alert(1)> **bold**')}</div>)
   expect(container.querySelector('img')).toBeNull()
   expect(container.textContent).toContain('<img src=x onerror=alert(1)>')
 })

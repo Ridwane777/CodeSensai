@@ -1,18 +1,18 @@
 """
-Rejoue le corpus adversarial [EV4] et écrit le tableau de résultats.
+Replays the adversarial corpus [EV4] and writes the results table.
 
-Aucun modèle, aucun réseau, aucun Docker : les mêmes attaques que
-`tests/adversarial/`, sur la même source (`src/sensai/eval/adversarial.py`). La
-sortie est déterministe (ni date, ni chemin temporaire) : relancer le script sur
-le même commit redonne exactement le même fichier.
+No model, no network, no Docker: the same attacks as `tests/adversarial/`, from
+the same source (`src/sensai/eval/adversarial.py`). The output is deterministic
+(no date, no temporary path): rerunning the script on the same commit produces
+exactly the same file.
 
-Usage (depuis la racine du dépôt) :
+Usage (from the repository root):
     python scripts/adversarial_run.py
-    python scripts/adversarial_run.py --out /tmp/resultats.md
+    python scripts/adversarial_run.py --out /tmp/results.md
 
-Code de sortie : 0 si aucun cas hors « écart connu » n'échoue ; 1 sinon, y compris
-quand un écart connu est corrigé (verdict « ÉCART CORRIGÉ ») : le cas est alors à
-reclasser, comme le ferait le xfail strict des tests.
+Exit code: 0 if no case outside the "known gaps" fails; 1 otherwise, including
+when a known gap gets fixed (the FIXED verdict): the case must then be
+reclassified, as the tests' strict xfail would require.
 """
 
 from __future__ import annotations
@@ -34,10 +34,10 @@ DEFAULT_OUT = ROOT / "docs" / "performance" / "data" / "EV4-adversarial-results.
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="fichier Markdown à écrire")
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Markdown file to write")
     args = parser.parse_args(argv)
 
-    # Les défenses journalisent leurs refus (c'est voulu) ; ici ce bruit masquerait le résumé.
+    # The defenses log their refusals (by design); here that noise would hide the summary.
     logging.disable(logging.CRITICAL)
     with tempfile.TemporaryDirectory(prefix="ev4-") as base:
         results = corpus.run_all(Path(base))
@@ -47,9 +47,9 @@ def main(argv: list[str] | None = None) -> int:
 
     bad = [r for r in results if r.verdict in (corpus.REGRESSION, corpus.FIXED)]
     for r in bad:
-        print(f"{r.verdict} : {r.case.id} — observé {r.observed}, {r.detail}", file=sys.stderr)
+        print(f"{r.verdict}: {r.case.id} — observed {r.observed}, {r.detail}", file=sys.stderr)
     known = sum(r.verdict == corpus.KNOWN for r in results)
-    print(f"{len(results)} cas, {known} écarts connus, {len(bad)} à traiter -> {args.out}")
+    print(f"{len(results)} cases, {known} known gaps, {len(bad)} to address -> {args.out}")
     return 1 if bad else 0
 
 

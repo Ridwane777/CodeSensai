@@ -1,18 +1,22 @@
 """
-Mesures de A6 (cache sémantique) : où placer le seuil de similarité ?
+A6 measurements (semantic cache): where should the similarity threshold go?
 
-Pour chaque question d'origine, on calcule la similarité (bge-m3, cosinus)
-avec :
-- des **reformulations**, qui devraient être servies depuis le cache ;
-- des **pièges**, proches par les mots mais qui appellent une autre réponse,
-  qui ne doivent **jamais** l'être (US-A6-2).
+For each original question, we compute the similarity (bge-m3, cosine) with:
+- **paraphrases**, which should be served from the cache;
+- **traps**, close in wording but calling for a different answer, which must
+  **never** be served (US-A6-2).
 
-Le jeu a été écrit le 2026-10-18, avant toute mesure. Résultats et choix :
-docs/performance/A6-cache.md.
+The dataset was written on 2026-10-18, before any measurement. Results and
+choices: docs/performance/A6-cache.md.
 
-    python scripts/bench_cache.py --host http://<hôte-ollama>:11434 --out a6.json
+The questions stay in French on purpose: they are the measured dataset (the
+published numbers come from them) and they exercise the French roots of the
+bilingual action rules in `sensai.knowledge.cache`. Translating them would
+produce a different, unmeasured dataset.
+
+    python scripts/bench_cache.py --host http://<ollama-host>:11434 --out a6.json
 """
-# ruff: noqa: E501  (les jeux de questions tiennent sur une ligne chacun)
+# ruff: noqa: E501  (each question set fits on one line)
 from __future__ import annotations
 
 import argparse
@@ -28,7 +32,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from sensai.knowledge.cache import conflict  # noqa: E402
 from sensai.knowledge.rag import OllamaEmbedder  # noqa: E402
 
-# (question d'origine, reformulations, pièges)
+# (original question, paraphrases, traps)
 CASES: list[tuple[str, list[str], list[str]]] = [
     ("Comment lancer les tests du projet ?",
      ["Quelle commande pour exécuter les tests ?", "Comment je fais tourner la suite de tests ?",
@@ -80,9 +84,9 @@ CASES: list[tuple[str, list[str], list[str]]] = [
 ]
 
 
-# Second jeu, écrit le 2026-10-18 après la première mesure mais AVANT d'écrire
-# les règles de `sensai.knowledge.cache` : il vérifie qu'elles ne sont pas
-# taillées pour le premier jeu.
+# Second dataset, written on 2026-10-18 after the first measurement but BEFORE
+# writing the rules in `sensai.knowledge.cache`: it checks that they are not
+# tailored to the first dataset.
 HELD_OUT: list[tuple[str, list[str], list[str]]] = [
     ("Comment générer la documentation ?",
      ["Quelle commande pour construire la doc ?", "how to build the docs?"],
@@ -122,7 +126,7 @@ def cosine(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def measure(embed, cases) -> tuple[list, list]:
-    """(score, question, autre, conflit) pour les reformulations et pour les pièges."""
+    """(score, question, other, conflict) for the paraphrases and for the traps."""
     paraphrases, traps = [], []
     for question, same, different in cases:
         vectors = [np.array(v) for v in embed([question, *same, *different])]
@@ -134,19 +138,19 @@ def measure(embed, cases) -> tuple[list, list]:
 
 
 def report(name: str, paraphrases: list, traps: list) -> None:
-    print(f"\n== {name} : {len(paraphrases)} reformulations, {len(traps)} pièges ==")
+    print(f"\n== {name}: {len(paraphrases)} paraphrases, {len(traps)} traps ==")
     for threshold in (0.70, 0.75, 0.80, 0.85, 0.90, 0.94):
-        for label, rules in (("embeddings seuls", False), ("embeddings + règles", True)):
+        for label, rules in (("embeddings only", False), ("embeddings + rules", True)):
             def served(row, t=threshold, r=rules):
                 return row[0] >= t and not (r and row[3])
             hits = sum(map(served, paraphrases))
             wrong = [row for row in traps if served(row)]
-            print(f"seuil {threshold:.2f} {label:20} : {hits}/{len(paraphrases)} servies, "
-                  f"{len(wrong)}/{len(traps)} pièges servis {[w[2] for w in wrong] if rules else ''}")
+            print(f"threshold {threshold:.2f} {label:20}: {hits}/{len(paraphrases)} served, "
+                  f"{len(wrong)}/{len(traps)} traps served {[w[2] for w in wrong] if rules else ''}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Seuil du cache sémantique (A6)")
+    parser = argparse.ArgumentParser(description="Semantic cache threshold (A6)")
     parser.add_argument("--host", required=True)
     parser.add_argument("--model", default="bge-m3")
     parser.add_argument("--out", type=Path)
@@ -154,7 +158,7 @@ def main() -> None:
 
     embed = OllamaEmbedder(args.host, args.model)
     results = {}
-    for name, cases in (("jeu 1", CASES), ("jeu tenu à part", HELD_OUT)):
+    for name, cases in (("set 1", CASES), ("held-out set", HELD_OUT)):
         paraphrases, traps = measure(embed, cases)
         report(name, paraphrases, traps)
         results[name] = {"paraphrases": paraphrases, "traps": traps}

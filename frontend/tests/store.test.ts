@@ -3,27 +3,27 @@ import { initialState, reduce, visibleTimeline, type UiState, type Action } from
 const run = (actions: Action[], from: UiState = initialState): UiState => actions.reduce(reduce, from)
 const start: Action = { type: 'turn_start', turnId: 't1', agent: 'sensei' }
 
-test('les tokens se concatènent dans le tour courant', () => {
+test('tokens are concatenated into the current turn', () => {
   const s = run([start, { type: 'token', turnId: 't1', text: 'Sa' }, { type: 'token', turnId: 't1', text: 'lut' }])
   const turn = s.timeline.find((i) => i.kind === 'turn')
   expect(turn && turn.kind === 'turn' && turn.turn.text).toBe('Salut')
   expect(s.thinking).toBe(true)
 })
 
-test('thought, action et observation du même stepId forment une seule étape', () => {
+test('thought, action and observation with the same stepId form a single step', () => {
   const s = run([
     start,
-    { type: 'thought', turnId: 't1', stepId: 's1', text: 'Je cherche' },
+    { type: 'thought', turnId: 't1', stepId: 's1', text: 'Searching' },
     { type: 'action', turnId: 't1', stepId: 's1', tool: 'rag.search', args: { q: 'x' } },
     { type: 'observation', turnId: 't1', stepId: 's1', text: '5 passages', ms: 340, ok: true },
   ])
   const turn = s.timeline.find((i) => i.kind === 'turn')
   const steps = turn && turn.kind === 'turn' ? turn.turn.steps : []
   expect(steps).toHaveLength(1)
-  expect(steps[0]).toMatchObject({ thought: 'Je cherche', tool: 'rag.search', observation: '5 passages', ms: 340, ok: true })
+  expect(steps[0]).toMatchObject({ thought: 'Searching', tool: 'rag.search', observation: '5 passages', ms: 340, ok: true })
 })
 
-test("une action puis son observation produisent une seule ligne de journal", () => {
+test("an action then its observation produce a single log line", () => {
   const s = run([
     start,
     { type: 'action', turnId: 't1', stepId: 's1', tool: 'sandbox.run', args: {} },
@@ -33,14 +33,14 @@ test("une action puis son observation produisent une seule ligne de journal", ()
   expect(s.logs[0]).toMatchObject({ tool: 'sandbox.run', ms: 410, ok: false })
 })
 
-test('done arrête la réflexion et note une interruption', () => {
+test('done stops thinking and records an interruption', () => {
   const s = run([start, { type: 'done', turnId: 't1', interrupted: true }])
   expect(s.thinking).toBe(false)
   const turn = s.timeline.find((i) => i.kind === 'turn')
   expect(turn && turn.kind === 'turn' && turn.turn.interrupted).toBe(true)
 })
 
-test('une demande de confirmation reste en attente puis est résolue', () => {
+test('a confirmation request stays pending then is resolved', () => {
   const asked = run([
     start,
     { type: 'confirm_request', requestId: 'c1', title: 'Supprimer ?', detail: 'build/', risk: 'high' },
@@ -52,12 +52,12 @@ test('une demande de confirmation reste en attente puis est résolue', () => {
   expect(c2 && c2.kind === 'confirm' && c2.status).toBe('approved')
 })
 
-test("résoudre une demande inconnue ne change rien", () => {
+test("resolving an unknown request changes nothing", () => {
   const s = reduce(initialState, { type: 'resolve', requestId: 'nope', status: 'approved' })
   expect(s.timeline).toEqual([])
 })
 
-test("usage remplace la jauge, error n'efface pas la conversation", () => {
+test("usage replaces the gauge, error does not clear the conversation", () => {
   const s = run([
     { type: 'user_message', id: 'm1', text: 'a' },
     { type: 'usage', used: 10, budget: 100, contextPct: 10 },
@@ -68,28 +68,28 @@ test("usage remplace la jauge, error n'efface pas la conversation", () => {
   expect(s.timeline).toHaveLength(1)
 })
 
-test("un patch d'artefact ne touche que sa section", () => {
+test("an artifact patch only touches its section", () => {
   const s = run([
-    { type: 'artifact_patch', section: 'Décisions', markdown: 'a' },
+    { type: 'artifact_patch', section: 'Decisions', markdown: 'a' },
     { type: 'artifact_patch', section: 'Tests', markdown: 'b' },
-    { type: 'artifact_patch', section: 'Décisions', markdown: 'a2' },
+    { type: 'artifact_patch', section: 'Decisions', markdown: 'a2' },
   ])
-  expect(s.artifact).toEqual({ Décisions: 'a2', Tests: 'b' })
-  expect(s.lastPatched).toBe('Décisions')
+  expect(s.artifact).toEqual({ Decisions: 'a2', Tests: 'b' })
+  expect(s.lastPatched).toBe('Decisions')
 })
 
-test("le passage de relais change l'agent actif", () => {
+test("the handoff changes the active agent", () => {
   const s = run([{ type: 'agent_handoff', from: 'sensei', to: 'reviewer' }])
   expect(s.persona).toBe('reviewer')
 })
 
-test("un relais vers un sous-agent s'affiche sans changer l'agent choisi", () => {
+test("a handoff to a sub-agent is shown without changing the chosen agent", () => {
   const s = run([{ type: 'agent_handoff', from: 'sensei', to: 'explorateur', subAgent: true }])
   expect(s.persona).toBe('sensei')
   expect(s.timeline.at(-1)).toMatchObject({ kind: 'handoff', from: 'sensei', to: 'explorateur' })
 })
 
-test("une branche montre l'historique avant la bifurcation puis ses propres messages", () => {
+test("a branch shows the history before the fork then its own messages", () => {
   let s = run([
     { type: 'user_message', id: 'm1', text: 'a' },
     { type: 'turn_start', turnId: 't1', agent: 'sensei' },
@@ -104,17 +104,17 @@ test("une branche montre l'historique avant la bifurcation puis ses propres mess
   expect(texts(s, 'b1')).toEqual(['a', 'turn', 'b2', 'turn'])
 })
 
-test("bifurquer depuis un message inconnu ne change rien", () => {
+test("forking from an unknown message changes nothing", () => {
   const s = reduce(initialState, { type: 'fork', branch: 'b1', fromId: 'zzz', id: 'x', text: 'y' })
   expect(s).toEqual(initialState)
 })
 
 
-test("une interruption périme les cartes en attente, qui ne peuvent plus être résolues", () => {
+test("an interruption expires pending cards, which can no longer be resolved", () => {
   let s = run([
     start,
     { type: 'confirm_request', requestId: 'c1', title: 'Supprimer ?', detail: 'build/', risk: 'high' },
-    { type: 'question', requestId: 'q1', title: 'Cible', fields: [] },
+    { type: 'question', requestId: 'q1', title: 'Target', fields: [] },
     { type: 'done', turnId: 't1', interrupted: true },
   ])
   const kinds = s.timeline.flatMap((i) => (i.kind === 'confirm' || i.kind === 'question' ? [i.status] : []))
@@ -124,7 +124,7 @@ test("une interruption périme les cartes en attente, qui ne peuvent plus être 
   expect(c && c.kind === 'confirm' && c.status).toBe('expired')
 })
 
-test("une demande déjà résolue ne change plus d'état", () => {
+test("an already resolved request no longer changes state", () => {
   let s = run([start, { type: 'confirm_request', requestId: 'c1', title: 't', detail: 'd', risk: 'low' }])
   s = reduce(s, { type: 'resolve', requestId: 'c1', status: 'approved' })
   s = reduce(s, { type: 'resolve', requestId: 'c1', status: 'denied' })
@@ -134,7 +134,7 @@ test("une demande déjà résolue ne change plus d'état", () => {
 
 const texts = (st: UiState, b: string) => visibleTimeline(st, b).map((i) => (i.kind === 'user' ? i.text : i.kind))
 
-test("éditer un ancien message depuis une variante n'affiche pas l'original", () => {
+test("editing an old message from a variant does not show the original", () => {
   let s = run([
     { type: 'user_message', id: 'm1', text: 'a' },
     { type: 'turn_start', turnId: 't1', agent: 'sensei' },
@@ -148,7 +148,7 @@ test("éditer un ancien message depuis une variante n'affiche pas l'original", (
   expect(texts(s, 'main')).toEqual(['a', 'turn', 'b'])
 })
 
-test("les éléments d'un tour restent dans la branche qui l'a lancé même si on change de vue", () => {
+test("a turn's items stay in the branch that started it even when switching view", () => {
   let s = run([{ type: 'user_message', id: 'm1', text: 'a' }])
   s = reduce(s, { type: 'fork', branch: 'b1', fromId: 'm1', id: 'm1-b1', text: 'a2' })
   s = reduce(s, { type: 'switch_branch', branch: 'main' })
@@ -161,7 +161,7 @@ test("les éléments d'un tour restent dans la branche qui l'a lancé même si o
   expect(texts(s, 'main')).toEqual(['a'])
 })
 
-test("#44 : une conversation rouverte remplace l'affichage par son historique", () => {
+test("#44: a reopened conversation replaces the display with its history", () => {
   const s = run([
     { type: 'user_message', id: 'm1', text: 'avant' },
     { type: 'load_history', messages: [{ id: 'h0', role: 'user', text: 'q1' }, { id: 'h1', role: 'assistant', text: 'r1' }] },
@@ -171,10 +171,10 @@ test("#44 : une conversation rouverte remplace l'affichage par son historique", 
   expect(s.timeline[1]).toMatchObject({ kind: 'turn', turn: { text: 'r1', done: true } })
 })
 
-test("A7 : la question de l'exemple joint est gardée sur le tour", () => {
+test("A7: the attached example's question is kept on the turn", () => {
   const s = run([
     { type: 'turn_start', turnId: 't1', agent: 'sensei' },
-    { type: 'fewshot', turnId: 't1', question: 'Comment lancer les tests ?' },
+    { type: 'fewshot', turnId: 't1', question: 'How do I run the tests?' },
   ])
-  expect(s.timeline.at(-1)).toMatchObject({ kind: 'turn', turn: { fewshot: 'Comment lancer les tests ?' } })
+  expect(s.timeline.at(-1)).toMatchObject({ kind: 'turn', turn: { fewshot: 'How do I run the tests?' } })
 })

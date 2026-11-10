@@ -1,7 +1,7 @@
-"""Teste la politique « sans surveillance » des tâches planifiées — feature [X5].
+"""Tests the "unattended" policy of scheduled tasks — feature [X5].
 
-Personne ne peut répondre « oui » à une confirmation : tout ce qui en demande
-une doit être refusé, quelles que soient les préférences.
+Nobody can answer "yes" to a confirmation: anything that needs one
+must be refused, whatever the preferences.
 """
 from typing import ClassVar
 
@@ -32,7 +32,7 @@ def test_allow_preference_cannot_loosen_write_or_execute(registry):
     assert gateway.call("ecrire", text="x").data["error"] == "refused"
     assert gateway.call("lancer", text="x").data["error"] == "refused"
     assert registry.get("ecrire").calls == [] and registry.get("lancer").calls == []
-    assert gateway.call("lire", text="x").ok  # lecture : autorisée
+    assert gateway.call("lire", text="x").ok  # read: allowed
 
 
 def test_gateway_confirmer_is_deny_all_and_not_replaceable_by_config(registry):
@@ -110,12 +110,12 @@ def test_untrusted_state_does_not_leak_between_runs(make_scheduler, registry, cl
     s.run_due()
     clock.advance(minutes=2)
     s.run_due()
-    assert results == [True, True]  # sinon la 2e exécution aurait hérité de la méfiance
+    assert results == [True, True]  # otherwise the 2nd run would have inherited the distrust
 
 
 def test_reset_untrusted_is_called_on_a_reused_gateway(make_scheduler, registry):
     shared = build_unattended_gateway(registry, ToolPreferences())
-    shared.call("lire", text="x")  # le passe en « contenu non fiable lu »
+    shared.call("lire", text="x")  # switches it to "untrusted content read"
     seen = []
 
     def agent(host, model, messages, tools):
@@ -142,10 +142,10 @@ def test_per_task_allowlist_is_applied_by_the_default_factory(make_scheduler, re
 
 
 class OutilBavard:
-    """Outil en lecture qui renvoie un secret, comme un fichier de config lu."""
+    """Read tool that returns a secret, like a config file being read."""
 
     name = "bavard"
-    description = "renvoie un secret"
+    description = "returns a secret"
     risk = "read"
     parameters: ClassVar[dict] = {"type": "object", "properties": {}, "required": []}
 
@@ -156,8 +156,8 @@ class OutilBavard:
 
 
 def test_les_garde_fous_masquent_les_secrets_sans_surveillance(registry):
-    """OUT-15 (EV4) vaut aussi pour les tâches planifiées : personne ne relit
-    ce que l'outil renvoie avant qu'il parte au modèle et au compte rendu."""
+    """OUT-15 (EV4) also applies to scheduled tasks: nobody reviews what
+    the tool returns before it reaches the model and the run record."""
     registry.register(OutilBavard())
     gateway = build_unattended_gateway(registry, ToolPreferences())
 

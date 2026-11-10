@@ -2,7 +2,7 @@
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Valentino) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) — to be confirmed by the team
 - **Lot concerned**: D (`web/questions.py`, `web/server.py`, `web/runtime.py`, `frontend/`), with a new shared tool (`tools/ask_user_tool.py`) also registered in the CLI (`cli.py`)
 
 ## Context
@@ -10,13 +10,13 @@
 [X4] Questions & Forms asks that the user can answer the questions the model
 asks in a fluid way (forms, proposed choices). The web interface already had
 a form card and a `question` event in its contract
-([ADR-0020](0020-interface-web-simulee.md)), but only the simulated engine
+([ADR-0020](0020-simulated-web-interface.md)), but only the simulated engine
 produced it: the real agent had no way to ask anything, so the feature was
-listed as simulated in `docs/architecture/web/simule-vs-reel.md` and
+listed as simulated in `docs/architecture/web/simulated-vs-real.md` and
 in issue #62.
 
 The agent loop (`core/agent.py`) only knows tools. Confirmations
-([ADR-0015](0015-confirmation-web-synchrone.md)) already solved "the agent
+([ADR-0015](0015-synchronous-web-confirmation.md)) already solved "the agent
 waits for a human in the browser": a synchronous callable blocks the agent's
 worker thread, the server publishes an SSE event, and a POST wakes the thread
 up. Timeouts, an interruption or a closed tab all end the wait.
@@ -57,7 +57,7 @@ secret typed by mistake.
 - ✅ Same safety properties as confirmations: no answer can be invented,
   nothing waits forever, and a closed tab or an interruption frees the agent.
 - ✅ The same tool works in the terminal, so the CLI and the web still offer
-  the same tools (`test_meme_agent_que_le_cli`).
+  the same tools (`test_same_agent_as_the_cli`).
 - ❌ Whether the model asks at the right moment depends on the model and on
   the tool description; this has only been tested with a scripted model, not
   yet with `qwen3-coder:30b`.

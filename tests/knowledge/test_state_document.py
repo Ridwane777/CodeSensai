@@ -1,9 +1,9 @@
 """
-Teste le document d'état du projet — feature [M4], ADR-0029.
+Tests the project state document — feature [M4], ADR-0029.
 
-Le test qui porte la DoD est `test_les_autres_sections_restent_identiques_a_l_octet` :
-il échoue si une mise à jour touche autre chose que la section visée, ce qui
-reviendrait à « réécrire le document en entier ».
+The test that carries the DoD is `test_other_sections_stay_byte_identical`:
+it fails if an update touches anything other than the target section, which
+would amount to "rewriting the whole document".
 """
 import json
 
@@ -17,277 +17,277 @@ from sensai.knowledge.state_document import (
     StateError,
 )
 
-ECRIT_A_LA_MAIN = """# État du projet
+HAND_WRITTEN = """# Project state
 
-Préambule écrit par l'humain.
+Preamble written by the human.
 
-## Fait
+## Done
 
 - Base Loop
-- M1 : sessions
+- M1: sessions
 
-## En cours
+## In progress
 
 - R2
 
-## Décisions
+## Decisions
 
-- SQLite partout, pas de Postgres (voir ADR-0007).
+- SQLite everywhere, no Postgres (see ADR-0007).
 
-## Problèmes connus
+## Known issues
 
-- L'indexation est lente.
+- Indexing is slow.
 
-## Notes perso
+## Personal notes
 
-Une section ajoutée à la main.
+A section added by hand.
 """
 
 
 @pytest.fixture
 def doc(tmp_path):
-    projet = tmp_path / "projet"
-    projet.mkdir()
-    return StateDocument(projet, tmp_path / "donnees" / "state" / "journal.jsonl")
+    project = tmp_path / "project"
+    project.mkdir()
+    return StateDocument(project, tmp_path / "data" / "state" / "journal.jsonl")
 
 
-def ecrire(doc, texte=ECRIT_A_LA_MAIN):
-    doc.path.write_text(texte, encoding="utf-8")
+def write(doc, text=HAND_WRITTEN):
+    doc.path.write_text(text, encoding="utf-8")
 
 
-# --- US-M4-1 : un fichier lisible, créé avec les sections de base --------------
+# --- US-M4-1: a readable file, created with the default sections --------------
 
 
-def test_le_fichier_est_dans_le_projet(doc):
+def test_file_lives_in_the_project(doc):
     assert doc.path.name == STATE_FILE == "SENSAI.md"
     assert doc.path.parent == doc.project
 
 
-def test_premiere_mise_a_jour_cree_les_sections_de_base(doc):
-    doc.update("En cours", "replace", "- M4 : document d'état")
+def test_first_update_creates_default_sections(doc):
+    doc.update("In progress", "replace", "- M4: state document")
 
-    texte = doc.path.read_text(encoding="utf-8")
+    text = doc.path.read_text(encoding="utf-8")
     for section in DEFAULT_SECTIONS:
-        assert f"## {section}\n" in texte
-    assert "- M4 : document d'état" in texte
+        assert f"## {section}\n" in text
+    assert "- M4: state document" in text
     assert doc.sections() == list(DEFAULT_SECTIONS)
 
 
-def test_sections_lues_dans_l_ordre_y_compris_celles_ajoutees_a_la_main(doc):
-    ecrire(doc)
+def test_sections_read_in_order_including_hand_added_ones(doc):
+    write(doc)
 
-    assert doc.sections() == ["Fait", "En cours", "Décisions", "Problèmes connus", "Notes perso"]
-
-
-# --- US-M4-2 : mise à jour ciblée, jamais destructrice ------------------------
+    assert doc.sections() == ["Done", "In progress", "Decisions", "Known issues", "Personal notes"]
 
 
-def test_les_autres_sections_restent_identiques_a_l_octet(doc):
-    ecrire(doc)
-    avant = doc.path.read_text(encoding="utf-8")
-
-    doc.update("En cours", "replace", "- M4\n- R2 (reranking)")
-
-    apres = doc.path.read_text(encoding="utf-8")
-    assert "- M4\n- R2 (reranking)" in apres
-    assert "\n- R2\n" not in apres
-    # Tout ce qui précède « ## En cours » et tout ce qui suit « ## Décisions » est intact.
-    debut = avant.index("## En cours")
-    suite = avant.index("## Décisions")
-    assert apres.startswith(avant[:debut])
-    assert apres.endswith(avant[suite:])
+# --- US-M4-2: targeted update, never destructive ------------------------
 
 
-def test_append_ajoute_a_la_fin_de_la_section(doc):
-    ecrire(doc)
+def test_other_sections_stay_byte_identical(doc):
+    write(doc)
+    before = doc.path.read_text(encoding="utf-8")
 
-    doc.update("Fait", "append", "- R1 : RAG")
+    doc.update("In progress", "replace", "- M4\n- R2 (reranking)")
 
-    texte = doc.path.read_text(encoding="utf-8")
-    assert "## Fait\n\n- Base Loop\n- M1 : sessions\n- R1 : RAG\n\n## En cours" in texte
+    after = doc.path.read_text(encoding="utf-8")
+    assert "- M4\n- R2 (reranking)" in after
+    assert "\n- R2\n" not in after
+    # Everything before "## In progress" and everything from "## Decisions" on is intact.
+    start = before.index("## In progress")
+    rest = before.index("## Decisions")
+    assert after.startswith(before[:start])
+    assert after.endswith(before[rest:])
 
 
-def test_la_derniere_section_peut_etre_modifiee(doc):
-    ecrire(doc)
+def test_append_adds_to_end_of_section(doc):
+    write(doc)
 
-    doc.update("Notes perso", "append", "Encore une note.")
+    doc.update("Done", "append", "- R1 : RAG")
+
+    text = doc.path.read_text(encoding="utf-8")
+    assert "## Done\n\n- Base Loop\n- M1: sessions\n- R1 : RAG\n\n## In progress" in text
+
+
+def test_last_section_can_be_changed(doc):
+    write(doc)
+
+    doc.update("Personal notes", "append", "One more note.")
 
     assert doc.path.read_text(encoding="utf-8").endswith(
-        "Une section ajoutée à la main.\nEncore une note.\n"
+        "A section added by hand.\nOne more note.\n"
     )
 
 
-def test_section_inconnue_refusee_avec_la_liste_et_fichier_intact(doc):
-    ecrire(doc)
+def test_unknown_section_rejected_with_list_and_file_intact(doc):
+    write(doc)
 
-    with pytest.raises(StateError) as erreur:
+    with pytest.raises(StateError) as error:
         doc.update("Roadmap", "append", "- X")
 
-    assert "Fait" in str(erreur.value) and "En cours" in str(erreur.value)
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
+    assert "Done" in str(error.value) and "In progress" in str(error.value)
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN
 
 
-@pytest.mark.parametrize("contenu", ["## Section cachée\n- x", "- ok\n# Titre", "  ## indenté"])
-def test_un_titre_dans_le_contenu_est_refuse(doc, contenu):
-    """Sinon le modèle pourrait créer une section ou casser le découpage."""
-    ecrire(doc)
-
-    with pytest.raises(StateError):
-        doc.update("En cours", "replace", contenu)
-
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
-
-
-def test_action_inconnue_refusee(doc):
-    ecrire(doc)
+@pytest.mark.parametrize("content", ["## Hidden section\n- x", "- ok\n# Title", "  ## indented"])
+def test_heading_in_content_is_rejected(doc, content):
+    """Otherwise the model could create a section or break the splitting."""
+    write(doc)
 
     with pytest.raises(StateError):
-        doc.update("En cours", "delete", "x")
+        doc.update("In progress", "replace", content)
+
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN
 
 
-def test_append_vide_refuse(doc):
-    ecrire(doc)
+def test_unknown_action_rejected(doc):
+    write(doc)
 
     with pytest.raises(StateError):
-        doc.update("Fait", "append", "   ")
+        doc.update("In progress", "delete", "x")
 
 
-def test_ecriture_interrompue_ne_laisse_pas_un_fichier_a_moitie_ecrit(doc, monkeypatch):
-    ecrire(doc)
+def test_empty_append_rejected(doc):
+    write(doc)
+
+    with pytest.raises(StateError):
+        doc.update("Done", "append", "   ")
+
+
+def test_interrupted_write_leaves_no_half_written_file(doc, monkeypatch):
+    write(doc)
     import os
 
-    def panne(*args, **kwargs):
-        raise OSError("disque plein")
+    def failure(*args, **kwargs):
+        raise OSError("disk full")
 
-    monkeypatch.setattr(os, "replace", panne)
+    monkeypatch.setattr(os, "replace", failure)
 
     with pytest.raises(OSError):
-        doc.update("En cours", "replace", "- autre chose")
+        doc.update("In progress", "replace", "- something else")
 
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN
     assert [p.name for p in doc.project.iterdir()] == [STATE_FILE]
 
 
-# --- US-M4-3 : voir, tracer, annuler ------------------------------------------
+# --- US-M4-3: view, trace, undo ------------------------------------------
 
 
-def test_preview_montre_la_section_avant_et_apres_sans_ecrire(doc):
-    ecrire(doc)
+def test_preview_shows_section_before_and_after_without_writing(doc):
+    write(doc)
 
-    apercu = doc.preview("En cours", "replace", "- M4")
+    preview = doc.preview("In progress", "replace", "- M4")
 
-    assert "-- R2" in apercu or "- - R2" in apercu
-    assert "+- M4" in apercu
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
-
-
-def test_chaque_mise_a_jour_est_journalisee(doc):
-    ecrire(doc)
-
-    doc.update("En cours", "replace", "- M4", summary="M4 commencé")
-
-    lignes = doc.journal_path.read_text(encoding="utf-8").splitlines()
-    entree = json.loads(lignes[-1])
-    assert entree["section"] == "En cours"
-    assert entree["action"] == "replace"
-    assert entree["before"].strip() == "- R2"
-    assert entree["after"].strip() == "- M4"
-    assert entree["summary"] == "M4 commencé"
-    assert entree["date"]
-    assert doc.history()[0]["section"] == "En cours"
+    assert "-- R2" in preview or "- - R2" in preview
+    assert "+- M4" in preview
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN
 
 
-def test_annuler_remet_la_section_dans_son_etat_precedent(doc):
-    ecrire(doc)
-    doc.update("En cours", "replace", "- M4")
+def test_every_update_is_logged(doc):
+    write(doc)
 
-    message = doc.undo("En cours")
+    doc.update("In progress", "replace", "- M4", summary="M4 started")
 
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
-    assert "En cours" in message
+    lines = doc.journal_path.read_text(encoding="utf-8").splitlines()
+    entry = json.loads(lines[-1])
+    assert entry["section"] == "In progress"
+    assert entry["action"] == "replace"
+    assert entry["before"].strip() == "- R2"
+    assert entry["after"].strip() == "- M4"
+    assert entry["summary"] == "M4 started"
+    assert entry["date"]
+    assert doc.history()[0]["section"] == "In progress"
+
+
+def test_undo_restores_previous_section_state(doc):
+    write(doc)
+    doc.update("In progress", "replace", "- M4")
+
+    message = doc.undo("In progress")
+
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN
+    assert "In progress" in message
     assert doc.history()[0]["action"] == "undo"
 
 
-def test_annuler_refuse_si_la_section_a_ete_modifiee_a_la_main(doc):
-    ecrire(doc)
-    doc.update("En cours", "replace", "- M4")
-    texte = doc.path.read_text(encoding="utf-8").replace("- M4", "- M4 (corrigé à la main)")
-    doc.path.write_text(texte, encoding="utf-8")
+def test_undo_refused_if_section_was_edited_by_hand(doc):
+    write(doc)
+    doc.update("In progress", "replace", "- M4")
+    text = doc.path.read_text(encoding="utf-8").replace("- M4", "- M4 (fixed by hand)")
+    doc.path.write_text(text, encoding="utf-8")
 
     with pytest.raises(StateError):
-        doc.undo("En cours")
+        doc.undo("In progress")
 
-    assert "corrigé à la main" in doc.path.read_text(encoding="utf-8")
+    assert "fixed by hand" in doc.path.read_text(encoding="utf-8")
 
 
-def test_annuler_sans_historique_refuse(doc):
-    ecrire(doc)
+def test_undo_without_history_refused(doc):
+    write(doc)
 
     with pytest.raises(StateError):
-        doc.undo("Fait")
+        doc.undo("Done")
 
 
-def test_le_journal_est_propre_au_projet(tmp_path):
+def test_log_is_per_project(tmp_path):
     a = StateDocument(tmp_path / "a", tmp_path / "journal-a.jsonl")
     b = StateDocument(tmp_path / "b", tmp_path / "journal-b.jsonl")
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
 
-    a.update("Fait", "append", "- a")
+    a.update("Done", "append", "- a")
 
     assert b.history() == []
 
 
-# --- Prompt système (ADR-0029, décision 4) ------------------------------------
+# --- System prompt (ADR-0029, decision 4) ------------------------------------
 
 
-def test_sans_fichier_pas_de_prompt(doc):
+def test_no_file_no_prompt(doc):
     assert doc.as_prompt() == ""
 
 
-def test_prompt_encadre_comme_une_donnee(doc):
-    ecrire(doc)
+def test_prompt_framed_as_data(doc):
+    write(doc)
 
     prompt = doc.as_prompt()
 
     assert "SENSAI.md" in prompt
-    assert "- SQLite partout" in prompt
-    assert "donnée" in prompt.lower() or "pas des instructions" in prompt.lower()
+    assert "- SQLite everywhere" in prompt
+    assert "data" in prompt.lower() and "not instructions" in prompt.lower()
 
 
-def test_prompt_tronque_au_dela_de_la_limite(doc):
-    ecrire(doc, "## Fait\n\n" + "- tâche faite\n" * 2000)
+def test_prompt_truncated_past_limit(doc):
+    write(doc, "## Done\n\n" + "- done task\n" * 2000)
 
     prompt = doc.as_prompt()
 
     assert len(prompt) <= MAX_PROMPT_CHARS + 500
-    assert "tronqué" in prompt
+    assert "truncated" in prompt
 
 
-def test_deux_annulations_remontent_de_deux_modifications(doc):
-    """Comme Ctrl+Z (ADR-0029, choix fait après l'essai réel du 2026-10-17) :
-    une annulation de plus remonte d'une modification de plus, elle n'annule
-    pas l'annulation précédente."""
-    ecrire(doc)
-    doc.update("En cours", "replace", "- M4")
-    doc.update("En cours", "replace", "- M4 et R2")
+def test_two_undos_go_back_two_changes(doc):
+    """Like Ctrl+Z (ADR-0029, choice made after the real trial run of 2026-10-17):
+    one more undo goes back one more change; it does not undo the previous
+    undo."""
+    write(doc)
+    doc.update("In progress", "replace", "- M4")
+    doc.update("In progress", "replace", "- M4 and R2")
 
-    doc.undo("En cours")
+    doc.undo("In progress")
     assert "\n- M4\n" in doc.path.read_text(encoding="utf-8")
 
-    doc.undo("En cours")
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
+    doc.undo("In progress")
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN
 
     with pytest.raises(StateError):
-        doc.undo("En cours")
+        doc.undo("In progress")
 
 
-def test_une_nouvelle_modification_apres_annulation_repart_de_la(doc):
-    ecrire(doc)
-    doc.update("En cours", "replace", "- M4")
-    doc.undo("En cours")
-    doc.update("En cours", "replace", "- R2")
+def test_new_change_after_undo_starts_from_there(doc):
+    write(doc)
+    doc.update("In progress", "replace", "- M4")
+    doc.undo("In progress")
+    doc.update("In progress", "replace", "- R2")
 
-    doc.undo("En cours")
+    doc.undo("In progress")
 
-    assert doc.path.read_text(encoding="utf-8") == ECRIT_A_LA_MAIN
+    assert doc.path.read_text(encoding="utf-8") == HAND_WRITTEN

@@ -1,25 +1,25 @@
-"""Réglages communs à toute la suite de tests.
+"""Settings shared by the whole test suite.
 
-Un terminal qui exporte FORCE_COLOR (certains terminaux, la CI) fait écrire à
-`rich` des codes de couleur même quand la sortie est capturée : le texte que
-les tests cherchent (« prompts : system v3 ») se retrouvait coupé par ces
-codes. La console de `sensai.ui` est créée à l'import ; on retire donc la
-variable ici, avant que les tests n'importent le module.
+A terminal that exports FORCE_COLOR (some terminals, CI) makes `rich` write
+color codes even when output is captured: the text the tests look for
+("prompts: system v3") ended up split by those codes. The `sensai.ui` console
+is created at import time, so the variable is removed here, before the tests
+import the module.
 """
 import os
 
 os.environ.pop("FORCE_COLOR", None)
-# La suite exerce team_task depuis le CLI, dont le projet est ce dépôt : sans ça, la
-# chaîne d'équipe lancerait pytest sur ce dépôt, qui relancerait team_task… (ADR-0056).
+# The suite exercises team_task from the CLI, whose project is this repo: without this,
+# the team pipeline would run pytest on this repo, which would rerun team_task... (ADR-0056).
 os.environ["SENSAI_NO_PROJECT_TESTS"] = "1"
 
 import pytest
 
 
 @pytest.fixture(autouse=True)
-def _parametres_de_generation_neutres():
-    """Le CLI règle les paramètres de génération pour tout le processus (ADR-0057) :
-    sans remise à zéro, un test qui lance le CLI les laisserait aux tests suivants."""
+def _neutral_generation_parameters():
+    """The CLI sets generation parameters for the whole process (ADR-0057):
+    without a reset, a test that runs the CLI would leak them into later tests."""
     from sensai.core.ollama_client import set_generation_options, set_request_timeout
 
     set_generation_options(None)

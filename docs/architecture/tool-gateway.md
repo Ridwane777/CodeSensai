@@ -2,14 +2,14 @@
 
 > Moved from `docs/user-stories/` on 2026-11-02: these are technical requirements shared by the features, not user stories of one catalogue feature.
 
-Lot B — Hands (Méric). `execution/gateway.py`, `tool_validation.py`,
+Workstream B — Hands (Meric). `execution/gateway.py`, `tool_validation.py`,
 `tool_policy.py`. Contract: [tool-contract.md](../architecture/tool-contract.md);
-decision: [ADR-0006](../decisions/0006-passerelle-d-outils.md).
+decision: [ADR-0006](../decisions/0006-tool-gateway.md).
 Not a catalogue feature: it is the base that makes A3, EV2 and T2/T4
-apply to **every** tool, including those of the other lots.
+apply to **every** tool, including those of the other workstreams.
 
 Personas: Marc, the lead who configures the tool for the team, and Camille,
-the developer ([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+the developer ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ---
 

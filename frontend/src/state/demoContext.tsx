@@ -10,6 +10,6 @@ export function DemoDataProvider({ children }: { children: ReactNode }) {
 
 export function useDemo() {
   const c = useContext(Ctx)
-  if (!c) throw new Error('useDemo doit être utilisé dans <DemoDataProvider>')
+  if (!c) throw new Error('useDemo must be used inside <DemoDataProvider>')
   return c
 }

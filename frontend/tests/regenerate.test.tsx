@@ -20,7 +20,7 @@ function Chat() {
   const { state, send } = useEngine()
   return (
     <>
-      <button onClick={() => send('Comment lancer les tests ?')}>envoyer</button>
+      <button onClick={() => send('How do I run the tests?')}>send</button>
       <MessageList items={visibleTimeline(state, state.activeBranch)} />
     </>
   )
@@ -29,23 +29,23 @@ function Chat() {
 function answered(regenerates: boolean) {
   const f = fakeEngine(regenerates)
   render(<EngineProvider engine={f.engine}><Chat /></EngineProvider>)
-  fireEvent.click(screen.getByText('envoyer'))
+  fireEvent.click(screen.getByText('send'))
   f.emit({ type: 'turn_start', turnId: 't1', agent: 'sensei' })
-  expect(screen.queryByText('↻ Régénérer')).not.toBeInTheDocument() // pas pendant la réponse
+  expect(screen.queryByText('↻ Regenerate')).not.toBeInTheDocument() // not while answering
   f.emit({ type: 'token', turnId: 't1', text: 'pytest -q' })
   f.emit({ type: 'done', turnId: 't1', interrupted: false })
   return f
 }
 
-test('avec le serveur réel, Régénérer envoie /again et réaffiche la question', () => {
+test('with the real server, Regenerate sends /again and shows the question again', () => {
   const { e } = answered(true)
-  fireEvent.click(screen.getByText('↻ Régénérer'))
+  fireEvent.click(screen.getByText('↻ Regenerate'))
   expect(e.send).toHaveBeenLastCalledWith(expect.objectContaining({ text: '/again' }))
-  expect(screen.getAllByText('Comment lancer les tests ?')).toHaveLength(2)
+  expect(screen.getAllByText('How do I run the tests?')).toHaveLength(2)
 })
 
-test('en démonstration, Régénérer rejoue la même question', () => {
+test('in demo mode, Regenerate replays the same question', () => {
   const { e } = answered(false)
-  fireEvent.click(screen.getByText('↻ Régénérer'))
-  expect(e.send).toHaveBeenLastCalledWith(expect.objectContaining({ text: 'Comment lancer les tests ?' }))
+  fireEvent.click(screen.getByText('↻ Regenerate'))
+  expect(e.send).toHaveBeenLastCalledWith(expect.objectContaining({ text: 'How do I run the tests?' }))
 })

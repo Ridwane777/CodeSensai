@@ -12,14 +12,14 @@ rollback-able. Feature A7 (Automated Prompt Optimization) builds on it.
 
 The criteria describe what Marc and Camille observe; the technical choices (storage,
 version identifiers, commands) are decided in the A4 ADR
-([ADR-0010](../decisions/0010-versionnement-des-prompts.md)).
+([ADR-0010](../decisions/0010-prompt-versioning.md)).
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-prompt history` and `check`: ✅ with both set-ups (< 1 s).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-prompt history` and `check`: ✅ with both set-ups (< 1 s).
 
 ## US-A4-1 — Find what changed in a prompt, and when
-> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who notices the agent has answered differently for a few days,
 **I want** to see the list of a prompt's versions with their date, and compare two versions,
@@ -37,7 +37,7 @@ had a login bug") — see
 [docs/performance/M1-sessions.md](../performance/M1-sessions.md).*
 
 ## US-A4-2 — Save a new version effortlessly
-> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who edits a prompt (for example the ReAct prompt),
 **I want** my change to become a new dated version, with a short description,
@@ -49,7 +49,7 @@ had a login bug") — see
 - A change that does not alter the text creates no version.
 
 ## US-A4-3 — Go back in one command
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who notices that a new version degrades the answers,
 **I want** to go back to a previous version in a single command,
@@ -62,7 +62,7 @@ had a login bug") — see
   version in one command.
 
 ## US-A4-4 — Browse the real registry from the web interface
-> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01 (
 [ADR-0055](../decisions/0055-prompt-versions-in-the-web.md)): ◐ tested with
@@ -82,7 +82,7 @@ description, active one), the text of a version and a diff between two versions,
   registry files keep the same bytes (checked by a test).
 
 ## US-A4-5 — Try a system prompt version in one conversation
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01: ◐ tested with a scripted model (pytest) and vitest,
 not yet with the real model.*
@@ -114,6 +114,6 @@ Each story checked against the code and the automated tests (not against earlier
 | --- | --- | --- | --- | --- |
 | US-A4-1 | ✅ | `knowledge/prompt_versions.py`, `prompt_cli.py` | `tests/knowledge/test_prompt_versions.py` (`historique_du_plus_recent_au_plus_ancien`, `diff_entre_deux_versions`, `version_modifiee_detectee`) |  |
 | US-A4-2 | ✅ | `prompt_cli.py` (`save`) | `tests/test_prompt_cli.py` (`save_depuis_un_fichier`, `save_d_un_texte_identique_refuse`) | A version is created by `sensai-prompt save`, not automatically when the file is edited |
-| US-A4-3 | ✅ | `prompt_cli.py` (`use`) | `tests/test_prompt_cli.py::test_dod_historique_puis_retour_en_arriere`, `tests/knowledge/test_prompt_versions.py::test_retour_en_arriere_ne_perd_rien` |  |
+| US-A4-3 | ✅ | `prompt_cli.py` (`use`) | `tests/test_prompt_cli.py::test_dod_history_then_rollback`, `tests/knowledge/test_prompt_versions.py::test_rollback_loses_nothing` |  |
 | US-A4-4 | ✅ | `web/server.py`, `frontend/src/pages/Prompts.tsx` | `tests/web/test_personas_prompts.py` (`liste_du_registre`, `texte_et_diff_d_une_version`, `le_web_n_ecrit_jamais_le_registre`), `frontend/tests/personasPrompts.test.tsx` |  |
 | US-A4-5 | ✅ | `web/runtime.py` | `tests/web/test_personas_prompts.py` (`essai_d_une_version_dans_une_conversation`, `essai_version_inconnue_ou_pendant_un_tour`) |  |

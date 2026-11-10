@@ -1,30 +1,31 @@
 import { route, SUGGESTIONS } from '../src/engine/router'
 import type { Step } from '../src/engine/scenarios/types'
 
-test('route par mot-clé', () => {
+// Inputs stay French on purpose: the demo router matches French keywords.
+test('routes by keyword', () => {
   expect(route("Où vérifie-t-on qu'une session inconnue ne plante pas ?").id).toBe('search')
   expect(route('supprime le dossier build').id).toBe('risky')
 })
 
-test('ignore la casse et les accents', () => {
+test('ignores case and accents', () => {
   expect(route('SUPPRIMÉ').id).toBe('risky')
 })
 
-test('texte inconnu : scénario de repli', () => {
+test('unknown text: fallback scenario', () => {
   expect(route('blabla zzz').id).toBe('fallback')
 })
 
-test('chaque suggestion mène au scénario annoncé', () => {
+test('each suggestion leads to its announced scenario', () => {
   for (const s of SUGGESTIONS) expect(route(s.text).id).toBe(s.scenario)
 })
 
-test('les 9 étapes du fil rouge ont une suggestion', () => {
+test('the 9 steps of the walkthrough each have a suggestion', () => {
   expect(SUGGESTIONS.map((s) => s.scenario)).toEqual([
     'resume', 'search', 'fix', 'risky', 'secret', 'form', 'web', 'budget', 'wrapup',
   ])
 })
 
-test('tout scénario commence par turn_start et finit par done (ou attend une réponse avant)', () => {
+test('every scenario starts with turn_start and ends with done (or waits for an answer first)', () => {
   for (const s of [...SUGGESTIONS.map((x) => route(x.text)), route('zzz')]) {
     const first = s.steps[0]
     const last = s.steps.at(-1)
@@ -33,7 +34,7 @@ test('tout scénario commence par turn_start et finit par done (ou attend une r�
   }
 })
 
-test("les waitFor ont un requestId émis juste avant", () => {
+test("each waitFor has a requestId emitted just before", () => {
   for (const s of SUGGESTIONS.map((x) => route(x.text))) {
     s.steps.forEach((st: Step, i: number) => {
       if (!('waitFor' in st)) return

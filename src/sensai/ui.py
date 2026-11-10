@@ -1,17 +1,17 @@
 """
-Affichage du CLI dans le terminal : accueil, zone de saisie, appels d'outils,
-diffs, confirmations, réponse en Markdown, interruption par Échap.
+CLI terminal display: welcome screen, input area, tool calls, diffs,
+confirmations, Markdown answer, interruption with Esc.
 
-Seul l'affichage vit ici. Le CLI (cli.py) garde la logique : il reçoit les
-événements de l'agent (core/events.py) et les confie à `TurnView`, comme le
-web les sérialisera en JSON (ADR-0005).
+Only display lives here. The CLI (cli.py) keeps the logic: it receives the
+agent's events (core/events.py) and hands them to `TurnView`, just as the web
+serializes them to JSON (ADR-0005).
 
-Deux modes :
-- **terminal interactif** : couleurs, animation avec le temps écoulé, réponse
-  rendue en Markdown au fil de l'eau, invite avec historique et complétion,
-  menu de confirmation aux flèches, Échap pour interrompre un tour ;
-- **sinon** (entrée redirigée, tests, CI) : texte brut et `input()`, que les
-  tests remplacent. Ce mode doit rester celui de pytest.
+Two modes:
+- **interactive terminal**: colors, spinner with elapsed time, answer rendered
+  as Markdown while it streams, prompt with history and completion, arrow-key
+  confirmation menu, Esc to interrupt a turn;
+- **otherwise** (redirected input, tests, CI): plain text and `input()`, which
+  tests replace. This must remain the mode used under pytest.
 """
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ from rich.text import Text
 
 from sensai.core.events import Done, Error, Event, Thought, Token, ToolCall, ToolReturn
 
-# soft_wrap : Rich ne coupe pas les lignes longues lui-même (le terminal le
-# fait) ; sans lui, un chemin ou un diff serait coupé au milieu en mode texte.
+# soft_wrap: Rich does not wrap long lines itself (the terminal does);
+# without it, a path or a diff would be cut in the middle in text mode.
 console = Console(highlight=False, soft_wrap=True)
 
 ACCENT = "#d97757"
@@ -42,16 +42,16 @@ COMMANDS = (
     "/help", "/profile", "/remember", "/forget", "/sessions", "/state", "/facts",
     "/cache", "/again", "/context", "/schedule", "/eval", "exit",
 )
-# Libellé affiché pour chaque outil, et l'argument montré entre parenthèses.
+# Label shown for each tool, and the argument shown in parentheses.
 TOOL_LABELS = {
-    "read_file": ("Lecture", "path"),
-    "write_file": ("Écriture", "path"),
-    "run_code": ("Exécution", None),
-    "web_search": ("Recherche web", "query"),
-    "search_codebase": ("Recherche projet", "query"),
-    "update_state": ("Document d'état", "section"),
-    "save_fact": ("Mémoire", "entity"),
-    "recall_facts": ("Mémoire", "entity"),
+    "read_file": ("Read", "path"),
+    "write_file": ("Write", "path"),
+    "run_code": ("Run", None),
+    "web_search": ("Web search", "query"),
+    "search_codebase": ("Project search", "query"),
+    "update_state": ("State document", "section"),
+    "save_fact": ("Memory", "entity"),
+    "recall_facts": ("Memory", "entity"),
 }
 
 
@@ -60,8 +60,8 @@ def interactive() -> bool:
 
 
 def plain(text: str, style: str | None = None) -> None:
-    """Texte variable (sortie de commande, chemin…) : jamais interprété comme
-    une balise Rich, sinon « [Bloqué] » disparaîtrait."""
+    """Variable text (command output, path…): never interpreted as Rich
+    markup, otherwise "[Blocked]" would disappear."""
     console.print(Text(text, style=style or ""))
 
 
@@ -77,17 +77,17 @@ def error(text: str) -> None:
     plain(text, "bold red")
 
 
-# --- Accueil ---------------------------------------------------------------------
+# --- Welcome -----------------------------------------------------------------------
 
 
 def banner(lines: list[tuple[str, str]], notes: list[str]) -> None:
-    """Le cadre de bienvenue : le titre, puis une ligne par information."""
+    """The welcome panel: the title, then one line per item."""
     body = Text()
     body.append("✻ ", style=ACCENT)
-    body.append("Bienvenue dans ", style="bold")
-    body.append("CodeSensei", style=f"bold {ACCENT}")
+    body.append("Welcome to ", style="bold")
+    body.append("CodeSensai", style=f"bold {ACCENT}")
     body.append(" !\n\n", style="bold")
-    body.append("  /help pour l'aide, exit pour quitter\n\n", style="dim italic")
+    body.append("  /help for help, exit to quit\n\n", style="dim italic")
     width = max((len(label) for label, _ in lines), default=0)
     for label, value in lines:
         body.append(f"  {label.ljust(width)} : ", style="dim")
@@ -99,37 +99,37 @@ def banner(lines: list[tuple[str, str]], notes: list[str]) -> None:
 
 
 HELP = """\
-Commandes du chat (rien n'est envoyé au modèle) :
-  /remember <texte>          ajouter une préférence au profil (/profile, /forget)
-  /sessions                  sessions de ce projet
-  /state                     document d'état SENSAI.md
-  /state history | undo <s>  ses modifications, annuler la dernière d'une section
-  /facts [entité]            mémoire de faits
-  /facts forget | history    effacer un fait, voir l'historique d'une entité
-  /persona [list|use <id>]   persona active, liste des personas, en changer
-  /cache [clear]             réponses en cache : bilan, ou tout vider
-  /again                     redemander au modèle la dernière question
-  /context                   le prompt exact envoyé au modèle et ses réglages
-  /schedule …  /eval …       tâches planifiées, évaluation
-  /structured <schéma.json> <demande>   réponse JSON conforme à un schéma
-  exit                       quitter
+Chat commands (nothing is sent to the model):
+  /remember <text>           add a preference to the profile (/profile, /forget)
+  /sessions                  sessions of this project
+  /state                     SENSAI.md state document
+  /state history | undo <s>  its changes, undo the last one of a section
+  /facts [entity]            fact memory
+  /facts forget | history    delete a fact, show an entity's history
+  /persona [list|use <id>]   active persona, list personas, switch persona
+  /cache [clear]             cached answers: summary, or clear everything
+  /again                     ask the model the last question again
+  /context                   the exact prompt sent to the model and its settings
+  /schedule …  /eval …       scheduled tasks, evaluation
+  /structured <schema.json> <request>   JSON answer matching a schema
+  exit                       quit
 
-Raccourcis : ↑ ↓ historique · Tab complète une commande · Échap interrompt l'agent
-· Ctrl+C deux fois pour quitter"""
+Shortcuts: ↑ ↓ history · Tab completes a command · Esc interrupts the agent
+· Ctrl+C twice to quit"""
 
 
 def loading(text: str):
-    """Animation pendant une attente sans événement (chargement du modèle)."""
+    """Spinner while waiting without events (model loading)."""
     return console.status(Text(text, style=ACCENT), spinner="dots")
 
 
-# --- Zone de saisie ------------------------------------------------------------------
+# --- Input area ---------------------------------------------------------------------
 
 
 class Prompt:
-    """La zone de saisie `>` sous un trait, avec une ligne d'aide dessous.
-    En terminal : historique persistant, complétion des commandes, Ctrl+C deux
-    fois pour quitter ; sinon `input()`, que les tests remplacent."""
+    """The `>` input area under a rule, with a help line below it.
+    In a terminal: persistent history, command completion, Ctrl+C twice to
+    quit; otherwise `input()`, which tests replace."""
 
     def __init__(self, history_file: Path | None = None) -> None:
         self._session = None
@@ -163,8 +163,8 @@ class Prompt:
             line = self._session.prompt(
                 HTML(f'<style fg="{ACCENT}"><b>&gt;</b></style> '),
                 bottom_toolbar=HTML(
-                    "<i>  /help pour les commandes · ↑ historique · "
-                    "Échap pendant une réponse pour l'interrompre</i>"
+                    "<i>  /help for commands · ↑ history · "
+                    "Esc during an answer to interrupt it</i>"
                 ),
             )
         except KeyboardInterrupt:
@@ -172,7 +172,7 @@ class Prompt:
             if now - self._last_interrupt < 2:
                 raise
             self._last_interrupt = now
-            info("  Appuie encore sur Ctrl+C pour quitter.")
+            info("  Press Ctrl+C again to quit.")
             return ""
         return line
 
@@ -183,8 +183,8 @@ _HUNK = re.compile(r"^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 
 
 def diff_view(summary: str) -> RenderableType:
-    """Un diff unifié avec numéros de ligne et fond coloré ; le reste du texte
-    tel quel. Les en-têtes `---`/`+++` sont masqués."""
+    """A unified diff with line numbers and colored background; other text
+    as is. The `---`/`+++` headers are hidden."""
     lines = summary.splitlines()
     if not any(_HUNK.match(line) for line in lines):
         return _colored(summary)
@@ -230,23 +230,23 @@ _watcher: EscWatcher | None = None
 
 
 def take_instruction() -> str | None:
-    """La consigne donnée avec « Non, et dire quoi faire », une seule fois."""
+    """The instruction given with "No, and tell it what to do", returned once."""
     global _pending_instruction
     instruction, _pending_instruction = _pending_instruction, None
     return instruction
 
 
 def confirm(title: str, details: str) -> bool:
-    """Demande d'autorisation : le plan dans un cadre, puis un choix. Seul un
-    « oui » explicite autorise ; « Non, et dire quoi faire » garde la consigne
-    pour l'envoyer à l'agent à la fin du tour."""
+    """Permission request: the plan in a panel, then a choice. Only an explicit
+    "yes" authorizes; "No, and tell it what to do" keeps the instruction to
+    send it to the agent at the end of the turn."""
     global _pending_instruction
     console.print()
     console.print(Panel(diff_view(details), title=title, title_align="left",
                         border_style="yellow", expand=False, padding=(0, 1)))
     if not interactive():
         try:
-            answer = input("Autoriser ? [y/N] ").strip().lower()
+            answer = input("Allow? [y/N] ").strip().lower()
         except (EOFError, KeyboardInterrupt):
             console.print()
             return False
@@ -259,13 +259,13 @@ def confirm(title: str, details: str) -> bool:
         _watcher.pause()
     try:
         answer = choice(
-            "Autoriser cette action ?",
-            options=[("yes", "Oui"), ("tell", "Non, et dire à l'agent quoi faire"),
-                     ("no", "Non")],
+            "Allow this action?",
+            options=[("yes", "Yes"), ("tell", "No, and tell the agent what to do"),
+                     ("no", "No")],
             default="yes",
         )
         if answer == "tell":
-            text = ask("  ⎿ Que doit faire l'agent ? ").strip()
+            text = ask("  ⎿ What should the agent do? ").strip()
             _pending_instruction = text or None
         return answer == "yes"
     except (EOFError, KeyboardInterrupt):
@@ -275,13 +275,13 @@ def confirm(title: str, details: str) -> bool:
             _watcher.resume()
 
 
-# --- Échap pour interrompre ---------------------------------------------------------------
+# --- Esc to interrupt --------------------------------------------------------------------
 
 
 class EscWatcher:
-    """Écoute la touche Échap pendant un tour (terminal en mode caractère).
+    """Listens for the Esc key during a turn (terminal in cbreak mode).
 
-    Mis en pause pendant une confirmation, pour ne pas lui voler les touches.
+    Paused during a confirmation so it does not steal its keystrokes.
     """
 
     def __init__(self) -> None:
@@ -343,11 +343,11 @@ class EscWatcher:
         _watcher = None
 
 
-# --- Un tour de l'agent ------------------------------------------------------------------
+# --- One agent turn ----------------------------------------------------------------------
 
 
 class _Thinking:
-    """« ✻ Réflexion… (12 s · Échap pour interrompre) », recalculé à chaque image."""
+    """"✻ Thinking… (12 s · Esc to interrupt)", recomputed on every frame."""
 
     def __init__(self) -> None:
         self.start = time.monotonic()
@@ -356,7 +356,7 @@ class _Thinking:
     def __rich_console__(self, console, options):
         seconds = int(time.monotonic() - self.start)
         self.spinner.text = Text.assemble(
-            ("Réflexion…", ACCENT), (f" ({seconds} s · Échap pour interrompre)", "dim"))
+            ("Thinking…", ACCENT), (f" ({seconds} s · Esc to interrupt)", "dim"))
         yield self.spinner
 
 
@@ -374,27 +374,27 @@ def tool_label(event: ToolCall) -> Text:
 
 
 def tool_summary(name: str, ok: bool, content: str) -> str:
-    """Une ligne utile sur ce qu'a fait l'outil, plutôt que son premier mot."""
+    """One useful line about what the tool did, rather than its first word."""
     body = content.strip()
     lines = [line for line in body.splitlines() if line.strip()]
-    first = lines[0] if lines else "(vide)"
+    first = lines[0] if lines else "(empty)"
     if not ok:
         return first[:120]
     if name == "read_file":
-        return f"{len(body.splitlines())} lignes lues"
+        return f"{len(body.splitlines())} lines read"
     if name == "write_file":
-        return "Fichier créé" if first.startswith("Created") else "Fichier modifié"
+        return "File created" if first.startswith("Created") else "File modified"
     if name == "web_search":
         count = sum(1 for line in lines if re.match(r"\s*\d+\.", line))
-        return f"{count} résultat(s)"
+        return f"{count} result(s)"
     if name == "search_codebase":
         found = re.search(r"(\d+) passage", first)
-        return f"{found.group(1)} passage(s) trouvé(s)" if found else first[:120]
+        return f"{found.group(1)} passage(s) found" if found else first[:120]
     if name == "recall_facts":
         count = sum(1 for line in lines if line.startswith("- "))
-        return f"{count} fait(s) trouvé(s)" if count else first[:120]
+        return f"{count} fact(s) found" if count else first[:120]
     if name == "run_code":
-        return first[:120] + (f"  (+{len(lines) - 1} lignes)" if len(lines) > 1 else "")
+        return first[:120] + (f"  (+{len(lines) - 1} lines)" if len(lines) > 1 else "")
     return first[:120]
 
 
@@ -402,8 +402,8 @@ _CALL_TEXT = re.compile(r"<function=|<tool_call>")
 
 
 def visible_answer(answer: str) -> str:
-    """Ce qu'on montre de la réponse : rien à partir d'un appel d'outil écrit
-    en texte (l'agent le lit ou le relance, ADR-0031 ; inutile de l'afficher)."""
+    """The part of the answer to show: nothing from a tool call written as text
+    onward (the agent parses or retries it, ADR-0031; no need to display it)."""
     found = _CALL_TEXT.search(answer)
     return answer[:found.start()].rstrip() if found else answer
 
@@ -417,12 +417,12 @@ def _bulleted(body: RenderableType, bullet: str = "●", style: str = "") -> Tab
 
 
 def cached_answer(answer: str, question: str, created_at, similarity: float) -> None:
-    """Réponse servie par le cache (A6) : on dit d'où elle vient pour qu'on
-    puisse juger si elle vaut encore (US-A6-3)."""
-    when = created_at.astimezone().strftime("%d/%m à %H:%M")
-    header = Text("↺ depuis le cache · question « ", style="dim")
+    """Answer served from the cache (A6): say where it comes from so the user
+    can judge whether it still holds (US-A6-3)."""
+    when = created_at.astimezone().strftime("%d/%m at %H:%M")
+    header = Text("↺ from cache · question \"", style="dim")
     header.append(question, style="dim italic")
-    header.append(f" » du {when} (similarité {similarity:.2f}) · /again pour redemander",
+    header.append(f"\" from {when} (similarity {similarity:.2f}) · /again to ask again",
                   style="dim")
     if not interactive():
         console.print(header)
@@ -434,9 +434,8 @@ def cached_answer(answer: str, question: str, created_at, similarity: float) -> 
 
 
 class TurnView:
-    """Affiche les événements d'un tour. En terminal : animation avec le temps
-    écoulé jusqu'au premier événement, appels en ●, résultats en ⎿, réponse en
-    Markdown au fil de l'eau."""
+    """Displays a turn's events. In a terminal: spinner with elapsed time until
+    the first event, calls as ●, results as ⎿, answer streamed as Markdown."""
 
     def __init__(self) -> None:
         self.live = interactive()
@@ -490,17 +489,17 @@ class TurnView:
             line.append(tool_summary(event.name, event.ok, event.content),
                         style="" if event.ok else "red")
             console.print(line)
-            # Après un appel d'outil, le modèle réfléchit de nouveau.
+            # After a tool call, the model thinks again.
             self._start_thinking()
         elif isinstance(event, Error):
-            error(f"✗ [Erreur] {event.message}")
+            error(f"✗ [Error] {event.message}")
         elif isinstance(event, Done) and event.reason == "max_iterations":
-            warn("[Arrêt] Nombre maximal d'étapes atteint sans réponse finale.")
+            warn("[Stopped] Maximum number of steps reached without a final answer.")
 
     def interrupted(self) -> None:
         self._stop_thinking()
         self._end_answer()
-        plain("  ⎿  Interrompu par l'utilisateur.", "yellow")
+        plain("  ⎿  Interrupted by the user.", "yellow")
 
     def close(self) -> None:
         self._stop_thinking()

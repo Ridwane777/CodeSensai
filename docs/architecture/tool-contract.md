@@ -1,6 +1,6 @@
 # Tool contract
 
-Read this before adding a tool. Decision: [ADR-0006](../decisions/0006-passerelle-d-outils.md).
+Read this before adding a tool. Decision: [ADR-0006](../decisions/0006-tool-gateway.md).
 
 The agent is not only a code assistant: tools are how it acts on the world.
 They can read documents (RAG), call external services (MCP, web), write files,

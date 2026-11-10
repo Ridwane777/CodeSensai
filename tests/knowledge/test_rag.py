@@ -1,21 +1,21 @@
 """
-Tests du RAG sur le projet — feature [R1].
+Tests for RAG over the project — feature [R1].
 
-Chaque bloc renvoie à une user story de docs/user-stories/R1-basic-rag.md ;
-les choix testés viennent de docs/decisions/0009-rag-sur-la-codebase.md.
+Each block maps to a user story in docs/user-stories/R1-basic-rag.md;
+the choices under test come from docs/decisions/0009-rag-over-the-codebase.md.
 
-Ollama n'est jamais appelé : `FauxEmbedder` produit un « sac de mots » haché.
-Deux textes qui partagent des mots ont des vecteurs proches, ce qui suffit à
-tester la recherche sans réseau ni modèle.
+Ollama is never called: `FakeEmbedder` produces a hashed "bag of words".
+Two texts that share words get close vectors, which is enough to test search
+without a network or a model.
 
-Les tests qui comptent le plus :
-- `test_env_jamais_indexe_meme_sans_gitignore` : un secret indexé peut partir
-  au modèle, voire vers un serveur Ollama distant. Il échoue si on retire la liste
-  interdite en dur.
-- `test_fichier_supprime_n_est_plus_cite` : sinon l'agent cite du code qui
-  n'existe plus.
-- `test_sous_le_seuil_rien_n_est_renvoye` : c'est ce qui empêche l'agent
-  d'inventer une réponse (US-R1-3).
+The tests that matter most:
+- `test_env_never_indexed_even_without_gitignore`: an indexed secret can reach
+  the model, or even a remote Ollama server. It fails if the hard-coded deny
+  list is removed.
+- `test_deleted_file_is_no_longer_cited`: otherwise the agent cites code that
+  no longer exists.
+- `test_below_threshold_nothing_is_returned`: this is what keeps the agent from
+  making up an answer (US-R1-3).
 """
 import hashlib
 import math
@@ -35,365 +35,368 @@ from sensai.knowledge.rag import (
 DIMS = 256
 
 
-class FauxEmbedder:
-    """Sac de mots haché, normalisé. Compte les textes reçus."""
+class FakeEmbedder:
+    """Hashed, normalized bag of words. Counts the texts received."""
 
     def __init__(self):
-        self.textes_recus = 0
+        self.texts_received = 0
 
-    def __call__(self, textes: list[str]) -> list[list[float]]:
-        self.textes_recus += len(textes)
-        vecteurs = []
-        for texte in textes:
+    def __call__(self, texts: list[str]) -> list[list[float]]:
+        self.texts_received += len(texts)
+        vectors = []
+        for text in texts:
             v = [0.0] * DIMS
-            for mot in re.findall(r"\w+", texte.lower()):
-                v[int(hashlib.md5(mot.encode()).hexdigest(), 16) % DIMS] += 1.0
+            for word in re.findall(r"\w+", text.lower()):
+                v[int(hashlib.md5(word.encode()).hexdigest(), 16) % DIMS] += 1.0
             n = math.sqrt(sum(x * x for x in v)) or 1.0
-            vecteurs.append([x / n for x in v])
-        return vecteurs
+            vectors.append([x / n for x in v])
+        return vectors
+
+
+FauxEmbedder = FakeEmbedder  # former name, still imported by other test modules
 
 
 @pytest.fixture
-def projet(tmp_path):
-    racine = tmp_path / "projet"
-    (racine / "src").mkdir(parents=True)
-    (racine / "src" / "auth.py").write_text(
-        '"""Authentification."""\n'
+def project(tmp_path):
+    root = tmp_path / "project"
+    (root / "src").mkdir(parents=True)
+    (root / "src" / "auth.py").write_text(
+        '"""Authentication."""\n'
         "import hmac\n"
         "\n"
         "\n"
-        "def verifier_token(token, secret):\n"
-        '    """Vérifie le token de connexion envoyé par le client."""\n'
+        "def verify_token(token, secret):\n"
+        '    """Verify the login token sent by the client."""\n'
         "    return hmac.compare_digest(token, secret)\n"
         "\n"
         "\n"
         "class Session:\n"
-        "    def ouvrir(self, utilisateur):\n"
-        "        return utilisateur\n",
+        "    def open(self, user):\n"
+        "        return user\n",
         encoding="utf-8",
     )
-    (racine / "README.md").write_text(
-        "# Projet\n"
-        "Présentation générale.\n"
+    (root / "README.md").write_text(
+        "# Project\n"
+        "General overview.\n"
         "\n"
         "## Installation\n"
-        "Lancer pip install pour installer les dépendances.\n"
+        "Run pip install to install the dependencies.\n"
         "\n"
-        "## Déploiement\n"
-        "Le déploiement se fait avec docker compose sur le serveur.\n",
+        "## Deployment\n"
+        "Deployment is done with docker compose on the server.\n",
         encoding="utf-8",
     )
-    return racine
+    return root
 
 
 @pytest.fixture
 def index(tmp_path):
-    return RagIndex(tmp_path / "donnees" / "rag.db", project="projet", embed=FauxEmbedder())
+    return RagIndex(tmp_path / "data" / "rag.db", project="project", embed=FakeEmbedder())
 
 
-def sources(resultats):
-    return [r["source"] for r in resultats]
+def sources(results):
+    return [r["source"] for r in results]
 
 
-def indexes(racine):
-    return [str(f.relative_to(racine)) for f in scan_files(racine).files]
+def indexed(root):
+    return [str(f.relative_to(root)) for f in scan_files(root).files]
 
 
-# --- US-R1-2 : indexer sans fuite ni attente inutile -------------------------
+# --- US-R1-2: index without leaks or needless waiting ------------------------
 
 
-def test_env_jamais_indexe_meme_sans_gitignore(projet):
-    (projet / ".env").write_text("DB_PASSWORD=hunter2\n", encoding="utf-8")
-    (projet / ".env.local").write_text("API_KEY=abc\n", encoding="utf-8")
-    (projet / "id_rsa").write_text("-----BEGIN OPENSSH PRIVATE KEY-----\n", encoding="utf-8")
-    (projet / "serveur.pem").write_text("-----BEGIN CERTIFICATE-----\n", encoding="utf-8")
+def test_env_never_indexed_even_without_gitignore(project):
+    (project / ".env").write_text("DB_PASSWORD=hunter2\n", encoding="utf-8")
+    (project / ".env.local").write_text("API_KEY=abc\n", encoding="utf-8")
+    (project / "id_rsa").write_text("-----BEGIN OPENSSH PRIVATE KEY-----\n", encoding="utf-8")
+    (project / "server.pem").write_text("-----BEGIN CERTIFICATE-----\n", encoding="utf-8")
 
-    fichiers = indexes(projet)
+    files = indexed(project)
 
-    assert ".env" not in fichiers
-    assert ".env.local" not in fichiers
-    assert "id_rsa" not in fichiers
-    assert "serveur.pem" not in fichiers
-    assert "src/auth.py" in fichiers
-
-
-def test_dossiers_inutiles_ignores(projet):
-    for dossier in (".git", ".venv", "node_modules", "__pycache__"):
-        (projet / dossier).mkdir()
-        (projet / dossier / "bruit.py").write_text("x = 1\n", encoding="utf-8")
-
-    assert all("bruit.py" not in f for f in indexes(projet))
+    assert ".env" not in files
+    assert ".env.local" not in files
+    assert "id_rsa" not in files
+    assert "server.pem" not in files
+    assert "src/auth.py" in files
 
 
-def test_gitignore_respecte(projet):
-    (projet / ".gitignore").write_text("build/\n*.log\n", encoding="utf-8")
-    (projet / "build").mkdir()
-    (projet / "build" / "genere.py").write_text("x = 1\n", encoding="utf-8")
-    (projet / "trace.log").write_text("erreur\n", encoding="utf-8")
+def test_useless_folders_ignored(project):
+    for folder in (".git", ".venv", "node_modules", "__pycache__"):
+        (project / folder).mkdir()
+        (project / folder / "noise.py").write_text("x = 1\n", encoding="utf-8")
 
-    fichiers = indexes(projet)
-
-    assert "build/genere.py" not in fichiers
-    assert "trace.log" not in fichiers
+    assert all("noise.py" not in f for f in indexed(project))
 
 
-def test_binaires_et_gros_fichiers_ignores(projet):
-    (projet / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00binaire")
-    (projet / "dump.sql").write_text("x" * 2_000_000, encoding="utf-8")
+def test_gitignore_honored(project):
+    (project / ".gitignore").write_text("build/\n*.log\n", encoding="utf-8")
+    (project / "build").mkdir()
+    (project / "build" / "generated.py").write_text("x = 1\n", encoding="utf-8")
+    (project / "trace.log").write_text("error\n", encoding="utf-8")
 
-    fichiers = indexes(projet)
+    files = indexed(project)
 
-    assert "logo.png" not in fichiers
-    assert "dump.sql" not in fichiers
+    assert "build/generated.py" not in files
+    assert "trace.log" not in files
 
 
-def test_format_non_pris_en_charge_liste_avec_un_conseil(projet):
-    """US-R1-4 / décision 7 : un format qu'on ne sait pas lire n'est pas indexé,
-    mais on dit quoi faire. (Depuis ADR-0034, le PDF est un document converti :
+def test_binaries_and_large_files_ignored(project):
+    (project / "logo.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00binary")
+    (project / "dump.sql").write_text("x" * 2_000_000, encoding="utf-8")
+
+    files = indexed(project)
+
+    assert "logo.png" not in files
+    assert "dump.sql" not in files
+
+
+def test_unsupported_format_listed_with_advice(project):
+    """US-R1-4 / decision 7: a format we cannot read is not indexed, but we say
+    what to do. (Since ADR-0034, PDF is a converted document:
     tests/knowledge/test_rag_documents.py.)"""
-    (projet / "notes.odt").write_bytes(b"PK\x03\x04binaire")
+    (project / "notes.odt").write_bytes(b"PK\x03\x04binary")
 
-    resultat = scan_files(projet)
+    result = scan_files(project)
 
-    assert all(f.name != "notes.odt" for f in resultat.files)
-    conseils = {str(p.relative_to(projet)): c for p, c in resultat.unsupported}
-    assert "notes.odt" in conseils
-    assert "pandoc" in conseils["notes.odt"].lower()
-
-
-def test_premiere_indexation_compte_fichiers_et_passages(projet, index):
-    rapport = index.update(projet)
-
-    assert rapport.files_indexed == 2
-    assert rapport.chunks > 0
+    assert all(f.name != "notes.odt" for f in result.files)
+    advice = {str(p.relative_to(project)): c for p, c in result.unsupported}
+    assert "notes.odt" in advice
+    assert "pandoc" in advice["notes.odt"].lower()
 
 
-def test_seuls_les_fichiers_modifies_sont_reindexes(projet, index):
-    index.update(projet)
-    avant = index.embed.textes_recus
+def test_first_indexing_counts_files_and_passages(project, index):
+    report = index.update(project)
 
-    (projet / "README.md").write_text("# Projet\nNouveau contenu.\n", encoding="utf-8")
-    rapport = index.update(projet)
-
-    assert rapport.files_indexed == 1, "seul README.md a changé"
-    nouveaux_textes = index.embed.textes_recus - avant
-    assert 0 < nouveaux_textes <= 2, "auth.py ne doit pas être réembarqué"
+    assert report.files_indexed == 2
+    assert report.chunks > 0
 
 
-def test_rien_a_refaire_si_rien_n_a_change(projet, index):
-    index.update(projet)
-    avant = index.embed.textes_recus
+def test_only_modified_files_are_reindexed(project, index):
+    index.update(project)
+    before = index.embed.texts_received
 
-    rapport = index.update(projet)
+    (project / "README.md").write_text("# Project\nNew content.\n", encoding="utf-8")
+    report = index.update(project)
 
-    assert rapport.files_indexed == 0
-    assert index.embed.textes_recus == avant
-
-
-def test_fichier_supprime_n_est_plus_cite(projet, index):
-    index.update(projet)
-    (projet / "src" / "auth.py").unlink()
-
-    rapport = index.update(projet)
-
-    assert rapport.files_removed == 1
-    resultats = index.search("vérifie le token de connexion", min_score=0.0)
-    assert "src/auth.py" not in sources(resultats)
+    assert report.files_indexed == 1, "only README.md changed"
+    new_texts = index.embed.texts_received - before
+    assert 0 < new_texts <= 2, "auth.py must not be re-embedded"
 
 
-def test_l_index_survit_a_la_fermeture(projet, tmp_path):
-    db = tmp_path / "donnees" / "rag.db"
-    RagIndex(db, project="projet", embed=FauxEmbedder()).update(projet)
+def test_nothing_to_redo_if_nothing_changed(project, index):
+    index.update(project)
+    before = index.embed.texts_received
 
-    relu = RagIndex(db, project="projet", embed=FauxEmbedder())
+    report = index.update(project)
 
-    assert not relu.is_empty()
-    assert "src/auth.py" in sources(relu.search("token de connexion", min_score=0.0))
-
-
-def test_les_projets_ne_se_melangent_pas(projet, tmp_path):
-    db = tmp_path / "donnees" / "rag.db"
-    RagIndex(db, project="projet", embed=FauxEmbedder()).update(projet)
-
-    autre = RagIndex(db, project="autre-projet", embed=FauxEmbedder())
-
-    assert autre.is_empty()
-    assert autre.search("token de connexion", min_score=0.0) == []
+    assert report.files_indexed == 0
+    assert index.embed.texts_received == before
 
 
-# --- Découpage par structure (décision 3) -----------------------------------
+def test_deleted_file_is_no_longer_cited(project, index):
+    index.update(project)
+    (project / "src" / "auth.py").unlink()
+
+    report = index.update(project)
+
+    assert report.files_removed == 1
+    results = index.search("verify the login token", min_score=0.0)
+    assert "src/auth.py" not in sources(results)
 
 
-def test_une_fonction_python_est_un_passage_avec_ses_lignes(projet):
-    passages = chunk_file(projet / "src" / "auth.py", "src/auth.py")
+def test_index_survives_closing(project, tmp_path):
+    db = tmp_path / "data" / "rag.db"
+    RagIndex(db, project="project", embed=FakeEmbedder()).update(project)
 
-    fonction = next(p for p in passages if "def verifier_token" in p.text)
-    assert (fonction.start, fonction.end) == (5, 7)
-    assert "class Session" not in fonction.text
+    reopened = RagIndex(db, project="project", embed=FakeEmbedder())
 
-
-def test_une_classe_python_est_un_passage(projet):
-    passages = chunk_file(projet / "src" / "auth.py", "src/auth.py")
-
-    classe = next(p for p in passages if "class Session" in p.text)
-    assert (classe.start, classe.end) == (10, 12)
+    assert not reopened.is_empty()
+    assert "src/auth.py" in sources(reopened.search("login token", min_score=0.0))
 
 
-def test_python_invalide_decoupe_par_lignes(tmp_path):
-    """Un fichier en cours d'écriture ne doit pas faire échouer l'indexation."""
-    fichier = tmp_path / "casse.py"
-    fichier.write_text("def oups(:\n    pass\n", encoding="utf-8")
+def test_projects_do_not_mix(project, tmp_path):
+    db = tmp_path / "data" / "rag.db"
+    RagIndex(db, project="project", embed=FakeEmbedder()).update(project)
 
-    passages = chunk_file(fichier, "casse.py")
+    other = RagIndex(db, project="other-project", embed=FakeEmbedder())
+
+    assert other.is_empty()
+    assert other.search("login token", min_score=0.0) == []
+
+
+# --- Structure-aware chunking (decision 3) -----------------------------------
+
+
+def test_a_python_function_is_one_passage_with_its_lines(project):
+    passages = chunk_file(project / "src" / "auth.py", "src/auth.py")
+
+    function = next(p for p in passages if "def verify_token" in p.text)
+    assert (function.start, function.end) == (5, 7)
+    assert "class Session" not in function.text
+
+
+def test_a_python_class_is_one_passage(project):
+    passages = chunk_file(project / "src" / "auth.py", "src/auth.py")
+
+    cls = next(p for p in passages if "class Session" in p.text)
+    assert (cls.start, cls.end) == (10, 12)
+
+
+def test_invalid_python_chunked_by_lines(tmp_path):
+    """A file being written must not make indexing fail."""
+    file = tmp_path / "broken.py"
+    file.write_text("def oops(:\n    pass\n", encoding="utf-8")
+
+    passages = chunk_file(file, "broken.py")
 
     assert passages and passages[0].start == 1
 
 
-def test_markdown_decoupe_par_section(projet):
-    passages = chunk_file(projet / "README.md", "README.md")
+def test_markdown_chunked_by_section(project):
+    passages = chunk_file(project / "README.md", "README.md")
 
-    deploiement = next(p for p in passages if "docker compose" in p.text)
-    assert deploiement.text.lstrip().startswith("## Déploiement")
-    assert "pip install" not in deploiement.text
-    assert (deploiement.start, deploiement.end) == (7, 8)
+    deployment = next(p for p in passages if "docker compose" in p.text)
+    assert deployment.text.lstrip().startswith("## Deployment")
+    assert "pip install" not in deployment.text
+    assert (deployment.start, deployment.end) == (7, 8)
 
 
-def test_long_fichier_texte_decoupe_en_blocs(tmp_path):
-    fichier = tmp_path / "notes.txt"
-    fichier.write_text("\n".join(f"ligne {i}" for i in range(1, 101)), encoding="utf-8")
+def test_long_text_file_chunked_into_blocks(tmp_path):
+    file = tmp_path / "notes.txt"
+    file.write_text("\n".join(f"line {i}" for i in range(1, 101)), encoding="utf-8")
 
-    passages = chunk_file(fichier, "notes.txt")
+    passages = chunk_file(file, "notes.txt")
 
     assert len(passages) > 1
     assert passages[0].start == 1
     assert passages[-1].end == 100
 
 
-# --- US-R1-1 : poser une question sur mon code ------------------------------
+# --- US-R1-1: ask a question about my code -----------------------------------
 
 
-def test_la_bonne_fonction_est_trouvee(projet, index):
-    index.update(projet)
+def test_the_right_function_is_found(project, index):
+    index.update(project)
 
-    resultats = index.search("où vérifie-t-on le token de connexion du client ?",
-                             min_score=0.0)
+    results = index.search("where do we verify the login token of the client?",
+                           min_score=0.0)
 
-    assert resultats[0]["source"] == "src/auth.py"
-    assert resultats[0]["start"] == 5
-
-
-def test_la_bonne_section_de_doc_est_trouvee(projet, index):
-    index.update(projet)
-
-    resultats = index.search("comment se fait le déploiement avec docker ?", min_score=0.0)
-
-    assert resultats[0]["source"] == "README.md"
+    assert results[0]["source"] == "src/auth.py"
+    assert results[0]["start"] == 5
 
 
-def test_le_contexte_cite_fichier_et_lignes(projet, index):
-    index.update(projet)
-    resultats = index.search("token de connexion", min_score=0.0, top_k=1)
+def test_the_right_doc_section_is_found(project, index):
+    index.update(project)
 
-    contexte = format_context(resultats)
+    results = index.search("how is deployment done with docker?", min_score=0.0)
 
-    assert "src/auth.py:5-7" in contexte
-    assert "verifier_token" in contexte
+    assert results[0]["source"] == "README.md"
 
 
-def test_le_contexte_numerote_chaque_ligne(projet, index):
-    """Essai réel : sans numéros, le modèle a cité cli.py:123-127 pour
-    du code situé ligne 112. Un modèle ne compte pas les lignes d'un passage : il
-    doit lire le numéro devant chacune."""
-    index.update(projet)
-    resultats = index.search("token de connexion", min_score=0.0, top_k=1)
+def test_context_cites_file_and_lines(project, index):
+    index.update(project)
+    results = index.search("login token", min_score=0.0, top_k=1)
 
-    contexte = format_context(resultats)
+    context = format_context(results)
 
-    assert "5│ def verifier_token(token, secret):" in contexte
-    assert "7│     return hmac.compare_digest(token, secret)" in contexte
+    assert "src/auth.py:5-7" in context
+    assert "verify_token" in context
 
 
-def test_le_contexte_ne_montre_pas_le_score(projet, index):
-    """Le score n'aide pas le modèle à répondre ; affiché, il le commentait
-    (« la pertinence est de 0.51 ») au lieu de répondre."""
-    index.update(projet)
+def test_context_numbers_each_line(project, index):
+    """Real trial run: without numbers, the model cited cli.py:123-127 for code
+    at line 112. A model does not count the lines of a passage: it must read
+    the number in front of each one."""
+    index.update(project)
+    results = index.search("login token", min_score=0.0, top_k=1)
 
-    contexte = format_context(index.search("token de connexion", min_score=0.0))
+    context = format_context(results)
 
-    assert "pertinence" not in contexte.lower()
-    assert "score" not in contexte.lower()
-
-
-def test_le_contexte_autorise_une_reponse_normale_hors_projet(projet, index):
-    """US-R1-1 : « c'est quoi une closure ? » doit être répondu comme avant, sans
-    commentaire sur des passages qui ne la concernent pas."""
-    index.update(projet)
-
-    for contexte in (format_context(index.search("token", min_score=0.0)), format_context([])):
-        assert "réponds normalement" in contexte
-        assert "sans mentionner" in contexte
+    assert "5│ def verify_token(token, secret):" in context
+    assert "7│     return hmac.compare_digest(token, secret)" in context
 
 
-def test_top_k_limite_le_nombre_de_passages(projet, index):
-    index.update(projet)
+def test_context_does_not_show_the_score(project, index):
+    """The score does not help the model answer; when shown, the model commented
+    on it ("the relevance is 0.51") instead of answering."""
+    index.update(project)
 
-    assert len(index.search("projet", min_score=0.0, top_k=2)) <= 2
+    context = format_context(index.search("login token", min_score=0.0))
+
+    assert "relevance" not in context.lower()
+    assert "score" not in context.lower()
 
 
-# --- US-R1-3 : dire quand le projet ne contient pas la réponse --------------
+def test_context_allows_a_normal_answer_outside_the_project(project, index):
+    """US-R1-1: "what is a closure?" must be answered as before, without
+    comments on passages unrelated to it."""
+    index.update(project)
+
+    for context in (format_context(index.search("token", min_score=0.0)), format_context([])):
+        assert "answer normally" in context
+        assert "without mentioning" in context
 
 
-def test_sous_le_seuil_rien_n_est_renvoye(projet, index):
-    index.update(projet)
+def test_top_k_limits_the_number_of_passages(project, index):
+    index.update(project)
+
+    assert len(index.search("project", min_score=0.0, top_k=2)) <= 2
+
+
+# --- US-R1-3: say when the project does not contain the answer --------------
+
+
+def test_below_threshold_nothing_is_returned(project, index):
+    index.update(project)
 
     assert index.search("broker kafka zookeeper", min_score=0.5) == []
 
 
-def test_contexte_vide_previent_le_modele():
-    assert "aucun passage" in format_context([]).lower()
+def test_empty_context_warns_the_model():
+    assert "no relevant passage" in format_context([]).lower()
 
 
-def test_index_vide(index):
+def test_empty_index(index):
     assert index.is_empty()
-    assert index.search("n'importe quoi", min_score=0.0) == []
+    assert index.search("anything at all", min_score=0.0) == []
 
 
-# --- Protection des données (ADR-0007, réutilisé par R1) ---------------------
+# --- Data protection (ADR-0007, reused by R1) --------------------------------
 
 
-@pytest.mark.skipif(os.name != "posix", reason="droits POSIX")
-def test_index_cree_en_prive(tmp_path):
-    dossier = tmp_path / ".sensai"
-    RagIndex(dossier / "rag.db", project="p", embed=FauxEmbedder())
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permissions")
+def test_index_created_private(tmp_path):
+    folder = tmp_path / ".sensai"
+    RagIndex(folder / "rag.db", project="p", embed=FakeEmbedder())
 
-    assert stat.S_IMODE(dossier.stat().st_mode) == 0o700
-    assert stat.S_IMODE((dossier / "rag.db").stat().st_mode) == 0o600
-
-
-def test_le_document_d_etat_n_est_pas_indexe(tmp_path):
-    """SENSAI.md est déjà donné en entier à l'agent (ADR-0029) : l'indexer
-    l'enverrait deux fois au modèle."""
-    racine = tmp_path / "projet"
-    racine.mkdir()
-    (racine / "SENSAI.md").write_text("## Fait\n\n- x\n", encoding="utf-8")
-    (racine / "README.md").write_text("# Projet\n", encoding="utf-8")
-
-    assert indexes(racine) == ["README.md"]
+    assert stat.S_IMODE(folder.stat().st_mode) == 0o700
+    assert stat.S_IMODE((folder / "rag.db").stat().st_mode) == 0o600
 
 
-def test_un_fichier_cree_apres_l_ouverture_entre_dans_la_recherche(tmp_path):
-    """Essai du 2026-11-01 : un fichier créé après la première question restait
-    invisible, et le modèle affirmait qu'il n'existait pas."""
-    projet = tmp_path / "projet"
-    projet.mkdir()
-    (projet / "a.md").write_text("Lancer les tests avec pytest.\n", encoding="utf-8")
-    index = RagIndex(tmp_path / "rag.db", str(projet), FauxEmbedder(), model="faux")
-    index.update(projet)
-    (projet / "deploiement.txt").write_text("Région de déploiement : eu-west-3\n", encoding="utf-8")
+def test_the_state_document_is_not_indexed(tmp_path):
+    """SENSAI.md is already given in full to the agent (ADR-0029): indexing it
+    would send it to the model twice."""
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / "SENSAI.md").write_text("## Done\n\n- x\n", encoding="utf-8")
+    (root / "README.md").write_text("# Project\n", encoding="utf-8")
 
-    assert index.refresh_if_stale(projet) is None  # moins de 30 s : rien n'est refait
+    assert indexed(root) == ["README.md"]
+
+
+def test_a_file_created_after_opening_enters_the_search(tmp_path):
+    """Trial run of 2026-11-01: a file created after the first question stayed
+    invisible, and the model claimed it did not exist."""
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "a.md").write_text("Run the tests with pytest.\n", encoding="utf-8")
+    index = RagIndex(tmp_path / "rag.db", str(project), FakeEmbedder(), model="fake")
+    index.update(project)
+    (project / "deployment.txt").write_text("Deployment region: eu-west-3\n", encoding="utf-8")
+
+    assert index.refresh_if_stale(project) is None  # under 30 s: nothing is redone
     index._updated_at -= 31
-    report = index.refresh_if_stale(projet)
+    report = index.refresh_if_stale(project)
     assert report is not None and report.files_indexed == 1
-    hits = index.search("région de déploiement", top_k=3, min_score=0.0)
-    assert any(h["source"] == "deploiement.txt" for h in hits)
+    hits = index.search("deployment region", top_k=3, min_score=0.0)
+    assert any(h["source"] == "deployment.txt" for h in hits)

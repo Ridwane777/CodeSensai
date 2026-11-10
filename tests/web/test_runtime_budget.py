@@ -1,9 +1,9 @@
 """
-Le budget de tokens (M2, ADR-0045) et `num_ctx` dans le serveur web.
+The token budget (M2, ADR-0045) and `num_ctx` in the web server.
 
-Le CLI les avait, le web non (revue PR #97) : une fonction activée par défaut
-d'un côté et absente de l'autre contredisait ADR-0035 (« le même agent des deux
-côtés »). On teste ici `WebRuntime` directement, sans serveur HTTP ni Ollama.
+The CLI had them, the web did not (PR #97 review): a feature enabled by default
+on one side and missing on the other contradicted ADR-0035 ("the same agent on both
+sides"). Here `WebRuntime` is tested directly, without an HTTP server or Ollama.
 """
 import threading
 
@@ -20,8 +20,8 @@ from sensai.web.runtime import WebRuntime
 from tests.knowledge.test_rag import FauxEmbedder
 
 
-class FauxTour:
-    """Remplace la boucle d'agent : note les messages reçus et répond « ok »."""
+class FakeTurn:
+    """Replaces the agent loop: records the received messages and answers "ok"."""
 
     def __init__(self):
         self.messages = []
@@ -33,16 +33,16 @@ class FauxTour:
 
 
 @pytest.fixture
-def fabrique(tmp_path):
-    def _fabrique(**options):
-        projet = tmp_path / "projet"
-        projet.mkdir(exist_ok=True)
+def factory(tmp_path):
+    def _factory(**options):
+        project = tmp_path / "project"
+        project.mkdir(exist_ok=True)
         settings = {
-            "model": "faux-modele",
+            "model": "fake-model",
             "host": "http://127.0.0.1:1",
-            "system_prompt": "Tu es CodeSensei.",
-            "memory_prompt": "Conversation reprise.",
-            "data_dir": str(tmp_path / "donnees"),
+            "system_prompt": "You are CodeSensai.",
+            "memory_prompt": "Conversation resumed.",
+            "data_dir": str(tmp_path / "data"),
             "retention_days": 30,
             "rag": False,
             "rag_model": "bge-m3",
@@ -52,128 +52,128 @@ def fabrique(tmp_path):
             "cache": False,
         }
         settings.update(options)
-        tour = FauxTour()
-        runtime = WebRuntime(settings, projet, run_turn=tour,
+        turn = FakeTurn()
+        runtime = WebRuntime(settings, project, run_turn=turn,
                              embedder_factory=lambda host, model: FauxEmbedder(),
                              converter_factory=lambda: None, reranker_factory=None)
-        return runtime, tour
+        return runtime, turn
 
-    return _fabrique
-
-
-def jouer(runtime, turns, texte):
-    evenements = []
-    nouveaux = runtime.run_turn(turns, texte, evenements.append, threading.Event(),
-                                lambda demande: True)
-    return nouveaux, evenements
+    return _factory
 
 
-def historique(n_paires):
+def play(runtime, turns, text):
+    events = []
+    new_turns = runtime.run_turn(turns, text, events.append, threading.Event(),
+                                 lambda request: True)
+    return new_turns, events
+
+
+def history(n_pairs):
     turns = []
-    for i in range(n_paires):
-        turns += [{"role": "user", "content": f"question numéro {i} avec un peu de texte"},
-                  {"role": "assistant", "content": f"réponse numéro {i} avec un peu de texte"}]
+    for i in range(n_pairs):
+        turns += [{"role": "user", "content": f"question number {i} with a bit of text"},
+                  {"role": "assistant", "content": f"answer number {i} with a bit of text"}]
     return turns
 
 
-def test_num_ctx_part_avec_la_boucle_d_agent_par_defaut(tmp_path, monkeypatch):
-    vus = []
+def test_num_ctx_is_sent_with_the_default_agent_loop(tmp_path, monkeypatch):
+    seen = []
 
-    def faux_agent(host, model, messages, tools, num_ctx=None, max_iterations=None):
-        vus.append(num_ctx)
+    def fake_agent(host, model, messages, tools, num_ctx=None, max_iterations=None):
+        seen.append(num_ctx)
         yield Token("ok")
         yield Done("final_answer")
 
-    monkeypatch.setattr(runtime_module, "run_agent_turn", faux_agent)
-    projet = tmp_path / "projet"
-    projet.mkdir()
+    monkeypatch.setattr(runtime_module, "run_agent_turn", fake_agent)
+    project = tmp_path / "project"
+    project.mkdir()
     runtime = WebRuntime(
         {"model": "m", "host": "http://h", "rag": False, "rag_model": "bge-m3",
          "rag_min_score": 0.0, "data_dir": str(tmp_path / "d"), "retention_days": 30,
          "num_ctx": 4096},
-        projet, embedder_factory=lambda host, model: FauxEmbedder(),
+        project, embedder_factory=lambda host, model: FauxEmbedder(),
         converter_factory=lambda: None, reranker_factory=None)
 
-    jouer(runtime, [], "Bonjour")
+    play(runtime, [], "Hello")
 
-    assert vus == [4096]
+    assert seen == [4096]
 
 
-def test_les_sous_agents_du_web_recoivent_num_ctx(fabrique, monkeypatch):
-    vus = []
+def test_web_subagents_receive_num_ctx(factory, monkeypatch):
+    seen = []
 
-    def faux_agent(host, model, messages, tools, num_ctx=None, max_iterations=None):
-        vus.append(num_ctx)
+    def fake_agent(host, model, messages, tools, num_ctx=None, max_iterations=None):
+        seen.append(num_ctx)
         yield Token("ok")
         yield Done("final_answer")
 
-    monkeypatch.setattr(delegate_tool, "_run_agent_turn", faux_agent)
-    runtime, _ = fabrique(num_ctx=4096)
+    monkeypatch.setattr(delegate_tool, "_run_agent_turn", fake_agent)
+    runtime, _ = factory(num_ctx=4096)
 
-    gateway = runtime.make_gateway(lambda demande: True)
-    gateway.registry.get("delegate_task").delegate("une sous-tâche")
+    gateway = runtime.make_gateway(lambda request: True)
+    gateway.registry.get("delegate_task").delegate("a subtask")
 
-    assert vus == [4096]
-
-
-def test_au_dessus_du_budget_les_vieux_tours_sont_resumes(fabrique, monkeypatch):
-    appels = []
-
-    def faux_resume(host, model, messages, options=None):
-        appels.append(options)
-        yield {"content": "voici le résumé"}
-
-    monkeypatch.setattr(compression, "stream_chat_messages", faux_resume)
-    runtime, tour = fabrique(token_budget_max=50, token_budget_keep_recent=2, num_ctx=4096)
-    turns = historique(10)
-
-    nouveaux, _ = jouer(runtime, turns, "une nouvelle question")
-
-    envoyes = tour.messages[0]
-    assert "voici le résumé" in envoyes[0]["content"]
-    assert len(envoyes) < len(turns)  # les vieux tours ne partent plus
-    assert appels == [{"num_ctx": 4096}]  # le résumé lui-même envoie num_ctx
-    # La session sauvegardée (M1) garde tout, intact.
-    assert nouveaux[:len(turns)] == turns
-    assert nouveaux[-2]["content"] == "une nouvelle question"
+    assert seen == [4096]
 
 
-def test_token_budget_desactive_ne_resume_rien(fabrique, monkeypatch):
+def test_over_the_budget_old_turns_are_summarized(factory, monkeypatch):
+    calls = []
+
+    def fake_summary(host, model, messages, options=None):
+        calls.append(options)
+        yield {"content": "here is the summary"}
+
+    monkeypatch.setattr(compression, "stream_chat_messages", fake_summary)
+    runtime, turn = factory(token_budget_max=50, token_budget_keep_recent=2, num_ctx=4096)
+    turns = history(10)
+
+    new_turns, _ = play(runtime, turns, "a new question")
+
+    sent = turn.messages[0]
+    assert "here is the summary" in sent[0]["content"]
+    assert len(sent) < len(turns)  # old turns are no longer sent
+    assert calls == [{"num_ctx": 4096}]  # the summary call itself sends num_ctx
+    # The saved session (M1) keeps everything, intact.
+    assert new_turns[:len(turns)] == turns
+    assert new_turns[-2]["content"] == "a new question"
+
+
+def test_disabled_token_budget_summarizes_nothing(factory, monkeypatch):
     monkeypatch.setattr(compression, "stream_chat_messages",
-                        lambda *a, **k: pytest.fail("ne doit pas résumer"))
-    runtime, tour = fabrique(token_budget=False, token_budget_max=50)
-    turns = historique(10)
+                        lambda *a, **k: pytest.fail("must not summarize"))
+    runtime, turn = factory(token_budget=False, token_budget_max=50)
+    turns = history(10)
 
-    jouer(runtime, turns, "une nouvelle question")
+    play(runtime, turns, "a new question")
 
-    assert len(tour.messages[0]) == 1 + len(turns) + 1
+    assert len(turn.messages[0]) == 1 + len(turns) + 1
 
 
-def test_echec_du_resume_garde_l_historique_et_avertit_une_fois(fabrique, monkeypatch):
-    def en_panne(host, model, messages, options=None):
-        raise OllamaError("injoignable")
+def test_summary_failure_keeps_history_and_warns_once(factory, monkeypatch):
+    def broken(host, model, messages, options=None):
+        raise OllamaError("unreachable")
         yield  # pragma: no cover
 
-    monkeypatch.setattr(compression, "stream_chat_messages", en_panne)
-    runtime, tour = fabrique(token_budget_max=50, token_budget_keep_recent=2)
-    turns = historique(10)
+    monkeypatch.setattr(compression, "stream_chat_messages", broken)
+    runtime, turn = factory(token_budget_max=50, token_budget_keep_recent=2)
+    turns = history(10)
 
-    jouer(runtime, turns, "première")
-    jouer(runtime, turns, "seconde")
+    play(runtime, turns, "first")
+    play(runtime, turns, "second")
 
-    assert len(tour.messages[0]) == 1 + len(turns) + 1  # rien n'est perdu
-    avertissements = [n for n in runtime.notices if "Résumé automatique" in n]
-    assert len(avertissements) == 1  # pas répété à chaque tour
+    assert len(turn.messages[0]) == 1 + len(turns) + 1  # nothing is lost
+    warnings = [n for n in runtime.notices if "Automatic history summary" in n]
+    assert len(warnings) == 1  # not repeated on every turn
 
 
-def test_un_contexte_trop_gros_pour_etre_reduit_avertit(fabrique, monkeypatch):
-    """Revue PR #97 : un dernier message gonflé à lui seul au-delà du budget part
-    tel quel ; au moins on prévient que la fenêtre risque d'être tronquée."""
+def test_a_context_too_large_to_reduce_warns(factory, monkeypatch):
+    """PR #97 review: a last message that alone exceeds the budget is sent
+    as is; at least the user is warned the window may be truncated."""
     monkeypatch.setattr(compression, "stream_chat_messages",
-                        lambda *a, **k: pytest.fail("rien à résumer"))
-    runtime, tour = fabrique(token_budget_max=50)
+                        lambda *a, **k: pytest.fail("nothing to summarize"))
+    runtime, turn = factory(token_budget_max=50)
 
-    jouer(runtime, [], "x" * 5000)
+    play(runtime, [], "x" * 5000)
 
-    assert any("dépasse le budget" in n for n in runtime.notices)
-    assert tour.messages[0][-1]["content"] == "x" * 5000  # envoyé tel quel
+    assert any("exceeds the token budget" in n for n in runtime.notices)
+    assert turn.messages[0][-1]["content"] == "x" * 5000  # sent as is

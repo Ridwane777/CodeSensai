@@ -1,90 +1,88 @@
-# Essai réel — [M3] Mémoire de faits
+# Real-model trial — [M3] Fact memory
 
-> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/remember` then `/profile`: ✅ with both set-ups (< 1 s). Earlier measurements below.
+> **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/remember` then `/profile`: ✅ with both set-ups (< 1 s). Earlier measurements below.
 
-Vérification de M3 avec le vrai modèle, en plus des tests automatiques
-(`tests/knowledge/test_facts.py`, `tests/tools/test_fact_tools.py`, et les
-tests M3 de `tests/test_cli_rag.py`). Choix :
-[ADR-0030](../decisions/0030-memoire-structuree-de-faits.md). L'essai a
-aussi conduit à l'[ADR-0031](../decisions/0031-appels-d-outils-ecrits-en-texte.md)
-et à la correction d'une régression de M4.
+M3 check with the real model, on top of the automated tests
+(`tests/knowledge/test_facts.py`, `tests/tools/test_fact_tools.py`, and the
+M3 tests in `tests/test_cli_rag.py`). Decision:
+[ADR-0030](../decisions/0030-structured-fact-memory.md). The trial also led
+to [ADR-0031](../decisions/0031-text-written-tool-calls.md) and to a fix for
+an M4 regression.
 
-## Ce qui est vérifié
-Les user stories : l'agent retient de lui-même un fait (US-M3-1), le
-retrouve dans une nouvelle session et trouve les relations inverses
-(US-M3-2), corrige une valeur sans laisser l'ancienne et laisse
-l'utilisateur effacer (US-M3-3).
+## What is checked
+The user stories: the agent stores a fact on its own (US-M3-1), finds it in a
+new session and resolves inverse relations (US-M3-2), corrects a value
+without keeping the old one, and lets the user delete (US-M3-3).
 
-## Machine et réglages
-- Pod RunPod (Community Cloud, GPU de 24 Go), Ollama 0.40.6,
-  `qwen3-coder:30b`, fenêtre de contexte 32 768. Adresse hors dépôt.
-- `sensai --no-rag --new-session`, dossier de données jetable, petit projet
-  vide ; confirmations données par une entrée programmée (`o`).
-- 8 outils proposés au modèle : `run_code`, `read_file`, `write_file`,
+## Machine and settings
+- RunPod pod (Community Cloud, 24 GB GPU), Ollama 0.40.6,
+  `qwen3-coder:30b`, context window 32,768. Address kept out of the repo.
+- `sensai --no-rag --new-session`, throwaway data folder, small empty
+  project; confirmations given by scripted input (`o`).
+- 8 tools offered to the model: `run_code`, `read_file`, `write_file`,
   `web_search`, `search_codebase`, `update_state`, `save_fact`, `recall_facts`.
 
-## Premier essai : ce qui marchait et ce qui cassait
+## First trial: what worked and what broke
 
-| Scénario | Résultat |
+| Scenario | Result |
 | --- | --- |
-| « Le service auth utilise Redis 7, dépend de PostgreSQL, Méric en est responsable. Retiens-le. » | ✅ 3 faits enregistrés, chacun confirmé (`add` pour la dépendance, `replace` pour la version) |
-| Nouvelle session : « Quelle version de Redis utilise auth ? » | ✅ `recall_facts`, répond 7 en citant le fait |
-| « Qu'est-ce qui dépend de PostgreSQL ? » | ✅ recherche inverse : auth |
-| « Quelle base utilise billing ? » | ✅ « je n'ai aucun fait », propose de chercher dans le code |
-| « On est passés à Redis 8, mets à jour ta mémoire » | ❌ l'appel est écrit **dans le texte** (`<function=remember_fact>…`), rien n'est exécuté, puis le modèle **affirme** « la version a été passée de 7 à 8 » |
+| "The auth service uses Redis 7, depends on PostgreSQL, Meric owns it. Remember that." | ✅ 3 facts saved, each confirmed (`add` for the dependency, `replace` for the version) |
+| New session: "Which Redis version does auth use?" | ✅ `recall_facts`, answers 7 citing the fact |
+| "What depends on PostgreSQL?" | ✅ inverse lookup: auth |
+| "Which database does billing use?" | ✅ "I have no fact", offers to search the code |
+| "We moved to Redis 8, update your memory" | ❌ the call is written **in the text** (`<function=remember_fact>…`), nothing runs, then the model **claims** "the version was changed from 7 to 8" |
 
-## Enquête : appels d'outils écrits en texte
+## Investigation: tool calls written as text
 
-Mesures sur l'API d'Ollama directement (appels structurés reçus dans
-`tool_calls`), même prompt système que le CLI :
+Measured directly against the Ollama API (structured calls received in
+`tool_calls`), same system prompt as the CLI:
 
-| Situation | Résultat |
+| Situation | Result |
 | --- | --- |
-| « retiens que… », 1 seul outil proposé | 8/8 structurés |
-| même demande, 8 outils proposés | 0/8 |
-| sans notre prompt système | même taux qu'avec : ce n'est pas lui |
-| `read_file` avec 5 outils (état de `main` le 14/10) | 5/5 |
-| `read_file` après l'ajout d'`update_state` (M4, description longue) | **1/5 : régression introduite par M4** |
-| description d'`update_state` réduite à une phrase | 5/5 |
-| `remember_fact` (12 essais) contre le nom `save_fact` | 4/12 contre 8/12 |
+| "remember that…", only 1 tool offered | 8/8 structured |
+| same request, 8 tools offered | 0/8 |
+| without our system prompt | same rate as with it: it is not the cause |
+| `read_file` with 5 tools (state of `main` on 10/14) | 5/5 |
+| `read_file` after adding `update_state` (M4, long description) | **1/5: regression introduced by M4** |
+| `update_state` description cut down to one sentence | 5/5 |
+| `remember_fact` (12 runs) vs. the name `save_fact` | 4/12 vs. 8/12 |
 
-Conclusions : qwen3-coder oublie la balise `<tool_call>` d'ouverture plus
-souvent quand les outils proposés sont nombreux et leurs descriptions longues
-(aucune phrase précise n'est seule en cause) ; le nom de l'outil compte
-aussi. Corrections :
-1. descriptions d'outils réduites à une phrase, mode d'emploi déplacé dans le
-   prompt système (corrige la régression de M4) ;
-2. `remember_fact` renommé `save_fact` ;
-3. ADR-0031 : un appel écrit en texte est lu seulement si la réponse n'est
-   que des appels à des outils proposés, puis passe par la passerelle et la
-   confirmation ; sinon le modèle est relancé deux fois, puis le tour
-   s'arrête sur une erreur au lieu d'une fausse affirmation.
+Conclusions: qwen3-coder drops the opening `<tool_call>` tag more often when
+many tools are offered and their descriptions are long (no single sentence is
+to blame); the tool name matters too. Fixes:
+1. tool descriptions cut to one sentence, usage instructions moved into the
+   system prompt (fixes the M4 regression);
+2. `remember_fact` renamed `save_fact`;
+3. ADR-0031: a call written as text is parsed only if the reply consists
+   solely of calls to offered tools, and then goes through the gateway and
+   confirmation; otherwise the model is retried twice, then the turn stops
+   with an error instead of a false claim.
 
-Après correction, appels structurés avec les 8 outils (6 essais chacun) :
+After the fix, structured calls with all 8 tools (6 runs each):
 `read_file` 5/6, `run_code` 6/6, `web_search` 6/6, `search_codebase` 6/6,
-`recall_facts` 6/6, `update_state` 6/6, `save_fact` 1/6 (d'où l'ADR-0031).
+`recall_facts` 6/6, `update_state` 6/6, `save_fact` 1/6 (hence ADR-0031).
 
-## Essai final (6 demandes « retiens que… », mémoire vierge)
+## Final trial (6 "remember that…" requests, empty memory)
 
-| | Relances seules | + lecture du texte (ADR-0031) | + cohérence des noms |
+| | Retries only | + text parsing (ADR-0031) | + name consistency |
 | --- | --- | --- | --- |
-| Faits enregistrés | 2/5 | 6/6 | **6/6** |
-| « Redis 8 » remplace « Redis 7 » | — | ❌ 7 reste, sous un autre nom | ✅ remplacé (l'agent consulte la fiche avant) |
-| Doublons | — | 3 noms pour la même donnée | 1 doublon, même valeur |
+| Facts saved | 2/5 | 6/6 | **6/6** |
+| "Redis 8" replaces "Redis 7" | — | ❌ 7 remains, under another name | ✅ replaced (the agent looks up the entry first) |
+| Duplicates | — | 3 names for the same data | 1 duplicate, same value |
 
-« Cohérence des noms » : espaces, `_` et `-` équivalents ; la confirmation et
-la réponse de `save_fact` montrent les attributs déjà connus de l'entité ; le
-prompt demande de consulter l'entité avant d'enregistrer ; un attribut
-introuvable renvoie tout ce qu'on sait de l'entité.
+"Name consistency": spaces, `_` and `-` are equivalent; the confirmation and
+the `save_fact` reply show the entity's already known attributes; the prompt
+asks to look up the entity before saving; a missing attribute returns
+everything known about the entity.
 
-Nouvelle session, « Quelle version de Redis utilise le service auth, et sur
-quel port ? » : **3 essais sur 3** répondent « Redis 8, port 8080 » avec un
-seul `recall_facts` (avant le dernier correctif, le modèle cherchait
-`redis_version`, ne trouvait rien et fouillait des fichiers inexistants).
+New session, "Which Redis version does the auth service use, and on which
+port?": **3 runs out of 3** answer "Redis 8, port 8080" with a single
+`recall_facts` (before the last fix, the model searched for `redis_version`,
+found nothing and dug through non-existent files).
 
-## Limites
-- Le modèle choisit lui-même les noms : un doublon reste possible ; la
-  confirmation le montre à l'utilisateur, qui peut refuser.
-- La lecture des appels en texte dépend du format de qwen3-coder (ADR-0031).
-- Mesures sur un seul projet, avec des entrées programmées ; une à huit
-  répétitions par cas : des ordres de grandeur.
+## Limits
+- The model picks the names itself: a duplicate is still possible; the
+  confirmation shows it to the user, who can refuse.
+- Parsing text-written calls depends on qwen3-coder's format (ADR-0031).
+- Measured on a single project, with scripted input; one to eight
+  repetitions per case: orders of magnitude.

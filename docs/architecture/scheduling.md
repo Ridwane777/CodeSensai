@@ -1,71 +1,71 @@
-# Planification de tâches — [X5]
+# Task scheduling — [X5]
 
-`sensai-schedule` rejoue des tâches de l'agent à intervalle fixe, sans
-surveillance. Décision et compromis : [ADR-0016](../decisions/0016-planification-des-taches.md).
-Histoires utilisateur : [X5-scheduling.md](../user-stories/X5-scheduling.md).
+`sensai-schedule` replays agent tasks at a fixed interval, unattended.
+Decision and trade-offs: [ADR-0016](../decisions/0016-task-scheduling.md).
+User stories: [X5-scheduling.md](../user-stories/X5-scheduling.md).
 
-La commande est installée avec le paquet (`pip install -e .`). Elle n'utilise
-que la bibliothèque standard et l'agent existant : aucune dépendance ajoutée.
+The command is installed with the package (`pip install -e .`). It only uses
+the standard library and the existing agent: no added dependency.
 
-## Principe
+## How it works
 
-1. On enregistre des tâches : un identifiant, un prompt, un intervalle.
-2. `sensai-schedule run-due` joue **une fois** les tâches échues, puis s'arrête.
-   C'est cron (ou un timer systemd) qui le lance régulièrement.
-3. Chaque exécution laisse un compte rendu JSON.
+1. You register tasks: an id, a prompt, an interval.
+2. `sensai-schedule run-due` runs the due tasks **once**, then exits.
+   cron (or a systemd timer) launches it regularly.
+3. Each run leaves a JSON report.
 
-Une tâche est échue si elle n'a jamais tourné, ou si l'intervalle est écoulé
-depuis le **début** de sa dernière exécution. Il n'y a **pas de rattrapage** :
-après trois jours d'arrêt, une tâche quotidienne tourne une fois, pas trois.
+A task is due if it has never run, or if the interval has elapsed since the
+**start** of its last run. There is **no catch-up**: after three days of
+downtime, a daily task runs once, not three times.
 
-## Commandes
+## Commands
 
-Options globales, à placer avant la commande : `--data-dir`, `--model`, `--host`
-(par défaut `config.json`, puis `$SENSAI_HOME` / `~/.sensai` pour les données).
+Global options, placed before the command: `--data-dir`, `--model`, `--host`
+(default: `config.json`, then `$SENSAI_HOME` / `~/.sensai` for the data).
 
-| Commande | Effet |
+| Command | Effect |
 | --- | --- |
-| `add ID --every 1d --prompt "…" [--tools a,b] [--timeout 600]` | Ajoute une tâche. `ID` : 1 à 40 caractères parmi `a-z`, `0-9`, `-`. Intervalle : `30m`, `1h`, `1d`, `7d` ou un nombre de secondes, **60 s au minimum**. `--tools` : liste des seuls outils proposés au modèle (noms vérifiés contre le registre) ; sans lui, tous. |
-| `list` | Identifiant, intervalle, active ou non, dernière exécution, statut, prochaine échéance. |
-| `remove ID` | Supprime la tâche **et** ses comptes rendus (`runs/ID/`). |
-| `enable ID` / `disable ID` | Réactive / suspend une tâche sans la supprimer. |
-| `run-due [--dry-run]` | Joue les tâches échues. `--dry-run` les liste sans rien lancer ni écrire. |
-| `run ID` | Joue une tâche maintenant, échue ou non (le verrou reste respecté). |
-| `history ID [-n 10]` | Derniers comptes rendus, du plus récent au plus ancien. |
-| `loop [--every 300]` | Appelle `run-due` toutes les N secondes (minimum 60) jusqu'à Ctrl+C. Mode de secours sans cron ni systemd. |
+| `add ID --every 1d --prompt "…" [--tools a,b] [--timeout 600]` | Adds a task. `ID`: 1 to 40 characters from `a-z`, `0-9`, `-`. Interval: `30m`, `1h`, `1d`, `7d` or a number of seconds, **60 s minimum**. `--tools`: the only tools offered to the model (names checked against the registry); without it, all of them. |
+| `list` | Id, interval, enabled or not, last run, status, next due time. |
+| `remove ID` | Deletes the task **and** its reports (`runs/ID/`). |
+| `enable ID` / `disable ID` | Re-enables / suspends a task without deleting it. |
+| `run-due [--dry-run]` | Runs the due tasks. `--dry-run` lists them without running or writing anything. |
+| `run ID` | Runs a task now, due or not (the lock is still respected). |
+| `history ID [-n 10]` | Latest reports, newest first. |
+| `loop [--every 300]` | Calls `run-due` every N seconds (minimum 60) until Ctrl+C. Fallback mode without cron or systemd. |
 
-Codes de sortie : `0` tout va bien (tâches `ok` ou ignorées), `1` une tâche a
-échoué (`error`, `timeout`, `max_iterations`) ou une tâche demandée n'existe
-pas, `2` mauvaise utilisation ou fichier des tâches inutilisable.
+Exit codes: `0` all good (tasks `ok` or skipped), `1` a task
+failed (`error`, `timeout`, `max_iterations`) or a requested task does not
+exist, `2` misuse or unusable task file.
 
-Le registre partagé (`src/sensai/registry.py`) propose `run_code`,
-`read_file`, `write_file` et `web_search`. Sans surveillance, seuls la lecture
-et la recherche web passent : `run_code` et `write_file` demandent une
-confirmation, donc sont toujours refusés (ADR-0016). Les garde-fous EV2
-masquent les secrets dans ce que renvoient les outils.
+The shared registry (`src/sensai/registry.py`) offers `run_code`,
+`read_file`, `write_file` and `web_search`. Unattended, only reading
+and web search go through: `run_code` and `write_file` require
+confirmation, so they are always refused (ADR-0016). The EV2 guardrails
+mask secrets in what the tools return.
 
-## Brancher cron
+## Hooking up cron
 
 ```cron
-# Toutes les 15 minutes : joue ce qui est échu (l'intervalle de chaque tâche décide du reste).
+# Every 15 minutes: run what is due (each task's interval decides the rest).
 */15 * * * * SENSAI_HOME=/home/moi/.sensai /home/moi/sensai/.venv/bin/sensai-schedule run-due >> /home/moi/.sensai/schedule/cron.log 2>&1
 ```
 
-- Utiliser le **chemin complet** de la commande : cron n'a pas le `PATH` d'un terminal.
-- Cron ne lit pas votre profil : définir `SENSAI_HOME` dans la ligne (ou
-  `data_dir` dans `config.json`) si les données ne sont pas dans `~/.sensai`.
-- `config.json` et `prompts/` sont cherchés dans le dossier courant puis dans
-  le dépôt ; le dossier courant de cron est `$HOME`.
-- Les avertissements (verrou périmé repris, compte rendu illisible) sortent sur
-  la sortie d'erreur, d'où la redirection.
+- Use the command's **full path**: cron does not have a terminal's `PATH`.
+- cron does not read your profile: set `SENSAI_HOME` in the line (or
+  `data_dir` in `config.json`) if the data is not in `~/.sensai`.
+- `config.json` and `prompts/` are looked up in the current folder, then in
+  the repository; cron's current folder is `$HOME`.
+- Warnings (stale lock taken over, unreadable report) go to
+  stderr, hence the redirection.
 
-## Brancher un timer systemd (utilisateur)
+## Hooking up a systemd timer (user)
 
 `~/.config/systemd/user/sensai-schedule.service`
 
 ```ini
 [Unit]
-Description=Tâches planifiées Sensai
+Description=CodeSensai scheduled tasks
 
 [Service]
 Type=oneshot
@@ -77,7 +77,7 @@ ExecStart=/home/moi/sensai/.venv/bin/sensai-schedule run-due
 
 ```ini
 [Unit]
-Description=Lance les tâches Sensai échues toutes les 15 minutes
+Description=Runs due CodeSensai tasks every 15 minutes
 
 [Timer]
 OnCalendar=*:0/15
@@ -87,21 +87,21 @@ Persistent=false
 WantedBy=timers.target
 ```
 
-Puis `systemctl --user daemon-reload && systemctl --user enable --now sensai-schedule.timer`.
-La sortie va dans `journalctl --user -u sensai-schedule.service`. Ces deux
-exemples sont à adapter : la commande, elle, est testée dans `tests/scheduling/`.
+Then `systemctl --user daemon-reload && systemctl --user enable --now sensai-schedule.timer`.
+Output goes to `journalctl --user -u sensai-schedule.service`. These two
+examples must be adapted; the command itself is tested in `tests/scheduling/`.
 
-## Où sont les fichiers
+## Where the files are
 
-Sous `<données>/schedule/` (`~/.sensai/schedule/` par défaut), dossier créé en `700` s'il n'existait pas :
+Under `<data>/schedule/` (`~/.sensai/schedule/` by default), a folder created with mode `700` if it did not exist:
 
-| Fichier | Contenu |
+| File | Content |
 | --- | --- |
-| `tasks.json` | Liste des tâches : `id`, `prompt`, `interval_s`, `enabled`, `created_at`, `last_run_at`, `last_status`, `timeout_s`, et `tools` si une liste a été donnée. Écriture atomique ; s'il est illisible ou mal formé, la commande s'arrête (code 2) en nommant le fichier, **sans le réécrire**. |
-| `runs/<id>/<horodatage UTC>.json` | Un compte rendu par exécution. On garde les 50 derniers par tâche, les plus anciens sont supprimés. |
-| `locks/<id>.lock` | Verrou présent pendant qu'une exécution tourne (`pid`, `started_at`). |
+| `tasks.json` | Task list: `id`, `prompt`, `interval_s`, `enabled`, `created_at`, `last_run_at`, `last_status`, `timeout_s`, and `tools` if a list was given. Atomic write; if it is unreadable or malformed, the command stops (code 2) naming the file, **without rewriting it**. |
+| `runs/<id>/<UTC timestamp>.json` | One report per run. The last 50 per task are kept, older ones are deleted. |
+| `locks/<id>.lock` | Lock present while a run is in progress (`pid`, `started_at`). |
 
-### Compte rendu d'exécution
+### Run report
 
 ```json
 {
@@ -109,49 +109,49 @@ Sous `<données>/schedule/` (`~/.sensai/schedule/` par défaut), dossier créé 
   "started_at": "2026-10-14T08:00:00+00:00",
   "finished_at": "2026-10-14T08:00:12+00:00",
   "status": "ok",
-  "answer": "texte de la réponse finale",
+  "answer": "text of the final answer",
   "tool_calls": [{"name": "lire", "ok": true}, {"name": "ecrire", "ok": false, "error": "refused"}],
   "error": null
 }
 ```
 
-Statuts : `ok`, `error` (agent injoignable, plantage, erreur signalée),
-`max_iterations` (6 appels au modèle sans réponse finale), `timeout`,
-`skipped_locked` (une autre exécution de la même tâche était en cours).
-`tool_calls` contient le **nom** et l'issue de chaque outil (`ok`, ou le code
-d'erreur de la passerelle), jamais les arguments. La réponse du modèle, elle,
-est enregistrée telle quelle.
+Statuses: `ok`, `error` (agent unreachable, crash, reported error),
+`max_iterations` (6 model calls without a final answer), `timeout`,
+`skipped_locked` (another run of the same task was in progress).
+`tool_calls` holds the **name** and outcome of each tool (`ok`, or the gateway
+error code), never the arguments. The model's answer, however,
+is stored as is.
 
-## Politique sans surveillance
+## Unattended policy
 
-- Chaque exécution utilise une passerelle d'outils neuve avec le confirmeur
-  `deny_all` : **un outil qui demande confirmation est toujours refusé**. Par
-  défaut, c'est le cas de tout outil `write` ou `execute`. Aucune préférence ne
-  peut l'assouplir pour ces deux niveaux.
-- Les préférences viennent de la clé `tools` de `config.json` si elle existe
-  (la CLI interactive la lit aussi). `confirm_after_untrusted` est
-  forcé à `true` : après la réponse d'un outil de lecture ou de réseau, plus
-  aucun outil autre que de lecture ne part.
-- Le modèle est prévenu que personne ne peut confirmer et qu'il ne doit pas
-  relancer un outil refusé.
-- Aucun historique : chaque exécution part du prompt système et du prompt de la
-  tâche, et rien n'est écrit dans `sessions.db`.
+- Each run uses a fresh tool gateway with the `deny_all`
+  confirmer: **a tool that requires confirmation is always refused**. By
+  default, that is every `write` or `execute` tool. No preference
+  can relax this for those two levels.
+- Preferences come from the `tools` key of `config.json` if it exists
+  (the interactive CLI reads it too). `confirm_after_untrusted` is
+  forced to `true`: after a read or network tool has answered, no
+  tool other than a read tool goes out.
+- The model is told that nobody can confirm and that it must not
+  retry a refused tool.
+- No history: each run starts from the system prompt and the task
+  prompt, and nothing is written to `sessions.db`.
 
-## Limites
+## Limitations
 
-- **Pas de tâche qui écrit ou exécute du code**, par construction.
-- Une tâche peut encore envoyer une requête par un outil réseau tant qu'aucun
-  outil n'a répondu dans l'exécution : donner à chaque tâche la liste
-  `--tools` la plus courte possible. Voir l'ADR-0016.
-- Le délai (`--timeout`, 600 s par défaut) n'est vérifié qu'**entre deux
-  événements** de l'agent. Un appel au modèle qui ne répond pas ne peut pas être
-  interrompu depuis la boucle : la commande attend. Les appels d'outils ont
-  leur propre délai dans la passerelle (120 s par défaut).
-- Un verrou plus vieux que **deux fois** le délai de la tâche est considéré
-  comme laissé par un processus tué : il est supprimé (avec un avertissement) et
-  l'exécution part. Deux passes qui reprennent le même verrou périmé au même
-  instant peuvent se chevaucher.
-- Pas d'expressions cron, pas de fuseau horaire : les dates stockées sont en UTC ;
-  `list` affiche la prochaine échéance en heure locale.
-- Modifier `tasks.json` pendant qu'une passe tourne peut perdre l'une des deux
-  modifications (pas de transaction).
+- **No task that writes or runs code**, by design.
+- A task can still send a request through a network tool as long as no
+  tool has answered in the run: give each task the shortest possible
+  `--tools` list. See ADR-0016.
+- The timeout (`--timeout`, 600 s by default) is only checked **between two
+  agent events**. A model call that does not answer cannot be
+  interrupted from the loop: the command waits. Tool calls have
+  their own timeout in the gateway (120 s by default).
+- A lock older than **twice** the task timeout is considered
+  left by a killed process: it is removed (with a warning) and
+  the run proceeds. Two passes taking over the same stale lock at the same
+  instant can overlap.
+- No cron expressions, no time zone: stored dates are in UTC;
+  `list` shows the next due time in local time.
+- Editing `tasks.json` while a pass is running can lose one of the two
+  edits (no transaction).

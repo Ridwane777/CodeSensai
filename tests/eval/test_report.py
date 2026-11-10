@@ -1,4 +1,4 @@
-"""Teste le rapport et la comparaison — feature [EV1], ADR-0019."""
+"""Tests the report and the comparison — feature [EV1], ADR-0019."""
 import copy
 import json
 from datetime import UTC, datetime
@@ -20,15 +20,15 @@ from sensai.eval.sources import Passage
 from sensai.knowledge.rag import EmbeddingError
 
 PROMPT = JudgePrompt("Q={{QUESTION}} P={{PASSAGES}} A={{ANSWER}}", "v1", "a" * 64)
-JUDGE_INFO = {"model": "juge-test", "host": "http://h", "temperature": 0, "seed": 42}
-SOURCES = ["f renvoie 1."]
+JUDGE_INFO = {"model": "test-judge", "host": "http://h", "temperature": 0, "seed": 42}
+SOURCES = ["f returns 1."]
 
 
 def dataset(*cases):
     return Dataset(path="d.jsonl", sha256="d" * 64, cases=list(cases))
 
 
-def case(id="c1", answer="f renvoie 1.", sources=SOURCES, question="Que fait f ?"):
+def case(id="c1", answer="f returns 1.", sources=SOURCES, question="What does f do?"):
     return Case(id=id, question=question, answer=answer, sources=list(sources))
 
 
@@ -37,7 +37,7 @@ def verdict_json(relevance, coherence, *verdicts):
         "relevance": relevance,
         "coherence": coherence,
         "claims": [
-            {"text": f"affirmation {n}", "verdict": v,
+            {"text": f"claim {n}", "verdict": v,
              "sources": ["S1"] if v != "UNVERIFIABLE" else [], "explanation": ""}
             for n, v in enumerate(verdicts)
         ],
@@ -45,7 +45,7 @@ def verdict_json(relevance, coherence, *verdicts):
 
 
 class FakeJudge:
-    """Répond selon un mot de la question, pour des cas indépendants de l'ordre."""
+    """Answers based on a word of the question, so cases do not depend on order."""
 
     def __init__(self, by_question):
         self.by_question = by_question
@@ -57,7 +57,7 @@ class FakeJudge:
                 if isinstance(output, Exception):
                     raise output
                 return output
-        raise AssertionError(f"question inattendue : {content[:60]}")
+        raise AssertionError(f"unexpected question: {content[:60]}")
 
 
 def evaluate(cases, judge, **kwargs):
@@ -71,7 +71,7 @@ def evaluate(cases, judge, **kwargs):
     )
 
 
-def test_rapport_complet_avec_metadonnees_et_agregats():
+def test_full_report_with_metadata_and_aggregates():
     judge = FakeJudge({
         "q1": verdict_json(5, 4, "SUPPORTED", "SUPPORTED"),
         "q2": verdict_json(3, 2, "SUPPORTED", "CONTRADICTED", "UNVERIFIABLE", "SUPPORTED"),
@@ -82,7 +82,7 @@ def test_rapport_complet_avec_metadonnees_et_agregats():
     assert report["schema_version"] == SCHEMA_VERSION
     assert report["created_at"] == "2026-10-14T12:00:00+00:00"
     assert report["judge"] == {
-        "model": "juge-test", "host": "http://h", "prompt_name": "judge",
+        "model": "test-judge", "host": "http://h", "prompt_name": "judge",
         "prompt_version": "v1", "prompt_sha256": "a" * 64,
         "temperature": 0, "seed": 42, "max_retries": 2,
     }
@@ -102,11 +102,11 @@ def test_rapport_complet_avec_metadonnees_et_agregats():
     assert flagged[0]["citations"][0]["id"] == "S1"
 
 
-def test_cas_en_erreur_exclus_des_moyennes_et_dénombrés_sans_note_zero():
+def test_error_cases_excluded_from_means_and_counted_without_zero_score():
     judge = FakeJudge({
         "q1": verdict_json(4, 4, "SUPPORTED"),
-        "q2": "pas du JSON",
-        "q3": OllamaError("hors ligne"),
+        "q2": "not JSON",
+        "q3": OllamaError("offline"),
     })
 
     report = evaluate(
@@ -116,12 +116,12 @@ def test_cas_en_erreur_exclus_des_moyennes_et_dénombrés_sans_note_zero():
     summary = report["summary"]
     assert summary["n_cases"] == 3 and summary["n_scored"] == 1
     assert summary["judge_errors"] == 2
-    assert summary["mean_relevance"] == 4.0  # pas 2.67 : les erreurs ne comptent pas comme 0
+    assert summary["mean_relevance"] == 4.0  # not 2.67: errors do not count as 0
     failed = report["cases"][1]
     assert failed["status"] == "judge_error" and "scores" not in failed and failed["raw"]
 
 
-def test_moyennes_nulles_quand_aucun_cas_n_est_juge():
+def test_null_means_when_no_case_is_judged():
     report = evaluate([case(question="q1")], FakeJudge({"q1": "non"}))
 
     summary = report["summary"]
@@ -130,7 +130,7 @@ def test_moyennes_nulles_quand_aucun_cas_n_est_juge():
     assert summary["flagged_claim_rate"] is None
 
 
-def test_fidelite_nulle_sans_affirmation_exclue_de_la_moyenne():
+def test_null_faithfulness_without_claims_excluded_from_mean():
     judge = FakeJudge({"q1": verdict_json(5, 5), "q2": verdict_json(4, 4, "SUPPORTED")})
 
     report = evaluate([case("c1", question="q1"), case("c2", question="q2")], judge)
@@ -141,7 +141,7 @@ def test_fidelite_nulle_sans_affirmation_exclue_de_la_moyenne():
     assert report["summary"]["mean_relevance"] == 4.5
 
 
-def test_cas_sans_reponse_et_sans_generateur_est_ignore():
+def test_case_without_answer_or_generator_is_skipped():
     never = FakeJudge({})
 
     report = evaluate([case(answer=None)], never)
@@ -150,12 +150,12 @@ def test_cas_sans_reponse_et_sans_generateur_est_ignore():
     assert report["summary"]["skipped"] == 1 and report["summary"]["n_scored"] == 0
 
 
-def test_generation_remplit_les_reponses_manquantes_et_enregistre_le_generateur():
+def test_generation_fills_missing_answers_and_records_the_generator():
     seen = []
 
     def answer_fn(question, passages):
         seen.append((question, [p.id for p in passages]))
-        return "réponse générée"
+        return "generated answer"
 
     judge = FakeJudge({"q1": verdict_json(4, 4, "SUPPORTED")})
     generator = {"model": "agent", "host": "http://h", "system_prompt_version": "v1"}
@@ -165,32 +165,32 @@ def test_generation_remplit_les_reponses_manquantes_et_enregistre_le_generateur(
 
     assert seen == [("q1", ["S1"])]
     assert report["generator"] == generator
-    assert report["cases"][0]["answer"] == "réponse générée"
+    assert report["cases"][0]["answer"] == "generated answer"
     assert report["cases"][0]["answer_origin"] == "generated"
 
 
-def test_echec_de_generation_ne_plante_pas():
+def test_generation_failure_does_not_crash():
     def failing(question, passages):
-        raise OllamaError("modèle absent")
+        raise OllamaError("model missing")
 
     def empty(question, passages):
         return "  "
 
     judge = FakeJudge({})
 
-    for answer_fn, reason in ((failing, "modèle absent"), (empty, "vide")):
+    for answer_fn, reason in ((failing, "model missing"), (empty, "empty")):
         report = evaluate([case(answer=None)], judge, answer_fn=answer_fn)
         assert report["cases"][0]["status"] == "generation_error"
         assert reason in report["cases"][0]["error"]
         assert report["summary"]["generation_errors"] == 1
 
 
-def test_mode_rag_interroge_le_fournisseur_avec_la_question():
+def test_rag_mode_queries_the_provider_with_the_question():
     asked = []
 
     def provider(question):
         asked.append(question)
-        return [Passage("S1", "src/a.py", "f renvoie 1.", 1, 3)]
+        return [Passage("S1", "src/a.py", "f returns 1.", 1, 3)]
 
     judge = FakeJudge({"q1": verdict_json(4, 4, "SUPPORTED")})
 
@@ -203,9 +203,9 @@ def test_mode_rag_interroge_le_fournisseur_avec_la_question():
     assert report["cases"][0]["claims"][0]["citations"][0]["start"] == 1
 
 
-def test_mode_rag_en_erreur_de_recherche_marque_le_cas_sans_planter():
+def test_rag_mode_search_error_marks_the_case_without_crashing():
     def provider(question):
-        raise EmbeddingError("Ollama injoignable")
+        raise EmbeddingError("Ollama unreachable")
 
     report = evaluate([case(question="q1")], FakeJudge({}),
                       sources_mode="rag", source_provider=provider)
@@ -214,9 +214,9 @@ def test_mode_rag_en_erreur_de_recherche_marque_le_cas_sans_planter():
     assert report["summary"]["source_errors"] == 1
 
 
-def test_mode_rag_ne_cherche_pas_pour_un_cas_ignore():
+def test_rag_mode_does_not_search_for_a_skipped_case():
     def provider(question):
-        raise AssertionError("ne doit pas être appelé")
+        raise AssertionError("must not be called")
 
     report = evaluate([case(answer=None)], FakeJudge({}),
                       sources_mode="rag", source_provider=provider)
@@ -224,12 +224,12 @@ def test_mode_rag_ne_cherche_pas_pour_un_cas_ignore():
     assert report["cases"][0]["status"] == "skipped"
 
 
-def test_sources_mode_inconnu_est_refuse():
+def test_unknown_sources_mode_is_refused():
     with pytest.raises(ValueError, match="sources_mode"):
         evaluate([case()], FakeJudge({}), sources_mode="web")
 
 
-def test_ecriture_et_relecture_du_rapport(tmp_path):
+def test_report_write_and_read_back(tmp_path):
     report = evaluate([case(question="q1")], FakeJudge({"q1": verdict_json(4, 4, "SUPPORTED")}))
     path = tmp_path / "sous" / "r.json"
 
@@ -239,8 +239,8 @@ def test_ecriture_et_relecture_du_rapport(tmp_path):
     assert not list(path.parent.glob("*.tmp"))
 
 
-@pytest.mark.parametrize("content", ["pas du json", "[1]", '{"summary": {}}'])
-def test_rapport_illisible_est_refuse(tmp_path, content):
+@pytest.mark.parametrize("content", ["not json", "[1]", '{"summary": {}}'])
+def test_unreadable_report_is_refused(tmp_path, content):
     path = tmp_path / "r.json"
     path.write_text(content, encoding="utf-8")
 
@@ -250,10 +250,10 @@ def test_rapport_illisible_est_refuse(tmp_path, content):
         load_report(tmp_path / "absent.json")
 
 
-# --- comparaison -------------------------------------------------------------------------
+# --- comparison -------------------------------------------------------------------------
 
 
-def make_report(relevance, *verdicts, prompt_sha="a" * 64, model="juge-test", ids=("c1",)):
+def make_report(relevance, *verdicts, prompt_sha="a" * 64, model="test-judge", ids=("c1",)):
     judge = FakeJudge({"q": verdict_json(relevance, 4, *verdicts)})
     info = {**JUDGE_INFO, "model": model}
     report = run_eval(
@@ -265,7 +265,7 @@ def make_report(relevance, *verdicts, prompt_sha="a" * 64, model="juge-test", id
     return report
 
 
-def test_comparaison_calcule_les_ecarts_b_moins_a():
+def test_comparison_computes_deltas_b_minus_a():
     a = make_report(3, "SUPPORTED", "CONTRADICTED")
     b = make_report(5, "SUPPORTED", "SUPPORTED")
 
@@ -282,10 +282,10 @@ def test_comparaison_calcule_les_ecarts_b_moins_a():
 
 
 @pytest.mark.parametrize(("change", "label"), [
-    ({"prompt_sha": "b" * 64}, "prompt du juge"),
-    ({"model": "autre-juge"}, "modèle du juge"),
+    ({"prompt_sha": "b" * 64}, "judge prompt"),
+    ({"model": "other-judge"}, "judge model"),
 ])
-def test_comparaison_signale_un_juge_different_mais_calcule_quand_meme_les_ecarts(change, label):
+def test_comparison_flags_a_different_judge_but_still_computes_deltas(change, label):
     a = make_report(3, "SUPPORTED")
     b = make_report(4, "SUPPORTED", **change)
 
@@ -296,7 +296,7 @@ def test_comparaison_signale_un_juge_different_mais_calcule_quand_meme_les_ecart
     assert result["deltas"]["mean_relevance"]["delta"] == 1.0
 
 
-def test_comparaison_signale_un_jeu_de_donnees_ou_des_passages_differents():
+def test_comparison_flags_a_different_dataset_or_passages():
     a = make_report(3, "SUPPORTED")
     b = copy.deepcopy(a)
     b["dataset"]["sha256"] = "e" * 64
@@ -306,11 +306,11 @@ def test_comparaison_signale_un_jeu_de_donnees_ou_des_passages_differents():
 
     assert result["comparable"] is False
     assert len(result["warnings"]) == 2
-    assert any("jeu de données" in w for w in result["warnings"])
-    assert any("origine des passages" in w for w in result["warnings"])
+    assert any("dataset" in w for w in result["warnings"])
+    assert any("passage origin" in w for w in result["warnings"])
 
 
-def test_comparaison_ne_bloque_pas_sur_un_generateur_different():
+def test_comparison_does_not_block_on_a_different_generator():
     a = make_report(3, "SUPPORTED")
     b = copy.deepcopy(a)
     b["generator"] = {"model": "agent", "host": "h", "system_prompt_version": "v2"}
@@ -318,7 +318,7 @@ def test_comparaison_ne_bloque_pas_sur_un_generateur_different():
     assert compare_reports(a, b)["comparable"] is True
 
 
-def test_comparaison_liste_les_cas_presents_d_un_seul_cote_et_garde_les_ecarts_des_autres():
+def test_comparison_lists_one_sided_cases_and_keeps_deltas_for_the_rest():
     a = make_report(3, "SUPPORTED", ids=("c1", "c2"))
     b = make_report(4, "SUPPORTED", ids=("c2", "c3"))
 
@@ -328,7 +328,7 @@ def test_comparaison_liste_les_cas_presents_d_un_seul_cote_et_garde_les_ecarts_d
     assert result["only_in_a"] == ["c1"] and result["only_in_b"] == ["c3"]
 
 
-def test_ecart_nul_quand_un_cote_n_a_aucun_cas_juge():
+def test_null_delta_when_one_side_has_no_judged_case():
     a = make_report(3, "SUPPORTED")
     b = evaluate([case(question="q1")], FakeJudge({"q1": "non"}))
     b["judge"] = a["judge"]

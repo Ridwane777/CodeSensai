@@ -1,11 +1,11 @@
 """
-Construction du registre d'outils, partagée par toutes les interfaces.
+Builds the tool registry shared by every interface.
 
-La CLI interactive (`sensai`) et le planificateur (`sensai-schedule`, feature
-X5) doivent proposer les mêmes outils : un outil enregistré ici arrive aux
-deux, sans que personne ait à penser à le brancher à deux endroits. Ce qui
-change entre eux, ce n'est pas le registre mais la politique de la passerelle
-(confirmation par l'utilisateur d'un côté, refus systématique de l'autre).
+The interactive CLI (`sensai`) and the scheduler (`sensai-schedule`, feature
+X5) must offer the same tools: a tool registered here reaches both, without
+anyone having to remember to wire it in two places. What differs between them
+is not the registry but the gateway policy (user confirmation on one side,
+systematic refusal on the other).
 """
 from sensai.core.tools import ToolRegistry
 from sensai.execution.file_permissions import FilePermissions
@@ -17,18 +17,18 @@ from sensai.tools.write_file_tool import WriteFileTool
 
 
 def build_registry(permissions: FilePermissions | None = None) -> ToolRegistry:
-    """Les lots B, C et D enregistreront leurs outils ici. Une ligne par outil :
-    c'est le seul endroit que les quatre lots modifient, autant qu'il reste
-    minuscule (voir CONTRIBUTING.md).
+    """Workstreams B, C and D register their tools here. One line per tool:
+    this is the only place all four workstreams modify, so keep it tiny
+    (see CONTRIBUTING.md).
 
-    Aucun outil ne contacte Docker à sa construction, seulement à son premier
-    appel : le CLI démarre même sans Docker. `permissions` vient de la section
-    `files` de config.json (ADR-0011) ; sans elle, le dossier courant."""
+    No tool contacts Docker when built, only on its first call: the CLI
+    starts even without Docker. `permissions` comes from the `files` section
+    of config.json (ADR-0011); without it, the current directory."""
     registry = ToolRegistry()
-    # Lot B : exécution isolée (T2), fichiers du dossier courant (T4), web (T3).
+    # Workstream B: isolated execution (T2), current-directory files (T4), web (T3).
     registry.register(SandboxTool())
     registry.register(ReadFileTool(permissions))
-    # Voir les fichiers du projet sans RAG (ADR-0059, essai du 2026-11-06).
+    # See the project files without RAG (ADR-0059, trial run of 2026-11-06).
     registry.register(ListFilesTool(permissions))
     registry.register(WriteFileTool(permissions))
     registry.register(WebSearchTool())

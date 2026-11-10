@@ -4,14 +4,14 @@ import { ArtifactPanel } from './ArtifactPanel'
 import { SourcesPanel } from './SourcesPanel'
 
 const TABS = [
-  { id: 'artefact', label: 'Artefact' },
+  { id: 'artefact', label: 'Artifact' },
   { id: 'sources', label: 'Sources' },
 ] as const
 
 export function SidePanel({ state }: { state: UiState }) {
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('artefact')
   return (
-    <aside className="glass rounded-3xl p-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto" aria-label="Panneau latéral">
+    <aside className="glass rounded-3xl p-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto" aria-label="Side panel">
       <div role="tablist" className="mb-3 flex gap-1">
         {TABS.map((t) => (
           <button

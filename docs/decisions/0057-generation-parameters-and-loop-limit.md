@@ -70,5 +70,5 @@ their scores must be reproducible.
   `generation` section does not apply to them; this is intentional but must be
   known.
 - Follow-up: `tests/core/test_ollama_client.py`, `tests/test_config.py`,
-  `tests/core/test_agent.py` (`test_le_nombre_d_etapes_se_regle`); revisit the
+  `tests/core/test_agent.py` (`test_the_step_count_is_configurable`); revisit the
   defaults if a model update changes the measured accuracy.

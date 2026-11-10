@@ -1,19 +1,19 @@
 # A5 — Persona
 
-See [ADR-0042](../decisions/0042-personas-configurables.md) for the core
+See [ADR-0042](../decisions/0042-configurable-personas.md) for the core
 design (config-driven profiles, switch without losing context) and
 [ADR-0043](../decisions/0043-persona-enhancements.md) for the
 enrichments below user story 2 (keyword routing, per-persona tool
 restriction, session-only personas).
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/persona list` and `GET /api/personas`: ✅ with both set-ups (< 1 s).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/persona list` and `GET /api/personas`: ✅ with both set-ups (< 1 s).
 
 ## User Story 1: Configuring a persona without touching the code
-> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensei up ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** "so that" for the scenario: so that **the team gets a "reviewer" persona that reads and reviews code without being able to write files, set up once in `config.json` with no code change** (step S0). The legal-assistant and math-tutor example came from the feature catalogue, not from Marc's needs.
 
-As **Marc, the lead who sets CodeSensei up for a specific use case**, I want **the agent's
+As **Marc, the lead who sets CodeSensai up for a specific use case**, I want **the agent's
 name, tone, role and response scope to be configurable in `config.json`**,
 so that **the same system becomes a legal assistant or a math tutor without
 a code change**.
@@ -31,7 +31,7 @@ a code change**.
   prompt sent to the model.
 
 ## User Story 2: Switching persona mid-conversation without losing context
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** "so that" for the scenario: so that **Camille can have her change checked by the "reviewer" persona in the same conversation, without restarting the chat or retyping what the agent already knows** (step S9). The support and tutoring examples came from the feature catalogue, not from Camille's day.
 
@@ -51,7 +51,7 @@ move from one subject's agent to another's, without restarting the chat**.
   switch.
 
 ## User Story 3: Routing to the right persona automatically
-> **Update on 2026-11-06:** no scenario step: withdrawn ([traceability](../conception/traceability.md#features-dropped-or-changed-along-the-way)).
+> **Update on 2026-11-06:** no scenario step: withdrawn ([traceability](../design/traceability.md#features-dropped-or-changed-along-the-way)).
 
 > **Withdrawn on 2026-11-02** ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 4). Kept below for the record.
 
@@ -73,7 +73,7 @@ command**.
   routing — only a question that actually reaches the model.
 
 ## User Story 4: Keeping a persona from using tools it shouldn't
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Marc, the lead who deploys a restricted persona** (e.g. a math tutor), I want
 **that persona to be unable to call tools outside its purpose** (e.g.
@@ -93,7 +93,7 @@ promises, not just what it says in its tone**.
   the global configuration's tool set.
 
 ## User Story 5: Trying out a persona without editing a file
-> **Update on 2026-11-06:** no scenario step: withdrawn ([traceability](../conception/traceability.md#features-dropped-or-changed-along-the-way)).
+> **Update on 2026-11-06:** no scenario step: withdrawn ([traceability](../design/traceability.md#features-dropped-or-changed-along-the-way)).
 
 > **Withdrawn on 2026-11-02** ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 4). Kept below for the record.
 
@@ -112,7 +112,7 @@ and restart**.
   gone on the next `sensai` run unless added to `config.json` by hand.
 
 ## User Story 6: Choosing the persona of a conversation in the web interface
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** "so that" for the scenario: so that **Camille can hand her open conversation to the "reviewer" persona from the page she is already working in, and its disabled tools are refused there too** (step S9).
 
@@ -136,7 +136,7 @@ so that **I get the same personas as in the CLI without opening a terminal**.
 - Persona creation and keyword routing are not offered in the web (CLI-only).
 
 ## User Story 7: A restrictive persona stays restrictive in the web, sub-agents included
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01: ◐ tested with a scripted model (pytest), not yet with
 the real model.*
@@ -162,10 +162,10 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| Story 1 Configure | ✅ | `knowledge/persona.py` | `tests/knowledge/test_persona.py` (`store_charge_les_profils_de_la_config`, `profil_incomplet_refuse`), `tests/test_config.py::test_persona_mal_ecrite_arrete_le_cli_avec_un_message` |  |
+| Story 1 Configure | ✅ | `knowledge/persona.py` | `tests/knowledge/test_persona.py` (`store_charge_les_profils_de_la_config`, `profil_incomplet_refuse`), `tests/test_config.py::test_malformed_persona_stops_the_cli_with_a_message` |  |
 | Story 2 Switch | ✅ | `knowledge/persona.py`, `cli.py` | `tests/test_cli_persona.py` (`persona_use_change_le_prompt_systeme_au_tour_suivant`, `persona_use_laisse_lhistorique_intact`) |  |
-| Story 3 Routing | — | — | `tests/knowledge/test_persona.py::test_le_routage_par_mots_cles_est_refuse_explicitement` | Withdrawn on 2026-11-02 (ADR-0056, item 4): the scenario does not need it; a `keywords` field is now refused |
+| Story 3 Routing | — | — | `tests/knowledge/test_persona.py::test_keyword_routing_is_explicitly_refused` | Withdrawn on 2026-11-02 (ADR-0056, item 4): the scenario does not need it; a `keywords` field is now refused |
 | Story 4 Restrict tools | ✅ | `knowledge/persona.py`, `cli.py` | `tests/test_cli_persona.py` (`persona_avec_outils_restreints_les_retire`, `delegate_task_refuse_un_outil_desactive_par_la_persona`) |  |
-| Story 5 Try without editing a file | — | — | `tests/knowledge/test_persona.py::test_persona_add_n_existe_plus` | Withdrawn on 2026-11-02 (ADR-0056, item 4): personas are defined in `config.json` |
+| Story 5 Try without editing a file | — | — | `tests/knowledge/test_persona.py::test_persona_add_no_longer_exists` | Withdrawn on 2026-11-02 (ADR-0056, item 4): personas are defined in `config.json` |
 | Story 6 Web choice | ✅ | `web/runtime.py`, `web/server.py` | `tests/web/test_personas_prompts.py` (`liste_des_personas`, `changer_de_persona_change_le_prompt_du_tour`) |  |
 | Story 7 Restrictive in the web | ✅ | `web/runtime.py` | `tests/web/test_personas_prompts.py` (`la_persona_retire_write_file_a_l_agent_principal`, `la_persona_s_applique_au_sous_agent`) |  |

@@ -1,18 +1,18 @@
 """
-[Lot D] Liens de partage d'une conversation — feature [X3] Export & Publication (ADR-0048).
+[Workstream D] Conversation share links — feature [X3] Export & Publishing (ADR-0048).
 
-Un lien = un jeton aléatoire (`secrets.token_urlsafe`, 256 bits) qui ouvre une
-page en lecture seule, sans authentification : `GET /share/<jeton>`.
+A link = a random token (`secrets.token_urlsafe`, 256 bits) that opens a
+read-only page, without authentication: `GET /share/<token>`.
 
-- Instantané : la conversation est copiée au moment du partage, secrets masqués
-  (mêmes filtres que l'export, EV2). Ce qui est dit ensuite n'est pas publié.
-- Le fichier ne garde que l'empreinte SHA-256 du jeton : quelqu'un qui le lit
-  ne peut pas reconstruire les liens.
-- Chaque lien expire (7 jours par défaut) et peut être révoqué ; les liens
-  expirés sont effacés au démarrage.
+- Snapshot: the conversation is copied at share time, with secrets masked
+  (same filters as the export, EV2). Anything said afterwards is not published.
+- The file only keeps the SHA-256 digest of the token: someone who reads it
+  cannot rebuild the links.
+- Each link expires (7 days by default) and can be revoked; expired links
+  are deleted at startup.
 
-Format de `<data_dir>/shares.json` :
-    {"<sha256 du jeton>": {"session_id": "...", "created_at": "2026-10-29T15:00:00+00:00",
+Format of `<data_dir>/shares.json`:
+    {"<sha256 of the token>": {"session_id": "...", "created_at": "2026-10-29T15:00:00+00:00",
                            "expires_at": "...", "messages": [{"role": "user", "content": "..."}]}}
 """
 from __future__ import annotations
@@ -46,7 +46,7 @@ class ShareStore:
         self.days = days
         self._lock = threading.Lock()
 
-    # --- fichier -----------------------------------------------------------------
+    # --- file --------------------------------------------------------------------
 
     def _load(self) -> dict[str, dict[str, Any]]:
         try:
@@ -54,14 +54,14 @@ class ShareStore:
         except FileNotFoundError:
             return {}
         if not isinstance(data, dict):
-            raise ValueError(f"{self.path} : objet JSON attendu")
+            raise ValueError(f"{self.path}: expected a JSON object")
         return data
 
     def _save(self, data: dict[str, dict[str, Any]]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        os.chmod(tmp, 0o600)  # des conversations : lisibles par leur seul propriétaire
+        os.chmod(tmp, 0o600)  # conversations: readable by their owner only
         tmp.replace(self.path)
 
     @staticmethod
@@ -69,12 +69,12 @@ class ShareStore:
         try:
             return datetime.fromisoformat(entry["expires_at"]) <= now
         except (KeyError, TypeError, ValueError):
-            return True  # entrée abîmée : jamais servie
+            return True  # corrupted entry: never served
 
     # --- API -----------------------------------------------------------------------
 
     def create(self, session_id: str, turns: list[dict]) -> dict[str, str]:
-        """Publie un instantané filtré ; renvoie le jeton (montré une seule fois) et l'échéance."""
+        """Publish a filtered snapshot; return the token (shown only once) and the expiry."""
         token = secrets.token_urlsafe(32)
         now = _now()
         entry = {
@@ -92,7 +92,7 @@ class ShareStore:
         return {"token": token, "expires_at": entry["expires_at"]}
 
     def get(self, token: str) -> dict[str, Any] | None:
-        """L'instantané d'un lien valide, ou None (inconnu, révoqué ou expiré)."""
+        """The snapshot of a valid link, or None (unknown, revoked or expired)."""
         if not isinstance(token, str) or not token:
             return None
         with self._lock:
@@ -110,7 +110,7 @@ class ShareStore:
             return True
 
     def purge(self) -> int:
-        """Efface les liens expirés ; renvoie leur nombre."""
+        """Delete expired links; return how many."""
         now = _now()
         with self._lock:
             data = self._load()

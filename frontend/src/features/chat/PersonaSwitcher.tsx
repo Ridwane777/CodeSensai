@@ -4,8 +4,8 @@ import { useEngine } from '../../state/useEngine'
 import { PERSONA_LABEL } from '../../ui/personas'
 
 /**
- * « Agent actif ». Serveur réel (A5, ADR-0054) : les personas de config.json, choisies pour la
- * conversation affichée ; démonstration : les deux profils simulés.
+ * "Active agent". Real server (A5, ADR-0054): the personas from config.json, selected for the
+ * displayed conversation; demo: the two simulated profiles.
  */
 export function PersonaSwitcher({ persona }: { persona: string }) {
   const { switchPersona, listPersonas } = useEngine()
@@ -16,7 +16,7 @@ export function PersonaSwitcher({ persona }: { persona: string }) {
     let alive = true
     void listPersonas().then((list) => {
       if (!alive || !list) return
-      // Le nom de la persona s'affiche sur les tours de l'agent.
+      // The persona name is shown on the agent's turns.
       for (const p of list) PERSONA_LABEL[p.id] = p.name
       setReal(list)
     })
@@ -33,7 +33,7 @@ export function PersonaSwitcher({ persona }: { persona: string }) {
       <select
         value={persona}
         onChange={(e) => switchPersona(e.target.value)}
-        title={current?.toolsDisabled.length ? `Outils désactivés : ${current.toolsDisabled.join(', ')}` : undefined}
+        title={current?.toolsDisabled.length ? `Disabled tools: ${current.toolsDisabled.join(', ')}` : undefined}
         className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold"
       >
         {options.map(([id, label]) => (

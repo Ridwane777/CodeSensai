@@ -1,19 +1,19 @@
 """
-Passerelle d'outils : le seul chemin par lequel l'agent exécute un outil.
+Tool gateway: the only path through which the agent runs a tool.
 
-Elle enveloppe le ToolRegistry (core/tools.py, ADR-0002) sans le modifier et
-impose, pour CHAQUE outil, le même pipeline :
+It wraps the ToolRegistry (core/tools.py, ADR-0002) without modifying it and
+enforces the same pipeline for EVERY tool:
 
-    outil connu -> activé -> arguments valides -> mode de permission
-    -> garde-fous d'entrée [EV2] -> confirmation [A3] -> exécution
-    -> résultat valide -> filtres de sortie [EV2] -> plafond de taille
+    known tool -> enabled -> valid arguments -> permission mode
+    -> input guardrails [EV2] -> confirmation [A3] -> execution
+    -> valid result -> output filters [EV2] -> size cap
 
-Un outil n'implémente aucune de ces étapes : il déclare son risque et rend un
-ToolResult. Voir docs/architecture/tool-contract.md et ADR-0006.
+A tool implements none of these steps: it declares its risk and returns a
+ToolResult. See docs/architecture/tool-contract.md and ADR-0006.
 
-Les décisions de la passerelle reviennent au modèle sous forme de ToolResult
-(ok=False, data={"error": <code>}) : un refus est une observation dont l'agent
-peut tirer parti, jamais une exception qui plante la boucle.
+Gateway decisions go back to the model as a ToolResult
+(ok=False, data={"error": <code>}): a refusal is an observation the agent can
+use, never an exception that crashes the loop.
 """
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ from .tool_validation import check_arguments, check_result
 
 log = logging.getLogger(__name__)
 
-# Codes d'erreur renvoyés dans data["error"] : stables, testables, et lisibles
-# par la boucle ReAct sans parser du texte.
+# Error codes returned in data["error"]: stable, testable, and readable by
+# the ReAct loop without parsing text.
 UNKNOWN_TOOL = "unknown_tool"
 DISABLED = "disabled"
 INVALID_ARGUMENTS = "invalid_arguments"
@@ -51,9 +51,9 @@ TIMEOUT = "timeout"
 NETWORK_ERROR = "network_error"
 TOOL_ERROR = "tool_error"
 
-# Pannes réseau : le modèle peut raisonnablement réessayer plus tard ou
-# changer de source, contrairement à un bug de l'outil. requests lève ses
-# propres exceptions, qui ne dérivent pas toutes de ConnectionError.
+# Network failures: the model can reasonably retry later or switch source,
+# unlike a tool bug. requests raises its own exceptions, which do not all
+# derive from ConnectionError.
 _NETWORK_ERRORS = (
     ConnectionError,
     TimeoutError,
@@ -62,16 +62,16 @@ _NETWORK_ERRORS = (
     requests.exceptions.Timeout,
 )
 
-_TRUNCATION_MARKER = "\n[... sortie tronquée ...]"
+_TRUNCATION_MARKER = "\n[... output truncated ...]"
 _SUMMARY_LIMIT = 500
 
 
 @dataclass(frozen=True)
 class Decision:
-    """Verdict d'un garde-fou d'entrée.
+    """Verdict of an input guardrail.
 
-    `replacement`, s'il est donné sur une décision autorisée, remplace les
-    arguments (ex. EV2 qui masque une clé d'API dans le code à exécuter).
+    `replacement`, when given on an allowed decision, replaces the arguments
+    (e.g. EV2 masking an API key in the code to run).
     """
 
     allowed: bool
@@ -81,10 +81,10 @@ class Decision:
 
 @dataclass(frozen=True)
 class ConfirmationRequest:
-    """Ce que l'interface doit présenter à l'utilisateur avant une action.
+    """What the interface must show the user before an action.
 
-    Décrit l'action, ne dit rien de COMMENT la montrer : console pour la CLI,
-    bouton pour le web (ADR-0005, point 3).
+    Describes the action, says nothing about HOW to show it: console for the
+    CLI, button for the web (ADR-0005, point 3).
     """
 
     tool: str
@@ -100,11 +100,11 @@ Confirmer = Callable[[ConfirmationRequest], bool]
 
 
 def deny_all(request: ConfirmationRequest) -> bool:
-    """Confirmeur par défaut : refuse tout.
+    """Default confirmer: refuses everything.
 
-    Tant qu'aucune interface ne branche son propre confirmeur, une action qui
-    demande confirmation n'a pas lieu. Mieux vaut un outil inutilisable qu'un
-    code exécuté sans que personne n'ait dit oui.
+    Until an interface plugs in its own confirmer, an action that needs
+    confirmation does not happen. Better an unusable tool than code run
+    without anyone saying yes.
     """
     return False
 
@@ -114,7 +114,7 @@ def _fail(code: str, content: str) -> ToolResult:
 
 
 def _apply_to_strings(value: Any, fn: OutputFilter) -> Any:
-    """Applique `fn` à toutes les chaînes d'une structure JSON (pas aux clés)."""
+    """Apply `fn` to every string of a JSON structure (not to keys)."""
     if isinstance(value, str):
         return fn(value)
     if isinstance(value, dict):
@@ -125,30 +125,30 @@ def _apply_to_strings(value: Any, fn: OutputFilter) -> Any:
 
 
 class _TimedOut(Exception):
-    """Le délai est dépassé avant la fin de l'appel."""
+    """The timeout expired before the call finished."""
 
 
 def _run_bounded(fn: Callable[[], Any], timeout_s: float) -> Any:
-    """Exécute `fn` dans un thread et attend au plus `timeout_s` secondes.
+    """Run `fn` in a thread and wait at most `timeout_s` seconds.
 
-    Un thread Python ne peut pas être tué : après un délai dépassé le travail
-    peut continuer en arrière-plan. C'est pourquoi le thread est « daemon »
-    (il n'empêche pas le programme de se terminer) et pourquoi un outil qui
-    modifie l'état doit aussi borner lui-même sa durée (la sandbox tue son
-    conteneur). Une exception levée par `fn` est relancée chez l'appelant.
+    A Python thread cannot be killed: after a timeout the work may keep going
+    in the background. That is why the thread is a daemon (it does not keep
+    the program alive) and why a tool that changes state must also bound its
+    own duration (the sandbox kills its container). An exception raised by
+    `fn` is re-raised in the caller.
     """
     box: dict[str, Any] = {}
 
     def target() -> None:
         try:
             box["value"] = fn()
-        # Relancée chez l'appelant : rien n'est avalé ici.
+        # Re-raised in the caller: nothing is swallowed here.
         except BaseException as exc:
             box["error"] = exc
 
-    # Le thread reçoit une copie du contexte de l'appelant : sans elle, une
-    # ContextVar (la profondeur de délégation de delegate_task, A2) repartirait
-    # de sa valeur par défaut à chaque outil, et le garde-fou ne bornerait rien.
+    # The thread gets a copy of the caller's context: without it, a ContextVar
+    # (the delegation depth of delegate_task, A2) would restart from its
+    # default value on every tool, and the guardrail would bound nothing.
     ctx = contextvars.copy_context()
     thread = threading.Thread(target=ctx.run, args=(target,), daemon=True)
     thread.start()
@@ -182,13 +182,13 @@ class ToolGateway:
         """Forget that untrusted content was read (call it when a conversation starts)."""
         self._untrusted_seen = False
 
-    # -- ce que le modèle voit --------------------------------------------
+    # -- what the model sees ----------------------------------------------
 
     def describe_all(self) -> list[dict[str, Any]]:
-        """Outils proposés au modèle : ni désactivés, ni refusés par la politique.
+        """Tools offered to the model: neither disabled nor denied by policy.
 
-        Ne pas annoncer un outil qui sera de toute façon refusé évite que le
-        modèle le choisisse, échoue, puis insiste.
+        Not advertising a tool that will be refused anyway keeps the model
+        from picking it, failing, then insisting.
         """
         return [d for d in self.registry.describe_all() if self._offered(d["name"])]
 
@@ -203,20 +203,20 @@ class ToolGateway:
         mode = effective_mode(name, risk, self.preferences)
         wanted = self.preferences.modes.get(name)
         if wanted is not None and wanted is not mode:
-            log.warning("préférence %r=%s ignorée pour un outil %s", name, wanted.value, risk.value)
+            log.warning("preference %r=%s ignored for a %s tool", name, wanted.value, risk.value)
         return mode
 
-    # -- le pipeline --------------------------------------------------------
+    # -- the pipeline -------------------------------------------------------
 
-    # `name` est positionnel uniquement (le `/`), comme dans ToolRegistry.call :
-    # sans ça, un outil dont un paramètre s'appelle `name` ferait lever une
-    # TypeError à l'agent avant même d'entrer dans le pipeline.
+    # `name` is positional-only (the `/`), as in ToolRegistry.call: otherwise a
+    # tool with a parameter called `name` would make the agent raise a
+    # TypeError before even entering the pipeline.
     def call(self, name: str, /, **kwargs: Any) -> ToolResult:
-        """Même signature que ToolRegistry.call : l'agent peut passer de l'un à l'autre."""
+        """Same signature as ToolRegistry.call: the agent can switch between them."""
         started = time.monotonic()
         result, mode = self._pipeline(name, kwargs)
-        # On journalise le nom, le mode et l'issue — jamais les arguments ni la
-        # sortie : ils peuvent contenir exactement ce qu'EV2 doit protéger.
+        # Log the name, mode and outcome — never the arguments or the output:
+        # they may contain exactly what EV2 must protect.
         log.info(
             "tool=%s mode=%s ok=%s error=%s ms=%d",
             name,
@@ -230,17 +230,17 @@ class ToolGateway:
     def _pipeline(self, name: str, args: dict[str, Any]) -> tuple[ToolResult, str]:
         tool = self.registry.get(name)
         if tool is None:
-            return _fail(UNKNOWN_TOOL, f"Outil inconnu : {name}"), "-"
+            return _fail(UNKNOWN_TOOL, f"Unknown tool: {name}"), "-"
         if name in self.preferences.disabled:
-            return _fail(DISABLED, f"L'outil {name} est désactivé."), "-"
+            return _fail(DISABLED, f"Tool {name} is disabled."), "-"
 
         problem = check_arguments(tool.parameters, args)
         if problem:
-            return _fail(INVALID_ARGUMENTS, f"Arguments invalides pour {name} : {problem}"), "-"
+            return _fail(INVALID_ARGUMENTS, f"Invalid arguments for {name}: {problem}"), "-"
 
         mode = self._mode(name, tool)
         if mode is Mode.DENY:
-            return _fail(DENIED_BY_POLICY, f"L'outil {name} n'est pas autorisé."), mode.value
+            return _fail(DENIED_BY_POLICY, f"Tool {name} is not allowed."), mode.value
 
         # After reading untrusted content, anything that can act or send data
         # out asks first: an injected instruction then needs the user's yes.
@@ -252,9 +252,9 @@ class ToolGateway:
         ):
             mode = Mode.ASK
 
-        # Les garde-fous passent AVANT la confirmation : l'utilisateur ne doit
-        # pas valider une action qui sera bloquée, ni voir des arguments non
-        # masqués dans la demande.
+        # Guardrails run BEFORE confirmation: the user must not approve an
+        # action that will be blocked, nor see unmasked arguments in the
+        # request.
         args, blocked = self._run_guards(name, tool, args)
         if blocked is not None:
             return blocked, mode.value
@@ -263,8 +263,8 @@ class ToolGateway:
             return (
                 _fail(
                     REFUSED,
-                    f"L'utilisateur a refusé l'exécution de {name}. "
-                    "Ne la relance pas telle quelle : propose une alternative ou demande-lui.",
+                    f"The user refused to run {name}. "
+                    "Do not retry it as is: propose an alternative or ask them.",
                 ),
                 mode.value,
             )
@@ -276,13 +276,13 @@ class ToolGateway:
         return checked, mode.value
 
     def _execute(self, name: str, tool: Tool, args: dict[str, Any]) -> Any:
-        """Exécute l'outil sous délai et classe ses échecs.
+        """Run the tool under a timeout and classify its failures.
 
-        On appelle `tool.run` ici plutôt que `registry.call` : le registre
-        transforme toute exception en texte sans code, alors que le modèle a
-        besoin de distinguer « réessaie plus tard » (réseau, délai) de « ton
-        appel est faux » (bug de l'outil). Le résultat passe ensuite par la
-        validation et les filtres comme n'importe quel autre.
+        `tool.run` is called here rather than `registry.call`: the registry
+        turns any exception into text without a code, while the model needs to
+        tell "retry later" (network, timeout) from "your call is wrong" (tool
+        bug). The result then goes through validation and filters like any
+        other.
         """
         limit = self.preferences.tool_timeout_s
         declared = getattr(tool, "timeout_s", None)
@@ -291,21 +291,21 @@ class ToolGateway:
         try:
             return _run_bounded(lambda: tool.run(**args), limit)
         except _TimedOut:
-            log.warning("outil %s sans réponse après %ss", name, limit)
+            log.warning("tool %s did not answer after %ss", name, limit)
             return _fail(
                 TIMEOUT,
-                f"L'outil {name} n'a pas répondu en {limit:g} s. Son résultat est inconnu : "
-                "l'action a pu aboutir. Vérifie avant de réessayer.",
+                f"Tool {name} did not answer within {limit:g} s. Its result is unknown: "
+                "the action may have completed. Check before retrying.",
             )
         except _NETWORK_ERRORS as exc:
             return _fail(
                 NETWORK_ERROR,
-                f"Erreur réseau dans l'outil {name} : {exc}. "
-                "Réessaie plus tard ou utilise une autre source.",
+                f"Network error in tool {name}: {exc}. "
+                "Retry later or use another source.",
             )
-        except Exception as exc:  # garde-fou : un outil qui plante ne plante pas l'agent
-            log.exception("outil %s en échec", name)
-            return _fail(TOOL_ERROR, f"Erreur dans l'outil {name} : {exc}")
+        except Exception as exc:  # guardrail: a crashing tool does not crash the agent
+            log.exception("tool %s failed", name)
+            return _fail(TOOL_ERROR, f"Error in tool {name}: {exc}")
 
     def _run_guards(
         self, name: str, tool: Tool, args: dict[str, Any]
@@ -313,25 +313,25 @@ class ToolGateway:
         for guard in self.input_guards:
             try:
                 decision = guard(name, args)
-            # Un garde-fou en panne bloque l'appel : il ne le laisse pas passer.
+            # A broken guardrail blocks the call: it does not let it through.
             except Exception:
-                log.exception("garde-fou d'entrée en échec pour %s", name)
-                return args, _fail(BLOCKED, f"Appel de {name} bloqué (garde-fou en échec).")
-            # Un garde-fou qui ne rend pas une Decision (None, bool...) est un
-            # garde-fou cassé : on bloque, on ne devine pas son intention.
+                log.exception("input guardrail failed for %s", name)
+                return args, _fail(BLOCKED, f"Call to {name} blocked (guardrail failed).")
+            # A guardrail that does not return a Decision (None, bool...) is
+            # broken: block, do not guess its intent.
             if not isinstance(decision, Decision):
-                log.error("garde-fou d'entrée invalide pour %s : %r", name, type(decision))
-                return args, _fail(BLOCKED, f"Appel de {name} bloqué (garde-fou invalide).")
+                log.error("invalid input guardrail for %s: %r", name, type(decision))
+                return args, _fail(BLOCKED, f"Call to {name} blocked (invalid guardrail).")
             if not decision.allowed:
-                reason = decision.reason or "refusé par un garde-fou"
-                return args, _fail(BLOCKED, f"Appel de {name} bloqué : {reason}")
+                reason = decision.reason or "refused by a guardrail"
+                return args, _fail(BLOCKED, f"Call to {name} blocked: {reason}")
             if decision.replacement is not None:
-                # Les arguments réécrits sont revalidés : un garde-fou ne doit
-                # pas pouvoir contourner le schéma que l'outil a déclaré.
+                # Rewritten arguments are validated again: a guardrail must not
+                # be able to bypass the schema the tool declared.
                 problem = check_arguments(tool.parameters, decision.replacement)
                 if problem:
                     return args, _fail(
-                        BLOCKED, f"Appel de {name} bloqué (réécriture invalide : {problem})"
+                        BLOCKED, f"Call to {name} blocked (invalid rewrite: {problem})"
                     )
                 args = decision.replacement
         return args, None
@@ -345,27 +345,27 @@ class ToolGateway:
             timeout_s=self.preferences.confirm_timeout_s,
         )
         try:
-            # Le délai est imposé ici et pas seulement transmis : un confirmeur
-            # qui n'a jamais de réponse (onglet fermé, utilisateur parti) ne doit
-            # pas figer l'agent. Pas de réponse à temps = refus.
+            # The timeout is enforced here, not just passed on: a confirmer that
+            # never gets an answer (tab closed, user gone) must not freeze the
+            # agent. No answer in time = refusal.
             return _run_bounded(lambda: self.confirm(request), request.timeout_s) is True
         except _TimedOut:
-            log.warning("confirmation de %s sans réponse en %ss : refus", name, request.timeout_s)
+            log.warning("confirmation of %s unanswered after %ss: refused", name, request.timeout_s)
             return False
-        # Interface plantée = refus.
+        # Crashed interface = refusal.
         except Exception:
-            log.exception("confirmation en échec pour %s : traité comme un refus", name)
+            log.exception("confirmation failed for %s: treated as a refusal", name)
             return False
 
     @staticmethod
     def _summary(name: str, tool: Tool, args: dict[str, Any]) -> str:
-        """Le plan montré à l'utilisateur : `describe_call` de l'outil, sinon un défaut."""
+        """The plan shown to the user: the tool's `describe_call`, otherwise a default."""
         describe = getattr(tool, "describe_call", None)
         if callable(describe):
             try:
                 return str(describe(**args))
             except Exception:
-                log.exception("describe_call en échec pour %s", name)
+                log.exception("describe_call failed for %s", name)
         text = f"{name}({json.dumps(args, ensure_ascii=False, default=str)})"
         return text if len(text) <= _SUMMARY_LIMIT else text[:_SUMMARY_LIMIT] + "…"
 
@@ -380,7 +380,7 @@ class ToolGateway:
     def _check_output(self, tool: Tool, result: Any) -> ToolResult:
         problem = check_result(result, getattr(tool, "output_schema", None))
         if problem:
-            return _fail(INVALID_RESULT, f"Résultat de {tool.name} rejeté : {problem}")
+            return _fail(INVALID_RESULT, f"Result of {tool.name} rejected: {problem}")
 
         # Deterministic cleaning comes first and does not depend on EV2: hidden
         # characters must not reach the filters either, they could hide a
@@ -394,13 +394,13 @@ class ToolGateway:
                 content = fn(content)
                 data = _apply_to_strings(data, fn)
         except Exception:
-            # On ne renvoie surtout pas la sortie brute : c'est justement ce
-            # que le filtre devait nettoyer.
-            log.exception("filtre de sortie en échec pour %s", tool.name)
-            return _fail(FILTER_FAILED, f"Sortie de {tool.name} retenue (filtre en échec).")
+            # Never return the raw output: that is exactly what the filter was
+            # meant to clean.
+            log.exception("output filter failed for %s", tool.name)
+            return _fail(FILTER_FAILED, f"Output of {tool.name} withheld (filter failed).")
 
-        # Le plafond vient APRÈS les filtres : couper avant pourrait laisser un
-        # secret coupé en deux, que le filtre ne reconnaîtrait plus.
+        # The cap comes AFTER the filters: cutting first could leave a secret
+        # split in two, which the filter would no longer recognize.
         limit = self.preferences.max_output_chars
         if len(content) > limit:
             content = content[:limit] + _TRUNCATION_MARKER

@@ -1,8 +1,8 @@
 """
-Identification des formats de fichier — issue #64 (ADR-0034, niveaux 1 et 4).
+File format identification — issue #64 (ADR-0034, levels 1 and 4).
 
-Le test qui compte le plus : `test_un_format_inconnu_est_nomme_sans_rien_inventer`.
-C'est ce qui remplace « binary? » : l'agent sait ce qu'est le fichier et quoi faire.
+The test that matters most: `test_an_unknown_format_is_named_without_inventing_anything`.
+It replaces "binary?": the agent knows what the file is and what to do.
 """
 import zipfile
 
@@ -11,80 +11,80 @@ import pytest
 from sensai.knowledge.documents import CONVERTIBLE, identify, unreadable_message
 
 
-def zip_avec(path, *noms):
+def zip_with(path, *names):
     with zipfile.ZipFile(path, "w") as z:
-        for nom in noms:
-            z.writestr(nom, "x")
+        for name in names:
+            z.writestr(name, "x")
     return path
 
 
 @pytest.fixture
-def dossier(tmp_path):
-    (tmp_path / "sujet.pdf").write_bytes(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n1 0 obj\n")
-    zip_avec(tmp_path / "cahier.docx", "[Content_Types].xml", "word/document.xml")
-    zip_avec(tmp_path / "budget.xlsx", "[Content_Types].xml", "xl/workbook.xml")
-    zip_avec(tmp_path / "slides.pptx", "[Content_Types].xml", "ppt/presentation.xml")
-    zip_avec(tmp_path / "livre.epub", "mimetype", "OEBPS/content.opf")
-    zip_avec(tmp_path / "archive.zip", "a.txt", "b.txt")
+def folder(tmp_path):
+    (tmp_path / "requirements.pdf").write_bytes(b"%PDF-1.7\n%\xe2\xe3\xcf\xd3\n1 0 obj\n")
+    zip_with(tmp_path / "spec.docx", "[Content_Types].xml", "word/document.xml")
+    zip_with(tmp_path / "budget.xlsx", "[Content_Types].xml", "xl/workbook.xml")
+    zip_with(tmp_path / "slides.pptx", "[Content_Types].xml", "ppt/presentation.xml")
+    zip_with(tmp_path / "book.epub", "mimetype", "OEBPS/content.opf")
+    zip_with(tmp_path / "archive.zip", "a.txt", "b.txt")
     (tmp_path / "logo.png").write_bytes(
         bytes.fromhex("89504e470d0a1a0a0000000d49484452") + bytes(64))
     (tmp_path / "plan.dwg").write_bytes(b"AC1032" + bytes(200))
-    (tmp_path / "donnees.bin").write_bytes(bytes(range(256)) * 4)
+    (tmp_path / "data.bin").write_bytes(bytes(range(256)) * 4)
     return tmp_path
 
 
-@pytest.mark.parametrize("nom, attendu", [
-    ("sujet.pdf", "pdf"),
-    ("cahier.docx", "docx"),
+@pytest.mark.parametrize("name, expected", [
+    ("requirements.pdf", "pdf"),
+    ("spec.docx", "docx"),
     ("budget.xlsx", "xlsx"),
     ("slides.pptx", "pptx"),
-    ("livre.epub", "epub"),
+    ("book.epub", "epub"),
     ("archive.zip", "zip"),
     ("logo.png", "image"),
 ])
-def test_le_type_vient_du_contenu(dossier, nom, attendu):
-    assert identify(dossier / nom).kind == attendu
+def test_type_comes_from_content(folder, name, expected):
+    assert identify(folder / name).kind == expected
 
 
-def test_l_extension_ne_trompe_pas(dossier):
-    faux = dossier / "notes.txt"
-    faux.write_bytes((dossier / "sujet.pdf").read_bytes())
-    assert identify(faux).kind == "pdf"
+def test_extension_does_not_fool_it(folder):
+    fake = folder / "notes.txt"
+    fake.write_bytes((folder / "requirements.pdf").read_bytes())
+    assert identify(fake).kind == "pdf"
 
 
-def test_les_formats_bureautiques_sont_convertibles():
+def test_office_formats_are_convertible():
     assert {"pdf", "docx", "xlsx", "pptx", "epub"} <= CONVERTIBLE
     assert "image" not in CONVERTIBLE
 
 
-def test_un_format_inconnu_est_nomme_sans_rien_inventer(dossier):
-    message = unreadable_message(dossier / "plan.dwg", identify(dossier / "plan.dwg"))
+def test_an_unknown_format_is_named_without_inventing_anything(folder):
+    message = unreadable_message(folder / "plan.dwg", identify(folder / "plan.dwg"))
     assert "plan.dwg" in message and "AutoCAD" in message
-    # Mesuré : puremagic donne image/x-dwg, mais un dessin CAO n'est pas une photo.
-    assert identify(dossier / "plan.dwg").kind == "other" and "OCR" not in message
+    # Measured: puremagic reports image/x-dwg, but a CAD drawing is not a photo.
+    assert identify(folder / "plan.dwg").kind == "other" and "OCR" not in message
     assert "bytes" in message
     assert "do not guess" in message.lower()
 
 
-def test_donnees_binaires_sans_type_connu(dossier):
-    fichier = dossier / "donnees.bin"
-    message = unreadable_message(fichier, identify(fichier))
-    assert "donnees.bin" in message and "binary" in message.lower()
+def test_binary_data_without_known_type(folder):
+    file = folder / "data.bin"
+    message = unreadable_message(file, identify(file))
+    assert "data.bin" in message and "binary" in message.lower()
 
 
-def test_une_image_explique_que_le_modele_ne_voit_pas_les_images(dossier):
-    message = unreadable_message(dossier / "logo.png", identify(dossier / "logo.png"))
+def test_an_image_explains_the_model_cannot_see_images(folder):
+    message = unreadable_message(folder / "logo.png", identify(folder / "logo.png"))
     assert "image" in message.lower() and "OCR" in message
 
 
-def test_un_pdf_vide_conseille_l_ocr(dossier):
-    fichier = dossier / "sujet.pdf"
-    message = unreadable_message(fichier, identify(fichier), reason="empty")
+def test_an_empty_pdf_suggests_ocr(folder):
+    file = folder / "requirements.pdf"
+    message = unreadable_message(file, identify(file), reason="empty")
     assert "ocrmypdf" in message
 
 
-def test_image_de_conversion_absente_donne_la_commande(dossier):
-    fichier = dossier / "sujet.pdf"
-    message = unreadable_message(fichier, identify(fichier), reason="image_missing")
+def test_missing_conversion_image_gives_the_command(folder):
+    file = folder / "requirements.pdf"
+    message = unreadable_message(file, identify(file), reason="image_missing")
     assert "docker build -t sensai-docs" in message
     assert "pdftotext" in message

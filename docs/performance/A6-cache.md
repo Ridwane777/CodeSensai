@@ -1,115 +1,113 @@
-# A6 — Cache sémantique : mesures et essai réel
+# A6 — Semantic cache: measurements and real trial
 
-> **Latest trial, 2026-11-06** ([report](essais/essai-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: same question twice with the cache on: qwen3:8b on CPU 5 min 37 then **0.5 s** from the cache; qwen3-coder:30b on GPU 9.0 s then **1.8 s**. Identical question only: the rephrasing measurements below still stand. Earlier measurements below.
+> **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: same question twice with the cache on: qwen3:8b on CPU 5 min 37 then **0.5 s** from the cache; qwen3-coder:30b on GPU 9.0 s then **1.8 s**. Identical question only: the rephrasing measurements below still stand. Earlier measurements below.
 
-Décision : [ADR-0033](../decisions/0033-cache-semantique-prudent.md).
-User stories : [A6-semantic-cache.md](../user-stories/A6-semantic-cache.md).
-Script : [`scripts/bench_cache.py`](../../scripts/bench_cache.py).
+Decision: [ADR-0033](../decisions/0033-conservative-semantic-cache.md).
+User stories: [A6-semantic-cache.md](../user-stories/A6-semantic-cache.md).
+Script: [`scripts/bench_cache.py`](../../scripts/bench_cache.py).
 
-## 1. Le seuil : reformulations contre pièges
+## 1. The threshold: rephrasings versus traps
 
-**Méthode** (2026-10-18). Ollama 0.40.6 sur un pod RunPod, client sur un
-portable Intel i7-1355U.
+**Method** (2026-10-18). Ollama 0.40.6 on a RunPod pod, client on an Intel
+i7-1355U laptop.
 
-- **Questions** : deux jeux de questions de développeurs. Chaque question
-  d'origine est accompagnée de reformulations, qui devraient être servies,
-  et de pièges, qui ne doivent jamais l'être : même thème, mais une autre
-  action, un autre objet ou un autre nom.
-- **Jeu 1** (25 reformulations, 28 pièges) : écrit avant toute mesure.
-- **Jeu tenu à part** (14 reformulations, 20 pièges) : écrit après la
-  première mesure, mais avant d'écrire les règles.
-- **Mesure** : similarité cosinus entre la question d'origine et chaque
-  autre question.
+- **Questions**: two sets of developer questions (written in French). Each
+  original question comes with rephrasings, which should be served, and
+  traps, which must never be: same topic, but a different action, object or
+  name.
+- **Set 1** (25 rephrasings, 28 traps): written before any measurement.
+- **Held-out set** (14 rephrasings, 20 traps): written after the first
+  measurement, but before writing the rules.
+- **Measurement**: cosine similarity between the original question and each
+  other question.
 
 ```bash
-python scripts/bench_cache.py --host <hôte Ollama> --model bge-m3 --out a6.json
+python scripts/bench_cache.py --host <Ollama host> --model bge-m3 --out a6.json
 ```
 
-**Résultat 1 : les embeddings seuls ne séparent pas les deux.**
+**Result 1: embeddings alone do not separate the two.**
 
 | bge-m3 | Score |
 | --- | --- |
-| Piège le plus fort : « taille **maximale** » / « taille **minimale** d'un fichier indexé » | 0,925 |
-| Puis « **lire** » / « **écrire** un fichier avec l'agent » | 0,907 |
-| Puis « **activer** » / « **désactiver** le mode debug » | 0,895 |
-| Reformulation la plus faible : « activer le mode debug » / « avoir plus de logs » | 0,588 |
+| Strongest trap: "**maximum**" / "**minimum** size of an indexed file" | 0.925 |
+| Then "**read**" / "**write** a file with the agent" | 0.907 |
+| Then "**enable**" / "**disable** debug mode" | 0.895 |
+| Weakest rephrasing: "enable debug mode" / "get more logs" | 0.588 |
 
-**Résultat 2 : trois modèles d'embeddings, avec ou sans les règles.** Pour
-chaque ligne, on prend le seuil le plus bas qui ne sert aucun piège sur les
-deux jeux réunis (48 pièges), puis on compte les reformulations servies.
+**Result 2: three embedding models, with or without the rules.** For each
+row, we take the lowest threshold that serves no trap on both sets combined
+(48 traps), then count the rephrasings served.
 
-| Modèle | Seuls : seuil, reformulations servies | Avec les règles : seuil, reformulations servies |
+| Model | Alone: threshold, rephrasings served | With the rules: threshold, rephrasings served |
 | --- | --- | --- |
-| **bge-m3** | 0,934 ; 4/39 | **0,876 ; 10/39** |
-| qwen3-embedding:0.6b | 0,948 ; 1/39 | 0,862 ; 9/39 (première version des règles) |
-| nomic-embed-text | 0,965 ; 0/39 | 0,908 ; 5/39 (première version des règles) |
+| **bge-m3** | 0.934; 4/39 | **0.876; 10/39** |
+| qwen3-embedding:0.6b | 0.948; 1/39 | 0.862; 9/39 (first version of the rules) |
+| nomic-embed-text | 0.965; 0/39 | 0.908; 5/39 (first version of the rules) |
 
-Les règles (`knowledge/cache.py`, `conflict`) refusent deux questions dont
-les noms (identifiants du code, mots avec majuscule ou chiffre) ou les
-familles d'actions (créer, lire, écrire, supprimer, activer, désactiver,
-démarrer, arrêter, augmenter, réduire…) diffèrent. Après la mesure des trois
-modèles, « combien » et « nombre » ont été retirés de la famille
-« compter » : ce sont des mots interrogatifs, qui bloquaient des
-reformulations honnêtes. bge-m3 a été remesuré avec les règles corrigées
-(tableau 3) ; les deux autres modèles ne l'ont pas été.
+The rules (`knowledge/cache.py`, `conflict`) refuse two questions whose
+names (code identifiers, words with a capital letter or a digit) or action
+families (create, read, write, delete, enable, disable, start, stop,
+increase, reduce…) differ. After measuring the three models, "combien" and
+"nombre" ("how many", "number") were removed from the "count" family: they
+are question words, which blocked honest rephrasings. bge-m3 was re-measured
+with the corrected rules (table 3); the other two models were not.
 
-**Résultat 3 : bge-m3 et les règles corrigées, selon le seuil** (les deux
-jeux réunis).
+**Result 3: bge-m3 and the corrected rules, by threshold** (both sets
+combined).
 
-| Seuil | Reformulations servies | Pièges servis |
+| Threshold | Rephrasings served | Traps served |
 | --- | --- | --- |
-| 0,70 | 19/39 | 8/48 |
-| 0,80 | 16/39 | 5/48 |
-| 0,85 | 12/39 | 2/48 |
-| **0,90 (retenu)** | **7/39 (18 %)** | **0/48** |
-| 0,94 | 2/39 | 0/48 |
+| 0.70 | 19/39 | 8/48 |
+| 0.80 | 16/39 | 5/48 |
+| 0.85 | 12/39 | 2/48 |
+| **0.90 (chosen)** | **7/39 (18 %)** | **0/48** |
+| 0.94 | 2/39 | 0/48 |
 
-Le seuil est fixé à 0,90 plutôt qu'au minimum mesuré (0,876, « que retourne
-`load_settings` » / « quels paramètres prend `load_settings` »), pour garder
-une marge sur des questions jamais vues.
+The threshold is set to 0.90 rather than the measured minimum (0.876, "what
+does `load_settings` return" / "which parameters does `load_settings` take"),
+to keep a margin on unseen questions.
 
-**Variante écartée : la vérification par le modèle de chat.** Les embeddings
-proposent un candidat, puis qwen3-coder répond oui ou non à la question
-« même question ? ». Sur le jeu 1, elle sert 21/25 reformulations et 1/28
-piège, en ~1,2 s de plus. Elle est écartée parce qu'elle appelle le modèle,
-ce qui va contre la lettre de la feature, et parce qu'elle sert 1 piège
-(ADR-0033).
+**Rejected variant: verification by the chat model.** The embeddings propose
+a candidate, then qwen3-coder answers yes or no to "same question?". On set
+1, it serves 21/25 rephrasings and 1/28 trap, for ~1.2 s more. It is
+rejected because it calls the model, which goes against the letter of the
+feature, and because it serves 1 trap (ADR-0033).
 
-## 2. Essai réel dans le CLI (2026-10-18)
+## 2. Real trial in the CLI (2026-10-18)
 
-`sensai --model qwen3-coder:30b --host <pod>` lancé dans ce dépôt (2 235
-passages indexés), avec cinq entrées à la suite :
+`sensai --model qwen3-coder:30b --host <pod>` run in this repository (2,235
+indexed passages), with five inputs in a row (asked in French):
 
-| Entrée | Résultat |
+| Input | Result |
 | --- | --- |
-| « Comment lancer les tests du projet ? » | Réponse du modèle en 16,8 s, enregistrée |
-| La même question | **Servie depuis le cache** (similarité 1,00), avec la question d'origine et sa date |
-| « Comment je lance les tests du projet ? » | **Servie depuis le cache** (similarité 0,92) |
-| « Comment ignorer un test qui échoue ? » (piège) | **Non servie** : réponse du modèle (`@pytest.mark.skip`…) en 11,3 s |
-| `/cache` | « 2 réponse(s) en mémoire, servie(s) 2 fois, environ 34 s gagnées » |
+| "How do I run the project's tests?" | Model answer in 16.8 s, saved |
+| The same question | **Served from the cache** (similarity 1.00), with the original question and its date |
+| "How do I go about running the project's tests?" | **Served from the cache** (similarity 0.92) |
+| "How do I skip a failing test?" (trap) | **Not served**: model answer (`@pytest.mark.skip`…) in 11.3 s |
+| `/cache` | "2 answer(s) in memory, served 2 time(s), about 34 s saved" |
 
-**Temps d'une réponse servie** : la même consultation (`AnswerCache.lookup`)
-a été répétée 10 fois sur la base de l'essai. Médiane **1,06 s**, maximum
-1,37 s, contre 16,8 s pour la réponse du modèle. Presque tout ce temps est
-l'aller-retour vers le pod pour l'embedding de la question, à travers le
-proxy HTTPS de RunPod ; la recherche dans la base est négligeable.
+**Time of a served answer**: the same lookup (`AnswerCache.lookup`) was
+repeated 10 times on the trial's database. Median **1.06 s**, maximum
+1.37 s, versus 16.8 s for the model's answer. Almost all of that time is the
+round trip to the pod for the question's embedding, through RunPod's HTTPS
+proxy; the database search is negligible.
 
-## 3. Critères des user stories
+## 3. User story criteria
 
-| Critère | État |
+| Criterion | Status |
 | --- | --- |
-| US-A6-1 : une reformulation servie en moins d'une seconde, sans appel au modèle de chat | **Non atteint pour le temps** : 1,06 s en médiane avec le pod distant. L'appel au modèle de chat est bien évité. Avec Ollama sur la même machine, l'aller-retour réseau disparaît (non mesuré ici) |
-| US-A6-1 : taux de réponses servies mesuré | 7/39 reformulations (18 %) au seuil retenu |
-| US-A6-2 : aucun piège servi | 0/48 au seuil 0,90 |
-| US-A6-2 : invalidation quand un fichier source change | Testé (`tests/knowledge/test_cache.py`) |
-| US-A6-2 : pas de cache après une écriture ou une exécution, ni pour une question qui dépend de la conversation | Testé (seuls `read_file` et `search_codebase` sont admis ; `standalone`) |
-| US-A6-3 : mention, question d'origine et date ; `/again`, `/cache`, `/cache clear` | Vu dans l'essai réel et testé |
+| US-A6-1: a rephrasing served in under one second, without calling the chat model | **Not met for time**: 1.06 s median with the remote pod. The chat model call is indeed avoided. With Ollama on the same machine, the network round trip disappears (not measured here) |
+| US-A6-1: served-answer rate measured | 7/39 rephrasings (18 %) at the chosen threshold |
+| US-A6-2: no trap served | 0/48 at threshold 0.90 |
+| US-A6-2: invalidation when a source file changes | Tested (`tests/knowledge/test_cache.py`) |
+| US-A6-2: no caching after a write or an execution, nor for a question that depends on the conversation | Tested (only `read_file` and `search_codebase` are allowed; `standalone`) |
+| US-A6-3: notice, original question and date; `/again`, `/cache`, `/cache clear` | Seen in the real trial and tested |
 
-## 4. Limites
+## 4. Limits
 
-- **Un cache prudent** : environ une reformulation sur cinq est servie. Les synonymes absents des listes (« passer en » pour « activer ») font refuser une vraie reformulation.
-- **Des jeux petits** : 48 pièges et 39 reformulations. Un contraire absent des listes passe si la similarité dépasse 0,90.
-- **Des jeux pas totalement indépendants** : l'auteur des règles avait vu les deux jeux. Le second a été écrit avant les règles.
-- **Les défauts sont resservis** : une réponse en cache est rejouée telle quelle, défauts compris. Dans l'essai, la première réponse citait à tort un test sur `sujet.pdf`. `/again` redemande au modèle et remplace l'entrée.
-- **La mémoire de faits n'est pas suivie** : le cache suit les fichiers lus par la réponse et `SENSAI.md`, pas la mémoire de faits (M3) ni le profil. Une réponse appuyée sur `recall_facts` n'est jamais mise en cache, mais le prompt système contient la liste des entités connues.
-- **L'expiration se fait à la lecture** : une entrée de plus de 30 jours est retirée quand une question la retrouve. Les entrées qu'aucune question ne retrouve restent dans `~/.sensai/cache.db` jusqu'à `/cache clear`.
+- **A conservative cache**: about one rephrasing in five is served. Synonyms missing from the lists ("switch to" for "enable") make a real rephrasing get refused.
+- **Small sets**: 48 traps and 39 rephrasings. An opposite missing from the lists gets through if the similarity exceeds 0.90.
+- **Sets not fully independent**: the author of the rules had seen both sets. The second was written before the rules.
+- **Defects are served again**: a cached answer is replayed as is, defects included. In the trial, the first answer wrongly cited a test on `requirements.pdf`. `/again` asks the model again and replaces the entry.
+- **Fact memory is not tracked**: the cache tracks the files read by the answer and `SENSAI.md`, not the fact memory (M3) or the profile. An answer based on `recall_facts` is never cached, but the system prompt contains the list of known entities.
+- **Expiry happens on read**: an entry older than 30 days is removed when a question finds it. Entries no question finds stay in `~/.sensai/cache.db` until `/cache clear`.

@@ -7,14 +7,14 @@
 
 ## Context
 
-In the [trial of 2026-11-06](../performance/essais/essai-2026-11-06.md), T5
+In the [trial of 2026-11-06](../performance/trials/trial-2026-11-06.md), T5
 (`/structured`) and A2 (`team_task`) failed with **both** models when RAG was
 off: the agent had no way to know which files the project holds. It tried
 `main.py`, `src/utils.py`, `calculs.py`… until the 6-step limit, asked the user
 where the code was, or wrote a new `src/moyenne.py` next to the real
 `stats.py`. With RAG on, A2 passed 3 of 3; but RAG is optional on purpose: it
 needs `bge-m3` (1.2 GB) and minutes of indexing on a laptop
-([persona-and-scenario.md](../conception/persona-and-scenario.md)). Backlog #25.
+([persona-and-scenario.md](../design/persona-and-scenario.md)). Backlog #25.
 
 ## Options considered
 

@@ -4,8 +4,8 @@ import { ConversationList } from '../src/features/chat/ConversationList'
 import { EngineProvider } from '../src/state/useEngine'
 
 const LIST: SessionSummary[] = [
-  { id: 'A', title: 'Lancer les tests', updatedAt: '2026-10-29T10:00:00+00:00', messageCount: 2 },
-  { id: 'B', title: 'Renommer parse', updatedAt: '2026-10-28T10:00:00+00:00', messageCount: 4 },
+  { id: 'A', title: 'Run the tests', updatedAt: '2026-10-29T10:00:00+00:00', messageCount: 2 },
+  { id: 'B', title: 'Rename parse', updatedAt: '2026-10-28T10:00:00+00:00', messageCount: 4 },
 ]
 
 function setup() {
@@ -23,32 +23,32 @@ function setup() {
   return e
 }
 
-test('liste les conversations et marque celle qui est ouverte', async () => {
+test('lists conversations and marks the open one', async () => {
   setup()
-  expect(await screen.findByText('Lancer les tests')).toHaveAttribute('aria-current', 'true')
-  expect(screen.getByText('Renommer parse')).not.toHaveAttribute('aria-current')
+  expect(await screen.findByText('Run the tests')).toHaveAttribute('aria-current', 'true')
+  expect(screen.getByText('Rename parse')).not.toHaveAttribute('aria-current')
 })
 
-test('rouvrir, et commencer une nouvelle conversation', async () => {
+test('reopen, and start a new conversation', async () => {
   const e = setup()
-  fireEvent.click(await screen.findByText('Renommer parse'))
+  fireEvent.click(await screen.findByText('Rename parse'))
   expect(e.openSession).toHaveBeenCalledWith('B')
   fireEvent.click(screen.getByText('+ Nouvelle conversation'))
   expect(e.newConversation).toHaveBeenCalled()
 })
 
-test('supprimer demande une confirmation dans la ligne, et « Non » ne supprime rien', async () => {
+test('delete asks for inline confirmation, and "No" deletes nothing', async () => {
   const e = setup()
-  fireEvent.click(await screen.findByRole('button', { name: 'Supprimer Renommer parse' }))
-  fireEvent.click(screen.getByText('Non'))
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete Rename parse' }))
+  fireEvent.click(screen.getByText('No'))
   expect(e.deleteSession).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: 'Supprimer Renommer parse' }))
-  await act(async () => { fireEvent.click(screen.getByText('Oui')) })
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Rename parse' }))
+  await act(async () => { fireEvent.click(screen.getByText('Yes')) })
   expect(e.deleteSession).toHaveBeenCalledWith('B')
-  expect(screen.queryByText('Renommer parse')).not.toBeInTheDocument()
+  expect(screen.queryByText('Rename parse')).not.toBeInTheDocument()
 })
 
-test('sans serveur réel, pas de barre latérale', () => {
+test('without a real server, no sidebar', () => {
   const e = { send: vi.fn(), interrupt: vi.fn(), editMessage: vi.fn(() => null), confirm: vi.fn(), answer: vi.fn(),
     switchPersona: vi.fn(), subscribe: vi.fn(() => () => {}) }
   const { container } = render(<EngineProvider engine={e as unknown as Engine}><ConversationList /></EngineProvider>)

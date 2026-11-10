@@ -1,18 +1,21 @@
 """
-Mesures de A2 (orchestration multi-agent, ADR-0038) avec le vrai modèle, dans un
-projet jetable (dossier temporaire) : le dépôt n'est jamais modifié.
-Résultats et choix : docs/performance/A2-orchestration.md.
+A2 measurements (multi-agent orchestration, ADR-0038) with the real model, in a
+throwaway project (temporary directory): the repository is never modified.
+Results and choices: docs/performance/A2-orchestration.md.
 
-    python scripts/bench_a2.py <hôte Ollama> roles|equipe|critique|choix|detail [essais]
+    python scripts/bench_a2.py <Ollama host> roles|team|review|choice|detail [runs]
 
-roles    : explorateur et relecteur à qui l'on demande d'écrire -> refus attendu.
-equipe   : team_task sur trois tâches vérifiables ; le code final est exécuté.
-critique : le relecteur reçoit un travail faux (CAS=faux) ou juste (CAS=juste).
-choix    : l'agent principal (prompt système v2) confie-t-il le code à l'équipe,
-           et répond-il seul aux questions ?
-detail   : rapport complet de l'équipe sur une tâche (TACHE=...).
+roles  : explorer and reviewer asked to write -> refusal expected.
+team   : team_task on three checkable tasks; the final code is executed.
+review : the reviewer gets wrong work (CASE=wrong) or correct work (CASE=right).
+choice : does the main agent (system prompt v2) hand code to the team,
+         and answer questions on its own?
+detail : full team report on one task (TASK=...).
+The former French mode names (equipe, critique, choix) and variables (CAS=faux|juste,
+TACHE) are still accepted. Role ids ("explorateur", "relecteur") are the ids defined
+in src/sensai/tools/delegate_tool.py.
 """
-# ruff: noqa: E402, E501  (chemin d'import ajouté avant les imports ; jeux sur une ligne)
+# ruff: noqa: E402, E501  (import path added before the imports; one-line datasets)
 import os
 import sys
 from pathlib import Path
@@ -35,41 +38,42 @@ from sensai.tools.read_file_tool import ReadFileTool
 from sensai.tools.team_tool import TeamTool, review_request, verdict
 from sensai.tools.write_file_tool import WriteFileTool
 
-HOST, MODE = sys.argv[1], sys.argv[2]
+HOST = sys.argv[1]
+MODE = {"equipe": "team", "critique": "review", "choix": "choice"}.get(sys.argv[2], sys.argv[2])
 RUNS = int(sys.argv[3]) if len(sys.argv) > 3 else 3
 MODEL = "qwen3-coder:30b"
 SYSTEM_V2 = (ROOT / "prompts/system/v2.txt").read_text(encoding="utf-8") + os.environ.get("EXTRA", "")
 
-STATS = '''def moyenne(valeurs):
-    """Moyenne arithmétique d'une liste non vide."""
-    return sum(valeurs) / (len(valeurs) + 1)
+STATS = '''def mean(values):
+    """Arithmetic mean of a non-empty list."""
+    return sum(values) / (len(values) + 1)
 
 
-def maximum(valeurs):
-    """Plus grande valeur d'une liste non vide."""
-    plus_grand = 0
-    for v in valeurs:
-        if v > plus_grand:
-            plus_grand = v
-    return plus_grand
+def maximum(values):
+    """Largest value of a non-empty list."""
+    largest = 0
+    for v in values:
+        if v > largest:
+            largest = v
+    return largest
 '''
 
-# (tâche, vérification exécutée sur le fichier final)
+# (task, check run against the final file)
 TASKS = [
-    ("Corrige le bug de la fonction moyenne dans stats.py (le fichier est à la racine du "
-     "projet) et réécris le fichier avec write_file.",
-     "from stats import moyenne; assert moyenne([2, 4]) == 3"),
-    ("Corrige la fonction maximum dans stats.py pour qu'elle marche aussi avec des nombres "
-     "négatifs, puis réécris le fichier avec write_file.",
+    ("Fix the bug in the mean function in stats.py (the file is at the project "
+     "root) and rewrite the file with write_file.",
+     "from stats import mean; assert mean([2, 4]) == 3"),
+    ("Fix the maximum function in stats.py so it also works with negative "
+     "numbers, then rewrite the file with write_file.",
      "from stats import maximum; assert maximum([-5, -2, -9]) == -2; assert maximum([1, 7]) == 7"),
-    ("Ajoute dans stats.py une fonction mediane(valeurs) (liste non vide, nombre pair ou impair "
-     "de valeurs) sans casser le reste, puis réécris le fichier avec write_file.",
-     "from stats import mediane; assert mediane([3, 1, 2]) == 2; assert mediane([4, 1, 3, 2]) == 2.5"),
+    ("Add a median(values) function to stats.py (non-empty list, even or odd number "
+     "of values) without breaking the rest, then rewrite the file with write_file.",
+     "from stats import median; assert median([3, 1, 2]) == 2; assert median([4, 1, 3, 2]) == 2.5"),
 ]
 
 
 def project():
-    root = Path(tempfile.mkdtemp(prefix="sensai-equipe-"))
+    root = Path(tempfile.mkdtemp(prefix="sensai-team-"))
     (root / "stats.py").write_text(STATS, encoding="utf-8")
     return root
 
@@ -117,14 +121,14 @@ if MODE == "roles":
             tools, confirmed = build(root)
             start = time.monotonic()
             result = tools.call("delegate_task", role=role,
-                                task="Crée le fichier notes.md contenant « bonjour » avec write_file.")
+                                task="Create the file notes.md containing \"hello\" with write_file.")
             took = time.monotonic() - start
-            print(f"{role:11} {took:5.1f} s  appels={tools.calls[1:]}  confirmations={confirmed[1:]}"
-                  f"  notes.md créé={(root / 'notes.md').exists()}  | {result.content[:80]!r}",
+            print(f"{role:11} {took:5.1f} s  calls={tools.calls[1:]}  confirmations={confirmed[1:]}"
+                  f"  notes.md created={(root / 'notes.md').exists()}  | {result.content[:80]!r}",
                   flush=True)
             shutil.rmtree(root)
 
-if MODE == "equipe":
+if MODE == "team":
     for task, code in TASKS:
         for _ in range(RUNS):
             root = project()
@@ -134,20 +138,20 @@ if MODE == "equipe":
             result = tools.call("team_task", task=task)
             took = time.monotonic() - start
             first = result.content.splitlines()[0] if result.content else ""
-            print(f"{took:5.1f} s  ok={result.ok}  code juste={check(root, code)}  "
-                  f"écritures={confirmed.count('write_file')}  | {first[:120]}", flush=True)
+            print(f"{took:5.1f} s  ok={result.ok}  code correct={check(root, code)}  "
+                  f"writes={confirmed.count('write_file')}  | {first[:120]}", flush=True)
             shutil.rmtree(root)
 
-if MODE == "choix":
+if MODE == "choice":
     prompts = [
-        ("code", "Corrige le bug de la fonction moyenne dans stats.py."),
-        ("code", "La fonction maximum de stats.py se trompe avec des nombres négatifs, répare-la."),
-        ("code", "Ajoute une fonction mediane à stats.py."),
-        ("code", "Ajoute des docstrings plus détaillées aux fonctions de stats.py."),
-        ("code", "Fais en sorte que moyenne lève une ValueError sur une liste vide dans stats.py."),
-        ("question", "Que fait la fonction moyenne dans stats.py ?"),
-        ("question", "Explique la différence entre une moyenne et une médiane."),
-        ("question", "Lis stats.py et dis-moi combien il y a de fonctions."),
+        ("code", "Fix the bug in the mean function in stats.py."),
+        ("code", "The maximum function in stats.py is wrong with negative numbers, fix it."),
+        ("code", "Add a median function to stats.py."),
+        ("code", "Add more detailed docstrings to the functions in stats.py."),
+        ("code", "Make mean raise a ValueError on an empty list in stats.py."),
+        ("question", "What does the mean function in stats.py do?"),
+        ("question", "Explain the difference between a mean and a median."),
+        ("question", "Read stats.py and tell me how many functions it has."),
     ]
     for kind, prompt in prompts:
         root = project()
@@ -157,29 +161,30 @@ if MODE == "choix":
         names = [e.name for e in run_agent_turn(HOST, MODEL, messages, tools)
                  if isinstance(e, ToolCall)]
         took = time.monotonic() - start
-        print(f"{kind:8} {took:5.1f} s  équipe={'team_task' in names}  outils={names}"
+        print(f"{kind:8} {took:5.1f} s  team={'team_task' in names}  tools={names}"
               f"  | {prompt[:50]}", flush=True)
         shutil.rmtree(root)
 
-# Le relecteur repère-t-il un travail faux ? On lui donne un fichier laissé
-# buggé (ou mal corrigé) avec un compte rendu qui prétend que c'est corrigé.
+# Does the reviewer spot wrong work? It gets a file left buggy (or badly
+# fixed) with a report claiming it is fixed.
 WRONG = [
-    ("Corrige le bug de la fonction moyenne dans stats.py.", STATS,
-     "J'ai corrigé moyenne dans stats.py : le fichier a été réécrit."),
-    ("Corrige maximum dans stats.py pour les nombres négatifs.",
-     STATS.replace("plus_grand = 0", "plus_grand = -1"),
-     "J'ai corrigé maximum : la valeur de départ est maintenant -1, réécrit avec write_file."),
+    ("Fix the bug in the mean function in stats.py.", STATS,
+     "I fixed mean in stats.py: the file has been rewritten."),
+    ("Fix maximum in stats.py for negative numbers.",
+     STATS.replace("largest = 0", "largest = -1"),
+     "I fixed maximum: the starting value is now -1, rewritten with write_file."),
 ]
 RIGHT = [
-    ("Corrige le bug de la fonction moyenne dans stats.py.",
-     STATS.replace("(len(valeurs) + 1)", "len(valeurs)"),
-     "J'ai corrigé moyenne dans stats.py : division par len(valeurs)."),
-    ("Corrige maximum dans stats.py pour les nombres négatifs.",
-     STATS.replace("plus_grand = 0", "plus_grand = valeurs[0]"),
-     "J'ai corrigé maximum : la valeur de départ est le premier élément."),
+    ("Fix the bug in the mean function in stats.py.",
+     STATS.replace("(len(values) + 1)", "len(values)"),
+     "I fixed mean in stats.py: division by len(values)."),
+    ("Fix maximum in stats.py for negative numbers.",
+     STATS.replace("largest = 0", "largest = values[0]"),
+     "I fixed maximum: the starting value is the first element."),
 ]
-if MODE == "critique":
-    cases = WRONG if os.environ.get("CAS", "faux") == "faux" else RIGHT
+if MODE == "review":
+    case = os.environ.get("CASE", os.environ.get("CAS", "wrong"))
+    cases = WRONG if case in ("wrong", "faux") else RIGHT
     for task, content, claim in cases:
         for _ in range(RUNS):
             root = project()
@@ -190,19 +195,19 @@ if MODE == "critique":
             r = delegate.delegate(review_request(task, claim, {"stats.py": content}),
                                   role="relecteur")
             print(f"{time.monotonic() - start:5.1f} s  verdict={verdict(r.content)}  "
-                  f"lectures={tools.calls.count('read_file')}  | {r.content[:90]!r}", flush=True)
+                  f"reads={tools.calls.count('read_file')}  | {r.content[:90]!r}", flush=True)
             shutil.rmtree(root)
 
 if MODE == "detail":
-    task = os.environ.get("TACHE", "Ajoute des docstrings plus détaillées aux fonctions de stats.py.")
+    task = os.environ.get("TASK", os.environ.get("TACHE", "Add more detailed docstrings to the functions in stats.py."))
     for i in range(RUNS):
         root = project()
         notes = []
         tools, confirmed = build(root, notes)
         start = time.monotonic()
         result = tools.call("team_task", task=task)
-        print(f"\n######## essai {i + 1} : {time.monotonic() - start:.1f} s ok={result.ok} "
-              f"écritures={confirmed.count('write_file')} relais={notes}", flush=True)
+        print(f"\n######## run {i + 1}: {time.monotonic() - start:.1f} s ok={result.ok} "
+              f"writes={confirmed.count('write_file')} handoffs={notes}", flush=True)
         print(result.content[:4000], flush=True)
-        print("--- stats.py final :\n" + (root / "stats.py").read_text(encoding="utf-8")[:1500])
+        print("--- final stats.py:\n" + (root / "stats.py").read_text(encoding="utf-8")[:1500])
         shutil.rmtree(root)

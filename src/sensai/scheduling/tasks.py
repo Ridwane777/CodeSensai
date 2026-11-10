@@ -1,9 +1,9 @@
 """
-Tâches planifiées et leur stockage — feature [X5], ADR-0016.
+Scheduled tasks and their storage — feature [X5], ADR-0016.
 
-Une tâche = un prompt rejoué à intervalle fixe. Tout est dans un seul fichier
-JSON (`<données>/schedule/tasks.json`) : quelques tâches par utilisateur, donc
-rien qui justifie une base de données (voir l'ADR).
+A task = a prompt replayed at a fixed interval. Everything lives in a single
+JSON file (`<data>/schedule/tasks.json`): a few tasks per user, so nothing
+that justifies a database (see the ADR).
 """
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ from pathlib import Path
 from typing import Any
 
 TASKS_FILE = "tasks.json"
-# Un identifiant sert de nom de dossier et de fichier verrou : alphabet restreint,
-# pour qu'aucun identifiant ne puisse sortir du dossier (« ../x »).
+# An id is used as a directory name and lock file name: restricted alphabet,
+# so that no id can escape the directory ("../x").
 ID_PATTERN = re.compile(r"[a-z0-9-]{1,40}")
-# En dessous d'une minute, une tâche se chevaucherait elle-même et saturerait Ollama.
+# Below one minute, a task would overlap itself and saturate Ollama.
 MIN_INTERVAL_S = 60
 DEFAULT_TIMEOUT_S = 600
 
@@ -29,10 +29,10 @@ _INTERVAL = re.compile(r"(\d+)\s*([smhd]?)")
 
 
 class ScheduleStoreError(Exception):
-    """Le fichier des tâches est illisible ou n'a pas le bon format.
+    """The task file is unreadable or has the wrong format.
 
-    Le fichier n'est jamais réécrit dans ce cas : il contient peut-être des
-    tâches récupérables à la main.
+    The file is never rewritten in that case: it may contain tasks that can
+    be recovered by hand.
     """
 
 
@@ -41,23 +41,23 @@ def utc_now() -> datetime:
 
 
 def parse_interval(text: str | int) -> int:
-    """« 30m », « 1h », « 1d », « 7d » ou un nombre de secondes -> secondes.
+    """"30m", "1h", "1d", "7d" or a number of seconds -> seconds.
 
-    Refuse tout ce qui est inférieur à MIN_INTERVAL_S.
+    Rejects anything below MIN_INTERVAL_S.
     """
     if isinstance(text, bool):
-        raise ValueError("Intervalle invalide.")
+        raise ValueError("Invalid interval.")
     if isinstance(text, int):
         seconds = text
     else:
         match = _INTERVAL.fullmatch(text.strip().lower())
         if match is None:
             raise ValueError(
-                f"Intervalle invalide : {text!r} (exemples : 300, 30m, 1h, 1d, 7d)."
+                f"Invalid interval: {text!r} (examples: 300, 30m, 1h, 1d, 7d)."
             )
         seconds = int(match.group(1)) * _UNITS[match.group(2) or "s"]
     if seconds < MIN_INTERVAL_S:
-        raise ValueError(f"Intervalle trop court : {MIN_INTERVAL_S} secondes au minimum.")
+        raise ValueError(f"Interval too short: {MIN_INTERVAL_S} seconds minimum.")
     return seconds
 
 
@@ -71,14 +71,14 @@ def format_interval(seconds: int) -> str:
 def validate_task_id(task_id: str) -> str:
     if not isinstance(task_id, str) or ID_PATTERN.fullmatch(task_id) is None:
         raise ValueError(
-            f"Identifiant invalide : {task_id!r} (1 à 40 caractères parmi a-z, 0-9 et « - »)."
+            f"Invalid id: {task_id!r} (1 to 40 characters from a-z, 0-9 and \"-\")."
         )
     return task_id
 
 
 def parse_time(text: str) -> datetime:
     parsed = datetime.fromisoformat(text)
-    # Une date sans fuseau est lue comme UTC : on ne mélange jamais naïf et aware.
+    # A date without a timezone is read as UTC: never mix naive and aware.
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
@@ -91,7 +91,7 @@ class Task:
     created_at: str = field(default_factory=lambda: utc_now().isoformat())
     last_run_at: str | None = None
     last_status: str | None = None
-    # None = tous les outils du registre ; sinon la liste de ceux qu'on garde.
+    # None = all registry tools; otherwise the list of those to keep.
     tools: list[str] | None = None
     timeout_s: int = DEFAULT_TIMEOUT_S
 
@@ -102,7 +102,7 @@ class Task:
         return due_at is None or now >= due_at
 
     def next_due(self) -> datetime | None:
-        """Prochaine échéance, ou None si la tâche n'a jamais tourné (due tout de suite)."""
+        """Next due time, or None if the task never ran (due right away)."""
         if self.last_run_at is None:
             return None
         return parse_time(self.last_run_at) + timedelta(seconds=self.interval_s)
@@ -124,24 +124,24 @@ class Task:
 
     @classmethod
     def from_dict(cls, data: Any) -> Task:
-        """Lève ValueError si `data` n'a pas le format attendu."""
+        """Raises ValueError if `data` does not have the expected format."""
         if not isinstance(data, dict):
-            raise ValueError("une tâche doit être un objet JSON")
+            raise ValueError("a task must be a JSON object")
         unknown = set(data) - {f for f in cls.__dataclass_fields__}
         if unknown:
-            raise ValueError(f"clés inconnues : {sorted(unknown)}")
+            raise ValueError(f"unknown keys: {sorted(unknown)}")
         task_id = validate_task_id(data.get("id"))  # type: ignore[arg-type]
         prompt = data.get("prompt")
         if not isinstance(prompt, str) or not prompt.strip():
-            raise ValueError(f"tâche {task_id} : 'prompt' doit être un texte non vide")
+            raise ValueError(f"task {task_id}: 'prompt' must be a non-empty string")
         interval = data.get("interval_s")
         if isinstance(interval, bool) or not isinstance(interval, int) or interval < MIN_INTERVAL_S:
             raise ValueError(
-                f"tâche {task_id} : 'interval_s' doit être un entier >= {MIN_INTERVAL_S}"
+                f"task {task_id}: 'interval_s' must be an integer >= {MIN_INTERVAL_S}"
             )
         enabled = data.get("enabled", True)
         if not isinstance(enabled, bool):
-            raise ValueError(f"tâche {task_id} : 'enabled' doit être true ou false")
+            raise ValueError(f"task {task_id}: 'enabled' must be true or false")
         created = data.get("created_at")
         last_run = data.get("last_run_at")
         for key, value in (("created_at", created), ("last_run_at", last_run)):
@@ -150,18 +150,18 @@ class Task:
             try:
                 parse_time(value)  # type: ignore[arg-type]
             except (TypeError, ValueError):
-                raise ValueError(f"tâche {task_id} : '{key}' n'est pas une date ISO") from None
+                raise ValueError(f"task {task_id}: '{key}' is not an ISO date") from None
         status = data.get("last_status")
         if status is not None and not isinstance(status, str):
-            raise ValueError(f"tâche {task_id} : 'last_status' doit être un texte")
+            raise ValueError(f"task {task_id}: 'last_status' must be a string")
         tools = data.get("tools")
         if tools is not None and (
             not isinstance(tools, list) or not all(isinstance(t, str) for t in tools)
         ):
-            raise ValueError(f"tâche {task_id} : 'tools' doit être une liste de noms d'outils")
+            raise ValueError(f"task {task_id}: 'tools' must be a list of tool names")
         timeout = data.get("timeout_s", DEFAULT_TIMEOUT_S)
         if isinstance(timeout, bool) or not isinstance(timeout, int) or timeout <= 0:
-            raise ValueError(f"tâche {task_id} : 'timeout_s' doit être un entier > 0")
+            raise ValueError(f"task {task_id}: 'timeout_s' must be an integer > 0")
         return cls(
             id=task_id,
             prompt=prompt,
@@ -176,10 +176,9 @@ class Task:
 
 
 def atomic_write(path: Path, text: str) -> None:
-    """Écriture atomique : fichier temporaire du même dossier, puis os.replace.
+    """Atomic write: temporary file in the same directory, then os.replace.
 
-    Un plantage (ou un autre processus qui lit) ne voit jamais un fichier
-    à moitié écrit.
+    A crash (or another process reading) never sees a half-written file.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}-", suffix=".tmp")
@@ -200,35 +199,35 @@ class TaskStore:
         self.path = Path(path)
 
     def load(self) -> list[Task]:
-        """Les tâches ; liste vide si le fichier n'existe pas encore.
+        """The tasks; empty list if the file does not exist yet.
 
-        Lève ScheduleStoreError si le fichier est cassé — sans y toucher.
+        Raises ScheduleStoreError if the file is broken — without touching it.
         """
         try:
             raw = self.path.read_text(encoding="utf-8")
         except FileNotFoundError:
             return []
         except (OSError, UnicodeDecodeError) as exc:
-            raise ScheduleStoreError(f"{self.path} illisible : {exc}") from exc
+            raise ScheduleStoreError(f"{self.path} unreadable: {exc}") from exc
         try:
             items = json.loads(raw)
         except json.JSONDecodeError as exc:
-            raise ScheduleStoreError(f"{self.path} n'est pas du JSON valide : {exc}") from exc
+            raise ScheduleStoreError(f"{self.path} is not valid JSON: {exc}") from exc
         if not isinstance(items, list):
-            raise ScheduleStoreError(f"{self.path} : une liste de tâches était attendue")
+            raise ScheduleStoreError(f"{self.path}: a list of tasks was expected")
         tasks: list[Task] = []
         for item in items:
             try:
                 tasks.append(Task.from_dict(item))
             except ValueError as exc:
-                raise ScheduleStoreError(f"{self.path} : {exc}") from exc
+                raise ScheduleStoreError(f"{self.path}: {exc}") from exc
         ids = [t.id for t in tasks]
         if len(set(ids)) != len(ids):
-            raise ScheduleStoreError(f"{self.path} : identifiants de tâche en double")
+            raise ScheduleStoreError(f"{self.path}: duplicate task ids")
         return tasks
 
     def save(self, tasks: list[Task]) -> None:
-        """Écrit toutes les tâches d'un coup (atomic_write)."""
+        """Writes all tasks at once (atomic_write)."""
         payload = json.dumps([t.to_dict() for t in tasks], ensure_ascii=False, indent=2)
         atomic_write(self.path, payload + "\n")
 
@@ -238,7 +237,7 @@ class TaskStore:
     def add(self, task: Task) -> None:
         tasks = self.load()
         if any(t.id == task.id for t in tasks):
-            raise ValueError(f"Une tâche « {task.id} » existe déjà.")
+            raise ValueError(f"A task \"{task.id}\" already exists.")
         tasks.append(task)
         self.save(tasks)
 
@@ -251,8 +250,8 @@ class TaskStore:
         return True
 
     def update(self, task_id: str, **changes: Any) -> bool:
-        """Modifie une tâche en relisant le fichier juste avant : une tâche ajoutée
-        pendant qu'une autre tourne n'est pas écrasée. False si elle a disparu."""
+        """Updates a task, re-reading the file just before: a task added while
+        another one runs is not overwritten. False if it has disappeared."""
         tasks = self.load()
         for task in tasks:
             if task.id == task_id:

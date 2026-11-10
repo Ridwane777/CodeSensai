@@ -1,11 +1,11 @@
 /**
- * Traduit le flux du serveur réel (événements du lot A, `to_wire`, plus les extensions de
- * l'ADR-0024) vers le modèle d'affichage de l'interface (ADR-0035, web-api-alignement.md §4).
+ * Translates the real server stream (Workstream A events, `to_wire`, plus the ADR-0024
+ * extensions) into the UI display model (ADR-0035, web-api-alignment.md §4).
  *
- * Une instance par tour. Le flux du lot A n'a ni début de tour ni identifiant d'étape :
- * l'adaptateur les crée. Chaque `thought` ouvre une étape ; un `tool_call` s'y rattache si
- * l'étape n'a pas encore d'outil, sinon il en ouvre une ; le `tool_return` retrouve son
- * étape par l'identifiant de l'appel, et sa durée est mesurée ici.
+ * One instance per turn. The Workstream A stream has no turn start and no step id: the
+ * adapter creates them. Each `thought` opens a step; a `tool_call` attaches to it if the step
+ * has no tool yet, otherwise it opens a new one; the `tool_return` finds its step by the call
+ * id, and its duration is measured here.
  */
 import type { EngineEvent, FormField } from '../contract/events'
 
@@ -14,7 +14,7 @@ const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v)
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {}
 
-/** Champs d'une question du serveur (X4, ADR-0046) ; un champ mal formé est écarté. */
+/** Fields of a server question (X4, ADR-0046); a malformed field is dropped. */
 export function toFields(raw: unknown): FormField[] {
   if (!Array.isArray(raw)) return []
   const out: FormField[] = []
@@ -32,27 +32,27 @@ export function toFields(raw: unknown): FormField[] {
   return out
 }
 
-/** Ce que l'utilisateur doit lire avant d'accepter, comme dans le CLI (`describe_request`). */
+/** What the user must read before accepting, as in the CLI (`describe_request`). */
 export function describeConfirm(tool: string, risk: string, summary: string, args: Record<string, unknown>) {
-  const title = `L'agent veut utiliser « ${tool} » (risque : ${risk || 'inconnu'})`
+  const title = `The agent wants to use "${tool}" (risk: ${risk || 'unknown'})`
   const detail =
     summary && !summary.startsWith(`${tool}(`)
       ? summary
       : Object.entries(args)
           .map(([k, v]) => `${k} = ${typeof v === 'string' ? v : JSON.stringify(v)}`)
           .join('\n')
-  return { title, detail: detail || '(aucun détail)' }
+  return { title, detail: detail || '(no details)' }
 }
 
 export class WireAdapter {
   private steps = 0
-  /** Étape ouverte par un `thought` et encore sans outil. */
+  /** Step opened by a `thought` and still without a tool. */
   private openStep: string | null = null
   private calls = new Map<string, { stepId: string; started: number }>()
-  /** Le modèle reprend la parole après un outil : nouveau paragraphe, pas une phrase collée. */
+  /** The model speaks again after a tool: new paragraph, not a glued sentence. */
   private hadText = false
   private breakBeforeText = false
-  /** Raison du `done` reçu : le moteur s'en sert pour compter les messages enregistrés. */
+  /** Reason of the received `done`: the engine uses it to count saved messages. */
   doneReason: string | null = null
 
   constructor(
@@ -116,7 +116,7 @@ export class WireAdapter {
         return [{ type: 'question', requestId, title: str(e.title), fields }]
       }
       case 'web_results': {
-        // Résultats de web_search relus par le serveur (US-T3-1) : liens http(s) seulement.
+        // web_search results reread by the server (US-T3-1): http(s) links only.
         const list = Array.isArray(e.results) ? e.results : []
         const results = list
           .map((r) => {
@@ -135,7 +135,7 @@ export class WireAdapter {
         return [{ type: 'rag_sources', sources }]
       }
       case 'agent_handoff': {
-        // « main » est l'agent principal : on garde le nom de la persona affichée.
+        // "main" is the main agent: keep the displayed persona name.
         const name = (v: unknown) => (str(v) === 'main' ? this.agent : str(v))
         const from = name(e.from)
         const to = name(e.to)
@@ -143,7 +143,7 @@ export class WireAdapter {
         return [{ type: 'agent_handoff', from, to, subAgent: true }]
       }
       case 'usage': {
-        // M2 : tokens ESTIMÉS de ce qui part au modèle, face à la fenêtre num_ctx.
+        // M2: ESTIMATED tokens sent to the model, against the num_ctx window.
         const used = num(e.used)
         const window = num(e.num_ctx)
         const budget = num(e.budget)
@@ -157,7 +157,7 @@ export class WireAdapter {
         return section ? [{ type: 'artifact_patch', section, markdown: str(e.markdown) }] : []
       }
       case 'subagent_step': {
-        // A2 : un outil du sous-agent, montré comme une étape du tour, préfixée par son rôle.
+        // A2: a sub-agent tool, shown as a turn step, prefixed by its role.
         const stepId = this.newStep()
         const tool = `${str(e.agent)} › ${str(e.tool)}`
         return [
@@ -176,18 +176,18 @@ export class WireAdapter {
         return [{ type: 'guardrail', kind, message: str(e.message) }]
       }
       case 'error':
-        return [{ type: 'error', message: str(e.message) || 'Erreur inconnue' }]
+        return [{ type: 'error', message: str(e.message) || 'Unknown error' }]
       case 'done': {
         const reason = str(e.reason)
         this.doneReason = reason
         const out: EngineEvent[] = []
         if (reason === 'max_iterations')
-          out.push({ type: 'error', message: "Arrêt : nombre maximal d'étapes atteint sans réponse finale." })
+          out.push({ type: 'error', message: 'Stopped: maximum number of steps reached without a final answer.' })
         out.push({ type: 'done', turnId, interrupted: reason === 'interrupted' })
         return out
       }
       default:
-        return [] // type inconnu : ignoré, jamais une exception
+        return [] // unknown type: ignored, never an exception
     }
   }
 }

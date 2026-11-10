@@ -1,17 +1,17 @@
 """
-Commande `sensai-eval` : évaluer les réponses de l'agent avec un juge LLM —
+`sensai-eval` command: evaluate the agent's answers with an LLM judge —
 feature [EV1], ADR-0019.
 
-    sensai-eval run --dataset datasets/eval/ev1_sample.jsonl --out rapport.json
-    sensai-eval run --dataset ... --out ... --generate        (l'agent répond lui-même)
-    sensai-eval run --dataset ... --out ... --sources rag     (passages tirés de l'index R1)
-    sensai-eval compare rapport_a.json rapport_b.json [--strict]
+    sensai-eval run --dataset datasets/eval/ev1_sample.jsonl --out report.json
+    sensai-eval run --dataset ... --out ... --generate        (the agent answers itself)
+    sensai-eval run --dataset ... --out ... --sources rag     (passages drawn from the R1 index)
+    sensai-eval compare report_a.json report_b.json [--strict]
 
-Comme `schedule_cli`, ce module n'appelle PAS `get_settings()` (qui lit `sys.argv`
-pour la CLI interactive) : il relit `config.json` avec les mêmes valeurs par défaut.
+Like `schedule_cli`, this module does NOT call `get_settings()` (which reads
+`sys.argv` for the interactive CLI): it rereads `config.json` with the same defaults.
 
-Codes de sortie : 0 succès ; 1 `compare --strict` sur deux rapports non comparables ;
-2 fichier ou option inutilisable.
+Exit codes: 0 success; 1 `compare --strict` on two non-comparable reports;
+2 unusable file or option.
 """
 from __future__ import annotations
 
@@ -67,42 +67,42 @@ EXIT_USAGE = 2
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sensai-eval",
-        description="Évaluer les réponses de l'agent avec un juge LLM (ADR-0019)",
+        description="Evaluate the agent's answers with an LLM judge (ADR-0019)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    run = sub.add_parser("run", help="Juger les réponses d'un jeu de données et écrire un rapport")
-    run.add_argument("--dataset", required=True, help="Fichier JSONL (une question par ligne)")
-    run.add_argument("--out", required=True, help="Rapport JSON à écrire")
+    run = sub.add_parser("run", help="Judge the answers of a dataset and write a report")
+    run.add_argument("--dataset", required=True, help="JSONL file (one question per line)")
+    run.add_argument("--out", required=True, help="JSON report to write")
     run.add_argument(
         "--sources",
         choices=("dataset", "rag"),
         default="dataset",
-        help="Origine des passages : le jeu de données (défaut) ou l'index du projet (R1)",
+        help="Passage origin: the dataset (default) or the project index (R1)",
     )
-    run.add_argument("--judge-model", help="Modèle du juge (défaut : le modèle de config.json)")
-    run.add_argument("--judge-prompt-version", help="Version du prompt `judge` (défaut : l'active)")
-    run.add_argument("--host", help="URL d'Ollama (défaut : config.json)")
+    run.add_argument("--judge-model", help="Judge model (default: the config.json model)")
+    run.add_argument("--judge-prompt-version", help="`judge` prompt version (default: the active one)")
+    run.add_argument("--host", help="Ollama URL (default: config.json)")
     run.add_argument(
         "--generate",
         action="store_true",
-        help="Faire répondre l'agent aux cas qui n'ont pas de réponse",
+        help="Have the agent answer the cases without an answer",
     )
 
-    compare = sub.add_parser("compare", help="Comparer deux rapports (écarts B moins A)")
+    compare = sub.add_parser("compare", help="Compare two reports (deltas B minus A)")
     compare.add_argument("report_a")
     compare.add_argument("report_b")
-    compare.add_argument("--out", help="Écrire la comparaison en JSON")
+    compare.add_argument("--out", help="Write the comparison as JSON")
     compare.add_argument(
         "--strict",
         action="store_true",
-        help="Sortir avec le code 1 si les deux rapports ne sont pas comparables",
+        help="Exit with code 1 if the two reports are not comparable",
     )
     return parser
 
 
 def _error(message: str) -> None:
-    print(f"sensai-eval : {message}", file=sys.stderr)
+    print(f"sensai-eval: {message}", file=sys.stderr)
 
 
 def _fmt(value: float | None, digits: int = 2) -> str:
@@ -111,7 +111,7 @@ def _fmt(value: float | None, digits: int = 2) -> str:
 
 def _fmt_delta(delta: dict, digits: int = 2) -> str:
     if delta["delta"] is None:
-        return f"{_fmt(delta['a'], digits)} -> {_fmt(delta['b'], digits)}  (écart n/a)"
+        return f"{_fmt(delta['a'], digits)} -> {_fmt(delta['b'], digits)}  (delta n/a)"
     change = f"{delta['delta']:+.{digits}f}"
     return f"{_fmt(delta['a'], digits)} -> {_fmt(delta['b'], digits)}  ({change})"
 
@@ -120,11 +120,11 @@ def _fmt_delta(delta: dict, digits: int = 2) -> str:
 
 
 def build_rag_provider(host: str, file_config: dict) -> SourceProvider:
-    """Ouvre l'index du projet courant comme le fait `sensai` (cli.open_rag_index).
+    """Opens the current project's index the way `sensai` does (cli.open_rag_index).
 
-    On réutilise sa fonction au lieu de recopier sa construction : l'évaluation
-    voit alors exactement les passages que l'agent aurait reçus. Import tardif :
-    le module du CLI interactif est lourd et inutile aux autres modes.
+    We reuse its function instead of copying its construction: the evaluation
+    then sees exactly the passages the agent would have received. Late import:
+    the interactive CLI module is heavy and useless to the other modes.
     """
     from sensai.cli import open_rag_index
     from sensai.knowledge.memory import default_data_dir
@@ -141,17 +141,17 @@ def build_rag_provider(host: str, file_config: dict) -> SourceProvider:
 def make_answer_fn(
     host: str, model: str, system_prompt: str, num_ctx: int | None = None
 ) -> AnswerFn:
-    """Générateur : un seul tour, prompt système + passages + question.
+    """Generator: a single turn, system prompt + passages + question.
 
-    Ce n'est pas la boucle complète de l'agent (pas d'outils, pas de mémoire) :
-    c'est le modèle et le prompt système, ce qui suffit à comparer deux prompts.
+    This is not the agent's full loop (no tools, no memory): it is the model
+    and the system prompt, which is enough to compare two prompts.
     """
 
     def answer(question: str, passages: list) -> str:
         content = question
         if passages:
-            extraits = format_passages(passages)
-            content = f"Extraits du projet :\n\n{extraits}\n\nQuestion : {question}"
+            excerpts = format_passages(passages)
+            content = f"Project excerpts:\n\n{excerpts}\n\nQuestion: {question}"
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
@@ -164,28 +164,28 @@ def make_answer_fn(
 def _print_run_summary(report: dict, out: str) -> None:
     s, judge = report["summary"], report["judge"]
     print(
-        f"Évaluation EV1 : {s['n_cases']} cas, {s['n_scored']} jugé(s), "
-        f"{s['judge_errors']} erreur(s) du juge, {s['skipped']} ignoré(s), "
-        f"{s['source_errors'] + s['generation_errors']} erreur(s) de passages ou de génération."
+        f"EV1 evaluation: {s['n_cases']} case(s), {s['n_scored']} judged, "
+        f"{s['judge_errors']} judge error(s), {s['skipped']} skipped, "
+        f"{s['source_errors'] + s['generation_errors']} passage or generation error(s)."
     )
     print(
-        f"Juge : {judge['model']} (prompt {judge['prompt_name']} {judge['prompt_version']}). "
-        "Ce sont des estimations d'un modèle, pas des mesures."
+        f"Judge: {judge['model']} (prompt {judge['prompt_name']} {judge['prompt_version']}). "
+        "These are a model's estimates, not measurements."
     )
-    print(f"  pertinence moyenne : {_fmt(s['mean_relevance'])} / 5")
-    print(f"  cohérence moyenne  : {_fmt(s['mean_coherence'])} / 5")
+    print(f"  mean relevance    : {_fmt(s['mean_relevance'])} / 5")
+    print(f"  mean coherence    : {_fmt(s['mean_coherence'])} / 5")
     print(
-        f"  fidélité moyenne   : {_fmt(s['mean_faithfulness'])} "
-        f"(sur {s['n_faithfulness']} cas avec affirmations)"
+        f"  mean faithfulness : {_fmt(s['mean_faithfulness'])} "
+        f"(over {s['n_faithfulness']} case(s) with claims)"
     )
     print(
-        f"  affirmations signalées : {s['claims_flagged']} sur {s['claims_total']} "
-        f"(contredites ou invérifiables)"
+        f"  flagged claims: {s['claims_flagged']} of {s['claims_total']} "
+        f"(contradicted or unverifiable)"
     )
     for case in report["cases"]:
         if case["status"] != STATUS_OK:
-            print(f"  - {case['id']} : {case['status']} — {case.get('error', '')}")
-    print(f"Rapport : {out}")
+            print(f"  - {case['id']}: {case['status']} — {case.get('error', '')}")
+    print(f"Report: {out}")
 
 
 def run_command(args: argparse.Namespace) -> int:
@@ -199,10 +199,10 @@ def run_command(args: argparse.Namespace) -> int:
     host = args.host or file_config.get("host", DEFAULT_HOST)
     judge_model = args.judge_model or file_config.get("model", DEFAULT_MODEL)
     try:
-        # M2, ADR-0045 : le juge et le générateur envoient la même fenêtre que le CLI.
+        # M2, ADR-0045: the judge and the generator send the same window as the CLI.
         num_ctx = num_ctx_from_config(file_config)
-        # ADR-0057 : les réponses générées (--generate) suivent les mêmes paramètres
-        # que le CLI ; le juge garde sa température 0 (judge.py).
+        # ADR-0057: generated answers (--generate) follow the same parameters as the
+        # CLI; the judge keeps its temperature 0 (judge.py).
         set_generation_options(generation_from_config(file_config))
         set_request_timeout(request_timeout_from_config(file_config))
     except ValueError as e:
@@ -212,7 +212,7 @@ def run_command(args: argparse.Namespace) -> int:
     try:
         prompt = load_judge_prompt(find_judge_store(), args.judge_prompt_version)
     except KeyError as e:
-        _error(f"prompt du juge introuvable : {e.args[0]}")
+        _error(f"judge prompt not found: {e.args[0]}")
         return EXIT_USAGE
 
     source_provider = None
@@ -220,7 +220,7 @@ def run_command(args: argparse.Namespace) -> int:
         try:
             source_provider = build_rag_provider(host, file_config)
         except (EmbeddingError, OSError) as e:
-            _error(f"index du projet inutilisable : {e}")
+            _error(f"project index unusable: {e}")
             return EXIT_USAGE
 
     answer_fn = generator = None
@@ -253,7 +253,7 @@ def run_command(args: argparse.Namespace) -> int:
     try:
         write_json(args.out, report)
     except OSError as e:
-        _error(f"rapport non écrit : {e}")
+        _error(f"report not written: {e}")
         return EXIT_USAGE
     _print_run_summary(report, args.out)
     return EXIT_OK
@@ -264,33 +264,33 @@ def run_command(args: argparse.Namespace) -> int:
 
 def _print_comparison(comparison: dict) -> None:
     a, b = comparison["a"], comparison["b"]
-    print(f"A : {a['created_at']}, juge {a['judge_model']} ({a['judge_prompt_version']})")
-    print(f"B : {b['created_at']}, juge {b['judge_model']} ({b['judge_prompt_version']})")
+    print(f"A: {a['created_at']}, judge {a['judge_model']} ({a['judge_prompt_version']})")
+    print(f"B: {b['created_at']}, judge {b['judge_model']} ({b['judge_prompt_version']})")
     if comparison["comparable"]:
-        print("Rapports comparables (même juge, même prompt de juge, même jeu de données).")
+        print("Reports comparable (same judge, same judge prompt, same dataset).")
     else:
-        print("ATTENTION : rapports NON comparables, écarts à lire avec prudence.")
+        print("WARNING: reports NOT comparable, read the deltas with caution.")
         for warning in comparison["warnings"]:
             print(f"  ! {warning}")
     labels = {
-        "mean_relevance": "pertinence moyenne",
-        "mean_coherence": "cohérence moyenne",
-        "mean_faithfulness": "fidélité moyenne",
-        "flagged_claim_rate": "part d'affirmations signalées",
-        "judge_errors": "erreurs du juge",
+        "mean_relevance": "mean relevance",
+        "mean_coherence": "mean coherence",
+        "mean_faithfulness": "mean faithfulness",
+        "flagged_claim_rate": "flagged claim rate",
+        "judge_errors": "judge errors",
     }
     for key, label in labels.items():
         digits = 0 if key == "judge_errors" else 2
         print(f"  {label:<30} {_fmt_delta(comparison['deltas'][key], digits)}")
     for case in comparison["cases"]:
         print(
-            f"  cas {case['id']}: pertinence {_fmt_delta(case['relevance'], 0)} ; "
-            f"fidélité {_fmt_delta(case['faithfulness'])}"
+            f"  case {case['id']}: relevance {_fmt_delta(case['relevance'], 0)} ; "
+            f"faithfulness {_fmt_delta(case['faithfulness'])}"
         )
     if comparison["only_in_a"]:
-        print(f"  seulement dans A : {', '.join(comparison['only_in_a'])}")
+        print(f"  only in A: {', '.join(comparison['only_in_a'])}")
     if comparison["only_in_b"]:
-        print(f"  seulement dans B : {', '.join(comparison['only_in_b'])}")
+        print(f"  only in B: {', '.join(comparison['only_in_b'])}")
 
 
 def compare_command(args: argparse.Namespace) -> int:
@@ -305,7 +305,7 @@ def compare_command(args: argparse.Namespace) -> int:
         try:
             write_json(args.out, comparison)
         except OSError as e:
-            _error(f"comparaison non écrite : {e}")
+            _error(f"comparison not written: {e}")
             return EXIT_USAGE
     if args.strict and not comparison["comparable"]:
         return EXIT_NOT_COMPARABLE

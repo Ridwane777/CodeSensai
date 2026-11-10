@@ -1,12 +1,12 @@
 """
-[Lot D] `sensai-web` : lance le serveur web et sert l'interface (ADR-0035).
+[Workstream D] `sensai-web`: starts the web server and serves the interface (ADR-0035).
 
-    sensai-web                      # http://127.0.0.1:8000, projet = dossier courant
+    sensai-web                      # http://127.0.0.1:8000, project = current directory
     sensai-web --port 9000 --model qwen3-coder:30b --host <Ollama>
 
-Les options du CLI (`sensai --help`) sont acceptées telles quelles. Le jeton
-d'accès est généré à chaque démarrage et affiché une seule fois (ADR-0023) :
-on le colle dans l'interface.
+CLI options (`sensai --help`) are accepted as-is. The access token is
+generated at every start and shown only once (ADR-0023): paste it into the
+interface.
 """
 from __future__ import annotations
 
@@ -19,15 +19,15 @@ from pathlib import Path
 import requests
 
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
-# src/sensai/web/cli.py -> racine du dépôt -> frontend/dist (npm run build).
+# src/sensai/web/cli.py -> repo root -> frontend/dist (npm run build).
 DEFAULT_FRONTEND = Path(__file__).resolve().parents[3] / "frontend" / "dist"
 
 
 def preload(host: str, model: str, num_ctx: int | None = None) -> None:
-    """Charge le modèle en arrière-plan : la première question n'attend pas ~80 s.
+    """Loads the model in the background: the first question does not wait ~80 s.
 
-    `num_ctx` (M2, ADR-0045) : même fenêtre que les requêtes de chat, sinon Ollama
-    recharge le modèle à la première question.
+    `num_ctx` (M2, ADR-0045): same window as chat requests, otherwise Ollama
+    reloads the model on the first question.
     """
     payload: dict = {"model": model, "prompt": ""}
     if num_ctx:
@@ -35,25 +35,25 @@ def preload(host: str, model: str, num_ctx: int | None = None) -> None:
     try:
         requests.post(f"{host}/api/generate", json=payload, timeout=300).raise_for_status()
     except requests.RequestException as e:
-        print(f"(avertissement : le modèle n'a pas pu être préchargé — {e})", file=sys.stderr)
+        print(f"(warning: the model could not be preloaded — {e})", file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="sensai-web",
-        description="Serveur web de CodeSensei : l'API et l'interface.",
-        epilog="Les options du CLI (sensai --help : --model, --host, --no-rag…) sont acceptées.",
+        description="CodeSensai web server: the API and the interface.",
+        epilog="CLI options (sensai --help: --model, --host, --no-rag…) are accepted.",
     )
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--bind", default="127.0.0.1",
-                        help="Adresse d'écoute (défaut : la machine locale seulement)")
+                        help="Listen address (default: the local machine only)")
     parser.add_argument("--allow-origin", action="append", default=[],
-                        help="Origine autorisée en plus de l'interface servie ici (répétable)")
+                        help="Allowed origin besides the interface served here (repeatable)")
     parser.add_argument("--frontend", type=Path, default=DEFAULT_FRONTEND,
-                        help="Dossier de l'interface construite (npm run build)")
+                        help="Directory of the built interface (npm run build)")
     own, rest = parser.parse_known_args(argv)
 
-    # Importés ici : `sensai-web --help` répond sans charger FastAPI ni le modèle.
+    # Imported here: `sensai-web --help` answers without loading FastAPI or the model.
     import uvicorn
 
     from sensai.config import get_settings
@@ -62,14 +62,14 @@ def main(argv: list[str] | None = None) -> None:
     from sensai.web.server import create_app
 
     settings = get_settings(rest, prog="sensai-web")
-    # Paramètres de génération (ADR-0057) : appliqués à chaque appel de chat.
+    # Generation parameters (ADR-0057): applied to every chat call.
     from sensai.core.ollama_client import set_generation_options, set_request_timeout
     set_generation_options(settings.get("generation"))
     set_request_timeout(settings.get("request_timeout"))
     try:
         runtime = WebRuntime(settings, Path.cwd())
-    except ValueError as e:  # règle d'entrée mal écrite (ADR-0027), profil…
-        parser.error(f"config.json : {e}")
+    except ValueError as e:  # badly written input rule (ADR-0027), profile…
+        parser.error(f"config.json: {e}")
     purged = runtime.purge()
 
     token = secrets.token_urlsafe(32)
@@ -77,19 +77,19 @@ def main(argv: list[str] | None = None) -> None:
                      frontend_dir=own.frontend)
 
     url = f"http://{own.bind}:{own.port}/"
-    print(f"CodeSensei — interface web sur {url}")
-    print(f"  modèle : {runtime.model} · projet : {runtime.project}")
-    print(f"  sessions : {runtime.data_dir / SESSIONS_FILE}")
+    print(f"CodeSensai — web interface at {url}")
+    print(f"  model: {runtime.model} · project: {runtime.project}")
+    print(f"  sessions: {runtime.data_dir / SESSIONS_FILE}")
     if purged:
-        print(f"  {purged} session(s) trop ancienne(s) supprimée(s) (--retention-days).")
+        print(f"  {purged} expired session(s) deleted (--retention-days).")
     if not (own.frontend / "index.html").is_file():
-        print("  (interface non construite : cd frontend && npm ci && npm run build ; "
-              "l'API fonctionne seule)")
+        print("  (interface not built: cd frontend && npm ci && npm run build; "
+              "the API works on its own)")
     if own.bind not in LOCAL_HOSTS:
-        print(f"  ATTENTION : le serveur écoute sur {own.bind}, pas seulement sur cette machine. "
-              "Toute personne qui a le jeton peut faire agir l'agent sur ce projet.")
-    # Affiché une seule fois, jamais écrit dans un fichier ni dans une URL (ADR-0023).
-    print(f"\n  Jeton d'accès (à coller dans l'interface) : {token}\n", flush=True)
+        print(f"  WARNING: the server listens on {own.bind}, not only on this machine. "
+              "Anyone with the token can make the agent act on this project.")
+    # Shown only once, never written to a file or a URL (ADR-0023).
+    print(f"\n  Access token (paste it into the interface): {token}\n", flush=True)
 
     threading.Thread(
         target=preload, args=(runtime.host, runtime.model, runtime.num_ctx), daemon=True

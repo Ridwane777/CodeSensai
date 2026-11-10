@@ -1,20 +1,20 @@
-## Ce que ça change
+## What this changes
 
-<!-- Une ou deux phrases. Ce qu'un relecteur doit comprendre avant de lire le code. -->
+<!-- One or two sentences. What a reviewer needs to understand before reading the code. -->
 
-## Lot et décision concernés
+## Workstream and decision involved
 
-<!-- Lot A / B / C / D — et l'ADR si la PR applique ou remet en cause une décision
-     (docs/decisions/). Écris « aucun » si ça ne touche à aucune décision. -->
+<!-- Workstream A / B / C / D — and the ADR if the PR applies or challenges a decision
+     (docs/decisions/). Write "none" if it touches no decision. -->
 
-## Comment le vérifier
+## How to verify
 
-<!-- La commande à lancer, ou ce qu'il faut regarder pour voir que ça marche. -->
+<!-- The command to run, or what to look at to see it works. -->
 
-## Avant de demander une relecture
+## Before requesting a review
 
-- [ ] `pytest -q` passe
-- [ ] `ruff check src tests` ne signale rien
-- [ ] la branche est à jour avec `main` (`git pull --rebase origin main`)
-- [ ] aucun secret, clé d'API ou `.env` dans le diff
-- [ ] si cette PR fixe un choix d'architecture, l'ADR correspondant est écrit
+- [ ] `pytest -q` passes
+- [ ] `ruff check src tests` reports nothing
+- [ ] the branch is up to date with `main` (`git pull --rebase origin main`)
+- [ ] no secret, API key or `.env` in the diff
+- [ ] if this PR settles an architecture choice, the matching ADR is written

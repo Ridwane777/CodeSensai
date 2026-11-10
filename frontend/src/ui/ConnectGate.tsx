@@ -3,7 +3,7 @@ import { useConnection } from '../state/connection'
 import { GlassCard } from './GlassCard'
 import { PillButton } from './PillButton'
 
-/** Écran affiché tant que l'interface ne sait pas à quel moteur parler (ADR-0035). */
+/** Screen shown while the interface does not know which engine to talk to (ADR-0035). */
 export function ConnectGate() {
   const conn = useConnection()
   const [token, setToken] = useState('')
@@ -13,7 +13,7 @@ export function ConnectGate() {
   if (!conn || conn.mode === 'checking') {
     return (
       <main className="grid min-h-screen place-items-center px-4">
-        <p className="text-muted" role="status">Recherche du serveur CodeSensei…</p>
+        <p className="text-muted" role="status">Looking for the CodeSensai server…</p>
       </main>
     )
   }
@@ -29,14 +29,14 @@ export function ConnectGate() {
   return (
     <main className="grid min-h-screen place-items-center px-4">
       <GlassCard className="w-full max-w-md p-8">
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">Connexion à CodeSensei</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink">Connect to CodeSensai</h1>
         <p className="mt-2 text-sm text-muted">
-          Collez le jeton affiché dans le terminal au démarrage de <code>sensai-web</code>. Il change à chaque
-          démarrage et reste dans cet onglet.
+          Paste the token printed in the terminal when <code>sensai-web</code> starts. It changes on every
+          start and stays in this tab.
         </p>
         <form className="mt-6 flex flex-col gap-3" onSubmit={submit}>
           <label className="text-sm font-semibold text-ink" htmlFor="sensai-token">
-            Jeton d'accès
+            Access token
           </label>
           <input
             id="sensai-token"
@@ -52,10 +52,10 @@ export function ConnectGate() {
             </p>
           )}
           <PillButton type="submit" disabled={busy}>
-            Se connecter
+            Connect
           </PillButton>
           <PillButton variant="outline" arrow={false} onClick={() => conn.chooseDemo()}>
-            Continuer en démonstration (moteur simulé)
+            Continue in demo mode (simulated engine)
           </PillButton>
         </form>
       </GlassCard>

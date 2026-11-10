@@ -2,20 +2,20 @@
 
 - **Status**: Accepted (2026-11-01); amended by ADR-0056 (2026-11-02: share links off by default)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Valentino) — to be confirmed by the team
-- **Lot concerned**: D (`web/shares.py`, `web/server.py`, `web/runtime.py`, `frontend/`)
+- **Deciders**: Ridwane (Workstream C), on behalf of Workstream D (Christopher) — to be confirmed by the team
+- **Workstream**: D (`web/shares.py`, `web/server.py`, `web/runtime.py`, `frontend/`)
 
 ## Context
 
 [X3] Export & Publication asks for exports (JSON, Markdown, PDF) and for "a
 public link, without authentication, to view a shared conversation in the
 browser". Exports were real (browser files, and `GET /export` filtered by the
-EV2 guardrails, [ADR-0024](0024-extensions-du-contrat-web.md)); the share link
+EV2 guardrails, [ADR-0024](0024-web-contract-extensions.md)); the share link
 was fake: a hash on the reserved domain `codesensei.example` (issue #61).
 
-Constraints: CodeSensei is a local, single-user tool. `sensai-web` listens on
+Constraints: CodeSensai is a local, single-user tool. `sensai-web` listens on
 `127.0.0.1` by default and every API route needs a bearer token
-([ADR-0023](0023-acces-a-l-api-web.md)). A conversation can contain code,
+([ADR-0023](0023-web-api-access.md)). A conversation can contain code,
 paths and secrets. There is no hosting service in the project, and adding one
 would mean a new provider, an account and a privacy policy for third-party data.
 
@@ -58,5 +58,5 @@ simulated engine.
   published as is.
 - ❌ `shares.json` is rewritten whole on each change: fine for a single user,
   not for many links.
-- Follow-up: a "Révoquer" button and a list of active links on the Export page;
+- Follow-up: a "Revoke" button and a list of active links on the Export page;
   revisit the storage if links are ever shared beyond one machine.

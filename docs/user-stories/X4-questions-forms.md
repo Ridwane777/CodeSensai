@@ -2,18 +2,18 @@
 
 Interface: `frontend/`.
 
-CodeSensei scenario: Camille takes over a Python project and wants to
+CodeSensai scenario: Camille takes over a Python project and wants to
 follow, correct and keep track of what the agent does, without reading the code.
 
 **Validation status**: these criteria were first checked **on the simulated
-engine** (tests in `frontend/tests/`, [ADR-0020](../decisions/0020-interface-web-simulee.md)).
+engine** (tests in `frontend/tests/`, [ADR-0020](../decisions/0020-simulated-web-interface.md)).
 On 2026-10-18 the interface was wired to the real agent by `sensai-web`
-([ADR-0035](../decisions/0035-serveur-web-reel.md)) and tried in a browser with
-`qwen3-coder:30b` ([web-reel.md](../performance/web-reel.md)). On 2026-10-29 the
+([ADR-0035](../decisions/0035-real-web-server.md)) and tried in a browser with
+`qwen3-coder:30b` ([real-web.md](../performance/real-web.md)). On 2026-10-29 the
 agent got an `ask_user` tool ([ADR-0046](../decisions/0046-ask-user-tool.md)).
 Each story carries its status:
 ✅ checked with the real agent · ◐ partly · 🎭 still simulated · ⏳ not checked yet.
-Detail per feature: [simule-vs-reel.md](../architecture/web/simule-vs-reel.md).
+Detail per feature: [simulated-vs-real.md](../architecture/web/simulated-vs-real.md).
 
 The other features staged in the demo (A1, A3, M2, T2…) have their own
 story files.
@@ -22,18 +22,18 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `ask_user` form answered through `/answer`: ✅ with both models (8 min 57 on CPU, 8 s on GPU).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `ask_user` form answered through `/answer`: ✅ with both models (8 min 57 on CPU, 8 s on GPU).
 
 > **Update on 2026-11-06 (demo rehearsal):** with `qwen3-coder:30b` in the web, "demande-moi ce qu'il te manque" made the model ask its questions **in text**; the form appeared only when the request named `ask_user` and a form. The agent does not yet choose the form on its own (backlog #30).
 
 ## US-X4-1 — Answer the agent without leaving the chat
-> **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ The real server now sends the agent's questions
 > (`ask_user`, ADR-0046) and returns the answers to the model. Checked through
 > the real server with a scripted model (`tests/web/test_questions.py`) and in
 > the frontend tests; not yet tried with `qwen3-coder:30b`.
 
-> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/essais/essai-2026-11-01.md)): the `question` event was answered through the API and in the page's form card, and the agent repeated the values; left unanswered, the card expired after 100 s and the agent said what was missing instead of guessing.
+> **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): the `question` event was answered through the API and in the page's form card, and the agent repeated the values; left unanswered, the card expired after 100 s and the agent said what was missing instead of guessing.
 
 **As** Camille, the developer the agent is missing a piece of information from,
 **I want** to answer its questions in a form built into the conversation,
@@ -49,7 +49,7 @@ Other user stories of the interface: [README.md](README.md).
   agent says it is missing the information instead of guessing it.
 
 ## US-X4-2 — Decide before an irreversible action takes place
-> **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: the card shows the action, its detail and its risk; "Allow" creates the file ("✓ Allowed"); "Refuse" creates nothing ("✕ Refused") and the agent says so. Also covered by the server tests (yes, no, timeout, late answer).
 
 **As** Camille, the developer who stays in control of her project,
@@ -71,4 +71,4 @@ Each story checked against the code and the automated tests (not against earlier
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
 | US-X4-1 | ✅ | `tools/ask_user_tool.py`, `web/questions.py` | `tests/tools/test_ask_user_tool.py`, `tests/web/test_questions.py` |  |
-| US-X4-2 | ✅ | `execution/web_confirmation.py` | `tests/web/test_web_facade_spike.py` (`test_l_outil_a_risque_ne_s_execute_qu_apres_accord`, `test_refus_n_execute_rien_et_le_tour_continue`) |  |
+| US-X4-2 | ✅ | `execution/web_confirmation.py` | `tests/web/test_web_facade_spike.py` (`test_the_risky_tool_runs_only_after_approval`, `test_refusal_runs_nothing_and_the_turn_continues`) |  |

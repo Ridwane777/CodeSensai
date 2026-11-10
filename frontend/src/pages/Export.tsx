@@ -16,7 +16,7 @@ export default function Export() {
   const [real, setReal] = useState<SharedLink | null>(null)
   const [busy, setBusy] = useState(false)
   const [revoked, setRevoked] = useState(false)
-  // Serveur réel : un vrai lien, créé à la demande. Démonstration : lien factice.
+  // Real server: a real link, created on demand. Demo: a fake link.
   const link = share ? real?.url ?? '' : shareLink(state)
 
   async function create() {
@@ -56,58 +56,58 @@ export default function Export() {
 
   return (
     <>
-      <PageHeader title="Export" intro="Garder une trace de la séance : conversation et document de suivi, en JSON, Markdown ou PDF, plus un lien de partage." />
+      <PageHeader title="Export" intro="Keep a record of the session: conversation and state document, as JSON, Markdown or PDF, plus a share link." />
       <div className="grid gap-6 lg:grid-cols-[22rem_1fr]">
         <div className="space-y-6">
           <GlassCard className="space-y-3 p-5">
             <h2 className="text-xl font-extrabold">Formats</h2>
             <div className="flex flex-wrap gap-2">
-              <PillButton variant="outline" onClick={() => downloadText('seance-codesensei.json', 'application/json', toJson(state))}>Exporter en JSON</PillButton>
-              <PillButton variant="outline" onClick={() => downloadText('seance-codesensei.md', 'text/markdown', toMarkdown(state))}>Exporter en Markdown</PillButton>
-              <PillButton variant="outline" onClick={printPdf}>Exporter en PDF</PillButton>
+              <PillButton variant="outline" onClick={() => downloadText('codesensai-session.json', 'application/json', toJson(state))}>Export as JSON</PillButton>
+              <PillButton variant="outline" onClick={() => downloadText('codesensai-session.md', 'text/markdown', toMarkdown(state))}>Export as Markdown</PillButton>
+              <PillButton variant="outline" onClick={printPdf}>Export as PDF</PillButton>
             </div>
-            <p className="text-xs text-muted">Séance complète vue par le navigateur : messages, étapes de raisonnement et artefact.</p>
+            <p className="text-xs text-muted">Full session as seen by the browser: messages, reasoning steps and artifact.</p>
             {exportSession && (
               <>
                 <div className="flex flex-wrap gap-2 border-t border-line pt-3">
-                  <PillButton variant="outline" onClick={() => void serverExport('json')}>Conversation du serveur (JSON)</PillButton>
-                  <PillButton variant="outline" onClick={() => void serverExport('md')}>Conversation du serveur (Markdown)</PillButton>
+                  <PillButton variant="outline" onClick={() => void serverExport('json')}>Server conversation (JSON)</PillButton>
+                  <PillButton variant="outline" onClick={() => void serverExport('md')}>Server conversation (Markdown)</PillButton>
                 </div>
-                <p className="text-xs text-muted">Les messages enregistrés par sensai-web, secrets masqués par le serveur.</p>
+                <p className="text-xs text-muted">The messages saved by sensai-web, with secrets masked by the server.</p>
               </>
             )}
           </GlassCard>
           <GlassCard className="space-y-3 p-5">
-            <h2 className="text-xl font-extrabold">Lien de partage</h2>
+            <h2 className="text-xl font-extrabold">Share link</h2>
             {share && (
               <PillButton onClick={create} disabled={busy} arrow={false}>
-                {real ? 'Créer un nouveau lien' : 'Créer un lien de partage'}
+                {real ? 'Create a new link' : 'Create a share link'}
               </PillButton>
             )}
             {link && (
               <>
-                <input readOnly aria-label="Lien de partage" value={link} className="w-full rounded-xl border border-line bg-surface px-3 py-2 font-mono text-xs" />
+                <input readOnly aria-label="Share link" value={link} className="w-full rounded-xl border border-line bg-surface px-3 py-2 font-mono text-xs" />
                 <div className="flex flex-wrap gap-2">
-                  <PillButton onClick={copy} arrow={false}>{copied ? 'Lien copié' : 'Copier le lien'}</PillButton>
+                  <PillButton onClick={copy} arrow={false}>{copied ? 'Link copied' : 'Copy the link'}</PillButton>
                   {revokeShare && real && (
-                    <PillButton variant="outline" onClick={revoke} disabled={busy} arrow={false}>Révoquer le lien</PillButton>
+                    <PillButton variant="outline" onClick={revoke} disabled={busy} arrow={false}>Revoke the link</PillButton>
                   )}
                 </div>
               </>
             )}
-            {revoked && <p role="status" className="text-xs font-semibold text-ok">Lien révoqué : la page publique ne répond plus.</p>}
+            {revoked && <p role="status" className="text-xs font-semibold text-ok">Link revoked: the public page no longer responds.</p>}
             {share ? (
               <p className="text-xs text-muted">
-                Copie en lecture seule de la conversation, secrets masqués, lisible sans jeton par qui peut joindre ce serveur
-                {real ? ` ; valable jusqu'au ${real.expiresAt.slice(0, 10)}` : ' ; valable 7 jours'}.
+                Read-only copy of the conversation, secrets masked, readable without a token by anyone who can reach this server
+                {real ? `; valid until ${real.expiresAt.slice(0, 10)}` : '; valid for 7 days'}.
               </p>
             ) : (
-              <p className="text-xs text-muted">Lien simulé : aucune page publique n&apos;est créée dans cette démonstration.</p>
+              <p className="text-xs text-muted">Simulated link: no public page is created in this demo.</p>
             )}
           </GlassCard>
         </div>
         <GlassCard className="p-5">
-          <h2 className="mb-3 text-xl font-extrabold">Aperçu</h2>
+          <h2 className="mb-3 text-xl font-extrabold">Preview</h2>
           <pre id="printable" className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-2xl bg-bg/60 p-4 font-mono text-xs leading-relaxed">{toMarkdown(state)}</pre>
         </GlassCard>
       </div>

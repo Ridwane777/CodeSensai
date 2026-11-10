@@ -1,4 +1,4 @@
-"""Teste les tâches planifiées et leur stockage — feature [X5], ADR-0016."""
+"""Tests scheduled tasks and their storage — feature [X5], ADR-0016."""
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -55,7 +55,7 @@ def test_task_is_due_only_once_the_interval_has_elapsed():
     task = Task(id="a", prompt="p", interval_s=3600, last_run_at=T0.isoformat())
     assert not task.is_due(T0 + timedelta(seconds=3599))
     assert task.is_due(T0 + timedelta(seconds=3600))
-    assert task.is_due(T0 + timedelta(days=3))  # pas de rattrapage : une seule exécution
+    assert task.is_due(T0 + timedelta(days=3))  # no catch-up: a single run
 
 
 def test_disabled_task_is_never_due():
@@ -65,7 +65,7 @@ def test_disabled_task_is_never_due():
 def test_store_round_trip(tmp_path):
     store = TaskStore(tmp_path / "schedule" / "tasks.json")
     assert store.load() == []
-    task = Task(id="a", prompt="Résume", interval_s=3600, tools=["echo"], timeout_s=30)
+    task = Task(id="a", prompt="Summarize", interval_s=3600, tools=["echo"], timeout_s=30)
     store.add(task)
     store.add(Task(id="b", prompt="x", interval_s=60))
     loaded = TaskStore(store.path).load()
@@ -79,7 +79,7 @@ def test_duplicate_id_is_refused_and_file_unchanged(tmp_path):
     store = TaskStore(tmp_path / "tasks.json")
     store.add(Task(id="a", prompt="p", interval_s=60))
     before = store.path.read_bytes()
-    with pytest.raises(ValueError, match="existe déjà"):
+    with pytest.raises(ValueError, match="already exists"):
         store.add(Task(id="a", prompt="autre", interval_s=120))
     assert store.path.read_bytes() == before
 
@@ -98,14 +98,14 @@ def test_update_and_remove(tmp_path):
 @pytest.mark.parametrize(
     "content",
     [
-        b"{pas du json",
-        b'{"id": "a"}',  # un objet au lieu d'une liste
-        b'[{"id": "a"}]',  # prompt manquant
+        b"{not json",
+        b'{"id": "a"}',  # an object instead of a list
+        b'[{"id": "a"}]',  # missing prompt
         b'[{"id": "A!", "prompt": "p", "interval_s": 60, "created_at": "2026-10-14T08:00:00"}]',
         b'[{"id": "a", "prompt": "p", "interval_s": 5, "created_at": "2026-10-14T08:00:00"}]',
         b'[{"id": "a", "prompt": "p", "interval_s": 60, "created_at": "hier"}]',
         b'[{"id": "a", "prompt": "p", "interval_s": 60, "created_at": "2026-10-14T08:00:00",'
-        b' "inconnue": 1}]',
+        b' "unknown": 1}]',
         b"\xff\xfe",
     ],
 )
@@ -126,7 +126,7 @@ def test_duplicate_ids_in_file_are_a_corruption(tmp_path):
     store = TaskStore(tmp_path / "tasks.json")
     one = Task(id="a", prompt="p", interval_s=60).to_dict()
     store.path.write_text(json.dumps([one, one]), encoding="utf-8")
-    with pytest.raises(ScheduleStoreError, match="double"):
+    with pytest.raises(ScheduleStoreError, match="duplicate"):
         store.load()
 
 
@@ -146,7 +146,7 @@ def test_save_is_atomic_through_a_temp_file_and_replace(tmp_path, monkeypatch):
     src, dst = replaced[0]
     assert str(dst) == str(store.path)
     assert str(src) != str(dst)
-    assert Path(src).parent == tmp_path  # même dossier : os.replace reste atomique
+    assert Path(src).parent == tmp_path  # same folder: os.replace stays atomic
 
 
 def test_failed_save_leaves_the_old_file_and_no_temp_file(tmp_path, monkeypatch):
@@ -155,7 +155,7 @@ def test_failed_save_leaves_the_old_file_and_no_temp_file(tmp_path, monkeypatch)
     before = store.path.read_bytes()
 
     def boom(src, dst):
-        raise OSError("disque plein")
+        raise OSError("disk full")
 
     monkeypatch.setattr(tasks_module.os, "replace", boom)
     with pytest.raises(OSError):

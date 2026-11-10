@@ -1,8 +1,8 @@
-"""Teste l'outil `delegate_task` — feature [A2], ADR-0037.
+"""Tests the `delegate_task` tool — feature [A2], ADR-0037.
 
-`run_turn` est remplacé par un faux tour (pas d'Ollama) : chaque test ne
-vérifie qu'un seul comportement de DelegateTool, la vraie boucle ReAct est
-déjà testée par tests/core/test_agent.py.
+`run_turn` is replaced by a fake turn (no Ollama): each test checks a single
+DelegateTool behavior; the real ReAct loop is already tested by
+tests/core/test_agent.py.
 """
 import itertools
 
@@ -23,41 +23,41 @@ def fake_turn(events):
     return run_turn
 
 
-def test_declare_le_risque_execute():
+def test_declares_execute_risk():
     assert risk_of(DelegateTool("h", "m", tools=object())) is Risk.EXECUTE
 
 
-def test_renvoie_la_reponse_du_sous_agent():
-    run_turn = fake_turn([Token(text="ré"), Token(text="sultat"), Done()])
+def test_returns_the_sub_agent_answer():
+    run_turn = fake_turn([Token(text="res"), Token(text="ult"), Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    result = outil.run(task="fais X")
+    result = outil.run(task="do X")
 
     assert result.ok
-    assert result.content == "résultat"
+    assert result.content == "result"
 
 
-def test_la_tache_devient_le_seul_message_utilisateur():
+def test_the_task_becomes_the_only_user_message():
     run_turn = fake_turn([Token(text="ok"), Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    outil.run(task="analyse ce fichier")
+    outil.run(task="analyze this file")
 
-    assert run_turn.calls[0]["messages"] == [{"role": "user", "content": "analyse ce fichier"}]
+    assert run_turn.calls[0]["messages"] == [{"role": "user", "content": "analyze this file"}]
 
 
-def test_le_persona_part_en_message_systeme():
+def test_the_persona_goes_into_the_system_message():
     run_turn = fake_turn([Token(text="ok"), Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    outil.run(task="analyse ce fichier", persona="relectrice de sécurité")
+    outil.run(task="analyze this file", persona="security reviewer")
 
     messages = run_turn.calls[0]["messages"]
-    assert messages[0] == {"role": "system", "content": "relectrice de sécurité"}
-    assert messages[1] == {"role": "user", "content": "analyse ce fichier"}
+    assert messages[0] == {"role": "system", "content": "security reviewer"}
+    assert messages[1] == {"role": "user", "content": "analyze this file"}
 
 
-def test_le_sous_agent_passe_par_la_meme_passerelle():
+def test_the_sub_agent_goes_through_the_same_gateway():
     class Gateway:
         def __init__(self):
             self.calls = []
@@ -67,7 +67,7 @@ def test_le_sous_agent_passe_par_la_meme_passerelle():
 
         def call(self, name, /, **kwargs):
             self.calls.append((name, kwargs))
-            return ToolResult(ok=True, content="lu")
+            return ToolResult(ok=True, content="read")
 
     def sub_agent(host, model, messages, tools):
         assert tools.describe_all() == [{"name": "read_file"}]
@@ -75,13 +75,13 @@ def test_le_sous_agent_passe_par_la_meme_passerelle():
         yield Done()
 
     gateway = Gateway()
-    result = DelegateTool("http://h", "m1", tools=gateway, run_turn=sub_agent).run(task="fais X")
+    result = DelegateTool("http://h", "m1", tools=gateway, run_turn=sub_agent).run(task="do X")
 
     assert gateway.calls == [("read_file", {"path": "a.py"})]
-    assert result.content == "lu"
+    assert result.content == "read"
 
 
-def test_tache_vide_est_refusee_sans_appeler_le_sous_agent():
+def test_empty_task_is_rejected_without_calling_the_sub_agent():
     run_turn = fake_turn([Token(text="ok"), Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
@@ -91,63 +91,63 @@ def test_tache_vide_est_refusee_sans_appeler_le_sous_agent():
     assert run_turn.calls == []
 
 
-def test_erreur_du_sous_agent_est_rapportee_sans_lever():
-    run_turn = fake_turn([Error(message="Ollama en panne"), Done(reason="error")])
+def test_sub_agent_error_is_reported_without_raising():
+    run_turn = fake_turn([Error(message="Ollama down"), Done(reason="error")])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    result = outil.run(task="fais X")
+    result = outil.run(task="do X")
 
     assert not result.ok
-    assert "Ollama en panne" in result.content
+    assert "Ollama down" in result.content
 
 
-def test_max_iterations_est_signale_mais_le_contenu_est_garde():
-    run_turn = fake_turn([Token(text="réponse partielle"), Done(reason="max_iterations")])
+def test_max_iterations_is_reported_but_content_is_kept():
+    run_turn = fake_turn([Token(text="partial answer"), Done(reason="max_iterations")])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    result = outil.run(task="fais X")
+    result = outil.run(task="do X")
 
     assert result.ok
-    assert "réponse partielle" in result.content
-    assert "itérations" in result.content
+    assert "partial answer" in result.content
+    assert "iterations" in result.content
 
 
-def test_sans_reponse_est_un_echec():
+def test_no_answer_is_a_failure():
     run_turn = fake_turn([Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    result = outil.run(task="fais X")
+    result = outil.run(task="do X")
 
     assert not result.ok
 
 
-def test_profondeur_de_delegation_est_bornee():
+def test_delegation_depth_is_bounded():
     run_turn = fake_turn([Token(text="ok"), Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
     token = _depth.set(MAX_DELEGATION_DEPTH)
 
     try:
-        result = outil.run(task="fais X")
+        result = outil.run(task="do X")
     finally:
         _depth.reset(token)
 
     assert not result.ok
-    assert "Profondeur" in result.content
+    assert "Delegation depth" in result.content
     assert run_turn.calls == []
 
 
-def test_la_profondeur_est_remise_a_zero_apres_l_appel():
+def test_depth_is_reset_after_the_call():
     run_turn = fake_turn([Token(text="ok"), Done()])
     outil = DelegateTool("http://h", "m1", tools="gateway", run_turn=run_turn)
 
-    outil.run(task="fais X")
+    outil.run(task="do X")
 
     assert _depth.get() == 0
 
 
-def test_la_profondeur_est_bornee_a_travers_la_vraie_passerelle():
-    """La passerelle exécute chaque outil dans un thread : la profondeur doit y
-    suivre, sinon un sous-agent qui redélègue sans fin n'est jamais arrêté."""
+def test_depth_is_bounded_through_the_real_gateway():
+    """The gateway runs each tool in a thread: the depth must follow it there,
+    otherwise a sub-agent that re-delegates endlessly is never stopped."""
     from sensai.core.tools import ToolRegistry
     from sensai.execution.gateway import ToolGateway
 
@@ -155,13 +155,13 @@ def test_la_profondeur_est_bornee_a_travers_la_vraie_passerelle():
 
     def sub_agent(host, model, messages, tools):
         launched.append(messages[-1]["content"])
-        if len(launched) > MAX_DELEGATION_DEPTH + 3:  # filet du test : jamais atteint
-            yield Token(text="boucle")
+        if len(launched) > MAX_DELEGATION_DEPTH + 3:  # test safety net: never reached
+            yield Token(text="loop")
             yield Done()
             return
-        # La vraie passerelle, pas celle filtrée du sous-agent : le garde-fou de
-        # profondeur reste le dernier rempart si le filtre était contourné.
-        result = gateway.call("delegate_task", task="refais la même chose")
+        # The real gateway, not the sub-agent filtered one: the depth guardrail
+        # remains the last line of defense if the filter were bypassed.
+        result = gateway.call("delegate_task", task="do the same thing again")
         yield Token(text=result.content)
         yield Done()
 
@@ -169,26 +169,26 @@ def test_la_profondeur_est_bornee_a_travers_la_vraie_passerelle():
     gateway = ToolGateway(registry, None, confirm=lambda request: True)
     registry.register(DelegateTool("h", "m", gateway, run_turn=sub_agent))
 
-    result = gateway.call("delegate_task", task="tâche de départ")
+    result = gateway.call("delegate_task", task="initial task")
 
     assert len(launched) == MAX_DELEGATION_DEPTH
-    assert "Profondeur de délégation dépassée" in result.content
+    assert "Delegation depth exceeded" in result.content
 
 
-def test_le_prompt_du_projet_precede_le_persona():
+def test_the_project_prompt_precedes_the_persona():
     run_turn = fake_turn([Token(text="ok"), Done()])
     outil = DelegateTool("h", "m", tools="gateway", run_turn=run_turn,
-                         system_prompt=lambda: "Prompt du projet")
+                         system_prompt=lambda: "Project prompt")
 
-    outil.run(task="analyse", persona="relectrice")
+    outil.run(task="analyze", persona="reviewer")
 
     system = run_turn.calls[0]["messages"][0]
     assert system["role"] == "system"
-    assert system["content"].startswith("Prompt du projet")
-    assert "relectrice" in system["content"]
+    assert system["content"].startswith("Project prompt")
+    assert "reviewer" in system["content"]
 
 
-def test_le_prompt_du_projet_est_relu_a_chaque_delegation():
+def test_the_project_prompt_is_reread_on_each_delegation():
     run_turn = fake_turn([Token(text="ok"), Done()])
     prompts = iter(["v1", "v2"])
     outil = DelegateTool("h", "m", tools="gateway", run_turn=run_turn,
@@ -200,7 +200,7 @@ def test_le_prompt_du_projet_est_relu_a_chaque_delegation():
     assert [c["messages"][0]["content"] for c in run_turn.calls] == ["v1", "v2"]
 
 
-def test_un_sous_agent_ne_redelegue_pas():
+def test_a_sub_agent_does_not_redelegate():
     assert MAX_DELEGATION_DEPTH == 1
 
 
@@ -209,27 +209,27 @@ def fake_clock(monkeypatch, times):
     monkeypatch.setattr(delegate_tool.time, "monotonic", lambda: next(clock))
 
 
-def test_apres_l_echeance_le_sous_agent_est_arrete_avec_sa_reponse_partielle(monkeypatch):
+def test_after_the_deadline_the_sub_agent_is_stopped_with_its_partial_answer(monkeypatch):
     closed = []
 
     def sub_agent(host, model, messages, tools):
         try:
-            yield Token(text="début")
-            yield Token(text=" jamais lu")
+            yield Token(text="start")
+            yield Token(text=" never read")
         finally:
             closed.append(True)
 
-    # départ à 0 ; le premier morceau arrive après l'échéance (110 - 5 s)
+    # start at 0; the first chunk arrives after the deadline (110 - 5 s)
     fake_clock(monkeypatch, [0.0, 200.0])
     result = DelegateTool("h", "m", tools="gateway", run_turn=sub_agent).run(task="long")
 
     assert not result.ok
-    assert "délai" in result.content
-    assert "début" in result.content and "jamais lu" not in result.content
-    assert closed == [True]  # le générateur est refermé : plus rien en arrière-plan
+    assert "deadline" in result.content
+    assert "start" in result.content and "never read" not in result.content
+    assert closed == [True]  # the generator is closed: nothing left in the background
 
 
-def test_apres_l_echeance_aucun_outil_ni_confirmation(monkeypatch):
+def test_after_the_deadline_no_tool_and_no_confirmation(monkeypatch):
     class Gateway:
         def __init__(self):
             self.calls = []
@@ -239,32 +239,32 @@ def test_apres_l_echeance_aucun_outil_ni_confirmation(monkeypatch):
 
         def call(self, name, /, **kwargs):
             self.calls.append(name)
-            return ToolResult(ok=True, content="écrit")
+            return ToolResult(ok=True, content="written")
 
     seen = []
 
     def sub_agent(host, model, messages, tools):
         seen.append(tools.call("write_file", path="x", content="y"))
-        yield Token(text="fini")
+        yield Token(text="done")
         yield Done()
 
-    # départ à 0, l'appel d'outil arrive à 200 s, après l'échéance
+    # start at 0, the tool call arrives at 200 s, after the deadline
     fake_clock(monkeypatch, [0.0, 200.0])
     gateway = Gateway()
-    DelegateTool("h", "m", tools=gateway, run_turn=sub_agent).run(task="écris")
+    DelegateTool("h", "m", tools=gateway, run_turn=sub_agent).run(task="write")
 
     assert gateway.calls == []
-    assert not seen[0].ok and "non exécuté" in seen[0].content
+    assert not seen[0].ok and "not run" in seen[0].content
 
 
-def test_le_delai_tient_dans_celui_de_la_passerelle():
+def test_the_timeout_fits_within_the_gateway_timeout():
     from sensai.execution.tool_policy import ToolPreferences
 
     assert DelegateTool.timeout_s <= ToolPreferences().tool_timeout_s
     assert delegate_tool.STOP_MARGIN_S < DelegateTool.timeout_s
 
 
-def test_delegate_task_n_est_pas_propose_au_sous_agent():
+def test_delegate_task_is_not_offered_to_the_sub_agent():
     class Gateway:
         def describe_all(self):
             return [{"name": "read_file"}, {"name": "delegate_task"}]
@@ -282,7 +282,7 @@ def test_delegate_task_n_est_pas_propose_au_sous_agent():
 
 
 class _Gateway:
-    """Fausse passerelle qui propose tous les outils du projet et note les appels."""
+    """Fake gateway offering every project tool and recording calls."""
 
     names = ("read_file", "search_codebase", "recall_facts", "write_file", "run_code",
              "web_search", "delegate_task", "team_task")
@@ -295,7 +295,7 @@ class _Gateway:
 
     def call(self, name, /, **kwargs):
         self.calls.append(name)
-        return ToolResult(ok=True, content="fait")
+        return ToolResult(ok=True, content="done")
 
 
 def _seen_tools(role):
@@ -311,25 +311,25 @@ def _seen_tools(role):
     return seen
 
 
-def test_l_explorateur_et_le_relecteur_ne_voient_aucun_outil_d_ecriture():
+def test_explorer_and_reviewer_see_no_write_tool():
     for role in ("explorateur", "relecteur"):
         names = [s for s in _seen_tools(role) if isinstance(s, str)]
         assert "read_file" in names
         assert not {"write_file", "run_code", "delegate_task", "team_task"} & set(names)
 
 
-def test_le_developpeur_peut_ecrire_mais_pas_deleguer():
+def test_developer_can_write_but_not_delegate():
     names = [s for s in _seen_tools("developpeur") if isinstance(s, str)]
     assert {"write_file", "run_code", "read_file"} <= set(names)
     assert not {"delegate_task", "team_task"} & set(names)
 
 
-def test_le_role_donne_ses_consignes_au_sous_agent():
+def test_the_role_gives_its_instructions_to_the_sub_agent():
     system = dict(s for s in _seen_tools("relecteur") if isinstance(s, tuple))["system"]
     assert system == ROLES["relecteur"].prompt
 
 
-def test_un_outil_hors_du_role_est_refuse_sans_etre_execute():
+def test_a_tool_outside_the_role_is_refused_without_running():
     gateway = _Gateway()
     seen = []
 
@@ -341,16 +341,16 @@ def test_un_outil_hors_du_role_est_refuse_sans_etre_execute():
     DelegateTool("h", "m", tools=gateway, run_turn=sub_agent).run(task="x", role="explorateur")
 
     assert gateway.calls == []
-    assert not seen[0].ok and "non autorisé" in seen[0].content
+    assert not seen[0].ok and "not allowed" in seen[0].content
 
 
-def test_un_role_inconnu_est_refuse():
+def test_an_unknown_role_is_rejected():
     result = DelegateTool("h", "m", tools=_Gateway(), run_turn=fake_turn([])).run(
         task="x", role="pirate")
-    assert not result.ok and "Rôle inconnu" in result.content
+    assert not result.ok and "Unknown role" in result.content
 
 
-def test_un_sous_agent_qui_tente_de_deleguer_recoit_un_refus_explicite():
+def test_a_sub_agent_trying_to_delegate_gets_an_explicit_refusal():
     seen = []
 
     def sub_agent(host, model, messages, tools):
@@ -360,12 +360,12 @@ def test_un_sous_agent_qui_tente_de_deleguer_recoit_un_refus_explicite():
 
     DelegateTool("h", "m", tools=_Gateway(), run_turn=sub_agent).run(task="x")
 
-    assert not seen[0].ok and "ne redélègue pas" in seen[0].content
+    assert not seen[0].ok and "does not re-delegate" in seen[0].content
 
 
-def test_les_roles_qui_lisent_voient_les_fichiers_du_projet():
-    """Essai du 2026-11-06 : sans RAG, l'explorateur sans list_files ne trouvait pas
-    stats.py et le développeur créait un nouveau moyenne.py (ADR-0059)."""
+def test_reading_roles_see_the_project_files():
+    """Trial run of 2026-11-06: without RAG, the explorer without list_files could
+    not find stats.py and the developer created a new moyenne.py (ADR-0059)."""
     from sensai.tools.delegate_tool import ROLES
 
     for role in ("explorateur", "developpeur", "relecteur"):

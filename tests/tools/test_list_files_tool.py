@@ -1,4 +1,4 @@
-"""list_files (ADR-0059) : voir les fichiers du projet, mêmes règles que read_file."""
+"""list_files (ADR-0059): seeing the project files, same rules as read_file."""
 
 import subprocess
 
@@ -13,61 +13,61 @@ from sensai.tools.list_files_tool import ListFilesTool
 
 
 @pytest.fixture
-def projet(tmp_path):
-    (tmp_path / "stats.py").write_text("def moyenne(n): ...\n")
+def project(tmp_path):
+    (tmp_path / "stats.py").write_text("def mean(n): ...\n")
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "test_stats.py").write_text("def test(): ...\n")
-    (tmp_path / ".env").write_text("CLE=secret\n")
+    (tmp_path / ".env").write_text("KEY=secret\n")
     (tmp_path / "node_modules").mkdir()
     (tmp_path / "node_modules" / "lib.js").write_text("x\n")
     return tmp_path
 
 
-def lister(projet, **kwargs):
-    return ListFilesTool(FilePermissions.for_workspace(projet)).run(**kwargs)
+def list_(project, **kwargs):
+    return ListFilesTool(FilePermissions.for_workspace(project)).run(**kwargs)
 
 
-def test_l_outil_est_en_lecture_seule_et_dans_le_registre():
+def test_the_tool_is_read_only_and_in_the_registry():
     assert ListFilesTool.risk == "read"
     assert "list_files" in [d["name"] for d in build_registry().describe_all()]
 
 
-def test_liste_les_fichiers_du_projet_sans_secrets_ni_dependances(projet):
-    result = lister(projet)
+def test_lists_project_files_without_secrets_or_dependencies(project):
+    result = list_(project)
     assert result.ok
     assert result.content.splitlines() == ["stats.py", "tests/test_stats.py"]
     assert ".env" not in result.content and "node_modules" not in result.content
 
 
-def test_un_sous_dossier(projet):
-    assert lister(projet, path="tests").content == "tests/test_stats.py"
+def test_a_subfolder(project):
+    assert list_(project, path="tests").content == "tests/test_stats.py"
 
 
-def test_respecte_le_gitignore_d_un_depot(projet):
-    subprocess.run(["git", "init", "-q", str(projet)], check=True)
-    (projet / ".gitignore").write_text("build/\n")
-    (projet / "build").mkdir()
-    (projet / "build" / "out.py").write_text("x\n")
-    assert "build/out.py" not in lister(projet).content
+def test_respects_a_repository_gitignore(project):
+    subprocess.run(["git", "init", "-q", str(project)], check=True)
+    (project / ".gitignore").write_text("build/\n")
+    (project / "build").mkdir()
+    (project / "build" / "out.py").write_text("x\n")
+    assert "build/out.py" not in list_(project).content
 
 
-def test_refuse_hors_du_projet_et_un_nom_protege(projet):
-    assert not lister(projet, path="..").ok
-    assert not lister(projet, path=".git").ok
-    assert lister(projet, path="stats.py").data["error"] == "not_found"
+def test_refuses_outside_the_project_and_a_protected_name(project):
+    assert not list_(project, path="..").ok
+    assert not list_(project, path=".git").ok
+    assert list_(project, path="stats.py").data["error"] == "not_found"
 
 
-def test_coupe_au_plafond_et_le_dit(projet, monkeypatch):
+def test_truncates_at_the_cap_and_says_so(project, monkeypatch):
     monkeypatch.setattr(list_files_tool, "MAX_ENTRIES", 1)
-    result = lister(projet)
+    result = list_(project)
     assert result.data == {"count": 2, "returned": 1}
     assert "1 more files" in result.content
 
 
-def test_passe_par_la_passerelle_sans_confirmation(projet):
+def test_goes_through_the_gateway_without_confirmation(project):
     registry = ToolRegistry()
-    registry.register(ListFilesTool(FilePermissions.for_workspace(projet)))
-    demandes = []
-    gateway = ToolGateway(registry, confirm=lambda req: demandes.append(req) or True)
+    registry.register(ListFilesTool(FilePermissions.for_workspace(project)))
+    requests = []
+    gateway = ToolGateway(registry, confirm=lambda req: requests.append(req) or True)
     assert gateway.call("list_files").ok
-    assert demandes == []
+    assert requests == []

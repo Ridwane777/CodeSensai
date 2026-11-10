@@ -2,10 +2,10 @@ import { Fragment, useState, type ReactNode } from 'react'
 import { highlight } from '../code/syntax'
 
 /**
- * Le Markdown des réponses du modèle, écrit à la main (pas de dépendance) : titres, listes,
- * citations, blocs de code colorés avec un bouton « Copier », gras, italique, `code` et liens.
- * Jamais de HTML brut : tout passe par React, donc tout est échappé. Un lien n'est cliquable
- * que s'il commence par http(s):// (pas de `javascript:`).
+ * Hand-written Markdown for model answers (no dependency): headings, lists, quotes,
+ * highlighted code blocks with a "Copy" button, bold, italic, `code` and links.
+ * Never raw HTML: everything goes through React, so everything is escaped. A link is clickable
+ * only if it starts with http(s):// (no `javascript:`).
  */
 
 const PY_LIKE = new Set(['', 'py', 'python', 'python3', 'sh', 'bash', 'shell', 'console'])
@@ -26,8 +26,8 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
     <div className="my-2 overflow-hidden rounded-xl bg-accent-soft">
       <div className="flex items-center justify-between px-3 pt-1.5 font-mono text-[11px] text-muted">
         <span>{lang || 'code'}</span>
-        <button type="button" onClick={copy} className="rounded px-1.5 py-0.5 hover:text-ink" aria-label="Copier le code">
-          {copied ? '✓ Copié' : 'Copier'}
+        <button type="button" onClick={copy} className="rounded px-1.5 py-0.5 hover:text-ink" aria-label="Copy code">
+          {copied ? '✓ Copied' : 'Copy'}
         </button>
       </div>
       <pre className="overflow-x-auto p-3 pt-1 font-mono text-[0.85em] leading-snug">
@@ -48,7 +48,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
 
 const INLINE = /(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)\s]+\)|(?<![*\w])\*[^*\s][^*]*\*(?![*\w]))/g
 
-/** Gras, italique, `code` et liens dans une ligne. */
+/** Bold, italic, `code` and links within a line. */
 export function renderInline(text: string): ReactNode[] {
   return text.split(INLINE).map((part, i) => {
     if (!part) return null
@@ -70,7 +70,7 @@ export function renderInline(text: string): ReactNode[] {
   })
 }
 
-/** Le texte hors blocs de code : titres, listes, citations et paragraphes. */
+/** Text outside code blocks: headings, lists, quotes and paragraphs. */
 function renderBlocks(text: string, keyBase: string): ReactNode[] {
   const out: ReactNode[] = []
   let list: { ordered: boolean; items: string[] } | null = null
@@ -128,7 +128,7 @@ function renderBlocks(text: string, keyBase: string): ReactNode[] {
 }
 
 /**
- * Réponse du modèle : blocs de code (même pas encore fermés pendant le flux), puis le reste en Markdown.
+ * Model answer: code blocks (even not yet closed while streaming), then the rest as Markdown.
  */
 export function renderRich(text: string): ReactNode[] {
   const out: ReactNode[] = []

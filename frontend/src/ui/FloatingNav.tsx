@@ -1,6 +1,6 @@
 /**
- * Logo : un disque orange rayé, rappel de la visière de l'IA. L'ancien en-tête flottant a laissé
- * place à la barre latérale (`Sidebar`) ; le fichier garde le logo, importé ailleurs.
+ * Logo: a striped orange disc, echoing the AI visor. The former floating header gave way
+ * to the sidebar (`Sidebar`); the file keeps the logo, imported elsewhere.
  */
 export function BrandMark({ className = '' }: { className?: string }) {
   return (

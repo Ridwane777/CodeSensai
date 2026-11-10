@@ -2,7 +2,7 @@
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Valentino) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) — to be confirmed by the team
 - **Lot concerned**: D (`frontend/src/features/chat/markdown.tsx`)
 
 ## Context
@@ -17,7 +17,7 @@ by the model or copied from a file or a web page it read.
 | Option | Pros | Cons |
 | --- | --- | --- |
 | **Hand-written renderer for the subset the model uses** (chosen) | No new dependency; everything goes through React, so HTML is never interpreted; only `http(s)` links; reuses the existing Python highlighter | Partial Markdown: no tables, no nested lists, no images; we maintain it |
-| `react-markdown` + `remark-gfm` + a highlighter (Prism/Shiki) | Full CommonMark/GFM, tables, many languages | Several new dependencies and a bigger bundle; safe by default but its options (raw HTML, URL transform) must stay locked; a new entry in `docs/dependances.md` |
+| `react-markdown` + `remark-gfm` + a highlighter (Prism/Shiki) | Full CommonMark/GFM, tables, many languages | Several new dependencies and a bigger bundle; safe by default but its options (raw HTML, URL transform) must stay locked; a new entry in `docs/dependencies.md` |
 | `marked` + `dangerouslySetInnerHTML` + DOMPurify | Fast and complete | Inserts HTML: safety depends on the sanitizer configuration |
 
 ## Decision
@@ -33,4 +33,4 @@ No raw HTML is ever inserted.
 - ✅ No new dependency, no HTML injection path, same look as the rest of the interface.
 - ❌ Tables, nested lists, images and colouring for languages other than Python/shell are not rendered (they stay readable as text).
 - ❌ We maintain a parser: an unusual Markdown construct can render oddly.
-- Follow-up: switch to `react-markdown` + `remark-gfm` (with raw HTML off) if answers with tables become common; that would need its own ADR and a line in `docs/dependances.md`.
+- Follow-up: switch to `react-markdown` + `remark-gfm` (with raw HTML off) if answers with tables become common; that would need its own ADR and a line in `docs/dependencies.md`.

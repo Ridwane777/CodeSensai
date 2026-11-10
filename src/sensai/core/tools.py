@@ -1,12 +1,12 @@
 """
-Contrat commun à tous les outils que l'agent peut appeler (feature [T1] MCP).
+Shared contract for every tool the agent can call (feature [T1] MCP).
 
-Toute feature qui expose une capacité à l'agent — sandbox, RAG, outil MCP
-externe — implémente ce protocole. C'EST ce contrat qui permet aux 3 lots de
-travailler en parallèle sans se marcher dessus : l'agent ne connaît que le
-ToolRegistry, jamais l'implémentation d'un outil.
+Every feature that exposes a capability to the agent — sandbox, RAG, external
+MCP tool — implements this protocol. THIS contract is what lets the 3
+workstreams work in parallel without stepping on each other: the agent only
+knows the ToolRegistry, never a tool's implementation.
 
-Voir docs/decisions/0002-registre-d-outils-partage.md pour la justification.
+See docs/decisions/0002-shared-tool-registry.md for the rationale.
 """
 from __future__ import annotations
 
@@ -24,21 +24,21 @@ class ToolResult:
 class Tool(Protocol):
     name: str
     description: str
-    # JSON schema décrivant les arguments attendus (utilisé pour le function
-    # calling / la feature bonus [T5] Structured Output)
+    # JSON schema describing the expected arguments (used for function
+    # calling / the bonus feature [T5] Structured Output)
     parameters: dict[str, Any]
-    # Attendu aussi par la passerelle d'outils (ADR-0006) : `risk`, parmi
-    # "read", "network", "write", "execute". Absent = traité comme "execute",
-    # donc confirmation demandée. Voir docs/architecture/tool-contract.md.
+    # Also expected by the tool gateway (ADR-0006): `risk`, one of
+    # "read", "network", "write", "execute". Missing = treated as "execute",
+    # so confirmation is required. See docs/architecture/tool-contract.md.
 
     def run(self, **kwargs) -> ToolResult:
-        """Exécute l'outil. Ne doit JAMAIS lever d'exception non gérée : toute
-        erreur doit être encodée dans ToolResult(ok=False, ...)."""
+        """Run the tool. Must NEVER raise an unhandled exception: every error
+        must be encoded in ToolResult(ok=False, ...)."""
         ...
 
 
 class ToolRegistry:
-    """Registre central où chaque lot enregistre ses outils."""
+    """Central registry where each workstream registers its tools."""
 
     def __init__(self) -> None:
         self._tools: dict[str, Tool] = {}
@@ -50,20 +50,20 @@ class ToolRegistry:
         return self._tools.get(name)
 
     def describe_all(self) -> list[dict[str, Any]]:
-        """Utilisé pour informer le modèle des outils disponibles."""
+        """Used to tell the model which tools are available."""
         return [
             {"name": t.name, "description": t.description, "parameters": t.parameters}
             for t in self._tools.values()
         ]
 
-    # `name` est positionnel uniquement (le `/`) : sans ça, un outil dont un
-    # paramètre s'appelle lui aussi `name` ferait planter l'appel AVANT le try
-    # ci-dessous (« got multiple values for argument 'name' »).
+    # `name` is positional-only (the `/`): without it, a tool with a parameter
+    # also called `name` would crash the call BEFORE the try below
+    # ("got multiple values for argument 'name'").
     def call(self, name: str, /, **kwargs) -> ToolResult:
         tool = self.get(name)
         if tool is None:
-            return ToolResult(ok=False, content=f"Outil inconnu : {name}")
+            return ToolResult(ok=False, content=f"Unknown tool: {name}")
         try:
             return tool.run(**kwargs)
-        except Exception as e:  # garde-fou : un outil qui plante ne doit pas planter l'agent
-            return ToolResult(ok=False, content=f"Erreur dans l'outil {name} : {e}")
+        except Exception as e:  # guardrail: a crashing tool must not crash the agent
+            return ToolResult(ok=False, content=f"Error in tool {name}: {e}")

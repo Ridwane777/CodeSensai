@@ -1,9 +1,9 @@
 """
-Rejoue le corpus adversarial [EV4] (tests/adversarial/corpus.py).
+Replays the [EV4] adversarial corpus (tests/adversarial/corpus.py).
 
-Un écart connu est un `xfail(strict=True)` qui affirme le comportement SÛR : le
-test reste « attendu en échec » tant que le trou existe, et casse (XPASS) le
-jour où il est comblé, pour qu'on reclasse le cas au lieu de l'oublier.
+A known gap is an `xfail(strict=True)` that asserts the SAFE behavior: the test
+stays "expected to fail" while the hole exists, and breaks (XPASS) the day it
+is fixed, so the case gets reclassified instead of forgotten.
 """
 
 import re
@@ -43,11 +43,11 @@ def test_attack(case: AttackCase, tmp_path: Path):
     except CaseSkipped as exc:
         pytest.skip(str(exc))
     assert observed == case.wanted, (
-        f"{case.id} : attendu {case.wanted.value}, observé {observed.value} ({detail})"
+        f"{case.id}: expected {case.wanted.value}, observed {observed.value} ({detail})"
     )
 
 
-# -- le corpus lui-même -------------------------------------------------------
+# -- the corpus itself --------------------------------------------------------
 
 
 def test_ids_are_unique_and_well_formed():
@@ -66,19 +66,19 @@ def test_at_least_thirty_cases_and_four_per_category():
 def test_every_known_gap_names_its_cause_with_file_and_line():
     for case in CASES:
         if case.expected is Expected.KNOWN_GAP:
-            assert re.search(r"\w+\.py:\d+", case.gap), f"{case.id} : écart sans fichier:ligne"
+            assert re.search(r"\w+\.py:\d+", case.gap), f"{case.id}: gap without file:line"
 
 
 def test_cited_lines_exist():
-    """Garde-fou minimal contre les citations périmées : le fichier et la ligne existent."""
+    """Minimal guardrail against stale citations: the file and line exist."""
     for case in CASES:
         for name, line in re.findall(r"(\w+\.py):(\d+)", case.gap):
             matches = list((ROOT / "src").rglob(name))
-            assert matches, f"{case.id} cite {name}, introuvable dans src/"
+            assert matches, f"{case.id} cites {name}, not found in src/"
             assert int(line) <= len(matches[0].read_text(encoding="utf-8").splitlines())
 
 
-# -- le document généré --------------------------------------------------------
+# -- the generated document ----------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -91,12 +91,12 @@ def test_results_are_deterministic(full_run, tmp_path: Path):
 
 
 def test_committed_results_file_is_up_to_date(full_run):
-    """Le tableau versionné doit être celui que le code produit : sinon le rapport ment."""
+    """The committed table must be the one the code produces: otherwise the report lies."""
     if not RESULTS_FILE.exists():
-        pytest.skip("résultats pas encore générés (python scripts/adversarial_run.py)")
+        pytest.skip("results not generated yet (python scripts/adversarial_run.py)")
     assert RESULTS_FILE.read_text(encoding="utf-8") == render_markdown(full_run), (
-        "docs/performance/data/EV4-adversarial-results.md est périmé : "
-        "relancer `python scripts/adversarial_run.py`"
+        "docs/performance/data/EV4-adversarial-results.md is stale: "
+        "rerun `python scripts/adversarial_run.py`"
     )
 
 
@@ -106,10 +106,10 @@ def test_no_regression_in_the_run(full_run):
 
 
 def test_report_contains_the_generated_table():
-    """Le rapport en français recopie le tableau généré : il ne doit pas dériver."""
-    report = ROOT / "docs" / "securite" / "EV4-tests-adversariaux.md"
+    """The written report copies the generated table: it must not drift."""
+    report = ROOT / "docs" / "security" / "EV4-adversarial-tests.md"
     if not report.exists():
-        pytest.skip("rapport pas encore écrit")
+        pytest.skip("report not written yet")
     text = report.read_text(encoding="utf-8")
     rows = [
         line
@@ -117,10 +117,10 @@ def test_report_contains_the_generated_table():
         if line.startswith("| ")
     ]
     missing = [row[:30] for row in rows if row not in text]
-    assert not missing, f"lignes du tableau absentes du rapport : {missing}"
+    assert not missing, f"table rows missing from the report: {missing}"
 
 
-# -- la forme JSON servie par la page Qualité ----------------------------------
+# -- the JSON form served by the Quality page -----------------------------------
 
 
 def test_committed_results_parse_back_to_the_same_rows(full_run):

@@ -1,35 +1,34 @@
-# Qui relit quoi. GitHub demande automatiquement la relecture du propriétaire
-# quand une PR touche ses fichiers.
+# Who reviews what. GitHub automatically requests a review from the owner
+# when a PR touches their files.
 #
-# ⚠️ Ce sont des pseudos GitHub, pas les noms affichés dans les commits : les
-# deux diffèrent souvent. Un pseudo faux ne provoque aucune erreur, la ligne
-# est simplement ignorée — le fichier échoue en silence. Vérifier qu'un pseudo
-# existe : ouvrir https://github.com/<pseudo>.
+# ⚠️ These are GitHub handles, not the names shown in commits: the two often
+# differ. A wrong handle raises no error, the line is just ignored — the file
+# fails silently. To check a handle exists, open https://github.com/<handle>.
 #
-# GitHub ne demande la relecture d'un propriétaire que s'il a accès en écriture
-# au dépôt. Quelqu'un d'absent de l'organisation ne sera jamais sollicité.
+# GitHub only requests an owner's review if they have write access to the
+# repository. Someone outside the organization will never be asked.
 #
-# La dernière règle qui correspond à un fichier gagne : les motifs généraux
-# sont donc en haut, les cas précis en bas.
+# The last rule matching a file wins: general patterns go at the top,
+# specific cases at the bottom.
 
-# Par défaut : le lot A, qui tient l'architecture et les contrats partagés.
+# Default: Workstream A, which owns the architecture and shared contracts.
 *                               @fresnel-cyber
 
-# Lot B — exécution de code et garde-fous
+# Workstream B — code execution and guardrails
 /src/sensai/execution/          @Meric-BG
 /src/sensai/tools/sandbox_tool.py  @Meric-BG
-/docs/recherche/model-choices.md          @Meric-BG
-/docs/recherche/infra-options.md          @Meric-BG
+/docs/research/model-choices.md          @Meric-BG
+/docs/research/infra-options.md          @Meric-BG
 
-# Lot C — recherche dans le code et mémoire de session
+# Workstream C — code search and session memory
 /src/sensai/knowledge/          @Ridwane777
 /src/sensai/tools/rag_tool.py   @Ridwane777
 
-# Lot D — interface web, observabilité, branchements externes
+# Workstream D — web interface, observability, external integrations
 /src/sensai/web/                @Christopher142769
 /src/sensai/observability/      @Christopher142769
 /src/sensai/tools/mcp_tool.py   @Christopher142769
 
-# Le contrat que tout le monde utilise : une modification ici casse les trois
-# autres lots, donc elle passe par le lot A.
+# The contract everyone uses: a change here breaks the other three
+# workstreams, so it goes through Workstream A.
 /src/sensai/core/tools.py       @fresnel-cyber

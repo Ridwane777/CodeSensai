@@ -1,5 +1,5 @@
 """
-[Lot B] Exposes the Python sandbox to the agent as a tool — feature [T2].
+[Workstream B] Exposes the Python sandbox to the agent as a tool — feature [T2].
 
 The tool only declares itself and returns what happened. Confirmation (A3),
 credential masking (EV2), output sanitizing and time limits are applied by the

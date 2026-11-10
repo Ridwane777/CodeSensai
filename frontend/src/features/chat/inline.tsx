@@ -4,10 +4,10 @@ import { renderInline, renderRich } from './markdown'
 export { renderInline, renderRich }
 
 /**
- * Retire les appels d'outil que le modèle écrit parfois en texte (`<function=…>…</function>`,
- * `<tool_call>`) : l'agent les lit et les exécute (ADR-0031), l'interface les montre déjà comme
- * une étape du raisonnement. Le CLI les masque aussi (`ui.visible_answer`). Un bloc pas encore
- * fermé (réponse en cours) est masqué jusqu'à la fin du texte reçu.
+ * Removes tool calls that the model sometimes writes as text (`<function=…>…</function>`,
+ * `<tool_call>`): the agent reads and runs them (ADR-0031), and the UI already shows them as a
+ * reasoning step. The CLI hides them too (`ui.visible_answer`). A block not yet closed (answer
+ * in progress) is hidden up to the end of the received text.
  */
 export function visibleAnswer(text: string): string {
   return text
@@ -17,7 +17,7 @@ export function visibleAnswer(text: string): string {
     .replace(/^\s+/, '')
 }
 
-/** Markdown minimal pour l'artefact : listes à puces et paragraphes. */
+/** Minimal Markdown for the artifact: bullet lists and paragraphs. */
 export function renderMarkdown(md: string): ReactNode {
   const out: ReactNode[] = []
   let bullets: string[] = []

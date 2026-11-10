@@ -1,4 +1,4 @@
-"""Teste les personas de l'agent — feature [A5], ADR-0042."""
+"""Tests the agent personas — feature [A5], ADR-0042."""
 import pytest
 
 from sensai.knowledge.persona import (
@@ -10,60 +10,60 @@ from sensai.knowledge.persona import (
 )
 
 
-def test_store_sans_config_a_une_persona_par_defaut():
+def test_store_without_config_has_a_default_persona():
     store = PersonaStore.from_config(None)
     assert store.names() == [DEFAULT_PERSONA_ID]
     assert store.default().id == DEFAULT_PERSONA_ID
 
 
-def test_store_charge_les_profils_de_la_config():
+def test_store_loads_config_profiles():
     store = PersonaStore.from_config({
         "default": "juridique",
         "profiles": [
-            {"id": "assistant", "name": "Sensai", "role": "assistant", "tone": "neutre",
-             "scope": "le projet"},
-            {"id": "juridique", "name": "Maître Sensai", "role": "assistant juridique",
-             "tone": "formel", "scope": "droit uniquement, pas de code"},
+            {"id": "assistant", "name": "CodeSensai", "role": "assistant", "tone": "neutral",
+             "scope": "the project"},
+            {"id": "juridique", "name": "Counsel CodeSensai", "role": "legal assistant",
+             "tone": "formal", "scope": "law only, no code"},
         ],
     })
     assert store.names() == ["assistant", "juridique"]
     assert store.default().id == "juridique"
-    assert store.get("juridique").name == "Maître Sensai"
+    assert store.get("juridique").name == "Counsel CodeSensai"
 
 
-def test_profil_incomplet_refuse():
+def test_incomplete_profile_refused():
     profil = {"id": "x", "name": "X", "tone": "x", "scope": "x"}
     with pytest.raises(PersonaError, match="role"):
         PersonaStore.from_config({"profiles": [profil]})
 
 
-def test_id_en_double_refuse():
+def test_duplicate_id_refused():
     profil = {"id": "x", "name": "X", "role": "r", "tone": "t", "scope": "s"}
-    with pytest.raises(PersonaError, match="double"):
+    with pytest.raises(PersonaError, match="duplicate"):
         PersonaStore.from_config({"profiles": [profil, dict(profil)]})
 
 
-def test_persona_par_defaut_inconnue_refusee():
-    with pytest.raises(PersonaError, match="inconnue"):
+def test_unknown_default_persona_refused():
+    with pytest.raises(PersonaError, match="unknown"):
         PersonaStore.from_config({
-            "default": "fantome",
+            "default": "ghost",
             "profiles": [{"id": "x", "name": "X", "role": "r", "tone": "t", "scope": "s"}],
         })
 
 
-def test_get_persona_inconnue_leve():
+def test_get_unknown_persona_raises():
     store = PersonaStore.from_config(None)
-    with pytest.raises(PersonaError, match="inconnue"):
-        store.get("fantome")
+    with pytest.raises(PersonaError, match="unknown"):
+        store.get("ghost")
 
 
-def test_as_prompt_contient_nom_role_ton_et_perimetre():
-    texte = Persona(id="t", name="Tuteur", role="tuteur de maths", tone="pédagogue",
-                     scope="mathématiques uniquement").as_prompt()
-    assert "Tuteur" in texte
-    assert "tuteur de maths" in texte
-    assert "pédagogue" in texte
-    assert "mathématiques uniquement" in texte
+def test_as_prompt_has_name_role_tone_and_scope():
+    texte = Persona(id="t", name="Tutor", role="math tutor", tone="patient",
+                     scope="mathematics only").as_prompt()
+    assert "Tutor" in texte
+    assert "math tutor" in texte
+    assert "patient" in texte
+    assert "mathematics only" in texte
 
 
 @pytest.fixture
@@ -71,122 +71,122 @@ def store():
     return PersonaStore.from_config({
         "default": "assistant",
         "profiles": [
-            {"id": "assistant", "name": "Sensai", "role": "assistant", "tone": "neutre",
-             "scope": "le projet"},
-            {"id": "juridique", "name": "Maître Sensai", "role": "assistant juridique",
-             "tone": "formel", "scope": "droit uniquement"},
+            {"id": "assistant", "name": "CodeSensai", "role": "assistant", "tone": "neutral",
+             "scope": "the project"},
+            {"id": "juridique", "name": "Counsel CodeSensai", "role": "legal assistant",
+             "tone": "formal", "scope": "law only"},
         ],
     })
 
 
-def test_commande_non_reconnue_retourne_none(store):
-    assert handle_persona_command("bonjour", store, "assistant") is None
+def test_unrecognized_command_returns_none(store):
+    assert handle_persona_command("hello", store, "assistant") is None
 
 
-def test_persona_sans_argument_affiche_lactive(store):
+def test_persona_without_argument_shows_active(store):
     texte, actif = handle_persona_command("/persona", store, "assistant")
     assert "assistant" in texte
     assert actif == "assistant"
 
 
-def test_persona_list_marque_lactive(store):
+def test_persona_list_marks_active(store):
     texte, actif = handle_persona_command("/persona list", store, "juridique")
     assert "* juridique" in texte
     assert "  assistant" in texte
     assert actif == "juridique"
 
 
-def test_persona_use_change_la_persona_active(store):
+def test_persona_use_changes_active_persona(store):
     texte, actif = handle_persona_command("/persona use juridique", store, "assistant")
     assert actif == "juridique"
     assert "juridique" in texte
-    assert "historique" in texte.lower()
+    assert "history" in texte.lower()
 
 
-def test_persona_use_inconnue_ne_change_rien(store):
+def test_persona_use_unknown_changes_nothing(store):
     texte, actif = handle_persona_command("/persona use fantome", store, "assistant")
     assert actif == "assistant"
-    assert "[Erreur]" in texte
+    assert "[Error]" in texte
 
 
-def test_persona_use_sans_id_affiche_usage(store):
+def test_persona_use_without_id_shows_usage(store):
     texte, actif = handle_persona_command("/persona use", store, "assistant")
     assert "Usage" in texte
     assert actif == "assistant"
 
 
-# --- Validation robuste d'une config mal écrite (revue PR #94) ------------
-# Une entrée qui ne respecte pas la forme attendue doit lever PersonaError,
-# jamais une AttributeError/TypeError Python qui plante le CLI avec une trace.
+# --- Robust validation of a badly written config (PR #94 review) ---------
+# An entry that does not match the expected shape must raise PersonaError,
+# never a Python AttributeError/TypeError that crashes the CLI with a traceback.
 
 
-def test_personas_pas_un_objet_refuse():
-    with pytest.raises(PersonaError, match="objet"):
+def test_personas_not_an_object_refused():
+    with pytest.raises(PersonaError, match="object"):
         PersonaStore.from_config("abc")
 
 
-def test_profil_pas_un_objet_refuse():
-    with pytest.raises(PersonaError, match="objet"):
+def test_profile_not_an_object_refused():
+    with pytest.raises(PersonaError, match="object"):
         PersonaStore.from_config({"profiles": ["x"]})
 
 
-def test_champ_qui_n_est_pas_une_chaine_refuse():
+def test_non_string_field_refused():
     profil = {"id": ["a"], "name": "X", "role": "r", "tone": "t", "scope": "s"}
     with pytest.raises(PersonaError, match="id"):
         PersonaStore.from_config({"profiles": [profil]})
 
 
-def test_champ_entier_refuse():
+def test_integer_field_refused():
     profil = {"id": "x", "name": 1, "role": "r", "tone": "t", "scope": "s"}
     with pytest.raises(PersonaError, match="name"):
         PersonaStore.from_config({"profiles": [profil]})
 
 
-def test_champ_vide_refuse():
+def test_empty_field_refused():
     profil = {"id": "x", "name": "", "role": "r", "tone": "t", "scope": "s"}
     with pytest.raises(PersonaError, match="name"):
         PersonaStore.from_config({"profiles": [profil]})
 
 
-def test_champ_uniquement_des_espaces_refuse():
+def test_whitespace_only_field_refused():
     profil = {"id": "x", "name": "   ", "role": "r", "tone": "t", "scope": "s"}
     with pytest.raises(PersonaError, match="name"):
         PersonaStore.from_config({"profiles": [profil]})
 
 
-def test_default_pas_une_chaine_refuse():
+def test_default_not_a_string_refused():
     profil = {"id": "x", "name": "X", "role": "r", "tone": "t", "scope": "s"}
     with pytest.raises(PersonaError, match="default"):
         PersonaStore.from_config({"profiles": [profil], "default": 1})
 
 
-def test_personas_vide_refuse_comme_profiles_vide():
-    """« {} » et « {"profiles": []} » disent tous les deux « aucun profil » :
-    même traitement (erreur), pour ne pas laisser {} passer par accident."""
+def test_empty_personas_refused_like_empty_profiles():
+    """`{}` and `{"profiles": []}` both mean "no profile": same handling
+    (error), so that {} does not slip through by accident."""
     with pytest.raises(PersonaError, match="profiles"):
         PersonaStore.from_config({})
 
 
-def test_tools_disabled_invalides_refuses():
+def test_invalid_tools_disabled_refused():
     with pytest.raises(PersonaError, match=r"tools\.disabled"):
         PersonaStore.from_config({
             "profiles": [{"id": "x", "name": "X", "role": "r", "tone": "t", "scope": "s",
-                          "tools": {"disabled": "pas une liste"}}],
+                          "tools": {"disabled": "not a list"}}],
         })
 
 
-def test_le_routage_par_mots_cles_est_refuse_explicitement():
-    """ADR-0056, point 4 : une clé `keywords` qui ne fait plus rien arrête le programme."""
-    with pytest.raises(PersonaError, match="mots-clés a été retiré"):
+def test_keyword_routing_is_explicitly_refused():
+    """ADR-0056, point 4: a `keywords` key that no longer does anything stops the program."""
+    with pytest.raises(PersonaError, match="keyword routing was removed"):
         PersonaStore.from_config({"profiles": [
-            {"id": "juridique", "name": "Maître", "role": "r", "tone": "t", "scope": "s",
-             "keywords": ["contrat"]}]})
+            {"id": "juridique", "name": "Counsel", "role": "r", "tone": "t", "scope": "s",
+             "keywords": ["contract"]}]})
 
 
-def test_persona_add_n_existe_plus(store):
-    """ADR-0056, point 4 : plus de persona créée en cours de session."""
-    texte, actif = handle_persona_command('/persona add medecin "Dr" "r" "t" "s"', store,
+def test_persona_add_no_longer_exists(store):
+    """ADR-0056, point 4: no more persona created mid-session."""
+    texte, actif = handle_persona_command('/persona add doctor "Dr" "r" "t" "s"', store,
                                           "assistant")
-    assert texte.startswith("Usage : /persona | /persona list | /persona use <id>")
+    assert texte.startswith("Usage: /persona | /persona list | /persona use <id>")
     assert actif == "assistant"
 

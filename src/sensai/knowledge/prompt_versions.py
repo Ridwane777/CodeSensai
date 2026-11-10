@@ -1,21 +1,20 @@
 """
-[Lot C — Ridwane] Registre des versions de prompts — feature [A4] Prompt
+[Workstream C — Ridwane] Prompt version registry — feature [A4] Prompt
 Versioning, ADR-0010.
 
-Principe repris des outils du métier (Langfuse, PromptLayer…) : une version est
-immuable, le marque-page `active` est mobile. L'agent lit la version marquée ;
-revenir en arrière consiste à déplacer le marque-page, sans rien recopier ni
-effacer.
+Principle borrowed from industry tools (Langfuse, PromptLayer…): a version is
+immutable, the `active` bookmark moves. The agent reads the marked version;
+rolling back means moving the bookmark, without copying or deleting anything.
 
-Sur disque, dans le dossier `prompts/` du dépôt :
+On disk, in the repo's `prompts/` directory:
 
-    versions.json        l'index : pour chaque prompt, `active` + ses versions
-    system/v1.txt        une version = un fichier, jamais modifié
+    versions.json        the index: for each prompt, `active` + its versions
+    system/v1.txt        one version = one file, never modified
     memory/v1.txt
 
-Chaque version garde son empreinte sha256 : ce n'est pas un identifiant (on
-désigne une version par son numéro), c'est ce qui permet à `check()` — et donc
-à la CI — de repérer une version modifiée après coup.
+Each version keeps its sha256 fingerprint: it is not an identifier (a version
+is referred to by its number), it is what lets `check()` — and therefore the
+CI — spot a version modified after the fact.
 """
 from __future__ import annotations
 
@@ -34,8 +33,8 @@ def _sha256(text: str) -> str:
 
 
 def _normalize(text: str) -> str:
-    # Les prompts sont chargés avec strip() : un retour à la ligne final en plus
-    # ne change rien pour le modèle, il ne doit pas créer de version.
+    # Prompts are loaded with strip(): an extra trailing newline changes
+    # nothing for the model, it must not create a version.
     return text.strip()
 
 
@@ -44,7 +43,7 @@ class PromptStore:
         self.root = Path(root)
         self.index_path = self.root / INDEX_FILE
 
-    # --- lecture ---------------------------------------------------------
+    # --- reading ---------------------------------------------------------
 
     def exists(self) -> bool:
         return self.index_path.is_file()
@@ -56,8 +55,8 @@ class PromptStore:
 
     def _prompt(self, index: dict, name: str) -> dict:
         if name not in index:
-            known = ", ".join(sorted(index)) or "aucun"
-            raise KeyError(f"prompt inconnu : {name} (connus : {known})")
+            known = ", ".join(sorted(index)) or "none"
+            raise KeyError(f"unknown prompt: {name} (known: {known})")
         return index[name]
 
     def names(self) -> list[str]:
@@ -67,11 +66,11 @@ class PromptStore:
         return self._prompt(self._read(), name)["active"]
 
     def resolve(self, name: str, version: str) -> str:
-        """Accepte `v2` ou `2` ; KeyError si la version n'existe pas."""
+        """Accepts `v2` or `2`; KeyError if the version does not exist."""
         entry = self._prompt(self._read(), name)
         wanted = version if version.startswith("v") else f"v{version}"
         if wanted not in {v["id"] for v in entry["versions"]}:
-            raise KeyError(f"version inconnue : {name} {version}")
+            raise KeyError(f"unknown version: {name} {version}")
         return wanted
 
     def _file(self, name: str, version_id: str) -> Path:
@@ -82,7 +81,7 @@ class PromptStore:
         return self._file(name, version_id).read_text(encoding="utf-8")
 
     def history(self, name: str) -> list[dict]:
-        """Les versions, de la plus récente à la plus ancienne."""
+        """The versions, newest first."""
         entry = self._prompt(self._read(), name)
         return [
             {
@@ -107,7 +106,7 @@ class PromptStore:
             )
         )
 
-    # --- écriture --------------------------------------------------------
+    # --- writing ---------------------------------------------------------
 
     def _write(self, index: dict) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
@@ -117,10 +116,10 @@ class PromptStore:
 
     def save(self, name: str, text: str, description: str, author: str,
              date: str | None = None) -> str:
-        """Range `text` comme nouvelle version ; ne déplace pas le marque-page.
+        """Stores `text` as a new version; does not move the bookmark.
 
-        La première version d'un prompt devient active : sans elle, l'agent
-        n'aurait rien à lire. ValueError si ce texte est déjà rangé.
+        A prompt's first version becomes active: without it, the agent would
+        have nothing to read. ValueError if this text is already stored.
         """
         text = _normalize(text)
         index = self._read()
@@ -128,7 +127,7 @@ class PromptStore:
         digest = _sha256(text)
         for v in entry["versions"]:
             if v["sha256"] == digest:
-                raise ValueError(f"texte identique à {name} {v['id']} : aucune version créée")
+                raise ValueError(f"text identical to {name} {v['id']}: no version created")
 
         version_id = f"v{len(entry['versions']) + 1}"
         path = self._file(name, version_id)
@@ -147,30 +146,30 @@ class PromptStore:
         return version_id
 
     def use(self, name: str, version: str) -> str:
-        """Déplace le marque-page ; le prochain lancement de `sensai` lit cette version."""
+        """Moves the bookmark; the next `sensai` launch reads this version."""
         version_id = self.resolve(name, version)
         index = self._read()
         index[name]["active"] = version_id
         self._write(index)
         return version_id
 
-    # --- cohérence -------------------------------------------------------
+    # --- consistency -----------------------------------------------------
 
     def check(self) -> list[str]:
-        """Liste les problèmes du registre ; vide s'il est cohérent."""
+        """Lists the registry's problems; empty if it is consistent."""
         problems = []
         for name, entry in sorted(self._read().items()):
             ids = [v["id"] for v in entry["versions"]]
             for dup in sorted({i for i in ids if ids.count(i) > 1}):
-                problems.append(f"{name} {dup} : numéro en double (fusion de deux branches ?)")
+                problems.append(f"{name} {dup}: duplicate number (merge of two branches?)")
             if entry["active"] not in ids:
-                problems.append(f"{name} : le marque-page pointe vers {entry['active']}, "
-                                "qui n'existe pas")
+                problems.append(f"{name}: the bookmark points to {entry['active']}, "
+                                "which does not exist")
             for v in entry["versions"]:
                 path = self._file(name, v["id"])
                 if not path.is_file():
-                    problems.append(f"{name} {v['id']} : fichier {path} manquant")
+                    problems.append(f"{name} {v['id']}: file {path} missing")
                 elif _sha256(path.read_text(encoding="utf-8")) != v["sha256"]:
-                    problems.append(f"{name} {v['id']} : modifiée après avoir été rangée "
-                                    "(ranger une nouvelle version à la place)")
+                    problems.append(f"{name} {v['id']}: modified after being stored "
+                                    "(store a new version instead)")
         return problems

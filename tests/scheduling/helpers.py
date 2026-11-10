@@ -1,4 +1,4 @@
-"""Faux éléments communs aux tests de la planification (X5)."""
+"""Shared fakes for the scheduling tests (X5)."""
 from datetime import UTC, datetime, timedelta
 from typing import Any, ClassVar
 
@@ -19,7 +19,7 @@ class FakeClock:
 
 
 class FakeTool:
-    """Outil qui compte ses exécutions : sert à prouver qu'il n'a PAS tourné."""
+    """Tool that counts its runs: used to prove it did NOT run."""
 
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
@@ -29,17 +29,17 @@ class FakeTool:
 
     def __init__(self, name: str, risk: str) -> None:
         self.name = name
-        self.description = f"outil {risk} de test"
+        self.description = f"{risk} test tool"
         self.risk = risk
         self.calls: list[dict] = []
 
     def run(self, **kwargs: Any) -> ToolResult:
         self.calls.append(kwargs)
-        return ToolResult(ok=True, content="fait")
+        return ToolResult(ok=True, content="done")
 
 
 def say(text: str):
-    """Agent factice : répond `text` puis termine."""
+    """Fake agent: answers `text`, then finishes."""
     from sensai.core.events import Done, Token
 
     def agent(host, model, messages, tools, num_ctx=None, max_iterations=None):
@@ -50,9 +50,9 @@ def say(text: str):
 
 
 def add(scheduler, task_id="a", **kwargs):
-    """Ajoute une tâche au fichier du planificateur."""
+    """Adds a task to the scheduler file."""
     from sensai.scheduling.tasks import Task
 
-    kwargs.setdefault("prompt", "fais ceci")
+    kwargs.setdefault("prompt", "do this")
     kwargs.setdefault("interval_s", 3600)
     scheduler.store.add(Task(id=task_id, **kwargs))

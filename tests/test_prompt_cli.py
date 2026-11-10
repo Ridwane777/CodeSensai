@@ -1,9 +1,8 @@
 """
-Teste la commande `sensai-prompt` de bout en bout — feature [A4], ADR-0010.
+Tests the `sensai-prompt` command end to end — feature [A4], ADR-0010.
 
-`test_dod_historique_puis_retour_en_arriere` rejoue la Definition of Done :
-montrer l'historique des prompts, puis revenir à une ancienne version en une
-commande.
+`test_dod_history_then_rollback` replays the Definition of Done: show the
+prompt history, then go back to an older version in one command.
 """
 import pytest
 
@@ -12,83 +11,83 @@ from sensai.knowledge.prompt_versions import PromptStore
 
 
 @pytest.fixture
-def dossier(tmp_path):
+def folder(tmp_path):
     s = PromptStore(tmp_path)
-    s.save("system", "Tu es CodeSensei.", "prompt initial", author="Alice", date="2026-09-28")
-    s.save("system", "Tu es CodeSensei.\nSois concis.", "concision", author="Bob",
+    s.save("system", "You are CodeSensai.", "initial prompt", author="Alice", date="2026-09-28")
+    s.save("system", "You are CodeSensai.\nBe concise.", "conciseness", author="Bob",
            date="2026-10-12")
     s.use("system", "v2")
     return tmp_path
 
 
-def lancer(dossier, *args):
-    return prompt_cli.main(["--dir", str(dossier), *args])
+def run(folder, *args):
+    return prompt_cli.main(["--dir", str(folder), *args])
 
 
-def test_dod_historique_puis_retour_en_arriere(dossier, capsys):
-    assert lancer(dossier, "history", "system") == 0
-    sortie = capsys.readouterr().out
-    assert "v2" in sortie and "2026-10-12" in sortie and "Bob" in sortie
-    assert "concision" in sortie and "active" in sortie
+def test_dod_history_then_rollback(folder, capsys):
+    assert run(folder, "history", "system") == 0
+    out = capsys.readouterr().out
+    assert "v2" in out and "2026-10-12" in out and "Bob" in out
+    assert "conciseness" in out and "active" in out
 
-    assert lancer(dossier, "use", "system", "v1") == 0
+    assert run(folder, "use", "system", "v1") == 0
 
-    assert PromptStore(dossier).active("system") == "v1"
+    assert PromptStore(folder).active("system") == "v1"
     assert "v1" in capsys.readouterr().out
 
 
-def test_show_affiche_la_version_active_par_defaut(dossier, capsys):
-    lancer(dossier, "show", "system")
+def test_show_prints_the_active_version_by_default(folder, capsys):
+    run(folder, "show", "system")
 
-    assert capsys.readouterr().out.strip() == "Tu es CodeSensei.\nSois concis."
-
-
-def test_show_d_une_version_precise(dossier, capsys):
-    lancer(dossier, "show", "system", "1")
-
-    assert capsys.readouterr().out.strip() == "Tu es CodeSensei."
+    assert capsys.readouterr().out.strip() == "You are CodeSensai.\nBe concise."
 
 
-def test_diff(dossier, capsys):
-    assert lancer(dossier, "diff", "system", "v1") == 0
+def test_show_a_specific_version(folder, capsys):
+    run(folder, "show", "system", "1")
 
-    assert "+Sois concis." in capsys.readouterr().out
+    assert capsys.readouterr().out.strip() == "You are CodeSensai."
 
 
-def test_save_depuis_un_fichier(dossier, tmp_path, capsys):
-    brouillon = tmp_path / "brouillon.txt"
-    brouillon.write_text("Tu es CodeSensei, en français.", encoding="utf-8")
+def test_diff(folder, capsys):
+    assert run(folder, "diff", "system", "v1") == 0
 
-    assert lancer(dossier, "save", "system", str(brouillon), "langue") == 0
+    assert "+Be concise." in capsys.readouterr().out
 
-    store = PromptStore(dossier)
+
+def test_save_from_a_file(folder, tmp_path, capsys):
+    draft = tmp_path / "draft.txt"
+    draft.write_text("You are CodeSensai, in English.", encoding="utf-8")
+
+    assert run(folder, "save", "system", str(draft), "language") == 0
+
+    store = PromptStore(folder)
     assert store.history("system")[0]["id"] == "v3"
     assert store.active("system") == "v2"
-    sortie = capsys.readouterr().out
-    assert "v3" in sortie and "use system v3" in sortie
+    out = capsys.readouterr().out
+    assert "v3" in out and "use system v3" in out
 
 
-def test_save_d_un_texte_identique_refuse(dossier, tmp_path, capsys):
-    brouillon = tmp_path / "brouillon.txt"
-    brouillon.write_text("Tu es CodeSensei.", encoding="utf-8")
+def test_save_of_identical_text_is_refused(folder, tmp_path, capsys):
+    draft = tmp_path / "draft.txt"
+    draft.write_text("You are CodeSensai.", encoding="utf-8")
 
-    assert lancer(dossier, "save", "system", str(brouillon), "doublon") == 1
+    assert run(folder, "save", "system", str(draft), "duplicate") == 1
     assert "v1" in capsys.readouterr().err
 
 
-def test_version_inconnue_message_clair(dossier, capsys):
-    assert lancer(dossier, "use", "system", "v9") == 1
+def test_unknown_version_clear_message(folder, capsys):
+    assert run(folder, "use", "system", "v9") == 1
     assert "v9" in capsys.readouterr().err
 
 
-def test_fichier_brouillon_absent(dossier, capsys):
-    assert lancer(dossier, "save", "system", "nexiste_pas.txt", "x") == 1
-    assert "nexiste_pas.txt" in capsys.readouterr().err
+def test_missing_draft_file(folder, capsys):
+    assert run(folder, "save", "system", "does_not_exist.txt", "x") == 1
+    assert "does_not_exist.txt" in capsys.readouterr().err
 
 
-def test_check(dossier, capsys):
-    assert lancer(dossier, "check") == 0
+def test_check(folder, capsys):
+    assert run(folder, "check") == 0
 
-    (dossier / "system" / "v1.txt").write_text("modifié", encoding="utf-8")
-    assert lancer(dossier, "check") == 1
+    (folder / "system" / "v1.txt").write_text("modified", encoding="utf-8")
+    assert run(folder, "check") == 1
     assert "system v1" in capsys.readouterr().err

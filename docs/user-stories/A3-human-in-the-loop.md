@@ -2,21 +2,21 @@
 
 CLI confirmer `execution/human_in_loop.py`, permission
 modes `execution/tool_policy.py`, called by the gateway
-(`execution/gateway.py`, [ADR-0006](../decisions/0006-passerelle-d-outils.md)).
+(`execution/gateway.py`, [ADR-0006](../decisions/0006-tool-gateway.md)).
 When these stories were written, button confirmation in the web interface was
 still to be done: it provides another "confirmer" without touching the
-gateway ([ADR-0005](../decisions/0005-interface-web-facade.md); stories in
+gateway ([ADR-0005](../decisions/0005-web-interface-facade.md); stories in
 [A3-human-in-the-loop.md](A3-human-in-the-loop.md)).
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: CLI refusal: ✅ with both models (nothing written). Web approval through `/confirm`: qwen3:8b ✅; qwen3-coder:30b 2 of 4 (failures: once a call written as text after a sentence, never run by design, ADR-0031, backlog #26; once a confirmation asked in words instead of calling `write_file`).
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: CLI refusal: ✅ with both models (nothing written). Web approval through `/confirm`: qwen3:8b ✅; qwen3-coder:30b 2 of 4 (failures: once a call written as text after a sentence, never run by design, ADR-0031, backlog #26; once a confirmation asked in words instead of calling `write_file`).
 
 ## US-A3-1 — See the exact plan before code runs
-> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent run code,
 **I want** to see the full code and the risk level before it runs,
@@ -28,7 +28,7 @@ Persona: Camille, the developer of the scenario
 - What I approve is what runs: the text of the request is built from the same arguments as the call.
 
 ## US-A3-2 — Refuse without breaking the agent
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who refuses an action,
 **I want** the agent to receive a clear refusal and adapt,
@@ -40,7 +40,7 @@ Persona: Camille, the developer of the scenario
 - An expired answer timeout (60 s by default, configurable) is a refusal.
 
 ## US-A3-3 — Choose when I am asked, without being able to switch security off
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who finds some confirmations repetitive,
 **I want** to set each tool's behaviour in the configuration,
@@ -57,18 +57,18 @@ Persona: Camille, the developer of the scenario
 ## Part merged from `A3-web-confirmation.md` on 2026-11-02: User stories — [A3] Human-in-the-Loop, confirmation from the browser
 
 Broker `execution/web_confirmation.py`
-(`WebConfirmationBroker`), decision in [ADR-0015](../decisions/0015-confirmation-web-synchrone.md),
+(`WebConfirmationBroker`), decision in [ADR-0015](../decisions/0015-synchronous-web-confirmation.md),
 HTTP contract in [web-api.md](../architecture/web/web-api.md). Complements the CLI A3 stories.
 
 Persona: Camille, the developer of the scenario
-([persona-and-scenario.md](../conception/persona-and-scenario.md)).
+([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ---
 
 ## US-A3-W1 — Allow a risky action with one click in the browser
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
-**As** Camille, the developer who uses CodeSensei in the browser,
+**As** Camille, the developer who uses CodeSensai in the browser,
 **I want** to see what the agent wants to run (tool, risk, exact plan) and click "Autoriser" or "Refuser",
 **so that** I keep control over every risky action without going through a terminal.
 
@@ -79,7 +79,7 @@ Persona: Camille, the developer of the scenario
 - If I refuse, the tool does not run, the stream continues and the agent explains or proposes an alternative.
 
 ## US-A3-W2 — Silence or an error never counts as approval
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who steps away or whose tab closes,
 **I want** any lack of a clear answer to be a refusal,
@@ -92,7 +92,7 @@ Persona: Camille, the developer of the scenario
 - If sending the question to the browser fails, the action is refused.
 
 ## US-A3-W3 — Be told when my answer is no longer valid
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who clicks after the timeout, or twice,
 **I want** the interface to tell me the request no longer exists, with no side effect,
@@ -104,7 +104,7 @@ Persona: Camille, the developer of the scenario
 - A late answer never starts the tool.
 
 ## US-A3-W4 — Keep several requests independent
-> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who opens several sessions,
 **I want** each confirmation request to have its own id and timeout,
@@ -128,5 +128,5 @@ Each story checked against the code and the automated tests (not against earlier
 | US-A3-3 | ✅ | `execution/tool_policy.py` | `tests/execution/test_tool_policy.py` (`test_default_modes`, `test_preferences_cannot_loosen_write_or_execute`, `test_missing_or_invalid_risk_is_treated_as_execute`), `tests/tools/test_web_search_tool.py::test_after_a_search_the_next_search_asks_when_the_option_is_on` |  |
 | US-A3-W1 | ✅ | `execution/web_confirmation.py` | `tests/execution/test_web_confirmation.py` (`test_emitted_payload_is_exactly_the_documented_one`, `test_gateway_approve_runs_the_tool_once`, `test_gateway_refusal_does_not_run_the_tool_and_is_not_an_exception`) |  |
 | US-A3-W2 | ✅ | `execution/web_confirmation.py` | `tests/execution/test_web_confirmation.py` (`test_timeout_refuses_and_leaves_nothing_pending`, `test_anything_but_literal_true_refuses`, `test_emit_raising_refuses_and_cleans_up`, `test_requests_after_close_refuse_immediately_without_emit`) |  |
-| US-A3-W3 | ✅ | `execution/web_confirmation.py`, `web/server.py` | `tests/execution/test_web_confirmation.py` (`test_duplicate_answer_first_one_wins`, `test_late_answer_after_timeout_is_ignored`), `tests/web/test_web_facade_spike.py::test_une_confirmation_inconnue_est_sans_effet` |  |
-| US-A3-W4 | ✅ | `execution/web_confirmation.py` | `tests/execution/test_web_confirmation.py::test_two_concurrent_requests_are_independent`, `tests/web/test_web_facade_spike.py::test_deux_sessions_en_parallele_ne_melangent_pas_leurs_confirmations` |  |
+| US-A3-W3 | ✅ | `execution/web_confirmation.py`, `web/server.py` | `tests/execution/test_web_confirmation.py` (`test_duplicate_answer_first_one_wins`, `test_late_answer_after_timeout_is_ignored`), `tests/web/test_web_facade_spike.py::test_an_unknown_confirmation_has_no_effect` |  |
+| US-A3-W4 | ✅ | `execution/web_confirmation.py` | `tests/execution/test_web_confirmation.py::test_two_concurrent_requests_are_independent`, `tests/web/test_web_facade_spike.py::test_two_parallel_sessions_do_not_mix_their_confirmations` |  |

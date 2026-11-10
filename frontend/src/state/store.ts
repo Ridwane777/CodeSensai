@@ -17,7 +17,7 @@ export interface Turn {
   steps: ReasoningStep[]
   done: boolean
   interrupted: boolean
-  /** A7 : la question de l'exemple few-shot joint, s'il y en a eu un. */
+  /** A7: the question of the attached few-shot example, if there was one. */
   fewshot?: string
 }
 
@@ -59,10 +59,10 @@ export interface UiState {
   thinking: boolean
   error: string | null
   persona: string
-  /** Version du prompt système essayée dans cette conversation (A4, ADR-0055) ; null : l'active. */
+  /** System prompt version tried in this conversation (A4, ADR-0055); null: the active one. */
   promptTrial: string | null
   activeBranch: string
-  /** Branche du tour en cours : les éléments produits par le moteur y sont rangés, même si l'utilisateur change de vue. */
+  /** Branch of the current turn: the items produced by the engine go there, even if the user switches view. */
   runBranch: string
   branches: Record<string, { parent: string; forkIndex: number }>
 }
@@ -74,10 +74,10 @@ export type Action =
   | { type: 'fork'; branch: string; fromId: string; id: string; text: string }
   | { type: 'switch_branch'; branch: string }
   | { type: 'clear_error' }
-  /** Persona de la conversation lue ou changée sur le serveur réel (A5) : aucun relais affiché. */
+  /** Conversation persona read or changed on the real server (A5): no handoff shown. */
   | { type: 'set_persona'; persona: string }
   | { type: 'set_prompt_trial'; version: string | null }
-  /** Conversation rouverte (#44) : l'affichage repart de son historique. */
+  /** Reopened conversation (#44): the display restarts from its history. */
   | { type: 'load_history'; messages: { id: string; role: 'user' | 'assistant'; text: string }[] }
 
 export const initialState: UiState = {
@@ -196,7 +196,7 @@ export function reduce(s: UiState, a: Action): UiState {
       return { ...s, error: null }
     case 'done': {
       const ended = mapTurn({ ...s, thinking: false }, a.turnId, (t) => ({ ...t, done: true, interrupted: a.interrupted }))
-      // Une fois le tour fini, plus personne n'attend de réponse : les cartes encore ouvertes sont périmées.
+      // Once the turn is over, nobody is waiting for an answer anymore: cards still open are stale.
       return {
         ...ended,
         timeline: ended.timeline.map((i) =>
@@ -220,7 +220,7 @@ export function reduce(s: UiState, a: Action): UiState {
   }
 }
 
-/** Ce que l'utilisateur voit pour une branche : l'historique de ses ancêtres jusqu'à la bifurcation, puis ses propres éléments. */
+/** What the user sees for a branch: the history of its ancestors up to the fork, then its own items. */
 export function visibleTimeline(s: UiState, branch: string): TimelineItem[] {
   const chain: TimelineItem[][] = []
   let cur: string | undefined = branch

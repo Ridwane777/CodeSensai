@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { Turn } from '../../state/store'
 
-/** Ce que l'agent fait en ce moment, en une phrase courte. */
+/** What the agent is doing right now, in a short phrase. */
 export function activity(turn: Turn): string {
   const last = turn.steps[turn.steps.length - 1]
-  if (last?.tool && last.observation === undefined) return `Utilise ${last.tool}`
-  if (turn.text.trim()) return 'Rédaction'
-  return 'Réflexion'
+  if (last?.tool && last.observation === undefined) return `Using ${last.tool}`
+  if (turn.text.trim()) return 'Writing'
+  return 'Thinking'
 }
 
-/** Secondes écoulées depuis `since`, mises à jour chaque seconde. */
+/** Seconds elapsed since `since`, updated every second. */
 export function useElapsed(since: number, running: boolean): number {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -24,11 +24,11 @@ export function formatSeconds(s: number): string {
   return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`
 }
 
-/** L'étoile qui tourne et le texte qui brille : on voit que l'agent travaille, sans que rien ne saute. */
+/** The spinning star and shimmering text: the agent is visibly working, without anything jumping. */
 export function ThinkingIndicator({ label, since }: { label: string; since: number }) {
   const seconds = useElapsed(since, true)
   return (
-    <p role="status" className="flex items-center gap-2 text-sm" aria-label={`${label} en cours`}>
+    <p role="status" className="flex items-center gap-2 text-sm" aria-label={`${label} in progress`}>
       <span className="relative grid h-5 w-5 place-items-center text-accent" aria-hidden="true">
         <span className="breathe absolute inset-0 rounded-full bg-accent-soft" />
         <svg viewBox="0 0 24 24" className="spin-soft relative h-4 w-4" fill="currentColor">

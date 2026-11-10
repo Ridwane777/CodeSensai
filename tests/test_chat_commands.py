@@ -1,8 +1,8 @@
-"""/schedule et /eval dans le chat (ADR-0028).
+"""/schedule and /eval in the chat (ADR-0028).
 
-Les premiers tests font tourner le vrai `sensai-schedule` (aucun modèle n'est
-nécessaire pour ajouter, lister ou simuler). Ceux de `/eval` vérifient ce qui
-est transmis, car un vrai jugement demande Ollama.
+The first tests run the real `sensai-schedule` (no model is needed to add,
+list or dry-run). The `/eval` tests check what is passed through, because a
+real judgment needs Ollama.
 """
 import builtins
 
@@ -31,20 +31,20 @@ def test_les_lignes_qui_commencent_par_la_commande_sont_reconnues(line):
 
 
 @pytest.mark.parametrize(
-    "line", ["pourquoi /eval échoue ?", "/profile", "bonjour", "", "/scheduler list"]
+    "line", ["why does /eval fail?", "/profile", "hello", "", "/scheduler list"]
 )
 def test_une_question_ou_une_autre_commande_n_est_pas_interceptee(line):
     assert not is_chat_command(line)
 
 
 def test_schedule_ajoute_puis_liste_une_tache(tmp_path, capsys, sortie):
-    ajout = '/schedule add resume --every 1d --prompt "Résume le journal"'
+    ajout = '/schedule add resume --every 1d --prompt "Summarize the log"'
     assert _lancer(ajout, tmp_path, sortie) == 0
     assert _lancer("/schedule list", tmp_path, sortie) == 0
 
     sortie_ecran = capsys.readouterr().out
     assert "resume" in sortie_ecran and "1d" in sortie_ecran
-    assert (tmp_path / "schedule").is_dir(), "le dossier de données de la session est utilisé"
+    assert (tmp_path / "schedule").is_dir(), "the session data folder is used"
 
 
 def test_schedule_loop_est_refuse_car_il_figerait_le_chat(tmp_path, sortie):
@@ -52,7 +52,7 @@ def test_schedule_loop_est_refuse_car_il_figerait_le_chat(tmp_path, sortie):
     code = _lancer("/schedule loop", tmp_path, sortie, schedule=lambda argv: appels.append(argv))
 
     assert code == 2 and appels == []
-    assert "autre terminal" in sortie[0]
+    assert "another terminal" in sortie[0]
 
 
 def test_schedule_recoit_le_dossier_l_hote_et_le_modele_de_la_session(tmp_path, sortie):
@@ -69,11 +69,11 @@ def test_schedule_recoit_le_dossier_l_hote_et_le_modele_de_la_session(tmp_path, 
 def test_une_option_donnee_par_l_utilisateur_n_est_pas_ecrasee(tmp_path, sortie):
     recu = []
     _lancer(
-        "/schedule --model autre list", tmp_path, sortie,
+        "/schedule --model other list", tmp_path, sortie,
         schedule=lambda argv: recu.append(list(argv)) or 0,
     )
 
-    assert recu[0].count("--model") == 1 and "autre" in recu[0]
+    assert recu[0].count("--model") == 1 and "other" in recu[0]
 
 
 def test_eval_run_recoit_l_hote_et_le_juge_de_la_session(tmp_path, sortie):
@@ -105,7 +105,7 @@ def test_sans_argument_la_commande_affiche_son_usage(line, tmp_path, sortie):
 
 def test_un_guillemet_non_ferme_est_une_erreur_lisible(tmp_path, sortie):
     assert _lancer('/schedule add x --prompt "oups', tmp_path, sortie) == 2
-    assert "illisible" in sortie[0]
+    assert "Unreadable" in sortie[0]
 
 
 def test_une_option_inconnue_ne_ferme_pas_le_chat(tmp_path, sortie, capsys):
@@ -124,7 +124,7 @@ def test_un_outil_en_panne_ne_ferme_pas_le_chat(tmp_path, sortie):
 def test_dans_le_vrai_cli_la_commande_ne_part_pas_au_modele(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     settings = {
-        "model": "faux", "host": "http://localhost:11434", "system_prompt": "S.",
+        "model": "fake", "host": "http://localhost:11434", "system_prompt": "S.",
         "session": None, "new_session": False, "data_dir": str(tmp_path / "donnees"),
         "retention_days": 30, "rag": False, "rag_model": "bge-m3",
         "rag_min_score": 0.0, "rag_top_k": 3,
@@ -135,7 +135,7 @@ def test_dans_le_vrai_cli_la_commande_ne_part_pas_au_modele(tmp_path, monkeypatc
         envoyes.append(messages)
         yield "ok"
 
-    entrees = iter(['/schedule add t1 --every 1h --prompt "x"', "/schedule list", "Bonjour"])
+    entrees = iter(['/schedule add t1 --every 1h --prompt "x"', "/schedule list", "Hello"])
 
     def faux_input(_=""):
         try:
@@ -148,7 +148,7 @@ def test_dans_le_vrai_cli_la_commande_ne_part_pas_au_modele(tmp_path, monkeypatc
     monkeypatch.setattr(builtins, "input", faux_input)
     cli.main()
 
-    assert len(envoyes) == 1, "seul « Bonjour » atteint le modèle"
+    assert len(envoyes) == 1, "only \"Hello\" reaches the model"
     assert all("/schedule" not in m["content"] for m in envoyes[0])
     assert "t1" in capsys.readouterr().out
     assert (tmp_path / "donnees" / "schedule" / "tasks.json").exists()

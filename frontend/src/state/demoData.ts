@@ -21,10 +21,10 @@ export type DemoAction =
   | { type: 'use_prompt'; name: string; version: string }
 
 export const initialDemo: DemoData = {
-  prefs: ['réponds en français et utilise pytest'],
+  prefs: ['answer in English and use pytest'],
   tasks: [
-    { id: 't1', title: 'Résumé quotidien du projet', every: 'chaque jour', active: true },
-    { id: 't2', title: 'Bilan hebdomadaire', every: 'chaque lundi', active: true },
+    { id: 't1', title: 'Daily project summary', every: 'every day', active: true },
+    { id: 't2', title: 'Weekly review', every: 'every Monday', active: true },
   ],
   promptActive: { system: 'v1', memory: 'v1' },
 }

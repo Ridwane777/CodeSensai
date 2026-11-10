@@ -1,110 +1,109 @@
-# Comment on travaille sur ce dépôt
+# How we work on this repository
 
-À lire une fois, avant le premier commit. Ces règles ne sont pas là pour faire
-joli : `main` est la branche depuis laquelle on fera la démo, et une seule
-personne qui y pousse du code cassé nous coûte une soirée.
+Read once, before your first commit. These rules are not decoration: `main`
+is the branch we demo from, and one person pushing broken code to it costs
+us an evening.
 
-## La règle principale
+## The main rule
 
-**Personne ne pousse directement sur `main`.** On y entre par une Pull Request
-relue. Si les droits d'administration du dépôt ne nous permettent pas de
-l'interdire techniquement, la règle tient parce qu'on la respecte.
+**Nobody pushes directly to `main`.** Changes land through a reviewed Pull
+Request. If the repository's admin settings do not let us enforce it
+technically, the rule holds because we respect it.
 
-## Le cycle de travail
+## The work cycle
 
 ```bash
 git checkout main
 git pull
-git checkout -b lot-a/boucle-react
-# ... travail, commits ...
-git push -u origin lot-a/boucle-react
+git checkout -b lot-a/react-loop
+# ... work, commits ...
+git push -u origin lot-a/react-loop
 ```
 
-Puis on ouvre la Pull Request sur GitHub.
+Then open the Pull Request on GitHub.
 
-**Nommage des branches :** `lot-<a|b|c|d>/<sujet-court>`. Le préfixe dit qui
-travaille, sans avoir à ouvrir la branche — `lot-b/sandbox-docker`,
-`lot-c/rag-ingestion`, `lot-d/api-web`.
+**Branch naming:** `lot-<a|b|c|d>/<short-topic>`, where the letter is the
+workstream. The prefix tells who is working without opening the branch —
+`lot-b/sandbox-docker`, `lot-c/rag-ingestion`, `lot-d/api-web`.
 
-**Avant de pousser**, si `main` a bougé entre-temps :
+**Before pushing**, if `main` has moved in the meantime:
 
 ```bash
 git pull --rebase origin main
 ```
 
-Le rebase rejoue ton travail par-dessus le `main` à jour. Tu découvres les
-conflits chez toi, pas dans la PR devant les autres, et l'historique reste
-lisible.
+The rebase replays your work on top of the up-to-date `main`. You discover
+conflicts locally, not in the PR in front of everyone, and the history stays
+readable.
 
-## Les relectures
+## Reviews
 
-Une approbation suffit, puis l'auteur fusionne lui-même. À quatre, exiger deux
-relecteurs bloque tout le monde.
+One approval is enough, then the author merges. With four people, requiring
+two reviewers blocks everyone.
 
-**Qui relire :** `.github/CODEOWNERS` le dit, et GitHub le demande tout seul.
-La logique : celui qui touche à un contrat partagé fait relire par le
-propriétaire du contrat. Le reste, dans son propre dossier, une relecture
-rapide par n'importe qui suffit.
+**Who reviews:** `.github/CODEOWNERS` says so, and GitHub requests it
+automatically. The logic: whoever touches a shared contract gets it reviewed
+by the contract's owner. For the rest, within your own folder, a quick review
+by anyone is enough.
 
-`src/sensai/core/tools.py` est le cas sensible : une modification là casse les
-trois autres lots. Elle passe toujours par le lot A.
+`src/sensai/core/tools.py` is the sensitive case: a change there breaks the
+other three workstreams. It always goes through Workstream A.
 
-## Des branches courtes
+## Short branches
 
-Plus une branche vit longtemps, plus `main` avance sans elle, et plus le risque
-augmente d'avoir touché aux mêmes lignes que quelqu'un d'autre. Découpe le
-travail : « le client MCP se connecte », puis « le client MCP appelle un
-outil » — pas une seule PR énorme.
+The longer a branch lives, the further `main` moves without it, and the
+higher the risk of touching the same lines as someone else. Split the work:
+"the MCP client connects", then "the MCP client calls a tool" — not one huge
+PR.
 
-## Ce qui doit passer avant de demander une relecture
+## What must pass before requesting a review
 
 ```bash
 pytest -q
 ruff check src tests
 ```
 
-La CI (`.github/workflows/ci.yml`) lance les deux sur chaque PR. Une PR rouge
-ne se fusionne pas.
+CI (`.github/workflows/ci.yml`) runs both on every PR. A red PR is not
+merged.
 
-Si ta modification ajoute un garde-fou, **ajoute le test qui échoue quand on
-le retire** — sinon quelqu'un le « simplifiera » dans trois semaines sans
-comprendre à quoi il servait.
+If your change adds a guardrail, **add the test that fails when it is
+removed** — otherwise someone will "simplify" it in three weeks without
+understanding what it was for.
 
-## Les décisions d'architecture
+## Architecture decisions
 
-Quand un choix structurant est fait — un outil qu'on adopte, une approche qu'on
-écarte — il s'écrit dans `docs/decisions/`, à partir de `TEMPLATE.md`. Un
-fichier par décision, numéroté, jamais réécrit : si on change d'avis, on en
-crée un nouveau qui remplace l'ancien. Chaque ADR ajoute sa ligne dans l'index
-`docs/decisions/README.md`, et sa section « Conséquences » dit aussi ce qu'on
-perd (au moins un ❌).
+When a structural choice is made — a tool we adopt, an approach we reject —
+it is written in `docs/decisions/`, from `TEMPLATE.md`. One file per
+decision, numbered, never rewritten: if we change our minds, we create a new
+one that supersedes the old one. Each ADR adds its row to the index
+`docs/decisions/README.md`, and its "Consequences" section also says what we
+lose (at least one ❌).
 
-Les ADR ne sont qu'une partie du dossier projet (légal, performance, coûts,
-rétrospective, business, user stories) : voir `AGENTS.md` et la carte
+ADRs are only part of the project file (legal, performance, costs,
+retrospective, business, user stories): see `AGENTS.md` and the map
 `docs/README.md`.
 
-Chaque ADR porte un `Statut` : `proposé` tant que l'équipe n'a pas tranché,
-`accepté` ensuite. Ne présente pas comme acté ce qui attend encore un accord.
+Each ADR carries a `Status`: `proposed` until the team has decided,
+`accepted` afterwards. Do not present as settled something that still awaits
+agreement.
 
-Ce qui mérite un ADR : une décision coûteuse à défaire, ou dont quelqu'un se
-demandera « pourquoi ils ont fait ça ? » dans deux mois. Le choix d'un nom de
-variable, non.
+What deserves an ADR: a decision that is costly to undo, or one where someone
+will ask "why did they do that?" in two months. Choosing a variable name does
+not.
 
-## Conventions de code
+## Code conventions
 
-- **Commentaires en français**, comme le reste du code, et qui expliquent le
-  **pourquoi** — surtout sur la logique de sécurité. C'est ce qui empêche un
-  futur contributeur de supprimer une vérification critique par mégarde.
-- **Messages de commit en anglais**, au format déjà en place :
+- **Comments in English**, like the rest of the code, explaining the
+  **why** — especially in security logic. That is what stops a future
+  contributor from removing a critical check by accident.
+- **Commit messages in English**, in the existing format:
   `feat(scope): ...`, `docs(scope): ...`, `chore(scope): ...`.
-- Écrire comme le fichier autour : même style, même niveau de commentaire.
+- Write like the surrounding file: same style, same level of commenting.
 
-## Ce qu'on ne commite jamais
+## What we never commit
 
-Aucune clé d'API, aucun `.env`, aucun mot de passe, aucune adresse de pod
-privé. Le `.gitignore` en couvre une partie, il ne couvre pas tout — c'est à
-relire dans le diff avant de pousser.
+No API key, no `.env`, no password, no private pod address. `.gitignore`
+covers part of it, not all of it — check the diff before pushing.
 
-Si un secret part quand même : le dire tout de suite à l'équipe, et considérer
-la clé comme compromise. La retirer d'un commit ne la retire pas de
-l'historique.
+If a secret leaks anyway: tell the team immediately, and consider the key
+compromised. Removing it from a commit does not remove it from the history.

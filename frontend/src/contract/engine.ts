@@ -2,7 +2,7 @@ import type { EngineEvent, UserMessage } from './events'
 
 export type BranchId = string
 
-/** Une conversation enregistrée côté serveur (M1), telle que la liste `GET /api/sessions`. */
+/** A conversation saved server-side (M1), as listed by `GET /api/sessions`. */
 export interface SessionSummary {
   id: string
   title: string
@@ -10,39 +10,39 @@ export interface SessionSummary {
   messageCount: number
 }
 
-/** Un message d'une conversation rouverte ; `id` permet ensuite de le modifier (X2). */
+/** A message from a reopened conversation; `id` lets you edit it later (X2). */
 export interface PastMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
 }
 
-/** Le profil de l'utilisateur (M1), tel que `GET /api/profile` le renvoie. */
+/** The user profile (M1), as returned by `GET /api/profile`. */
 export interface UserProfile {
   name: string
   instructions: string
   preferences: string[]
 }
 
-/** Un fait retenu sur le projet (M3). */
+/** A fact remembered about the project (M3). */
 export interface ProjectFact {
   entity: string
   attribute: string
   value: string
 }
 
-/** Résultat d'une évaluation à la demande (EV1) : notes du juge. */
+/** Result of an on-demand evaluation (EV1): the judge's scores. */
 export interface Evaluation {
-  /** 1 à 5 */
+  /** 1 to 5 */
   relevance: number
-  /** 1 à 5 */
+  /** 1 to 5 */
   coherence: number
-  /** 0 à 1, null sans passage du projet à vérifier */
+  /** 0 to 1, null when there is no project passage to check against */
   faithfulness: number | null
   passages: number
 }
 
-/** Une tâche planifiée (X5), telle que `sensai-schedule` la stocke. */
+/** A scheduled task (X5), as stored by `sensai-schedule`. */
 export interface ScheduledTask {
   id: string
   prompt: string
@@ -53,7 +53,7 @@ export interface ScheduledTask {
   nextDue: string | null
 }
 
-/** Ce que le serveur dit de l'A7 : fichier d'exemples, seuil, questions des exemples. */
+/** What the server reports about A7: examples file, threshold, example questions. */
 export interface FewshotInfo {
   configured: boolean
   file: string | null
@@ -62,19 +62,19 @@ export interface FewshotInfo {
   error: string | null
 }
 
-/** Une persona de config.json (A5, lot A), telle que `GET /api/personas` la renvoie. */
+/** A persona from config.json (A5, Workstream A), as returned by `GET /api/personas`. */
 export interface PersonaInfo {
   id: string
   name: string
   role: string
   tone: string
   scope: string
-  /** Outils refusés tant que cette persona est active (s'ajoutent à ceux de config.json). */
+  /** Tools denied while this persona is active (on top of those in config.json). */
   toolsDisabled: string[]
   isDefault: boolean
 }
 
-/** Une version du registre de prompts (A4, lot A), immuable. */
+/** An immutable version from the prompt registry (A4, Workstream A). */
 export interface PromptVersionInfo {
   id: string
   date: string
@@ -86,25 +86,25 @@ export interface PromptVersionInfo {
 export interface PromptEntry {
   name: string
   active: string
-  /** De la plus récente à la plus ancienne. */
+  /** Newest first. */
   versions: PromptVersionInfo[]
 }
 
-/** Essai d'une version du prompt système dans la conversation affichée (ADR-0055). */
+/** Trial run of a system prompt version in the displayed conversation (ADR-0055). */
 export interface PromptTrial {
   active: string | null
-  /** null : la conversation utilise la version active. */
+  /** null: the conversation uses the active version. */
   trial: string | null
 }
 
-/** Un cas du corpus adversarial (EV4), tel que `/api/quality/adversarial` le renvoie. */
+/** A case from the adversarial corpus (EV4), as returned by `/api/quality/adversarial`. */
 export interface AttackResult {
   id: string
   category: string
   attempt: string
   expected: string
   observed: string
-  /** « OK », « ÉCART CONNU », « RÉGRESSION », « ÉCART CORRIGÉ » ou « IGNORÉ » */
+  /** Status label sent by the server (e.g. OK, known gap, regression, fixed gap, skipped) */
   verdict: string
   detail: string
 }
@@ -112,12 +112,12 @@ export interface AttackResult {
 export interface AdversarialRun {
   cases: AttackResult[]
   summary: { total: number; ok: number; knownGaps: number; regressions: number; fixed: number; skipped: number }
-  /** null : tableau versionné du dépôt, pas encore relancé par ce serveur */
+  /** null: versioned table from the repository, not rerun by this server yet */
   ranAt: string | null
   source: 'run' | 'committed' | 'none'
 }
 
-/** Un appel d'outil noté dans le journal du serveur (EV3). */
+/** A tool call recorded in the server log (EV3). */
 export interface JournalTool {
   tool: string
   arguments: string
@@ -126,7 +126,7 @@ export interface JournalTool {
   agent: string
 }
 
-/** Un tour noté dans le journal du serveur (EV3), durées mesurées côté serveur. */
+/** A turn recorded in the server log (EV3), durations measured server-side. */
 export interface JournalTurn {
   id: number
   startedAt: string
@@ -149,7 +149,7 @@ export interface SharedLink {
   expiresAt: string
 }
 
-/** Seul point de contact entre l'interface et le moteur (ADR-0005). */
+/** The only contact point between the UI and the engine (ADR-0005). */
 export interface Engine {
   send(msg: UserMessage): void
   interrupt(): void
@@ -157,63 +157,63 @@ export interface Engine {
   confirm(requestId: string, approved: boolean): void
   answer(requestId: string, values: Record<string, unknown>): void
   switchPersona(id: string): void
-  /** Branche sur laquelle partent les prochains messages (moteur réel : une session par branche). */
+  /** Branch the next messages go to (real engine: one session per branch). */
   selectBranch?(branch: BranchId): void
-  /** Vrai si le moteur sait redemander la dernière question sans le cache (`/again`). */
+  /** True if the engine can re-ask the last question bypassing the cache (`/again`). */
   readonly regenerates?: boolean
-  /** Repart d'une conversation vide ; false si un tour est en cours (signalé). */
+  /** Starts over with an empty conversation; false if a turn is running (reported). */
   newConversation?(): boolean
-  /** Supprime une conversation enregistrée ; false en cas d'échec (signalé). */
+  /** Deletes a saved conversation; false on failure (reported). */
   deleteSession?(id: string): Promise<boolean>
-  /** La conversation où partent les prochains messages, null si elle n'existe pas encore. */
+  /** The conversation the next messages go to, null if it does not exist yet. */
   currentSession?(): string | null
-  /** Profil et faits réels (M1, M3) ; absents du moteur simulé. Null en cas d'échec (signalé). */
+  /** Real profile and facts (M1, M3); absent from the simulated engine. Null on failure (reported). */
   getProfile?(): Promise<UserProfile | null>
   addPreference?(text: string): Promise<UserProfile | null>
   forgetPreferences?(): Promise<UserProfile | null>
   getFacts?(): Promise<ProjectFact[] | null>
-  /** Oublie les faits d'une entité (M3) ; false en cas d'échec (signalé). */
+  /** Forgets an entity's facts (M3); false on failure (reported). */
   forgetFact?(entity: string): Promise<boolean>
-  /** Sections du document d'état (M4), pour le panneau Artefact au chargement. */
+  /** Sections of the state document (M4), for the Artifact panel on load. */
   getState?(): Promise<Record<string, string> | null>
-  /** Fait juger la dernière réponse de la conversation affichée (EV1). */
+  /** Has the judge score the last answer of the displayed conversation (EV1). */
   evaluate?(): Promise<Evaluation | null>
-  /** Tâches planifiées (X5) ; exécutées par `sensai-schedule`, pas par le serveur web. */
+  /** Scheduled tasks (X5); run by `sensai-schedule`, not by the web server. */
   listTasks?(): Promise<ScheduledTask[] | null>
   addTask?(id: string, prompt: string, every: string): Promise<ScheduledTask | null>
   removeTask?(id: string): Promise<boolean>
   setTaskEnabled?(id: string, enabled: boolean): Promise<boolean>
-  /** Conversations passées du projet (#44) ; absent du moteur simulé. */
+  /** Past conversations of the project (#44); absent from the simulated engine. */
   listSessions?(): Promise<SessionSummary[] | null>
-  /** Rouvre une conversation : les prochains messages la continuent. Null en cas d'échec (signalé). */
+  /** Reopens a conversation: the next messages continue it. Null on failure (reported). */
   openSession?(id: string): Promise<PastMessage[] | null>
-  /** Lien public en lecture seule (X3, ADR-0048) ; absent du moteur simulé. */
+  /** Public read-only link (X3, ADR-0048); absent from the simulated engine. */
   share?(): Promise<SharedLink | null>
-  /** Révoque un lien de partage : la page publique répond ensuite 404 (X3). */
+  /** Revokes a share link: the public page then returns 404 (X3). */
   revokeShare?(token: string): Promise<boolean>
-  /** Export du serveur, secrets masqués (X3, ADR-0024) ; null si rien à exporter ou en cas d'échec (signalé). */
+  /** Server export, secrets masked (X3, ADR-0024); null if there is nothing to export or on failure (reported). */
   exportSession?(format: 'json' | 'md'): Promise<string | null>
-  /** Personas réelles (A5, ADR-0054) ; absentes du moteur simulé. */
+  /** Real personas (A5, ADR-0054); absent from the simulated engine. */
   listPersonas?(): Promise<PersonaInfo[] | null>
-  /** Exemples few-shot configurés (A7), en lecture seule ; absent du moteur simulé. */
+  /** Configured few-shot examples (A7), read-only; absent from the simulated engine. */
   getFewshot?(): Promise<FewshotInfo | null>
-  /** Persona de la conversation affichée (celle par défaut tant qu'elle n'existe pas). */
+  /** Persona of the displayed conversation (the default one until it exists). */
   getPersona?(): Promise<PersonaInfo | null>
-  /** Change la persona de la conversation affichée ; null en cas d'échec (signalé). */
+  /** Changes the persona of the displayed conversation; null on failure (reported). */
   setPersona?(id: string): Promise<PersonaInfo | null>
-  /** Registre des prompts, en lecture seule (A4, ADR-0055) ; absent du moteur simulé. */
+  /** Prompt registry, read-only (A4, ADR-0055); absent from the simulated engine. */
   listPrompts?(): Promise<PromptEntry[] | null>
   getPromptText?(name: string, version: string): Promise<string | null>
   diffPrompts?(name: string, a: string, b: string): Promise<string | null>
   getPromptTrial?(): Promise<PromptTrial | null>
-  /** Essaie une version du prompt système dans cette conversation (null : revenir à l'active). */
+  /** Tries a system prompt version in this conversation (null: back to the active one). */
   setPromptTrial?(version: string | null): Promise<PromptTrial | null>
-  /** Corpus adversarial (EV4) : derniers résultats, et relance (sans modèle). */
+  /** Adversarial corpus (EV4): latest results, and rerun (no model). */
   adversarialResults?(): Promise<AdversarialRun | null>
   runAdversarial?(): Promise<AdversarialRun | null>
-  /** Journal des tours (EV3) d'une conversation, le plus récent d'abord. */
+  /** Turn log (EV3) of a conversation, newest first. */
   journal?(sessionId: string): Promise<JournalTurn[] | null>
-  /** Métriques du journal sur `days` jours, toutes conversations confondues (EV3). */
+  /** Log metrics over `days` days, across all conversations (EV3). */
   journalMetrics?(days: number): Promise<JournalMetrics | null>
   subscribe(listener: (e: EngineEvent) => void): () => void
 }

@@ -3,17 +3,17 @@
 Interface: `frontend/`; journal store:
 `src/sensai/observability/journal.py` ([ADR-0053](../decisions/0053-server-side-turn-journal.md), Proposed).
 
-CodeSensei scenario: Camille takes over a Python project and wants to follow,
+CodeSensai scenario: Camille takes over a Python project and wants to follow,
 correct and keep track of what the agent does, without reading the code.
 
 **Validation status**: these criteria were first checked **on the simulated
-engine** (tests in `frontend/tests/`, [ADR-0020](../decisions/0020-interface-web-simulee.md)).
+engine** (tests in `frontend/tests/`, [ADR-0020](../decisions/0020-simulated-web-interface.md)).
 On 2026-10-18 the interface was wired to the real agent by `sensai-web`
-([ADR-0035](../decisions/0035-serveur-web-reel.md)) and tried in a browser with
-`qwen3-coder:30b` ([web-reel.md](../performance/web-reel.md)). Each story has its
+([ADR-0035](../decisions/0035-real-web-server.md)) and tried in a browser with
+`qwen3-coder:30b` ([real-web.md](../performance/real-web.md)). Each story has its
 status:
 ✅ checked with the real agent · ◐ partly (or tested, not yet with the real model) · 🎭 still simulated · ⏳ not checked yet.
-Detail per feature: [simule-vs-reel.md](../architecture/web/simule-vs-reel.md).
+Detail per feature: [simulated-vs-real.md](../architecture/web/simulated-vs-real.md).
 
 The other features staged in the demo (A1, A3, M2, T2…) have their own
 story files.
@@ -24,11 +24,11 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
-> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/essais/essai-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: turn journal and metrics through the web API: ✅ with both set-ups.
+> **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: turn journal and metrics through the web API: ✅ with both set-ups.
 
 ## US-EV3-1 — Read back what the agent did
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
-> **Status on 2026-10-18:** ✅ Checked with the real agent: `read_file`, its arguments, 21 ms, "Succès".
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Status on 2026-10-18:** ✅ Checked with the real agent: `read_file`, its arguments, 21 ms, "Success".
 >
 > **Update on 2026-11-01:** ◐ tested, not yet with the real model. With the real server the page now reads the journal **stored by the server** (`GET /api/journal`, `<data_dir>/journal.db`): it survives a reload and reopening the conversation, includes the CLI's turns, and shows each turn's model time and each tool's server-measured duration (sub-agent tools included). Checked by pytest (scripted model) and vitest.
 
@@ -37,13 +37,13 @@ Other user stories of the interface: [README.md](README.md).
 **so that** I can find which step produced what.
 
 **Acceptance criteria:**
-- Each call is one line: tool, arguments, duration, state (Succès, Échec, en cours).
+- Each call is one line: tool, arguments, duration, state (Success, Failure, in progress).
 - With no call, the page says so and explains how to produce one.
 - *(Added 2026-11-01)* With the real server, the journal of the open conversation is still there after reloading the page; secrets in the arguments are masked.
 
 ## US-EV3-2 — Spot a reliability or slowness problem
-> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../conception/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
-> **Status on 2026-10-18:** ✅ Checked with the real agent: the indicators are computed on the real calls (1 call, 21 ms on average, 0 % failures). The "Tokens utilisés" box was still simulated (0).
+> **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
+> **Status on 2026-10-18:** ✅ Checked with the real agent: the indicators are computed on the real calls (1 call, 21 ms on average, 0 % failures). The "Tokens used" box was still simulated (0).
 >
 > **Update on 2026-11-01:** ◐ tested, not yet with the real model. "Tous les outils" view: per tool, calls, failures, mean and max duration over 7 days, all conversations and both interfaces (`GET /api/journal/metrics`), plus the model's turn count and mean/max model time.
 
@@ -65,5 +65,5 @@ Each story checked against the code and the automated tests (not against earlier
 
 | Story | Status | Code | Test | Missing / note |
 | --- | --- | --- | --- | --- |
-| US-EV3-1 | ✅ | `observability/journal.py`, `web/server.py` (`/api/journal`), `frontend/src/pages/Journal.tsx` | `tests/observability/test_journal.py`, `tests/web/test_journal_quality.py::test_un_tour_web_ecrit_le_journal`, `tests/test_cli_journal.py` |  |
+| US-EV3-1 | ✅ | `observability/journal.py`, `web/server.py` (`/api/journal`), `frontend/src/pages/Journal.tsx` | `tests/observability/test_journal.py`, `tests/web/test_journal_quality.py::test_a_web_turn_writes_the_log`, `tests/test_cli_journal.py` |  |
 | US-EV3-2 | ✅ | `observability/journal.py` (metrics), `frontend/src/pages/Journal.tsx` | `tests/observability/test_journal.py`, `frontend/tests/pages.test.tsx` |  |

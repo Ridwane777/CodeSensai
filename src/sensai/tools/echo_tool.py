@@ -1,8 +1,8 @@
 """
-Outil de démonstration — implémente le contrat Tool (core/tools.py).
+Demo tool — implements the Tool contract (core/tools.py).
 
-Sert de gabarit pour sandbox_tool.py et rag_tool.py, et permet de tester le
-ToolRegistry et la future boucle ReAct avant que les vrais outils soient prêts.
+Serves as a template for sandbox_tool.py and rag_tool.py, and lets us test the
+ToolRegistry and the upcoming ReAct loop before the real tools are ready.
 """
 from typing import Any, ClassVar
 
@@ -11,9 +11,9 @@ from sensai.core.tools import ToolResult
 
 class EchoTool:
     name = "echo"
-    description = "Renvoie le texte reçu tel quel. Sert à tester le registre d'outils."
-    # Obligatoire pour la passerelle (docs/architecture/tool-contract.md) : un outil sans
-    # risque déclaré est traité comme le plus dangereux et demande confirmation.
+    description = "Returns the received text unchanged. Used to test the tool registry."
+    # Required by the gateway (docs/architecture/tool-contract.md): a tool with no
+    # declared risk is treated as the most dangerous and asks for confirmation.
     risk = "read"
     parameters: ClassVar[dict[str, Any]] = {
         "type": "object",
