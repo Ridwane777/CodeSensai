@@ -1,5 +1,5 @@
 """
-Tests the `save_fact` and `recall_facts` tools — feature [M3], ADR-0030.
+Tests the `save_fact` and `recall_facts` tools - feature [M3], ADR-0030.
 
 `test_save_asks_confirmation_and_a_refusal_saves_nothing` guards against
 memory poisoning: no fact gets in without consent.

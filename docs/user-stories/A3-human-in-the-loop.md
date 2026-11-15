@@ -1,4 +1,4 @@
-# User stories — [A3] Human-in-the-Loop (confirmation before a risky action)
+# User stories - [A3] Human-in-the-Loop (confirmation before a risky action)
 
 CLI confirmer `execution/human_in_loop.py`, permission
 modes `execution/tool_policy.py`, called by the gateway
@@ -15,7 +15,7 @@ Persona: Camille, the developer of the scenario
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: CLI refusal: ✅ with both models (nothing written). Web approval through `/confirm`: qwen3:8b ✅; qwen3-coder:30b 2 of 4 (failures: once a call written as text after a sentence, never run by design, ADR-0031, backlog #26; once a confirmation asked in words instead of calling `write_file`).
 
-## US-A3-1 — See the exact plan before code runs
+## US-A3-1 - See the exact plan before code runs
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent run code,
@@ -27,7 +27,7 @@ Persona: Camille, the developer of the scenario
 - Without an answer, the code does not run: the sandbox is never started without an explicit confirmation.
 - What I approve is what runs: the text of the request is built from the same arguments as the call.
 
-## US-A3-2 — Refuse without breaking the agent
+## US-A3-2 - Refuse without breaking the agent
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who refuses an action,
@@ -39,7 +39,7 @@ Persona: Camille, the developer of the scenario
 - A refusal sends the agent a readable tool result (action refused by the user); the loop goes on, nothing is executed.
 - An expired answer timeout (60 s by default, configurable) is a refusal.
 
-## US-A3-3 — Choose when I am asked, without being able to switch security off
+## US-A3-3 - Choose when I am asked, without being able to switch security off
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who finds some confirmations repetitive,
@@ -54,7 +54,7 @@ Persona: Camille, the developer of the scenario
 
 ---
 
-## Part merged from `A3-web-confirmation.md` on 2026-11-02: User stories — [A3] Human-in-the-Loop, confirmation from the browser
+## Part merged from `A3-web-confirmation.md` on 2026-11-02: User stories - [A3] Human-in-the-Loop, confirmation from the browser
 
 Broker `execution/web_confirmation.py`
 (`WebConfirmationBroker`), decision in [ADR-0015](../decisions/0015-synchronous-web-confirmation.md),
@@ -65,7 +65,7 @@ Persona: Camille, the developer of the scenario
 
 ---
 
-## US-A3-W1 — Allow a risky action with one click in the browser
+## US-A3-W1 - Allow a risky action with one click in the browser
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who uses CodeSensai in the browser,
@@ -78,7 +78,7 @@ Persona: Camille, the developer of the scenario
 - If I allow, the tool runs once and the stream continues with its result.
 - If I refuse, the tool does not run, the stream continues and the agent explains or proposes an alternative.
 
-## US-A3-W2 — Silence or an error never counts as approval
+## US-A3-W2 - Silence or an error never counts as approval
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who steps away or whose tab closes,
@@ -91,7 +91,7 @@ Persona: Camille, the developer of the scenario
 - Only the JSON boolean `true` allows: `false`, `1`, `"true"`, `null` or a missing field are refusals.
 - If sending the question to the browser fails, the action is refused.
 
-## US-A3-W3 — Be told when my answer is no longer valid
+## US-A3-W3 - Be told when my answer is no longer valid
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who clicks after the timeout, or twice,
@@ -103,7 +103,7 @@ Persona: Camille, the developer of the scenario
 - When I answer twice, the first answer wins.
 - A late answer never starts the tool.
 
-## US-A3-W4 — Keep several requests independent
+## US-A3-W4 - Keep several requests independent
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who opens several sessions,

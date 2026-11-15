@@ -1,4 +1,4 @@
-# User stories — [X4] Questions and forms
+# User stories - [X4] Questions and forms
 
 Interface: `frontend/`.
 
@@ -26,7 +26,7 @@ Other user stories of the interface: [README.md](README.md).
 
 > **Update on 2026-11-06 (demo rehearsal):** with `qwen3-coder:30b` in the web, "demande-moi ce qu'il te manque" made the model ask its questions **in text**; the form appeared only when the request named `ask_user` and a form. The agent does not yet choose the form on its own (backlog #30).
 
-## US-X4-1 — Answer the agent without leaving the chat
+## US-X4-1 - Answer the agent without leaving the chat
 > **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-29:** ◐ The real server now sends the agent's questions
 > (`ask_user`, ADR-0046) and returns the answers to the model. Checked through
@@ -48,7 +48,7 @@ Other user stories of the interface: [README.md](README.md).
   answer within 100 s, an interruption or a closed tab ends the wait, and the
   agent says it is missing the information instead of guessing it.
 
-## US-X4-2 — Decide before an irreversible action takes place
+## US-X4-2 - Decide before an irreversible action takes place
 > **Update on 2026-11-06:** scenario step **S5**, a missing piece of information ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: the card shows the action, its detail and its risk; "Allow" creates the file ("✓ Allowed"); "Refuse" creates nothing ("✕ Refused") and the agent says so. Also covered by the server tests (yes, no, timeout, late answer).
 

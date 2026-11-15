@@ -3,7 +3,7 @@ Risk levels, permission modes and user preferences for tools.
 
 Part of the tool gateway contract (docs/architecture/tool-contract.md,
 ADR-0006). This module decides nothing on its own: it answers a single
-question — "for this tool, what must the gateway do before running it:
+question - "for this tool, what must the gateway do before running it:
 let it through, ask, or refuse?".
 """
 from __future__ import annotations

@@ -1,4 +1,4 @@
-# ADR-0033 — Conservative semantic cache: bge-m3 embeddings, "decisive words" rules and a 0.90 threshold (A6)
+# ADR-0033 - Conservative semantic cache: bge-m3 embeddings, "decisive words" rules and a 0.90 threshold (A6)
 
 - **Status**: Accepted; amended by ADR-0056 (2026-11-02: cache disabled by default)
 - **Date**: 2026-10-18

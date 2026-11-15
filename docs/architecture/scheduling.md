@@ -1,4 +1,4 @@
-# Task scheduling — [X5]
+# Task scheduling - [X5]
 
 `sensai-schedule` replays agent tasks at a fixed interval, unattended.
 Decision and trade-offs: [ADR-0016](../decisions/0016-task-scheduling.md).

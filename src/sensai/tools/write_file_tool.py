@@ -1,6 +1,6 @@
 """
-[Workstream B] write_file — creates or replaces a text file inside the allowed
-folders — feature [T4].
+[Workstream B] write_file - creates or replaces a text file inside the allowed
+folders - feature [T4].
 
 Risk `write`: the gateway always asks first, and what the user approves is
 `describe_call`: the exact path and, when replacing, a diff. By default the
@@ -51,12 +51,12 @@ class WriteFileTool:
         try:
             path = self.permissions.check_write(args.get("path", ""))
         except PermissionDenied as exc:
-            return f"Write {args.get('path')!r} — will be refused: {exc}"
+            return f"Write {args.get('path')!r} - will be refused: {exc}"
         size = len(content.encode("utf-8"))
         if not path.exists():
             return f"CREATE {path} ({size} bytes):\n\n{_clip(content)}"
         if not args.get("overwrite"):
-            return f"Write {path} — will be refused: it already exists and overwrite is not set."
+            return f"Write {path} - will be refused: it already exists and overwrite is not set."
         try:
             before = path.read_text(encoding="utf-8").splitlines(keepends=True)
         except (OSError, UnicodeDecodeError):

@@ -1,4 +1,4 @@
-# T3 — Web search: real engine trials
+# T3 - Web search: real engine trials
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: isolated web search: ✅ `python.org` with both models, qwen3:8b on CPU 11 min 16, qwen3-coder:30b on GPU 10 s. Earlier measurements below.
 

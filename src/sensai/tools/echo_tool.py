@@ -1,5 +1,5 @@
 """
-Demo tool — implements the Tool contract (core/tools.py).
+Demo tool - implements the Tool contract (core/tools.py).
 
 Serves as a template for sandbox_tool.py and rag_tool.py, and lets us test the
 ToolRegistry and the upcoming ReAct loop before the real tools are ready.

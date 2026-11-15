@@ -233,7 +233,7 @@ def a7_fewshot(t: Trial):
 
 def a5_persona(t: Trial):
     r = t.chat(["/persona list"])
-    return has(r"\* \w+ — ", r.out), r
+    return has(r"\* \w+ - ", r.out), r
 
 
 def ev2_secret(t: Trial):

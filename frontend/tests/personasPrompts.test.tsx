@@ -1,4 +1,4 @@
-// [Workstream A — Fresnel] Personas (A5) and prompt versions (A4) with the real server:
+// [Workstream A - Fresnel] Personas (A5) and prompt versions (A4) with the real server:
 // ADR-0054 and ADR-0055.
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'

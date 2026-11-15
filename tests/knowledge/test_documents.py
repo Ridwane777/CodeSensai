@@ -1,5 +1,5 @@
 """
-File format identification — issue #64 (ADR-0034, levels 1 and 4).
+File format identification - issue #64 (ADR-0034, levels 1 and 4).
 
 The test that matters most: `test_an_unknown_format_is_named_without_inventing_anything`.
 It replaces "binary?": the agent knows what the file is and what to do.

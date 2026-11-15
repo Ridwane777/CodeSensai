@@ -1,4 +1,4 @@
-# ADR-0008 — Scope: implement the 28 features of the catalog
+# ADR-0008 - Scope: implement the 28 features of the catalog
 
 - **Status**: Accepted; partly superseded by ADR-0056 (2026-11-02)
 - **Date**: 2026-10-11
@@ -31,10 +31,10 @@ proximity to each workstream's code, and the 4 bonus ones become mandatory:
 
 | Workstream | Added features |
 | --- | --- |
-| A — Brain | A2 Multi-agents, M2 Token Budgeting, A5 Persona, A7 Prompt optimization |
-| B — Hands | EV1 Evaluation and hallucinations, T4 File access, X5 Scheduling |
-| C — Memory | R2 Advanced RAG, M3 Structured memory, A6 Semantic cache |
-| D — Interface | X2 Branching/interruption, T3 Web search, X3 Export, X4 Questions and forms |
+| A - Brain | A2 Multi-agents, M2 Token Budgeting, A5 Persona, A7 Prompt optimization |
+| B - Hands | EV1 Evaluation and hallucinations, T4 File access, X5 Scheduling |
+| C - Memory | R2 Advanced RAG, M3 Structured memory, A6 Semantic cache |
+| D - Interface | X2 Branching/interruption, T3 Web search, X3 Export, X4 Questions and forms |
 
 ## Consequences
 - ✅ Every catalog feature has an owner and a deadline (ClickUp tasks

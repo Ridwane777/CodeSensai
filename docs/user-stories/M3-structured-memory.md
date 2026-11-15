@@ -1,4 +1,4 @@
-# User stories — [M3] External Structured Memory
+# User stories - [M3] External Structured Memory
 
 Issue #57, mandatory since ADR-0008
 (scope: the 28 features).
@@ -27,7 +27,7 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/remember` then `/profile`: ✅ with both set-ups (< 1 s).
 
-## US-M3-1 — The agent remembers a fact without being told again
+## US-M3-1 - The agent remembers a fact without being told again
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who explains her project over the sessions,
@@ -40,7 +40,7 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
 - The fact is kept after the CLI is closed, in a local database.
 - A fact that already exists is not created twice: it is updated.
 
-## US-M3-2 — The agent finds the facts useful to answer
+## US-M3-2 - The agent finds the facts useful to answer
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks a question weeks later,
@@ -54,7 +54,7 @@ model, tools, confirmation, search) are settled in the ADR dedicated to M3.
   to another ("what depends on Redis?").
 - If it knows nothing, it says so instead of inventing.
 
-## US-M3-3 — Correct or forget a fact
+## US-M3-3 - Correct or forget a fact
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose project changes,

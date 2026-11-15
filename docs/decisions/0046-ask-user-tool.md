@@ -1,8 +1,8 @@
-# ADR-0046 — Questions & Forms (X4): an `ask_user` tool, answered through the same blocking mechanism as confirmations
+# ADR-0046 - Questions & Forms (X4): an `ask_user` tool, answered through the same blocking mechanism as confirmations
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) - to be confirmed by the team
 - **Lot concerned**: D (`web/questions.py`, `web/server.py`, `web/runtime.py`, `frontend/`), with a new shared tool (`tools/ask_user_tool.py`) also registered in the CLI (`cli.py`)
 
 ## Context

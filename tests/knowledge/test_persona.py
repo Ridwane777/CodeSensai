@@ -1,4 +1,4 @@
-"""Tests the agent personas — feature [A5], ADR-0042."""
+"""Tests the agent personas - feature [A5], ADR-0042."""
 import pytest
 
 from sensai.knowledge.persona import (

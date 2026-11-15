@@ -1,5 +1,5 @@
 """
-Checks the prompt registry actually shipped in the repository — feature [A4].
+Checks the prompt registry actually shipped in the repository - feature [A4].
 
 This test runs in CI: it fails if someone edits an already stored version,
 deletes a version file, or merges two branches that created the same

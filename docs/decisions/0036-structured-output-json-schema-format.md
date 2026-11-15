@@ -1,4 +1,4 @@
-# ADR-0036 — Structured output via Ollama's `format` field (JSON schema)
+# ADR-0036 - Structured output via Ollama's `format` field (JSON schema)
 
 - **Status**: Accepted
 - **Date**: 2026-10-23
@@ -20,7 +20,7 @@ HTTP API, like the rest of the project (see `core/ollama_client.py`).
 | Option | Pros | Cons |
 | --- | --- | --- |
 | Ask for JSON in the prompt ("answer in JSON with the fields...") | No code, no dependency | No guarantee: the model adds text around it, forgets a field, or writes invalid JSON. Measured on `qwen3-coder`: fails one time in three on a 4-field request. |
-| Ollama's native `format` field on the `/api/chat` API (JSON Schema or `"json"`) | The model's decoding is constrained token by token: the output is guaranteed to follow the schema's shape (field names, types). Already the mechanism used for native tool calling (ADR-0003) — same API family. | Requires a recent Ollama version; only guarantees the *shape*, not that the *values* make sense; does not mix with tools in the same call (see Decision). |
+| Ollama's native `format` field on the `/api/chat` API (JSON Schema or `"json"`) | The model's decoding is constrained token by token: the output is guaranteed to follow the schema's shape (field names, types). Already the mechanism used for native tool calling (ADR-0003) - same API family. | Requires a recent Ollama version; only guarantees the *shape*, not that the *values* make sense; does not mix with tools in the same call (see Decision). |
 | Validate afterwards with the `jsonschema` library | Finer validation (formats, numeric bounds) | New dependency for a problem `format` already solves at the source; an extra ADR to write to justify it (repo rule on major dependencies). |
 
 ## Decision
@@ -52,7 +52,7 @@ calls the core (Workstream A) without going through the agent loop.
   new ADR for `jsonschema`, not a rewrite of this one.
 - ❌ Assumes an Ollama version that understands `format` as JSON Schema (not
   just `"json"`); on a version that is too old, the call fails or
-  Ollama silently ignores the constraint — `run_structured_query` raises
+  Ollama silently ignores the constraint - `run_structured_query` raises
   `StructuredOutputError` if the response is still not valid JSON,
   but cannot distinguish that case from an undisciplined model.
 - Follow-up: if a schema with fine constraints (regex, min/max, enum) is

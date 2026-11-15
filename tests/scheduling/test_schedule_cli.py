@@ -1,4 +1,4 @@
-"""Tests the `sensai-schedule` command end to end — feature [X5], ADR-0016."""
+"""Tests the `sensai-schedule` command end to end - feature [X5], ADR-0016."""
 import json
 
 import pytest

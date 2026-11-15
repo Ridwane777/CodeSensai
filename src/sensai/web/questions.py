@@ -1,5 +1,5 @@
 """
-[Workstream D] Agent questions from the browser — feature [X4] (ADR-0046).
+[Workstream D] Agent questions from the browser - feature [X4] (ADR-0046).
 
 Same mechanism as web confirmation (`execution/web_confirmation.py`,
 ADR-0015): the `ask_user` tool calls a SYNCHRONOUS `Asker`, which publishes a

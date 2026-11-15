@@ -19,7 +19,7 @@ from sensai.tools.mcp_tool import parse_mcp_config
 
 # Repository root: config.py lives in src/sensai/, so two levels up.
 # Without this, `config.json` and `prompts/` were only found when the command
-# was run from the project folder — but `sensai` is an installed command, and a
+# was run from the project folder - but `sensai` is an installed command, and a
 # coding assistant is precisely launched from the user's own project.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -31,14 +31,14 @@ DEFAULT_HOST = "http://localhost:11434"
 DEFAULT_SYSTEM_PROMPT_PATH = "prompts/system_prompt.txt"
 # Instruction added when a session is resumed (feature M1, ADR-0007).
 DEFAULT_MEMORY_PROMPT_PATH = "prompts/memory_prompt.txt"
-# Session retention (ADR-0007): 30 days, like Claude Code.
+# Session retention (ADR-0007): 30 days.
 DEFAULT_RETENTION_DAYS = 30
 # RAG (ADR-0009): model and threshold chosen by measurement, docs/performance/R1-rag.md.
 DEFAULT_RAG_MODEL = "bge-m3"
 DEFAULT_RAG_MIN_SCORE = 0.54
 DEFAULT_RAG_TOP_K = 5
 # Automatic few-shot (A7, ADR-0044): stricter than RAG, but the threshold is ESTIMATED,
-# not measured — see fewshot.py and scripts/bench_fewshot.py.
+# not measured - see fewshot.py and scripts/bench_fewshot.py.
 DEFAULT_FEWSHOT_MIN_SCORE = 0.75
 # Token budget (M2, ADR-0045): DEFAULT_NUM_CTX (imported from compression.py)
 # is the window sent to Ollama; the budget is derived from it (minus a reply
@@ -130,7 +130,7 @@ def load_system_prompt(path: str) -> str:
 
 def prompts_dir() -> Path:
     """Prompt registry folder (A4, ADR-0010): the current directory's one if it
-    has one, otherwise the repository's — same rule as `resolve_path`."""
+    has one, otherwise the repository's - same rule as `resolve_path`."""
     index = resolve_path(f"prompts/{INDEX_FILE}")
     return index.parent if index else PROJECT_ROOT / "prompts"
 

@@ -18,7 +18,7 @@ function Metric({ id, label, value }: { id: string; label: string; value: string
   )
 }
 
-const ms = (v: number | null | undefined) => (v === null || v === undefined ? '—' : `${fmt(v)} ms`)
+const ms = (v: number | null | undefined) => (v === null || v === undefined ? '-' : `${fmt(v)} ms`)
 
 /** Real server (EV3): the log stored server-side, which survives a reload. */
 function ServerJournal() {
@@ -152,8 +152,8 @@ function LiveJournal() {
       <PageHeader title="Log" intro="Each tool called by the agent during the session: arguments, duration, success or failure. Demo: computed in the browser, nothing is saved." />
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
         <Metric id="metric-calls" label="Tool calls" value={String(logs.length)} />
-        <Metric id="metric-latency" label="Mean latency" value={mean === null ? '—' : `${mean} ms`} />
-        <Metric id="metric-errors" label="Failure rate" value={rate === null ? '—' : `${rate} %`} />
+        <Metric id="metric-latency" label="Mean latency" value={mean === null ? '-' : `${mean} ms`} />
+        <Metric id="metric-errors" label="Failure rate" value={rate === null ? '-' : `${rate} %`} />
         <Metric id="metric-tokens" label="Tokens used" value={fmt(state.usage.used)} />
       </div>
       <GlassCard className="p-5">

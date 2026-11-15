@@ -1,5 +1,5 @@
 """
-Tests A5 (persona) end to end on the real CLI, without Ollama — ADR-0042
+Tests A5 (persona) end to end on the real CLI, without Ollama - ADR-0042
 (the core: switching persona mid-session) and ADR-0043 (the extras:
 per-persona tool restriction, automatic keyword routing, adding a persona
 during a session).
@@ -103,7 +103,7 @@ def test_persona_use_keeps_history_intact(lancer, tmp_path):
     )
 
     # Turn 2: system (new), then the two messages of turn 1, then the new
-    # question — the history has not changed.
+    # question - the history has not changed.
     tour2 = observe[1]["messages"]
     assert [m["role"] for m in tour2] == ["system", "user", "assistant", "user"]
     assert tour2[1]["content"] == "first question"
@@ -229,7 +229,7 @@ def espions(monkeypatch):
 
 def test_delegate_task_refuses_a_tool_disabled_by_persona(lancer, espions):
     """PR #95 review: the restriction also applies to subagents, which share
-    the CLI gateway — no test guaranteed it."""
+    the CLI gateway - no test guaranteed it."""
     delegates, _ = espions
     lancer(["Hello"], personas=PersonaStore.from_config(TUTEUR_SANS_CODE))
     refus = []

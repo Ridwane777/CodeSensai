@@ -1,4 +1,4 @@
-# User stories — [T4] File Access within Permissions
+# User stories - [T4] File Access within Permissions
 
 Tools `read_file` and `write_file`, permission layer
 `execution/file_permissions.py`, decision in [ADR-0011](../decisions/0011-file-permissions.md).
@@ -10,7 +10,7 @@ for the team ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: write after confirmation: ✅ with both models (10 min 39 on CPU, 8 s on GPU).
 
-## US-T4-1 — Let the agent read my project without exposing my secrets
+## US-T4-1 - Let the agent read my project without exposing my secrets
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks "explain this module",
@@ -23,7 +23,7 @@ for the team ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 - Reading `../x`, `/etc/passwd` or a symbolic link that leaves the project is refused.
 - A binary or too large file returns a readable error, not a crash.
 
-## US-T4-2 — Approve each write while seeing what changes
+## US-T4-2 - Approve each write while seeing what changes
 > **Update on 2026-11-06:** scenario step **S4**, the fix, approved ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent edit her code,
@@ -36,7 +36,7 @@ for the team ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 - An existing file is never overwritten without `overwrite=true`, visible in the request.
 - Writing outside the project or to a protected file is refused before the question is even asked.
 
-## US-T4-3 — Limit where the agent can write
+## US-T4-3 - Limit where the agent can write
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who wants an agent "allowed to read and write in `/src`" for the team,

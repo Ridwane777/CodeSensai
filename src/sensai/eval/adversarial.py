@@ -1805,7 +1805,7 @@ def render_markdown(results: list[Result]) -> str:
     for r in results:
         if r.case.expected is Expected.KNOWN_GAP:
             lines += [
-                f"- **{r.case.id}** — {r.case.gap}",
+                f"- **{r.case.id}** - {r.case.gap}",
                 f"  Observed: {_cell(r.detail)}",
             ]
     return "\n".join(lines) + "\n"

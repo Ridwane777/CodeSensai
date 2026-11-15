@@ -1,8 +1,8 @@
-# ADR-0052 — Scheduling (X5): the agent may propose a scheduled task, always on explicit approval
+# ADR-0052 - Scheduling (X5): the agent may propose a scheduled task, always on explicit approval
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-11-01
-- **Deciders**: Ridwane (Lot C) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C) - to be confirmed by the team
 - **Lot concerned**: B/X5 (`tools/schedule_task_tool.py`, scheduling), A (`tools/delegate_tool.py`, `core/agent.py`), D (`web/runtime.py`)
 
 ## Context
@@ -10,13 +10,13 @@
 Tasks could only be scheduled with an explicit command (`sensai-schedule add`,
 or `/schedule add` in the chat, [ADR-0028](0028-schedule-and-eval-commands-in-chat.md)).
 Asking in plain language ("summarise the TODOs every morning") did nothing: the
-agent had no tool for it, on purpose — what the model writes is never run as a
+agent had no tool for it, on purpose - what the model writes is never run as a
 command. A scheduled task replays its prompt with nobody watching
 ([ADR-0016](0016-task-scheduling.md)), so an instruction hidden in a
 web page or a file the agent read could, through such a tool, plant an action that
 runs every day: the worst case of prompt injection, because it persists.
 
-Claude Code allows scheduling in plain language through tools gated by its
+Existing command-line agents allow scheduling in plain language through tools gated by its
 permission system, and runs the scheduled agents in an isolated cloud environment.
 
 ## Options considered
@@ -49,7 +49,7 @@ permission system, and runs the scheduled agents in an isolated cloud environmen
   recurring task (still limited by the unattended policy).
 - ❌ The task runs only if `sensai-schedule loop` or cron runs; the agent says so, but
   nothing starts it automatically.
-- ❌ Unlike Claude Code, tasks run on the user's machine, not in an isolated
+- ❌ Unlike hosted agents, tasks run on the user's machine, not in an isolated
   environment: the unattended policy is the only barrier.
 - Follow-up: checked with `qwen3-coder:30b` on 2026-11-01, in the CLI and through
   `sensai-web`: task created after "yes", nothing created after "no" on the card, and

@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Session persistence & profiles — feature [M1].
+[Workstream C - Ridwane] Session persistence & profiles - feature [M1].
 
 Two things survive closing the CLI:
 
@@ -434,8 +434,8 @@ def handle_command(
     """Handle the memory commands typed in the CLI.
 
     Returns the text to display, or None if `line` is not a command: it is then
-    sent to the model. Only a line that *starts* with a command is intercepted
-    — "why does /profile return 404?" is a question.
+    sent to the model. Only a line that *starts* with a command is intercepted:
+    "why does /profile return 404?" is a question.
     """
     command, _, argument = line.strip().partition(" ")
     argument = argument.strip()

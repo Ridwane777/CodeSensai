@@ -55,7 +55,7 @@ def test_numbered_diff_without_headers():
 
 
 def test_text_without_diff_shown_as_is():
-    assert "Remember: auth" in render(ui.diff_view("Remember: auth — port: 8080"))
+    assert "Remember: auth" in render(ui.diff_view("Remember: auth - port: 8080"))
 
 
 def test_instruction_is_given_only_once(monkeypatch):

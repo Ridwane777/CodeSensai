@@ -1,4 +1,4 @@
-# A6 — Semantic cache: measurements and real trial
+# A6 - Semantic cache: measurements and real trial
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: same question twice with the cache on: qwen3:8b on CPU 5 min 37 then **0.5 s** from the cache; qwen3-coder:30b on GPU 9.0 s then **1.8 s**. Identical question only: the rephrasing measurements below still stand. Earlier measurements below.
 

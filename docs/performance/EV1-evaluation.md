@@ -1,4 +1,4 @@
-# Answer and hallucination evaluation — [EV1]
+# Answer and hallucination evaluation - [EV1]
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `sensai-eval run` on `ev1_sample.jsonl` (5 cases) was run for real: qwen3:8b as model and judge on CPU, report written in 25 min; qwen3-coder:30b on GPU in 19 s, mean relevance **3.40 / 5**, coherence **5.00 / 5**, faithfulness **0.42** (4 cases with claims), 3 claims of 7 flagged. These are a model's estimates, not measurements (see "Limits"). Earlier measurements below.
 

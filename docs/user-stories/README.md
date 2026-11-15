@@ -1,4 +1,4 @@
-# User stories — index
+# User stories - index
 
 Every story is written for one of the two personas of the scenario
 ([persona-and-scenario.md](../design/persona-and-scenario.md)):

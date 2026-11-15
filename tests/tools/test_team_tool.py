@@ -1,4 +1,4 @@
-"""Tests the `team_task` team — feature [A2], ADR-0038.
+"""Tests the `team_task` team - feature [A2], ADR-0038.
 
 The sub-agents are fake turns (no Ollama): each answers according to its role,
 recognized by its instructions in the system message.

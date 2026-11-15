@@ -222,7 +222,7 @@ export class HttpEngine implements Engine {
     let message = `Unexpected server response (${res.status})`
     try {
       const body = (await res.json()) as { error?: string; details?: string }
-      if (body.error) message = body.details ? `${body.error} — ${body.details}` : body.error
+      if (body.error) message = body.details ? `${body.error} - ${body.details}` : body.error
     } catch {
       /* unreadable body: generic message */
     }

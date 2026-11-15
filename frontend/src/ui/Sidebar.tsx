@@ -42,7 +42,7 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
 }
 
 /**
- * claude.ai-style sidebar: fixed on the left on large screens, a drawer opened by the
+ * Chat-assistant-style sidebar: fixed on the left on large screens, a drawer opened by the
  * "hamburger" button below `lg` (clicking the backdrop, Escape or a link closes it).
  */
 export function Sidebar() {

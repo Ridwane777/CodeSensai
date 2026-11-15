@@ -127,7 +127,7 @@ export class MockEngine implements Engine {
   private fill(text: string): string {
     return text.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
       const v = this.answers[key]
-      return v === undefined || v === '' ? '—' : String(v)
+      return v === undefined || v === '' ? '-' : String(v)
     })
   }
 

@@ -4,7 +4,7 @@ A7 measurements (automatic few-shot): where should `fewshot_min_score` go?
 Same method as `scripts/bench_cache.py` (A6): for each example in the library,
 we compute the similarity (bge-m3, cosine) with:
 - **close questions**, which should receive that example;
-- **distant questions**, which must **never** receive it — a bad example
+- **distant questions**, which must **never** receive it - a bad example
   misleads the model more than an off-topic RAG passage, ADR-0044.
 
 Not run yet (no Ollama with bge-m3 was available when this script was

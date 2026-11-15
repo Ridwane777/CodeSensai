@@ -1,4 +1,4 @@
-# ADR-0024 — Extensions to Workstream A's contract: what we ask for, and what to do if refused
+# ADR-0024 - Extensions to Workstream A's contract: what we ask for, and what to do if refused
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

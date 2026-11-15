@@ -1,5 +1,5 @@
 """
-[Workstream B — Meric] User confirmation before a risky action — feature [A3]
+[Workstream B - Meric] User confirmation before a risky action - feature [A3]
 Human-in-the-Loop. Applies before any call to `run_code` (risk `execute`).
 
 Cross-workstream contract (ADR-0005): HOW the question is asked belongs to the

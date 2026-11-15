@@ -1,4 +1,4 @@
-# Performance measurements — [R1] Basic RAG
+# Performance measurements - [R1] Basic RAG
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: "where is `maximum` defined?": ✅ `stats.py:6` with both models, qwen3:8b on CPU 7 min 41, qwen3-coder:30b on GPU 57 s, indexing included. Earlier measurements below.
 
@@ -36,7 +36,7 @@ Both VMs were set up for the measurement (Ollama, models, Python environment
 in a dedicated folder) and then fully cleaned. The development machine (disk
 97% full, no GPU) was not used.
 
-## Measurement A — which embedding model?
+## Measurement A - which embedding model?
 
 **Method**
 - Corpus: the 55 text files tracked by git (code, docs, tests, config), split
@@ -67,7 +67,7 @@ in a dedicated folder) and then fully cleaned. The development machine (disk
 On the first attempt (2 vCPU), `nomic-embed-text` gave the same score (8/15,
 14/15) in 178 s: quality does not depend on the machine, time does.
 
-**"Nothing found" threshold** — score of the best passage for each question:
+**"Nothing found" threshold** - score of the best passage for each question:
 
 | | Weakest real question | Strongest unanswerable question | Margin |
 |---|---|---|---|
@@ -89,7 +89,7 @@ The corrupted-database question fails with all three models (rank 15, 33 and
 in neighboring code. That is the concrete argument for structure-based
 splitting (decision 3).
 
-## Measurement B — which search method?
+## Measurement B - which search method?
 
 **Method**: random normalized vectors of 1,024 dimensions (bge-m3's size),
 top-5 search by dot product over the whole collection. Median time over 20
@@ -117,7 +117,7 @@ python scripts/bench_rag.py quality --models bge-m3 --chunker structure
 
 **Method error fixed.** A first attempt gave 1/15 in 1st position: since the
 corpus is `git ls-files`, it now contained the results of the first
-measurement, its report and this script — three files that contain the 15
+measurement, its report and this script - three files that contain the 15
 questions word for word. Search found the question instead of the answer.
 The script now excludes `docs/performance/` and `scripts/bench_rag.py` from
 the corpus (`EXCLUDED_FROM_CORPUS`). A measurement's own files must never be
@@ -271,4 +271,4 @@ the models are free. The RunPod pod is billed by the hour while it runs
 (range from `docs/research/infra-options.md`: $0.20 to $0.70/h for an RTX
 3090/4090); the exact trial duration was not recorded. Usage cost for the
 user: 1.2 GB of disk for bge-m3, plus the index size (not measured on a real
-project — to be added with the implementation).
+project - to be added with the implementation).

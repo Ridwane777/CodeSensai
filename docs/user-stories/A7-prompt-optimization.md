@@ -1,4 +1,4 @@
-# A7 — Automated Prompt Optimization
+# A7 - Automated Prompt Optimization
 
 See [ADR-0044](../decisions/0044-automatic-few-shot.md) for the design
 (semantic few-shot selection, reusing the EV1 dataset format and the R1
@@ -21,7 +21,7 @@ feature**.
   JSONL file in the EV1 dataset format (`eval/dataset.py`): `id`,
   `question`, `answer` per line.
 - A case without an `answer` is silently unusable as an example (it's a
-  normal EV1 case without one — not an error, since the same file could
+  normal EV1 case without one - not an error, since the same file could
   also be used for `sensai-eval`).
 - A missing, unreadable, or malformed file disables the feature with a
   clear warning at startup; it never stops the CLI from working otherwise.
@@ -37,14 +37,14 @@ to paste the example myself every time**.
 ### Acceptance criteria
 
 - Before a question reaches the model, if a configured example's question
-  is semantically close enough (`fewshot_min_score`, default 0.75 — an
+  is semantically close enough (`fewshot_min_score`, default 0.75 - an
   estimate, see ADR-0044), it is
-  attached to the question sent to the model — never to the system prompt,
+  attached to the question sent to the model - never to the system prompt,
   and never saved into the session's history.
 - A question with no sufficiently close example reaches the model
   unchanged: nothing is added "just in case".
 - The attached example is clearly marked as an example to draw inspiration
-  from, not a question to answer — the real question is still the one
+  from, not a question to answer - the real question is still the one
   being asked.
 
 > **Update on 2026-10-29:** ◐ Web interface ([ADR-0050](../decisions/0050-real-web-features-on-demand-evaluation.md), proposed): few-shot now works in `sensai-web` as in the CLI (`fewshot_examples`, `fewshot_min_score`, example attached to the question, `fewshot` event); a missing or broken examples file becomes a notice instead of an error. Tested (`tests/web/test_real_features.py`, `frontend/tests/realFeatures.test.tsx`), not yet with the real model.

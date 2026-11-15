@@ -1,5 +1,5 @@
 """
-The LLM judge — feature [EV1], ADR-0019.
+The LLM judge - feature [EV1], ADR-0019.
 
 One model call per case, which answers in JSON:
 
@@ -9,7 +9,7 @@ One model call per case, which answers in JSON:
 Faithfulness is not asked of the model: it is computed here from the verdicts
 (SUPPORTED / number of claims). A local model sometimes outputs broken JSON;
 we retry with a corrective message, and if that is not enough the case is
-marked `judge_error` — never scored 0, never counted in the averages.
+marked `judge_error` - never scored 0, never counted in the averages.
 
 The prompt text comes from the prompt registry (A4, ADR-0010) under the name
 `judge`: changing the prompt therefore means a new version, and the report

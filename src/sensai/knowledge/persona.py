@@ -1,5 +1,5 @@
 """
-[Workstream A — Fresnel] Agent personas — feature [A5], ADR-0042 and ADR-0043.
+[Workstream A - Fresnel] Agent personas - feature [A5], ADR-0042 and ADR-0043.
 
 The agent's name, tone, role and scope are read from `config.json`
 (`personas` section), never hard-coded: the same system becomes a legal
@@ -44,7 +44,7 @@ class Persona:
     def as_prompt(self) -> str:
         return (
             f"For this session, you are {self.name}. Your role: {self.role}. "
-            f"Your tone: {self.tone}. Answer scope: {self.scope} — "
+            f"Your tone: {self.tone}. Answer scope: {self.scope} - "
             "if a question falls outside it, say so instead of answering anyway."
         )
 
@@ -75,8 +75,8 @@ class PersonaStore:
     def from_config(cls, data: dict | None) -> PersonaStore:
         """`data`: the value of `config.json["personas"]`, or None/absent.
 
-        Any entry without the expected shape — `data` not a dict, a profile
-        that is not a dict, a field that is missing, empty or not a string —
+        Any entry without the expected shape - `data` not a dict, a profile
+        that is not a dict, a field that is missing, empty or not a string -
         raises PersonaError rather than a Python AttributeError/TypeError: a
         badly written config must stop with a clear message, never a CLI
         traceback.
@@ -161,7 +161,7 @@ def handle_persona_command(
         for name in store.names():
             p = store.get(name)
             marker = "*" if name == active_id else " "
-            lines.append(f"{marker} {p.id} — {p.name}, {p.role}")
+            lines.append(f"{marker} {p.id} - {p.name}, {p.role}")
         return "\n".join(lines), active_id
     if words[1] == "use" and len(words) == 3:
         try:

@@ -1,8 +1,8 @@
-# Technical requirements — Tool gateway (contract shared by every tool)
+# Technical requirements - Tool gateway (contract shared by every tool)
 
 > Moved from `docs/user-stories/` on 2026-11-02: these are technical requirements shared by the features, not user stories of one catalogue feature.
 
-Workstream B — Hands (Meric). `execution/gateway.py`, `tool_validation.py`,
+Workstream B - Hands (Meric). `execution/gateway.py`, `tool_validation.py`,
 `tool_policy.py`. Contract: [tool-contract.md](../architecture/tool-contract.md);
 decision: [ADR-0006](../decisions/0006-tool-gateway.md).
 Not a catalogue feature: it is the base that makes A3, EV2 and T2/T4
@@ -13,7 +13,7 @@ the developer ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
 ---
 
-## US-GW-1 — Add a tool without rewriting the security
+## US-GW-1 - Add a tool without rewriting the security
 
 **As** Marc, the lead who adds an in-house tool (a search, an MCP server…) for the team,
 **I want** to declare only a name, a schema, a risk and a `run` function,
@@ -23,7 +23,7 @@ the developer ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 - Every call follows the same sequence: known tool, enabled, valid arguments, permission mode, input guardrails, confirmation, execution, valid result, output filters, size limit.
 - An unknown tool name, a disabled tool or a user refusal returns an error result readable by the model, never an exception.
 
-## US-GW-2 — A model that makes a mistake does not crash the agent
+## US-GW-2 - A model that makes a mistake does not crash the agent
 
 **As** Camille, the developer whose local model sometimes produces malformed calls,
 **I want** the arguments to be validated against the tool's schema before execution,

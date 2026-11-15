@@ -1,4 +1,4 @@
-# ADR-0039 — Structured output (T5) in two steps: search, then format
+# ADR-0039 - Structured output (T5) in two steps: search, then format
 
 - **Status**: Accepted (2026-10-24)
 - **Date**: 2026-10-24

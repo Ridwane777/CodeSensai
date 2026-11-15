@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Structured fact memory — feature [M3], ADR-0030.
+[Workstream C - Ridwane] Structured fact memory - feature [M3], ADR-0030.
 
 A fact is a triple (entity, attribute, value): `(auth, version_redis, 7)`,
 `(auth, depend_de, redis)`. A relation is a fact whose value is another
@@ -126,9 +126,9 @@ class FactStore:
         with closing(self._connect()) as conn:
             old = [r["value"] for r in self._values(conn, ekey, akey)]
             others = self._others(conn, ekey, akey)
-        fact = f"{entity} — {attribute}: {value}"
+        fact = f"{entity} - {attribute}: {value}"
         if mode == "replace" and old and old != [value]:
-            plan = f"Update fact: {entity} — {attribute}: {', '.join(old)} → {value}"
+            plan = f"Update fact: {entity} - {attribute}: {', '.join(old)} → {value}"
         elif mode == "add" and old:
             plan = f"Add: {fact} (current values: {', '.join(old)})"
         else:
@@ -305,12 +305,12 @@ def handle_facts_command(
                 return f"No history for {words[1]}."
             return "\n".join(
                 f"{e['at']}  {e['action']:<7}  {e['attribute']}: "
-                f"{e['old_value'] or '—'} → {e['new_value'] or '—'}" for e in entries
+                f"{e['old_value'] or '-'} → {e['new_value'] or '-'}" for e in entries
             )
         entity = " ".join(words)
         facts = store.recall(entity=entity)
         if not facts:
             return f"No facts about {entity}."
-        return "\n".join(f"{f['entity']} — {f['attribute']}: {f['value']}" for f in facts)
+        return "\n".join(f"{f['entity']} - {f['attribute']}: {f['value']}" for f in facts)
     except (FactError, sqlite3.Error, OSError) as e:
         return f"[Error] {e}"

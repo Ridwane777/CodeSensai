@@ -1,8 +1,8 @@
-# ADR-0047 — Web interface (X1, A2): real `agent_handoff` events, announced when a sub-agent actually starts
+# ADR-0047 - Web interface (X1, A2): real `agent_handoff` events, announced when a sub-agent actually starts
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) - to be confirmed by the team
 - **Lot concerned**: D (`web/runtime.py`, `frontend/`), with a small hook in A's `tools/team_tool.py` (Fresnel)
 
 ## Context

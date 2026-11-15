@@ -1,5 +1,5 @@
 """
-Tests the token budget and rolling-summary compression — feature
+Tests the token budget and rolling-summary compression - feature
 [M2], ADR-0045.
 
 `stream_chat_messages` is replaced by a fake summarizer: no network call,
@@ -86,7 +86,7 @@ def test_user_assistant_alternation_kept_after_compression(monkeypatch):
 
 def test_single_message_bigger_than_budget_is_sent_silently(monkeypatch):
     """Nothing to summarize (a single turn, below keep_recent): the message is
-    sent as is, even over budget — no infinite loop, no error."""
+    sent as is, even over budget - no infinite loop, no error."""
     def faux_stream(host, model, messages, options=None):
         pytest.fail("must never be called: nothing to summarize")
 
@@ -147,7 +147,7 @@ def test_summarize_passes_num_ctx_in_options(monkeypatch):
 
 def test_summarize_caps_input_to_num_ctx(monkeypatch):
     """PR #97 review: summarizing turns that are themselves too big for num_ctx
-    must not be silently truncated by Ollama — we cap them ourselves."""
+    must not be silently truncated by Ollama - we cap them ourselves."""
     recu = {}
 
     def faux_stream(host, model, messages, options=None):
@@ -174,7 +174,7 @@ def test_resolve_budget_derives_from_num_ctx_otherwise():
 
 def test_compress_messages_without_explicit_budget_follows_num_ctx(monkeypatch):
     """A single default (PR #97 review): without `max_tokens`, the limit is
-    `num_ctx` minus the margin — no more 8000 constant contradicting the rest."""
+    `num_ctx` minus the margin - no more 8000 constant contradicting the rest."""
     def faux_stream(host, model, messages, options=None):
         yield {"content": "summary"}
 

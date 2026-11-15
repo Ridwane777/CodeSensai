@@ -1,5 +1,5 @@
 """
-`sensai-prompt` command: manage prompt versions — feature [A4], ADR-0010.
+`sensai-prompt` command: manage prompt versions - feature [A4], ADR-0010.
 
 A team tool, used in the terminal like `git`: it needs neither Ollama nor
 the agent. Typical flow:
@@ -84,7 +84,7 @@ def run(args: argparse.Namespace, store: PromptStore) -> int:
                   f"To put it into service: sensai-prompt use {args.prompt} {version}")
     elif args.command == "use":
         version = store.use(args.prompt, args.version)
-        print(f"{args.prompt}: {version} active — used on the next sensai launch. "
+        print(f"{args.prompt}: {version} active - used on the next sensai launch. "
               "Commit prompts/versions.json to apply it to the team.")
     elif args.command == "check":
         problems = store.check()

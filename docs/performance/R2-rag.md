@@ -1,4 +1,4 @@
-# R2 — Advanced RAG: measurements
+# R2 - Advanced RAG: measurements
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: the end-to-end RAG scenario passes with both models (see R1); the ranking measurements below are not redone by that trial. Earlier measurements below.
 

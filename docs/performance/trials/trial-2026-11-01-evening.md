@@ -1,4 +1,4 @@
-# Full trial of every feature — 2026-11-01, afternoon
+# Full trial of every feature - 2026-11-01, afternoon
 
 State of `main` after PRs #115 to #117: A7 visible in the web, Python 3.12
 CI, time in the prompt, ADRs accepted. Same day as the

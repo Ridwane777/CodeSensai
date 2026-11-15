@@ -1,4 +1,4 @@
-# ADR-NNNN — Short title of the decision
+# ADR-NNNN - Short title of the decision
 
 - **Status**: Proposed | Accepted | Superseded by ADR-xxxx | Abandoned
 - **Date**: YYYY-MM-DD
@@ -23,7 +23,7 @@ What we choose, in one or two sentences.
 - Follow-up: tests, documents, threshold at which the decision should be revisited
 
 <!--
-Reminders (AGENTS.md):
+Reminders:
 - write the ADR when the decision is made, and add its line to README.md (the index);
 - an accepted ADR is never rewritten: create a new one that supersedes it,
   and only the Status line of the old one changes.

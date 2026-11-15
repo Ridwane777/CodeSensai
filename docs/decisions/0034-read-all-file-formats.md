@@ -1,4 +1,4 @@
-# ADR-0034 — Read and index any file format: content-based identification, MarkItDown conversion in the sandbox, an honest answer otherwise
+# ADR-0034 - Read and index any file format: content-based identification, MarkItDown conversion in the sandbox, an honest answer otherwise
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-18
@@ -18,7 +18,7 @@ The long-term goal: read the content, whatever the format.
 
 What is done elsewhere:
 - coding agents convert the document to text or Markdown before
-  reading it. Claude Code reads PDFs natively, and conversion "skills"
+  reading it. Some command-line agents read PDFs natively, and conversion "skills"
   can be added (pdfplumber, MinerU); OpenHands integrates
   PDF conversion;
 - MarkItDown (Microsoft, MIT) converts to Markdown, for LLMs: PDF,
@@ -63,7 +63,7 @@ Constraints:
 | Only when the agent calls `read_file` | No indexing cost | A question that does not name the file ("which frameworks are mandated?") never finds the requirements PDF |
 | **Also at RAG indexing** (chosen) | This is what document RAGs do: LlamaIndex (`SimpleDirectoryReader`), AnythingLLM and PrivateGPT index PDF, docx, xlsx, pptx by default; it is what US-R1-4 asks for | 3 to 8 s per document on first indexing; Docker required to benefit |
 
-Code indexers (Cursor) stick to code, but CodeSensai must
+Code indexers stick to code, but CodeSensai must
 also answer about the project's documents (US-R1-4).
 
 **Where to run the conversion**

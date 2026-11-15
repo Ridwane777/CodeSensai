@@ -1,5 +1,5 @@
 """
-A team of specialized agents that hand work to each other — feature [A2]
+A team of specialized agents that hand work to each other - feature [A2]
 Multi-Agent Orchestration (ADR-0038).
 
 `team_task` chains three specialized agents (roles defined in
@@ -240,9 +240,9 @@ class TeamTool:
         end = f"{judge} verdict: {state}"
         if self.test_runner is not None and not written:
             state = "needs fix"
-            end = "verdict: needs fix — no file modified, the tests were not run"
+            end = "verdict: needs fix - no file modified, the tests were not run"
         if wrong:
-            end = ("verdict: needs fix — file written in the wrong place: " + ", ".join(
+            end = ("verdict: needs fix - file written in the wrong place: " + ", ".join(
                 f"{made} (the task asked for {asked}, which was not modified)"
                 for made, asked in wrong))
         if state != "approved":

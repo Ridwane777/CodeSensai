@@ -5,7 +5,7 @@ for qwen3?
 Unlike `bench_cache.py` (A6) and `bench_fewshot.py` (A7), which measure
 embedding similarity, this compares the rough estimate (`len(text) // 4`)
 with the actual count the Ollama API itself returns in `prompt_eval_count`
-for an exchange that is really sent — the measurement suggested by the
+for an exchange that is really sent - the measurement suggested by the
 PR #97 review.
 
 Not run yet (no Ollama with a chat model was available when this script was

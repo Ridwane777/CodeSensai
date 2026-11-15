@@ -1,4 +1,4 @@
-# Real-model trial — [M4] Project state document
+# Real-model trial - [M4] Project state document
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/state`: ✅ with both set-ups (< 1 s). Earlier measurements below.
 
@@ -31,8 +31,8 @@ section changes (US-M4-2), every change is visible, logged and can be undone
 | --- | --- | --- |
 | 1. "Fix the bug in calcul.py, then update the state document" | `read_file`, `write_file`, then `update_state` on "Done" and on "In progress" | ✅ Each confirmation shows the section before and after. `diff` against the original: only "Done" and "In progress" changed; the preamble, "Decisions" and "Known issues" are identical. 20 s for the turn |
 | 2. New session: "Where are we? Answer without using a tool." | No tool call | ✅ Accurate summary of the four sections (US-M4-1). 3.5 s including commands |
-| 3. `/state history` | — | ✅ Date, action, section and summary of both updates |
-| 4. `/state undo En cours`, twice | — | ⚠️ The 1st restores "- Nothing", the 2nd **undoes the undo**. Matches the first version of the ADR, but confusing: fixed (see below) |
+| 3. `/state history` | - | ✅ Date, action, section and summary of both updates |
+| 4. `/state undo En cours`, twice | - | ⚠️ The 1st restores "- Nothing", the 2nd **undoes the undo**. Matches the first version of the ADR, but confusing: fixed (see below) |
 | 5. After the fix: "Add a docstring, note it, add In progress: write tests", then `/state undo Fait` twice | `write_file`, `update_state` (`append` on "Done", `replace` on "In progress") | ✅ The agent uses `append` without copying the old line. Both undos remove the last two lines of "Done", like Ctrl+Z |
 
 ## What the trial changed

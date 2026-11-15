@@ -1,4 +1,4 @@
-# Legal file — risk analysis
+# Legal file - risk analysis
 
 > **Disclaimer.** These documents are written by the CodeSensai project team for what
 > the project is today: a development tool used by the team on its own

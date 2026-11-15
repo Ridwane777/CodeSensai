@@ -1,4 +1,4 @@
-# Architecture — CodeSensai
+# Architecture - CodeSensai
 
 Status as of 2026-10-14 (`main`, after #73). Decisions live in
 [decisions/](../decisions/README.md); this document describes what the code does.
@@ -6,7 +6,7 @@ Status as of 2026-10-14 (`main`, after #73). Decisions live in
 ## Use case
 A solo developer (or a small team) on a long-running project who wants an
 assistant that can: remember the code context from one session to the next,
-run and fix code autonomously, and explain its reasoning transparently —
+run and fix code autonomously, and explain its reasoning transparently -
 while asking for confirmation before any risky action and never leaking
 secrets.
 
@@ -18,16 +18,16 @@ secrets.
       └──────────┬──────────┴──────────────────────────┘
                  │  the same events: Token, Thought, ToolCall, ToolReturn, Error, Done
                  ▼
-        ReAct agent — core/agent.py                         Workstream A (A1)
+        ReAct agent - core/agent.py                         Workstream A (A1)
         calls the model → reads tool_calls → calls a tool → repeats (6 calls max)
                  │  Ollama native tool calling (ADR-0003)
                  ▼
-        Gateway — execution/gateway.py                      Workstream B (ADR-0006)
+        Gateway - execution/gateway.py                      Workstream B (ADR-0006)
         risk policy · argument validation · EV2 guardrails ·
         A3 confirmation · timeout (120 s) · result sanitizing and validation
                  │
                  ▼
-        Tool registry — core/tools.py + registry.py         shared Tool contract (ADR-0002)
+        Tool registry - core/tools.py + registry.py         shared Tool contract (ADR-0002)
    ┌─────────────┬──────────────┬──────────────┬──────────────┬─────────────────┐
  run_code      read_file      write_file     web_search     search_codebase
  (T2, Docker)  (T4)           (T4)           (T3, Chromium  (R1, Workstream C,
@@ -80,7 +80,7 @@ Around the loop:
 | Ollama client | `core/ollama_client.py` | A | Raw HTTP calls, streaming, tools in the `tools` field |
 | History | `core/history.py` | A | Conversation context sent to the model |
 | Agent (ReAct) | `core/agent.py` | A | Tool-calling loop, at most 6 model calls per turn |
-| Events | `core/events.py` | A | What a turn emits — CLI ↔ web contract ([api-contract.md](web/api-contract.md), [web-api.md](web/web-api.md)) |
+| Events | `core/events.py` | A | What a turn emits - CLI ↔ web contract ([api-contract.md](web/api-contract.md), [web-api.md](web/web-api.md)) |
 | Tool contract, registry | `core/tools.py` | A | `Tool` protocol, `ToolRegistry` |
 | Shared registry | `registry.py` | all | Tools offered to the CLI and the scheduler: one line per tool |
 | Gateway | `execution/gateway.py`, `tool_policy.py`, `tool_validation.py`, `output_sanitizer.py` | B | Every tool call goes through it ([tool-contract.md](tool-contract.md)) |
@@ -97,7 +97,7 @@ Around the loop:
 | External MCP tool | `tools/mcp_tool.py` | D | Skeleton: to be written |
 | Observability | `observability/` | D | Upcoming: turn log, feeds the interface |
 
-## Interfaces — the contracts between workstreams
+## Interfaces - the contracts between workstreams
 
 Every capability exposed to the agent implements the `Tool` protocol
 (`core/tools.py`):
@@ -118,7 +118,7 @@ model. See [ADR-0002](../decisions/0002-shared-tool-registry.md) and
 [ADR-0006](../decisions/0006-tool-gateway.md).
 
 Second contract, for the interfaces: an agent turn emits
-**events** (`core/events.py`), not text — the CLI displays them, the
+**events** (`core/events.py`), not text - the CLI displays them, the
 scheduler summarizes them in a run report, the web will serialize them to JSON.
 See [ADR-0005](../decisions/0005-web-interface-facade.md).
 
@@ -150,7 +150,7 @@ demo) and `HttpEngine` (SSE skeleton, not wired; routes `/messages`,
 ## Why this architecture (summary)
 
 - **`core/` vs `execution/` vs `knowledge/`**: split by
-  responsibility, not by person — survives a change in who does what.
+  responsibility, not by person - survives a change in who does what.
 - **A mandatory gateway between the agent and the tools**: the
   protections (confirmation, guardrails, timeouts) are written once, and
   no tool can forget them.

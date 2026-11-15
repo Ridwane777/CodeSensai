@@ -1,4 +1,4 @@
-"""Tests the judge passage providers — feature [EV1], ADR-0019."""
+"""Tests the judge passage providers - feature [EV1], ADR-0019."""
 from sensai.eval.sources import (
     NO_PASSAGES,
     Passage,

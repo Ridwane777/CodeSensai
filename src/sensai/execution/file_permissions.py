@@ -1,5 +1,5 @@
 """
-Permission layer for file access — feature [T4].
+Permission layer for file access - feature [T4].
 
 Every path an agent gives to a file tool goes through here BEFORE any
 filesystem call. The rules, in order:

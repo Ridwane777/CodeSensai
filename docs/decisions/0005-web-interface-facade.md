@@ -1,4 +1,4 @@
-# ADR-0005 — The web interface is a facade, not a second agent
+# ADR-0005 - The web interface is a facade, not a second agent
 
 Date: 2026-09-25
 Workstream: D (impacts A and B)
@@ -15,7 +15,7 @@ README:
   being started.
 
 The underlying question remains: what is the web interface allowed to do?
-The default answer — "it reimplements whatever it needs" — produces two
+The default answer - "it reimplements whatever it needs" - produces two
 agents that diverge, and a demo where the CLI and the browser give different
 answers to the same question.
 
@@ -30,7 +30,7 @@ answers to the same question.
 ## Decision
 1. **The web calls `sensai.core`, it does not duplicate it.** All reasoning,
    tool-calling and history logic stays in `core/`. If the web needs a
-   behavior `core/` cannot provide, we change `core/` — and the CLI benefits
+   behavior `core/` cannot provide, we change `core/` - and the CLI benefits
    too.
 2. **The exchange format between the interface and the core is frozen
    before development**, just as the `Tool` protocol was for tools
@@ -59,4 +59,4 @@ answers to the same question.
   Internet is a generation API open to everyone. Closing that access is part
   of Workstream D's scope.
 - FastAPI (or equivalent) is allowed: it is a web framework, not an LLM
-  framework — [ADR-0001](0001-no-llm-framework.md) is not affected.
+  framework - [ADR-0001](0001-no-llm-framework.md) is not affected.

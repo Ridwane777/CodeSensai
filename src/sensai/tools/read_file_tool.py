@@ -1,5 +1,5 @@
 """
-[Workstream B] read_file — reads a text file inside the allowed folders — feature [T4].
+[Workstream B] read_file - reads a text file inside the allowed folders - feature [T4].
 
 Paths are checked by execution.file_permissions before the file is opened.
 The content is untrusted data (a file can contain instructions): the gateway

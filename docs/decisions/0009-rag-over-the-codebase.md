@@ -1,4 +1,4 @@
-# ADR-0009 — RAG over the project: bge-m3, SQLite + numpy, automatic indexing
+# ADR-0009 - RAG over the project: bge-m3, SQLite + numpy, automatic indexing
 
 - **Status**: Accepted (2026-11-01, approved by the team); threshold (decision 8) and ranking superseded by [ADR-0032](0032-hybrid-rag-and-reranking.md)
 - **Date**: 2026-10-11
@@ -68,7 +68,7 @@ Decisions 1, 2 and 8 rely on measurements:
 
 | Option | Pros | Cons |
 | --- | --- | --- |
-| **Automatically, on the first question, then only modified files** (chosen) | Nothing to run by hand: the Claude Code experience (which itself searches on demand with `grep`, without embeddings: we borrow the experience, not the mechanism). A progress display is shown | A slow first question on a new project |
+| **Automatically, on the first question, then only modified files** (chosen) | Nothing to run by hand: the experience of existing command-line agents (which itself searches on demand with `grep`, without embeddings: we borrow the experience, not the mechanism). A progress display is shown | A slow first question on a new project |
 | Explicit command (`/index`) | No surprise delay | A step the user has to know about |
 | Full indexing at every launch | Always up to date | Several minutes of waiting at every startup |
 

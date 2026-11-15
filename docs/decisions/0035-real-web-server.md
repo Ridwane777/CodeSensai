@@ -1,4 +1,4 @@
-# ADR-0035 — Real web interface: `sensai-web` FastAPI server, same agent as the CLI
+# ADR-0035 - Real web interface: `sensai-web` FastAPI server, same agent as the CLI
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-18

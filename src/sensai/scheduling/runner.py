@@ -1,5 +1,5 @@
 """
-Running scheduled tasks — feature [X5], ADR-0016.
+Running scheduled tasks - feature [X5], ADR-0016.
 
 Nobody is in front of the screen when a task runs. The guarantees:
 
@@ -90,7 +90,7 @@ def unattended_preferences(
     """Preferences for an unattended run.
 
     `confirm_after_untrusted` is forced: after reading untrusted content, no
-    non-read tool runs without confirmation — so, here, none at all. An
+    non-read tool runs without confirmation - so, here, none at all. An
     `allowed` list removes the other tools from what the model sees. `modes`
     is left alone: the policy ignores any loosening for WRITE and EXECUTE
     anyway.
@@ -124,7 +124,7 @@ def build_unattended_gateway(
 
 class _RecordingGateway:
     """Wraps the gateway to keep, per tool call, the name and the outcome
-    (ok or error code) — never the arguments, which may contain secrets."""
+    (ok or error code) - never the arguments, which may contain secrets."""
 
     def __init__(self, inner: Any) -> None:
         self.inner = inner

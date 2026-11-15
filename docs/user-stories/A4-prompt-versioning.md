@@ -1,4 +1,4 @@
-# User stories — [A4] Prompt Versioning
+# User stories - [A4] Prompt Versioning
 
 Registry and command `sensai-prompt`; web page (US-A4-4, US-A4-5). Mandatory
 since ADR-0008 (scope: the 28 features).
@@ -18,7 +18,7 @@ version identifiers, commands) are decided in the A4 ADR
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-prompt history` and `check`: ✅ with both set-ups (< 1 s).
 
-## US-A4-1 — Find what changed in a prompt, and when
+## US-A4-1 - Find what changed in a prompt, and when
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who notices the agent has answered differently for a few days,
@@ -33,10 +33,10 @@ version identifiers, commands) are decided in the A4 ADR
 
 *Real case: the M1 memory prompt (`prompts/memory_prompt.txt`), added after
 the trials, changed the model's answers ("I have no memory" became "yes, you
-had a login bug") — see
+had a login bug") - see
 [docs/performance/M1-sessions.md](../performance/M1-sessions.md).*
 
-## US-A4-2 — Save a new version effortlessly
+## US-A4-2 - Save a new version effortlessly
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who edits a prompt (for example the ReAct prompt),
@@ -48,7 +48,7 @@ had a login bug") — see
 - A short description can be attached ("add the memory instruction").
 - A change that does not alter the text creates no version.
 
-## US-A4-3 — Go back in one command
+## US-A4-3 - Go back in one command
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who notices that a new version degrades the answers,
@@ -61,7 +61,7 @@ had a login bug") — see
 - This is the Definition of Done: show the history and go back to an older
   version in one command.
 
-## US-A4-4 — Browse the real registry from the web interface
+## US-A4-4 - Browse the real registry from the web interface
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01 (
@@ -81,7 +81,7 @@ description, active one), the text of a version and a diff between two versions,
 - Nothing on the page can save a version or change the active one: the
   registry files keep the same bytes (checked by a test).
 
-## US-A4-5 — Try a system prompt version in one conversation
+## US-A4-5 - Try a system prompt version in one conversation
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 *Update on 2026-11-01: ◐ tested with a scripted model (pytest) and vitest,

@@ -1,5 +1,5 @@
 """
-[Workstream B — Meric] Content & privacy guardrails — feature [EV2].
+[Workstream B - Meric] Content & privacy guardrails - feature [EV2].
 
 What is implemented here plugs into the tool gateway (docs/architecture/tool-contract.md):
 

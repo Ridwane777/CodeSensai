@@ -1,5 +1,5 @@
 """
-Tests for RAG over the project — feature [R1].
+Tests for RAG over the project - feature [R1].
 
 Each block maps to a user story in docs/user-stories/R1-basic-rag.md;
 the choices under test come from docs/decisions/0009-rag-over-the-codebase.md.

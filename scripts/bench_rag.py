@@ -1,5 +1,5 @@
 """
-Measurements behind the R1 (Basic RAG) choices — see docs/performance/R1-rag.md.
+Measurements behind the R1 (Basic RAG) choices - see docs/performance/R1-rag.md.
 
 Two independent measurements:
 

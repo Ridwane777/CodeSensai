@@ -14,7 +14,3 @@ frontend/dist/
 # macOS
 .DS_Store
 
-# Local Claude Code folders (sub-agent worktrees): never committed
-.claude/
-# Temporary (requested on 2026-11-01)
-CLAUDE.md

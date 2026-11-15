@@ -1,4 +1,4 @@
-# Real-model trials — [M1] Session persistence & profiles
+# Real-model trials - [M1] Session persistence & profiles
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: resume a session and recall a word: ✅ with both models, qwen3:8b on CPU 20 min 33 (2 turns), qwen3-coder:30b on GPU 16 s. Earlier measurements below.
 
@@ -25,10 +25,10 @@ and the profile applies in a fresh session.
 
 | Date | Model (machine) | Resume | "Do you remember my bug?" | "Which test, which error?" | Profile in a new session |
 |---|---|---|---|---|---|
-| 2026-10-11 | `llama3` (dev machine, CPU) | ✅ "resumed (2 messages)" | ❌ "I have no memory" | — | ✅ pytest, in French |
+| 2026-10-11 | `llama3` (dev machine, CPU) | ✅ "resumed (2 messages)" | ❌ "I have no memory" | - | ✅ pytest, in French |
 | 2026-10-11 | `granite3.1-moe` (dev machine, CPU) | ✅ | ✅ cites the test and the KeyError | ⚠️ answers with an action plan | ✅ pytest, in French |
 | 2026-10-12 | `qwen3-coder:30b` (RunPod pod, GPU), M1 at commit `9a9724e`, RAG disabled | ✅ | ⚠️ "I can't remember the details… but I can help you with the `KeyError` on "token"" | ✅ "`test_login` was failing with a `KeyError` on "token"" | ✅ pytest-style test |
-| 2026-10-12 | `qwen3-coder:30b` (RunPod pod, GPU), with the resume instruction | ✅ | ✅ "Yes, you had a login bug where the test failed with a `KeyError` on "token"…" | ✅ same exact answer | — (in a new session, same question: asks for details, does not invent) |
+| 2026-10-12 | `qwen3-coder:30b` (RunPod pod, GPU), with the resume instruction | ✅ | ✅ "Yes, you had a login bug where the test failed with a `KeyError` on "token"…" | ✅ same exact answer | - (in a new session, same question: asks for details, does not invent) |
 
 During the 2026-10-12 trial, `/sessions` listed both project sessions with
 title, date and message count, and both `sessions.db` and `profile.json` were

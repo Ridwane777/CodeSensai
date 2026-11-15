@@ -1,5 +1,5 @@
 """
-[Workstream B — Meric] Evaluation of the agent's answers by an LLM judge — feature
+[Workstream B - Meric] Evaluation of the agent's answers by an LLM judge - feature
 [EV1], ADR-0019.
 
 A second model call scores each answer (relevance, coherence, 1 to 5) and

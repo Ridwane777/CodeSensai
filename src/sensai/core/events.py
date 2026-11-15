@@ -1,5 +1,5 @@
 """
-What the agent emits during a turn — the contract between the core and the
+What the agent emits during a turn - the contract between the core and the
 interfaces (ADR-0005).
 
 The idea: an agent turn does not produce "text", it produces a sequence of
@@ -9,11 +9,11 @@ these steps is a distinct event.
 Why this rather than a text stream: the CLI renders these events in a
 terminal, the web interface sends them to the browser as JSON. Both consume
 the SAME source. If the core returned pre-formatted text, the web app would
-have to split it again — i.e. rebuild logic that belongs to the core, exactly
+have to split it again - i.e. rebuild logic that belongs to the core, exactly
 what ADR-0005 forbids.
 
 Practical consequence: adding an event type here forces a decision on what
-each interface does with it. That is intended — it is what keeps the two
+each interface does with it. That is intended - it is what keeps the two
 interfaces from drifting apart unnoticed.
 """
 from __future__ import annotations
@@ -30,7 +30,7 @@ class Token:
 
 @dataclass
 class Thought:
-    """The agent's reasoning before acting — the transparency requirement.
+    """The agent's reasoning before acting - the transparency requirement.
 
     Separate from Token so interfaces can present it differently: dimmed in
     the terminal, collapsible in the browser. Never mixed up with the answer

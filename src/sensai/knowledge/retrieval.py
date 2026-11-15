@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Keyword search and rank fusion — feature [R2].
+[Workstream C - Ridwane] Keyword search and rank fusion - feature [R2].
 
 `BM25` complements R1's embedding search: code names (`retention_days`,
 `purge`, `SessionStore`) are exact words that embeddings match poorly.

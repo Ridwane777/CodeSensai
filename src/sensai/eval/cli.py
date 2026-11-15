@@ -1,5 +1,5 @@
 """
-`sensai-eval` command: evaluate the agent's answers with an LLM judge —
+`sensai-eval` command: evaluate the agent's answers with an LLM judge -
 feature [EV1], ADR-0019.
 
     sensai-eval run --dataset datasets/eval/ev1_sample.jsonl --out report.json
@@ -184,7 +184,7 @@ def _print_run_summary(report: dict, out: str) -> None:
     )
     for case in report["cases"]:
         if case["status"] != STATUS_OK:
-            print(f"  - {case['id']}: {case['status']} — {case.get('error', '')}")
+            print(f"  - {case['id']}: {case['status']} - {case.get('error', '')}")
     print(f"Report: {out}")
 
 

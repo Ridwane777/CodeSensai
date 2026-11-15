@@ -1,7 +1,7 @@
 # CodeSensai
 
 **A local coding agent that reads your codebase, runs and fixes code in a
-sandbox, and asks before it touches anything — on a model you host yourself.**
+sandbox, and asks before it touches anything - on a model you host yourself.**
 
 CodeSensai is a developer agent written in Python 3.12 that talks directly to
 [Ollama](https://ollama.com)'s HTTP API, **without an LLM framework**
@@ -19,7 +19,7 @@ client and a web interface (React + TypeScript, SSE streaming).
 - **No framework, full control**: agent loop, tool registry, Ollama client,
   context budgeting and structured output are plain Python
   (`src/sensai/core/`).
-- **Safety by design**: every tool call goes through one gateway — human
+- **Safety by design**: every tool call goes through one gateway - human
   confirmation for writes and execution, secret masking on tool I/O *and* on
   the streamed answer, path allow-lists, timeouts, untrusted-output wrapping
   ([ADR-0006](docs/decisions/0006-tool-gateway.md)).
@@ -337,11 +337,11 @@ With the server, the interface also offers:
   on the Quality page (EV1, one model call, on demand only), and the
   **Planning page** that lists, adds, pauses and removes real `sensai-schedule`
   tasks (they run only while `sensai-schedule loop` runs);
-- a **left sidebar** like claude.ai with the conversations and every tab
+- a **left sidebar** like a typical chat assistant, with the conversations and every tab
   (Home, Chat, Memory, Agents, Quality, Prompts, Log, Planning,
   Export), a drawer on small screens;
 - since 2026-10-31 ([ADR-0051](docs/decisions/0051-calm-chat-layout-and-motion.md)): a **calmer
-  chat** — input ready on the welcome screen, a wider conversation, the
+  chat** - input ready on the welcome screen, a wider conversation, the
   Artefact / Sources panel folded by default, smooth animations instead of
   stop-motion ones, and a **"working" indicator** (rotating star, what the
   agent does, seconds elapsed) with the reasoning folding itself at the end.
@@ -440,7 +440,7 @@ later, in any session of the project.
 > We moved the auth service to Redis 8.
   → recall_facts({'entity': 'auth service'})
   → save_fact({'entity': 'auth service', 'attribute': 'uses', 'value': 'Redis 8'})
-[Confirmation] … Change the fact: auth service — uses: Redis 7 → Redis 8
+[Confirmation] … Change the fact: auth service - uses: Redis 7 → Redis 8
 Allow? [y/N] y
 
 (new session)
@@ -637,23 +637,23 @@ python scripts/essai_outils.py --web   # real trial of the tools through the gat
 Built by a team of four.
 
 **My contribution (Ridwane777):** project lead; the knowledge layer in
-`src/sensai/knowledge/` — RAG over the codebase (indexing, hybrid retrieval,
+`src/sensai/knowledge/` - RAG over the codebase (indexing, hybrid retrieval,
 reranking, document readers for every file format), session memory, the
 structured fact memory, the semantic cache, the `SENSAI.md` state document and
-prompt versioning — with their agent tools (`search_codebase`, `save_fact` /
+prompt versioning - with their agent tools (`search_codebase`, `save_fact` /
 `recall_facts`, `update_state`, `schedule_task`, `list_files`, project tests),
 the CLI and configuration (`cli.py`, `config.py`, `ui.py`, `sensai-prompt`),
 the EV4 adversarial corpus, and most of the architecture, decision (ADR),
 business, research and performance documentation, including the reproducible
 feature-trial scripts and the trial reports.
 
-- **Christopher Guidibi** ([@Christopher142769](https://github.com/Christopher142769)) —
+- **Christopher Guidibi** ([@Christopher142769](https://github.com/Christopher142769)) -
   web frontend (React/TypeScript), the web server (`src/sensai/web/`) and observability.
-- **Meric Gbemetonou** ([@Meric-BG](https://github.com/Meric-BG)) —
+- **Meric Gbemetonou** ([@Meric-BG](https://github.com/Meric-BG)) -
   sandbox and code execution (Docker Python/browser/document sandboxes, tool
   gateway, guardrails, human-in-the-loop), file and web-search tools,
   scheduling, LLM-judge evaluation.
-- **Fresnel Satignon** ([@fresnel-cyber](https://github.com/fresnel-cyber)) —
+- **Fresnel Satignon** ([@fresnel-cyber](https://github.com/fresnel-cyber)) -
   agent core (`src/sensai/core/`: ReAct loop, Ollama client, history,
   structured output), personas, few-shot examples, context compression,
   sub-agent delegation and team handoffs; legal and dependency documentation.

@@ -1,8 +1,8 @@
-# Project dossier — document map
+# Project dossier - document map
 
 Entry point for following the work **without reading the code**: how to use
 it, how it is built, what we decided, what it implies, what we take away from
-it. Writing rules: [AGENTS.md](../AGENTS.md). Keep this map up to date with
+it. Keep this map up to date with
 every document added.
 
 As of 2026-11-01.

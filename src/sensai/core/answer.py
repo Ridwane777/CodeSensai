@@ -1,7 +1,7 @@
 """
 The text of a turn's reply, as it is stored (M1 session, A6 cache).
 
-The model sometimes writes a bit of text, calls a tool, then writes the rest —
+The model sometimes writes a bit of text, calls a tool, then writes the rest -
 or even rewrites the same reply. Concatenated as is, these chunks produced
 "…the file.The file…" in the stored session (real trial run on 2026-11-01).
 Here, each chunk separated by a tool call becomes a paragraph, and a chunk the

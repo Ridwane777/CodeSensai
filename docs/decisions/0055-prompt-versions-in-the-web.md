@@ -1,8 +1,8 @@
-# ADR-0055 — Prompt versions (A4) in the web: read the registry, try a version in one conversation
+# ADR-0055 - Prompt versions (A4) in the web: read the registry, try a version in one conversation
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-11-01
-- **Deciders**: Ridwane (Lot C), on behalf of Lot A (Fresnel) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot A (Fresnel) - to be confirmed by the team
 - **Lot concerned**: A/A4 (feature presented by Lot A; registry `knowledge/prompt_versions.py` from [ADR-0010](0010-prompt-versioning.md)), D (`web/runtime.py`, `web/server.py`, `frontend/`)
 
 ## Context

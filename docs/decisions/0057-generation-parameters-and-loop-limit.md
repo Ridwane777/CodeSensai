@@ -1,4 +1,4 @@
-# ADR-0057 — Generation parameters and loop limit come from the configuration
+# ADR-0057 - Generation parameters and loop limit come from the configuration
 
 - **Status**: Accepted (2026-11-02, decided by Ridwane, Lot C)
 - **Date**: 2026-11-01

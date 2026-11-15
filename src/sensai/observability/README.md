@@ -1,4 +1,4 @@
-[Workstream D — Christopher] Logging & Monitoring [EV3] (ADR-0008, ADR-0053).
+[Workstream D - Christopher] Logging & Monitoring [EV3] (ADR-0008, ADR-0053).
 
 `journal.py` traces every agent turn in `<data_dir>/journal.db` (SQLite, mode
 600): per turn, the session, the model time measured server-side, the

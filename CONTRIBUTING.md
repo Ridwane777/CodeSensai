@@ -23,7 +23,7 @@ git push -u origin lot-a/react-loop
 Then open the Pull Request on GitHub.
 
 **Branch naming:** `lot-<a|b|c|d>/<short-topic>`, where the letter is the
-workstream. The prefix tells who is working without opening the branch —
+workstream. The prefix tells who is working without opening the branch -
 `lot-b/sandbox-docker`, `lot-c/rag-ingestion`, `lot-d/api-web`.
 
 **Before pushing**, if `main` has moved in the meantime:
@@ -53,7 +53,7 @@ other three workstreams. It always goes through Workstream A.
 
 The longer a branch lives, the further `main` moves without it, and the
 higher the risk of touching the same lines as someone else. Split the work:
-"the MCP client connects", then "the MCP client calls a tool" — not one huge
+"the MCP client connects", then "the MCP client calls a tool" - not one huge
 PR.
 
 ## What must pass before requesting a review
@@ -67,12 +67,12 @@ CI (`.github/workflows/ci.yml`) runs both on every PR. A red PR is not
 merged.
 
 If your change adds a guardrail, **add the test that fails when it is
-removed** — otherwise someone will "simplify" it in three weeks without
+removed** - otherwise someone will "simplify" it in three weeks without
 understanding what it was for.
 
 ## Architecture decisions
 
-When a structural choice is made — a tool we adopt, an approach we reject —
+When a structural choice is made - a tool we adopt, an approach we reject -
 it is written in `docs/decisions/`, from `TEMPLATE.md`. One file per
 decision, numbered, never rewritten: if we change our minds, we create a new
 one that supersedes the old one. Each ADR adds its row to the index
@@ -80,7 +80,7 @@ one that supersedes the old one. Each ADR adds its row to the index
 lose (at least one ❌).
 
 ADRs are only part of the project file (legal, performance, costs,
-retrospective, business, user stories): see `AGENTS.md` and the map
+retrospective, business, user stories): see the map
 `docs/README.md`.
 
 Each ADR carries a `Status`: `proposed` until the team has decided,
@@ -94,7 +94,7 @@ not.
 ## Code conventions
 
 - **Comments in English**, like the rest of the code, explaining the
-  **why** — especially in security logic. That is what stops a future
+  **why** - especially in security logic. That is what stops a future
   contributor from removing a critical check by accident.
 - **Commit messages in English**, in the existing format:
   `feat(scope): ...`, `docs(scope): ...`, `chore(scope): ...`.
@@ -103,7 +103,7 @@ not.
 ## What we never commit
 
 No API key, no `.env`, no password, no private pod address. `.gitignore`
-covers part of it, not all of it — check the diff before pushing.
+covers part of it, not all of it - check the diff before pushing.
 
 If a secret leaks anyway: tell the team immediately, and consider the key
 compromised. Removing it from a commit does not remove it from the history.

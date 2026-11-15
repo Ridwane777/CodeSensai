@@ -1,8 +1,8 @@
-# ADR-0050 — Web interface: M2, M4 and A2 data streamed as SSE events, EV1 evaluation on demand, X5 tasks edited from the web but run by `sensai-schedule`
+# ADR-0050 - Web interface: M2, M4 and A2 data streamed as SSE events, EV1 evaluation on demand, X5 tasks edited from the web but run by `sensai-schedule`
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Workstream C), on behalf of Workstream D — to be confirmed by the team
+- **Deciders**: Ridwane (Workstream C), on behalf of Workstream D - to be confirmed by the team
 - **Workstream**: D (`src/sensai/web/runtime.py`, `src/sensai/web/server.py`, `frontend/src/engine/wire.ts`, `frontend/src/pages/Quality.tsx`, `frontend/src/pages/Planning.tsx`)
 
 ## Context

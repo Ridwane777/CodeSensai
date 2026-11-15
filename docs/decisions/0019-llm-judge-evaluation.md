@@ -1,4 +1,4 @@
-# ADR-0019 — LLM-judge evaluation: versioned prompt, per-claim faithfulness, comparable reports
+# ADR-0019 - LLM-judge evaluation: versioned prompt, per-claim faithfulness, comparable reports
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14
@@ -27,7 +27,7 @@ can be wrong, and it is wrong in a way that depends on its model. This ADR
 does not claim otherwise; it decides how to limit these errors and make them
 visible.
 
-## Decision 1 — An LLM judge whose prompt is a version in the A4 registry
+## Decision 1 - An LLM judge whose prompt is a version in the A4 registry
 
 | Option | Pros | Cons |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ temperature 0 and fixed seed (42). The client writes its own non-streamed
 and streams, and we do not modify `core/ollama_client.py` for a peripheral
 feature.
 
-## Decision 2 — Scale: 1 to 5 judged by the model, faithfulness computed by the code
+## Decision 2 - Scale: 1 to 5 judged by the model, faithfulness computed by the code
 
 | Option | Pros | Cons |
 | --- | --- | --- |
@@ -53,7 +53,7 @@ feature.
 Relevance ignores factual accuracy, and so does coherence: the two
 criteria do not mix with faithfulness.
 
-## Decision 3 — Comparable reports: frozen metadata, a comparison that refuses silence
+## Decision 3 - Comparable reports: frozen metadata, a comparison that refuses silence
 
 Each JSON report carries the judge (model, host, prompt and its sha256,
 temperature, seed, number of retries), the dataset (sha256, number of
@@ -72,7 +72,7 @@ compare.
 | Compare silently | Simple | A judge change reads as agent progress. |
 | Refuse any non-comparable comparison | Safe | We can no longer look at the effect of a judge change, useful to validate the judge itself. |
 
-## Decision 4 — Hallucination detection: per-claim verdict, with citation
+## Decision 4 - Hallucination detection: per-claim verdict, with citation
 
 The judge splits the answer into factual claims and gives each one a
 verdict **SUPPORTED**, **CONTRADICTED** or **UNVERIFIABLE**, with the

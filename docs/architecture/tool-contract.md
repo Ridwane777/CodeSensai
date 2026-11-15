@@ -9,8 +9,8 @@ side effects that cannot be undone, and all of them feed text back to the model.
 The contract therefore has to hold for any tool, not just code execution.
 
 A tool writes no security checks. It **declares** what it is (name, arguments,
-risk) and **returns** a `ToolResult`. Everything else — permissions,
-confirmation, validation, filtering — is applied by the gateway
+risk) and **returns** a `ToolResult`. Everything else - permissions,
+confirmation, validation, filtering - is applied by the gateway
 (`execution/gateway.py`), in the same way for every tool.
 
 ```
@@ -232,7 +232,7 @@ offered to the model).
 
 ## Preferences
 
-`ToolPreferences` (`execution/tool_policy.py`), built from a dict — for example
+`ToolPreferences` (`execution/tool_policy.py`), built from a dict - for example
 a `"tools"` key in `config.json`:
 
 ```json
@@ -334,7 +334,7 @@ agent_registry = gateway   # the agent calls gateway.call / gateway.describe_all
 2. `run()` does not raise; errors become `ok=False` with enough to fix them.
 3. If `risk` is `write` or `execute`: write `describe_call` so the plan shown to
    the user is readable.
-4. `registry.register(MyTool())` — registration with the gateway is automatic,
+4. `registry.register(MyTool())` - registration with the gateway is automatic,
    since it is the same registry instance.
 5. A test `tests/<lot>/test_my_tool.py`: success, expected failure, and (if
    `ask`) a test proving that without confirmation the tool does not run.

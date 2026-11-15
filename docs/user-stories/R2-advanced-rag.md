@@ -1,4 +1,4 @@
-# User stories — [R2] Advanced RAG
+# User stories - [R2] Advanced RAG
 
 Issue #56, high priority.
 
@@ -22,7 +22,7 @@ threshold) are settled in the ADR dedicated to R2.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: same RAG scenario as R1: ✅ with both models; the ranking itself is measured in [R2-rag.md](../performance/R2-rag.md).
 
-## US-R2-1 — The passage that really answers, first
+## US-R2-1 - The passage that really answers, first
 > **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking a precise question about her code,
@@ -36,7 +36,7 @@ threshold) are settled in the ADR dedicated to R2.
 - If re-ranking fails (missing model, error), R1's order is kept without
   crashing.
 
-## US-R2-2 — Search only where needed
+## US-R2-2 - Search only where needed
 > **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who knows where the answer is,
@@ -49,7 +49,7 @@ threshold) are settled in the ADR dedicated to R2.
 - A passage outside the filter is never returned.
 - An unknown filter gives a clear message instead of an empty result.
 
-## US-R2-3 — Discard the passages that look alike without answering
+## US-R2-3 - Discard the passages that look alike without answering
 > **Update on 2026-11-06:** scenario step **S2**, she asks how to run the tests ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who relies on the cited passages,

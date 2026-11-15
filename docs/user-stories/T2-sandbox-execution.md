@@ -1,4 +1,4 @@
-# User stories — [T2] Sandboxed code execution
+# User stories - [T2] Sandboxed code execution
 
 Tool `run_code` (`tools/sandbox_tool.py`), sandboxes in
 `execution/sandbox/`. The isolated web search (`web_search`, same sandbox
@@ -18,7 +18,7 @@ these stories guarantee that the error comes back complete enough for that to wo
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `run_code` in the Docker sandbox: ✅ `42` with both models (7 min 43 on CPU, 5 s on GPU).
 
-## US-T2-1 — Run code without putting my machine at risk
+## US-T2-1 - Run code without putting my machine at risk
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent test its code,
@@ -32,7 +32,7 @@ these stories guarantee that the error comes back complete enough for that to wo
 - An infinite loop is stopped at the timeout (10 s by default, 60 s at most) with a readable `Timeout` error; a memory overrun (256 MB) is reported as such.
 - If Docker is missing or broken, the tool returns a readable error (`SandboxError`); it does not crash the agent.
 
-## US-T2-2 — Get a usable error to fix the code
+## US-T2-2 - Get a usable error to fix the code
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose agent writes a script that crashes,

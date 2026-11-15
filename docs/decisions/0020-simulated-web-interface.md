@@ -1,4 +1,4 @@
-# ADR-0020 — Web interface built on a simulated engine, behind a replaceable contract
+# ADR-0020 - Web interface built on a simulated engine, behind a replaceable contract
 
 - **Status**: Accepted (2026-11-01, approved by the team); partly superseded by [ADR-0035](0035-real-web-server.md) (real server)
 - **Date**: 2026-10-13

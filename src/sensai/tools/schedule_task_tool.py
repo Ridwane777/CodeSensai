@@ -7,7 +7,7 @@ prompt and frequency. Then `sensai-schedule` (cron or `loop`) runs it,
 unattended, with its usual policy (risky actions refused).
 
 Guardrails, because a scheduled task replays its prompt every day with nobody
-in front of the screen — the worst case for an instruction hidden in a web page
+in front of the screen - the worst case for an instruction hidden in a web page
 or a file that was read:
 - `write` risk: the gateway ALWAYS asks for approval (no preference can
   loosen this level, `tool_policy.LOOSENABLE`);

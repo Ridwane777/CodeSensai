@@ -1,4 +1,4 @@
-"""Tests the report and the comparison — feature [EV1], ADR-0019."""
+"""Tests the report and the comparison - feature [EV1], ADR-0019."""
 import copy
 import json
 from datetime import UTC, datetime

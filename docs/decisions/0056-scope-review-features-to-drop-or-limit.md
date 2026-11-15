@@ -1,4 +1,4 @@
-# ADR-0056 — Features we drop or limit
+# ADR-0056 - Features we drop or limit
 
 - **Status**: Accepted (2026-11-02, decided by Ridwane, Lot C): all five items applied
 - **Date**: 2026-11-01

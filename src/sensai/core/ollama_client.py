@@ -1,5 +1,5 @@
 """
-Minimal HTTP client for the Ollama API — NO LLM framework (project constraint).
+Minimal HTTP client for the Ollama API - NO LLM framework (project constraint).
 Everything goes through direct HTTP calls via `requests`.
 """
 import json
@@ -70,7 +70,7 @@ def stream_chat_messages(
     `format` is passed as is in the field of the same name (ADR-0036): a JSON
     schema to constrain the reply to that shape, or `"json"`.
 
-    `options` is passed as is in the field of the same name — notably
+    `options` is passed as is in the field of the same name - notably
     `num_ctx` (M2, ADR-0045): without it, Ollama truncates the history at its
     own default limit (2048 or 4096 depending on the version), silently and
     well before the budget M2 tracks.
@@ -128,7 +128,7 @@ def stream_chat(
 ) -> Iterator[str]:
     """
     Send the conversation history to Ollama and stream the reply chunk by
-    chunk (not a single block — a project requirement).
+    chunk (not a single block - a project requirement).
 
     `num_ctx` (M2, ADR-0045): see `stream_chat_messages`.
     """

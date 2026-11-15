@@ -1,8 +1,8 @@
-# ADR-0049 — Web interface (X1): answers rendered by a small hand-written Markdown renderer, not a library
+# ADR-0049 - Web interface (X1): answers rendered by a small hand-written Markdown renderer, not a library
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot D (Christopher) - to be confirmed by the team
 - **Lot concerned**: D (`frontend/src/features/chat/markdown.tsx`)
 
 ## Context

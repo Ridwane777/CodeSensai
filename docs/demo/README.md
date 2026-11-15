@@ -260,7 +260,7 @@ For slides that do not take WebM (Keynote, PowerPoint), convert one with
 | [web-7-memory-export-share.webm](web/web-7-memory-export-share.webm) | [png](web/web-7-memory-export-share.png) | a preference added, a conversation reopened, export preview, share link created | M1, X3 |
 | [web-8-cache-sources-artifact.webm](web/web-8-cache-sources-artifact.webm) | [png](web/web-8-cache-sources-artifact.png) | Sources panel; the same question in a new conversation, "Answer served from the cache (similarity 100 %)"; `update_state` with its diff, accepted | A6, R1, M4 |
 | [web-9-stop-variant-refusal.webm](web/web-9-stop-variant-refusal.webm) | [png](web/web-9-stop-variant-refusal.png) | a long answer stopped with "■ Stop" ("Generation interrupted"); "✎ Edit" on the message, "Send the variant", tabs "Main / Variant 1"; `run_code` refused, "✕ Denied" | X2, A3 |
-| [demo-day-in-the-life.webm](web/demo-day-in-the-life.webm) | — | **the whole scenario S0 → S9 d in one video** (2026-11-02, 6 min 30): EV2 key masked and injection blocked, `/context`, team verdict by the project's tests, cache, variant, `schedule_task` from the chat, export, journal, quality, "Reviewer Sensai" refusing to write; see [trial 2026-11-02](../performance/trials/trial-2026-11-02.md) | all steps of the scenario |
+| [demo-day-in-the-life.webm](web/demo-day-in-the-life.webm) | - | **the whole scenario S0 → S9 d in one video** (2026-11-02, 6 min 30): EV2 key masked and injection blocked, `/context`, team verdict by the project's tests, cache, variant, `schedule_task` from the chat, export, journal, quality, "Reviewer Sensai" refusing to write; see [trial 2026-11-02](../performance/trials/trial-2026-11-02.md) | all steps of the scenario |
 
 ### Coverage of the 30 features
 

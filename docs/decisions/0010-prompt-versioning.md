@@ -1,4 +1,4 @@
-# ADR-0010 — Prompt versioning: immutable versions in the repository, "active" bookmark
+# ADR-0010 - Prompt versioning: immutable versions in the repository, "active" bookmark
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-12
@@ -10,7 +10,7 @@ Feature [A4] Prompt Versioning (mandatory since ADR-0008) must make it
 possible to show the history of system prompts and go back to an old
 version in one command (ClickUp Definition of Done). It serves **the team
 building the agent**, not the end user: "you will iterate on system prompts
-(ReAct, guardrails, persona) throughout the project anyway — might as well
+(ReAct, guardrails, persona) throughout the project anyway - might as well
 treat them as versioned, comparable and rollback-able artifacts". Feature
 A7 (Workstream A) can build on it. Detailed needs:
 [A4 user stories](../user-stories/A4-prompt-versioning.md).
@@ -61,7 +61,7 @@ Constraints:
 
 | Option | Pros | Cons |
 | --- | --- | --- |
-| **A number** (`v1`, `v2`…), with date, author, description and sha256 hash in the index (chosen) | Readable and short to type. The hash does not identify: it lets `sensai-prompt check` (and CI) detect a version modified after being stored — without it, "a version is never modified" would just be a convention (added while writing the tests) | Two branches that each create a `v4` produce a git conflict in `versions.json`: renumber one of them |
+| **A number** (`v1`, `v2`…), with date, author, description and sha256 hash in the index (chosen) | Readable and short to type. The hash does not identify: it lets `sensai-prompt check` (and CI) detect a version modified after being stored - without it, "a version is never modified" would just be a convention (added while writing the tests) | Two branches that each create a `v4` produce a git conflict in `versions.json`: renumber one of them |
 | Date and time (`2026-10-12_1724`) | No collision | Long to type |
 | sha256 hash as identifier | No collision | Unreadable; only useful if each machine kept its own history |
 
@@ -69,7 +69,7 @@ Constraints:
 
 | Option | Pros | Cons |
 | --- | --- | --- |
-| **`system` and `memory`, with a generic mechanism** (adding a prompt = one line) (chosen) | The only two prompts that actually influence the agent | — |
+| **`system` and `memory`, with a generic mechanism** (adding a prompt = one line) (chosen) | The only two prompts that actually influence the agent | - |
 | `system` only | The letter of the DoD | No history for the memory prompt, the real case |
 | Include `react_prompt.txt` | Complete in appearance | This file has no effect: we would be versioning an unused file |
 
@@ -178,10 +178,10 @@ version the ReAct prompt when Workstream A wires it, rely on EV1 to attach
 evaluation results to each version, and let A7 create versions.
 
 ## Sources
-- [Langfuse — Prompt Version Control](https://langfuse.com/docs/prompt-management/features/prompt-version-control)
-- [Arize — What Is Prompt Versioning?](https://arize.com/glossary/prompt-versioning/)
-- [Agenta — Git vs. Prompt Management Tools](https://agenta.ai/blog/git-vs-prompt-management-tools)
-- [Agenta — Prompt Versioning: The Complete Guide](https://agenta.ai/blog/prompt-versioning-guide)
-- [PromptLayer — How to version prompts in LLM apps](https://blog.promptlayer.com/how-to-version-prompts-in-llm-apps/)
-- [Maxim — Prompt Versioning: Best Practices for AI Engineering Teams](https://www.getmaxim.ai/articles/prompt-versioning-best-practices-for-ai-engineering-teams/)
-- [Hamel Husain — How should I version and manage prompts?](https://hamel.dev/blog/posts/evals-faq/how-should-i-version-and-manage-prompts.html)
+- [Langfuse - Prompt Version Control](https://langfuse.com/docs/prompt-management/features/prompt-version-control)
+- [Arize - What Is Prompt Versioning?](https://arize.com/glossary/prompt-versioning/)
+- [Agenta - Git vs. Prompt Management Tools](https://agenta.ai/blog/git-vs-prompt-management-tools)
+- [Agenta - Prompt Versioning: The Complete Guide](https://agenta.ai/blog/prompt-versioning-guide)
+- [PromptLayer - How to version prompts in LLM apps](https://blog.promptlayer.com/how-to-version-prompts-in-llm-apps/)
+- [Maxim - Prompt Versioning: Best Practices for AI Engineering Teams](https://www.getmaxim.ai/articles/prompt-versioning-best-practices-for-ai-engineering-teams/)
+- [Hamel Husain - How should I version and manage prompts?](https://hamel.dev/blog/posts/evals-faq/how-should-i-version-and-manage-prompts.html)

@@ -4,7 +4,7 @@
 
 ## Workstream and decision involved
 
-<!-- Workstream A / B / C / D — and the ADR if the PR applies or challenges a decision
+<!-- Workstream A / B / C / D - and the ADR if the PR applies or challenges a decision
      (docs/decisions/). Write "none" if it touches no decision. -->
 
 ## How to verify

@@ -245,7 +245,7 @@ def test_default_num_ctx_and_budget(tmp_path, monkeypatch):
 @pytest.mark.parametrize("num_ctx", [4096, 32768])
 def test_budget_follows_command_line_num_ctx(tmp_path, monkeypatch, num_ctx):
     """PR #97 review: `--num-ctx 4096` left the budget at 6192, larger than the
-    window — Ollama truncated before summarization kicked in."""
+    window - Ollama truncated before summarization kicked in."""
     settings = _settings(tmp_path, monkeypatch, ["--num-ctx", str(num_ctx)])
     assert settings["num_ctx"] == num_ctx
     assert settings["token_budget_max"] == budget_from_num_ctx(num_ctx)

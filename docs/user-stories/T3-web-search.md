@@ -1,4 +1,4 @@
-# User stories — [T3] Web search
+# User stories - [T3] Web search
 
 Interface: `frontend/`. The tool
 itself (`tools/web_search_tool.py`) and its isolated browser
@@ -29,7 +29,7 @@ Other user stories of the interface: [README.md](README.md).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: isolated web search: ✅ `python.org` with both models (11 min 16 on CPU, 10 s on GPU).
 
-## US-T3-1 — Check the cited web sources
+## US-T3-1 - Check the cited web sources
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The `web_search` tool is real on the server side, but the server does not send `web_results` yet: the pages consulted appear in the step's observation, not in the Sources tab. Not tried in the browser yet.
 >
@@ -44,7 +44,7 @@ Other user stories of the interface: [README.md](README.md).
 - Links open in a new tab, without passing on the origin page (`noopener`).
 - In the demo, no network request is made: the results are scripted.
 
-## US-T3-2 — Not rely on information from memory
+## US-T3-2 - Not rely on information from memory
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ⏳ Not checked yet: it depends on the model's answer.
 
@@ -57,7 +57,7 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
-## US-T3-3 — Get dated, numbered web results the agent can cite
+## US-T3-3 - Get dated, numbered web results the agent can cite
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, who asks "what is the latest version of pytest?" during the invoice-report fix,
@@ -70,7 +70,7 @@ Other user stories of the interface: [README.md](README.md).
 - A failure (timeout, empty page, captcha) is returned to the model as a readable error with its code (`Timeout`, `SearchEmptyPage`…); the turn goes on.
 - By default a search does not ask for confirmation (it reads, it does not change the machine).
 
-## US-T3-4 — Keep control over what web pages can make the agent do
+## US-T3-4 - Keep control over what web pages can make the agent do
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who configures CodeSensai for the team,
@@ -86,7 +86,7 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
-## US-T3-5 — Search the web for recent information without exposing the agent
+## US-T3-5 - Search the web for recent information without exposing the agent
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking about a recent version of a library,
@@ -99,7 +99,7 @@ Other user stories of the interface: [README.md](README.md).
 - The results are untrusted text: they go through the gateway's cleaning and are presented to the model as data, not as instructions.
 - An empty query, one longer than 400 characters or one with control characters is refused before any container is started.
 
-## US-T3-6 — Understand why a search fails
+## US-T3-6 - Understand why a search fails
 > **Update on 2026-11-06:** scenario step **S7**, outside knowledge, and secrets ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer whose search returns nothing,

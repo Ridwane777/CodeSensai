@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Prompt version registry — feature [A4] Prompt
+[Workstream C - Ridwane] Prompt version registry - feature [A4] Prompt
 Versioning, ADR-0010.
 
 Principle borrowed from industry tools (Langfuse, PromptLayer…): a version is
@@ -13,8 +13,8 @@ On disk, in the repo's `prompts/` directory:
     memory/v1.txt
 
 Each version keeps its sha256 fingerprint: it is not an identifier (a version
-is referred to by its number), it is what lets `check()` — and therefore the
-CI — spot a version modified after the fact.
+is referred to by its number), it is what lets `check()` - and therefore the
+CI - spot a version modified after the fact.
 """
 from __future__ import annotations
 

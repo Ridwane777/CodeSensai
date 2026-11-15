@@ -1,4 +1,4 @@
-# Real trial — [A4] Prompt Versioning
+# Real trial - [A4] Prompt Versioning
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `sensai-prompt history` and `check`: ✅ (< 1 s, no model call). Earlier measurements below.
 
@@ -10,7 +10,7 @@ to the automated tests (`tests/knowledge/test_prompt_versions.py`,
 
 ## What is verified
 The Definition of Done: show the history of the system prompts and roll back
-to an older version with one command — and above all that **switching version
+to an older version with one command - and above all that **switching version
 really changes the agent's behaviour**, and that rolling back restores it.
 
 ## Machine and settings

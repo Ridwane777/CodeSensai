@@ -1,4 +1,4 @@
-# ADR-0022 — One turn = one SSE stream opened by POST; the agent runs in a thread
+# ADR-0022 - One turn = one SSE stream opened by POST; the agent runs in a thread
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

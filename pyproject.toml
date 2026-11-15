@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sensai"
 version = "0.1.0"
-description = "CodeSensai — local developer agent (Ollama, no LLM framework)"
+description = "CodeSensai - local developer agent (Ollama, no LLM framework)"
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.31",
@@ -40,7 +40,7 @@ src = ["src"]
 
 [tool.ruff.lint]
 # Explicit rule set: otherwise `ruff` in CI follows its defaults, which change
-# between versions — CI would break on its own without any code change.
+# between versions - CI would break on its own without any code change.
 select = ["E", "F", "I", "UP", "B", "RUF"]
 # UP042 suggests StrEnum: str() of a StrEnum returns the value, not "Risk.WRITE".
 # That is a behavior change, to be done separately if needed, not as part of the 3.12 bump.

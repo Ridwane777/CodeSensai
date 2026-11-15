@@ -1,5 +1,5 @@
 """
-The answer cache in the CLI — feature [A6] (ADR-0033).
+The answer cache in the CLI - feature [A6] (ADR-0033).
 
 Reuses the driven CLI from tests/test_cli_rag.py: the chat model is a fake
 that answers "Got it." and counts the calls.

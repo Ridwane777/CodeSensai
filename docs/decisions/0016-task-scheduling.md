@@ -1,4 +1,4 @@
-# ADR-0016 — Scheduling: `sensai-schedule run-due` called by cron, no daemon or dependency
+# ADR-0016 - Scheduling: `sensai-schedule run-due` called by cron, no daemon or dependency
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14
@@ -22,12 +22,12 @@ sometimes WSL or macOS).
 | APScheduler (library) | Cron, intervals, persistence, very common | New major dependency (to document, to keep up to date), a process that must stay alive, lots of features useless here |
 | cron / systemd alone, without a dedicated command | Nothing to write | One command per task would have to be written by hand; no guarantee of non-overlap, reporting or unattended policy |
 | Daemon: a scheduling thread inside `sensai` | No system configuration | Tasks only run while the interactive session is open; a thread calling the agent and the gateway in parallel with the conversation shares its state (e.g. "untrusted content read") |
-| **`run-due` command (one pass then exit) called by cron/systemd, stdlib only** — chosen | The operating system already knows how to relaunch, log and survive reboots; testable with an injected clock; zero dependencies | The user must write a crontab line or a timer; `loop` is only a fallback mode |
+| **`run-due` command (one pass then exit) called by cron/systemd, stdlib only** - chosen | The operating system already knows how to relaunch, log and survive reboots; testable with an injected clock; zero dependencies | The user must write a crontab line or a timer; `loop` is only a fallback mode |
 
 ### Task storage
 | Option | Pros | Cons |
 | --- | --- | --- |
-| **A JSON file** — chosen | Readable and fixable by hand, a few tasks per user, atomic write (temporary file then `os.replace`) | No transaction: two processes writing at the same time can lose a change |
+| **A JSON file** - chosen | Readable and fixable by hand, a few tasks per user, atomic write (temporary file then `os.replace`) | No transaction: two processes writing at the same time can lose a change |
 | SQLite (like sessions, ADR-0007) | Transactions, concurrent access | Disproportionate for a dozen rows; less readable; a damaged file is harder to repair by hand |
 
 ## Decision
@@ -72,7 +72,7 @@ always remains callable. A first network call may therefore go out with
 what the model already had in mind (the task prompt, the system prompt),
 and a search query is a URL that goes out to the engine: data could leak
 through that channel. Mitigations: the `--tools` list (give a task only what
-it needs), `deny_all`, `confirm_after_untrusted`, and the EV2 guardrails —
+it needs), `deny_all`, `confirm_after_untrusted`, and the EV2 guardrails -
 these still need wiring, since neither the interactive CLI nor the
 scheduler passes any to the gateway in `main` today. We do not claim
 injection is impossible.

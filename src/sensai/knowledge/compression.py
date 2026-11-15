@@ -1,12 +1,12 @@
 """
-[Workstream A — Fresnel] Token budget and rolling-summary compression —
+[Workstream A - Fresnel] Token budget and rolling-summary compression -
 feature [M2], ADR-0045.
 
 Each turn, the token count of what would be sent to the model is estimated
-(an approximation, not a real tokenizer — see ADR-0045). Above a budget, the
+(an approximation, not a real tokenizer - see ADR-0045). Above a budget, the
 oldest turns are replaced by a single summary, produced by a separate call to
 the chat model (same pattern as `/structured`, `core/structured.py`: one round
-trip, no tools) and merged into the system prompt — not added as a second
+trip, no tools) and merged into the system prompt - not added as a second
 `user` message, which would break the alternation with the turns kept intact
 (PR #97 review).
 
@@ -88,7 +88,7 @@ def summarize(host: str, model: str, turns: list[dict], num_ctx: int | None = No
     before sending: otherwise, summarizing turns that are themselves too many
     for the model window would be silently truncated by Ollama, exactly the
     problem M2 must avoid (PR #97 review). The oldest turns of `turns` are cut
-    first — they lie further back in time than the most recent ones.
+    first - they lie further back in time than the most recent ones.
 
     CompressionError if Ollama is unavailable or returns nothing: never an
     empty summary that would silently replace real exchanges.
@@ -127,10 +127,10 @@ def compress_messages(
 ) -> tuple[list[dict], bool]:
     """The messages to SEND this turn; `(messages, compressed)`.
 
-    `messages` is what the caller actually sends to the model — system prompt
+    `messages` is what the caller actually sends to the model - system prompt
     first, THEN everything that accompanies this turn's question (RAG passages,
     few-shot example, etc.: see cli.py, which compresses AFTER adding them, not
-    before, otherwise the budget would not count what is really sent — PR #97
+    before, otherwise the budget would not count what is really sent - PR #97
     review). If not given, `max_tokens` defaults to the budget derived from
     `num_ctx` (`resolve_budget`). Under that budget, or if there are not enough
     old turns to summarize without breaking the user/assistant alternation,

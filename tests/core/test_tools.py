@@ -1,5 +1,5 @@
 """
-Tests the Tool contract + the ToolRegistry — independently of the agent, the
+Tests the Tool contract + the ToolRegistry - independently of the agent, the
 sandbox or the RAG. Serves as a template for the tests teammates write for
 their own tools.
 """

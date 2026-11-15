@@ -101,7 +101,7 @@ export function QuestionCard({ item }: { item: QuestionItem }) {
             return (
               <li key={f.id}>
                 <span className="text-muted">{f.label} :</span>{' '}
-                <strong>{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v ?? '—')}</strong>
+                <strong>{typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v ?? '-')}</strong>
               </li>
             )
           })}

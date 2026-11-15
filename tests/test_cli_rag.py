@@ -5,7 +5,7 @@ from tests/knowledge/test_rag.py.
 
 What matters is what the model *sees*. R1's DoD ("the answer cites the right
 passage") assumes the passage and its source reach the message sent to the
-model — that is what `test_premiere_question_indexe_et_cite` checks.
+model - that is what `test_premiere_question_indexe_et_cite` checks.
 
 `test_le_contexte_n_est_pas_sauvegarde_dans_la_session` protects M1: injected
 passages must not pile up in the saved history.

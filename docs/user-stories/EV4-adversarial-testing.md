@@ -1,4 +1,4 @@
-# User stories — [EV4] Adversarial testing
+# User stories - [EV4] Adversarial testing
 
 Corpus `src/sensai/eval/adversarial.py` (moved from
 `tests/adversarial/corpus.py` on 2026-11-01 so the web server can run it; the old
@@ -13,7 +13,7 @@ decision in [ADR-0018](../decisions/0018-strict-xfail-adversarial-gaps.md).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: adversarial corpus (no model): ✅ 85 cases, 19 known gaps.
 
-## US-EV4-1 — Know what the defences really stop
+## US-EV4-1 - Know what the defences really stop
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who must vouch for the agent's security before the team uses it,
@@ -26,7 +26,7 @@ decision in [ADR-0018](../decisions/0018-strict-xfail-adversarial-gaps.md).
 - Each attack has an expected outcome (blocked, masked, flagged or known gap) and the generated table gives the observed outcome and a verdict.
 - Removing a defence (for example the file deny list) makes the cases that target it fail.
 
-## US-EV4-2 — Do not lose a known hole
+## US-EV4-2 - Do not lose a known hole
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who gets a flaw fixed,
@@ -39,7 +39,7 @@ decision in [ADR-0018](../decisions/0018-strict-xfail-adversarial-gaps.md).
 - The report ranks the gaps by severity and gives each a concrete fix with an effort marked as an estimate.
 - No assertion is weakened to turn green.
 
-## US-EV4-3 — Reproduce the measurements exactly
+## US-EV4-3 - Reproduce the measurements exactly
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who reports on the agent's robustness,
@@ -51,7 +51,7 @@ decision in [ADR-0018](../decisions/0018-strict-xfail-adversarial-gaps.md).
 - The script returns a non-zero exit code if a case outside the known gaps fails, or if a known gap has been fixed.
 - A test fails if the committed file or the report's table differs from the script's output.
 
-## US-EV4-4 — Rerun the attacks from the web interface
+## US-EV4-4 - Rerun the attacks from the web interface
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ◐ tested (pytest on the real routes, vitest on the page), not yet tried in a browser on the real server. The corpus never calls the model, so the model is not involved.
 

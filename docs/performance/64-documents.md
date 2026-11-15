@@ -1,4 +1,4 @@
-# Issue #64 — Reading and indexing documents: real trials
+# Issue #64 - Reading and indexing documents: real trials
 
 Decision: [ADR-0034](../decisions/0034-read-all-file-formats.md).
 

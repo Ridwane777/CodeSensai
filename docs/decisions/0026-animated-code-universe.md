@@ -1,4 +1,4 @@
-# ADR-0026 — Animated "code" universe: stop motion, parallax and live bug analysis
+# ADR-0026 - Animated "code" universe: stop motion, parallax and live bug analysis
 
 - **Status**: Superseded by ADR-0056 (2026-11-02: the animated code universe was removed from the code)
 - **Date**: 2026-10-14

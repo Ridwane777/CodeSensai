@@ -1,4 +1,4 @@
-# ADR-0018 — Adversarial tests: known gaps are strict expected failures
+# ADR-0018 - Adversarial tests: known gaps are strict expected failures
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

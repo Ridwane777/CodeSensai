@@ -350,7 +350,7 @@ class WebRuntime:
                 self.notices.append(f"Project search disabled: {e}")
                 return None
             for path, advice in report.unsupported:
-                self.notices.append(f"Not indexed: {_relative(str(path), self.project)} — {advice}")
+                self.notices.append(f"Not indexed: {_relative(str(path), self.project)} - {advice}")
             self.rag_index = index
             self.rag_tool.index = index
             return index
@@ -660,7 +660,7 @@ class WebRuntime:
         persona = self.persona_of(session_id)
         prompt_version = self.prompt_trial_of(session_id)
         # Like the CLI (ADR-0043): a persona that restricts tools neither reads nor
-        # feeds the cache; nor does a prompt trial (ADR-0055) — an answer stored
+        # feeds the cache; nor does a prompt trial (ADR-0055) - an answer stored
         # under another prompt version says nothing about the one being trialed.
         cache_usable = (self.cache is not None and not persona.tools_disabled
                         and prompt_version is None)

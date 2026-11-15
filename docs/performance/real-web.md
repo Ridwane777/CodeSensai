@@ -12,17 +12,17 @@ token, same SSE stream.
 
 | Step | Result | Time |
 | --- | --- | --- |
-| `GET /api/config` without a token | `401` | — |
-| `GET /` (built interface) | `200` | — |
+| `GET /api/config` without a token | `401` | - |
+| `GET /` (built interface) | `200` | - |
 | "What does the add function in calc.py do?" | `rag_sources` then the answer, which cites `calc.py` lines 1-2 | 11.8 s |
 | The same question | **Served from the cache** (`cache_hit`), no model call | 1.4 s |
 | "Create the file test_calc.py…" | The model first **asked for permission in text** instead of calling the tool (model behavior, not the server) | 23.5 s |
-| "Yes, create it now…" | `tool_call` → `confirm_request` (creation diff) → "yes" (`204`) → file created | — |
-| "Also create notes.txt…" then "no" | `tool_return` failed ("The user refused…"), file **not** created | — |
+| "Yes, create it now…" | `tool_call` → `confirm_request` (creation diff) → "yes" (`204`) → file created | - |
+| "Also create notes.txt…" then "no" | `tool_return` failed ("The user refused…"), file **not** created | - |
 | `/state` | Command output, no model call | 0.0 s |
 | Long explanation, interrupted after 0.5 s | `done` with `reason: "interrupted"`, nothing saved | 4.1 s |
-| `GET /export?format=md` | `200`, `text/markdown` | — |
-| `GET /api/sessions` | The session, with its title and 6 messages | — |
+| `GET /export?format=md` | `200`, `text/markdown` | - |
+| `GET /api/sessions` | The session, with its title and 6 messages | - |
 
 ## Click-through trial in a browser
 

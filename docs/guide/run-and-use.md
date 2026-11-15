@@ -137,8 +137,8 @@ ADR-0042.
 One optional field per profile (ADR-0043):
 
 - `tools`: `disabled` removes tools from what that persona can call, on
-  top of whatever `config.json`'s global `tools` section already removes
-  — a persona can only restrict further, never loosen the global config.
+  top of whatever `config.json`'s global `tools` section already removes:
+  a persona can only restrict further, never loosen the global config.
 
 Keyword routing (`keywords`) and session-only personas (`/persona add`) were
 removed on 2026-11-02 (ADR-0056, item 4): a `keywords` field now stops the
@@ -158,7 +158,7 @@ enough to one of them:
 }
 ```
 
-Each line needs `id`, `question` and `answer` (`eval/dataset.py`'s format —
+Each line needs `id`, `question` and `answer` (`eval/dataset.py`'s format -
 an existing EV1 dataset works as-is, provided its cases have an `answer`).
 Without `fewshot_examples`, nothing changes. The `0.75` threshold is an
 **estimate, not a measured value** (see ADR-0044; `scripts/bench_fewshot.py`
@@ -170,7 +170,7 @@ On by default: once the estimated size of what would be sent to the model
 crosses a budget, the oldest turns of the conversation are condensed into
 one summary (by the chat model itself, in a separate call) before the next
 question is sent. The most recent turns are always kept exact, and nothing
-saved to the session (M1) is ever rewritten — resuming later still shows
+saved to the session (M1) is ever rewritten - resuming later still shows
 the full, uncompressed history.
 
 ```json
@@ -190,7 +190,7 @@ tokens), silently. The budget (`token_budget_max`) defaults to `num_ctx` minus
 `num_ctx`. A turn that is over budget but cannot be summarized (one very
 large message) is sent as is, with a warning.
 
-`--no-token-budget` disables the summary entirely. See ADR-0045 — the token
+`--no-token-budget` disables the summary entirely. See ADR-0045 - the token
 count is an approximation (`len // 4`), not a real tokenizer, and the default
 `8192` window is an estimate, not a measured value (a larger window costs GPU
 memory and latency).
@@ -252,9 +252,9 @@ gave a wrong structured answer (T5) in that trial: use `qwen3-coder:30b` on a
 | `--no-rag-rerank` | Skip reranking passages with the model (about 3 s less per question, R2) |
 | `--cache` / `--no-cache` | Serve and record cached answers (A6), off by default since ADR-0056; in chat: `/cache`, `/cache clear`, `/again` |
 | `--fewshot-examples <file>` | JSONL example library for automatic few-shot (A7) |
-| `--fewshot-min-score X` | Relevance threshold for a few-shot match (default 0.75 — estimate, see ADR-0044) |
+| `--fewshot-min-score X` | Relevance threshold for a few-shot match (default 0.75 - estimate, see ADR-0044) |
 | `--no-token-budget` | Send the full history to the model, never summarizing old turns (M2) |
-| `--num-ctx N` | Context window sent to Ollama (default 8192 — estimate, see ADR-0045) |
+| `--num-ctx N` | Context window sent to Ollama (default 8192 - estimate, see ADR-0045) |
 | `--temperature T`, `--top-p P`, `--seed N`, `--num-predict N` | Generation parameters sent to Ollama, override `generation` in config.json (ADR-0057) |
 | `--max-iterations N` | Model calls allowed per turn (default 6) |
 | `--token-budget-max N` | Estimated tokens above which old turns are summarized (default: `--num-ctx` minus 2000) |

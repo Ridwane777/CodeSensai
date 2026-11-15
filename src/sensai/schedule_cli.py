@@ -1,5 +1,5 @@
 """
-`sensai-schedule` command: schedule agent tasks — feature [X5],
+`sensai-schedule` command: schedule agent tasks - feature [X5],
 ADR-0016.
 
     sensai-schedule add daily-summary --every 1d --prompt "Summarize today's log"
@@ -143,7 +143,7 @@ def _make_scheduler(
 
 def _print_records(records: list[dict]) -> None:
     for record in records:
-        suffix = f" — {record['error']}" if record.get("error") else ""
+        suffix = f" - {record['error']}" if record.get("error") else ""
         print(f"{record['task_id']} : {record['status']}{suffix}")
 
 

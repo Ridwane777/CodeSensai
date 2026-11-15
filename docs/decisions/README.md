@@ -1,9 +1,8 @@
-# Architecture decisions (ADR) — index
+# Architecture decisions (ADR) - index
 
 One important decision = one numbered file, written when the decision is
 made, from [TEMPLATE.md](TEMPLATE.md). An accepted ADR is never rewritten: if
-the decision changes, a new ADR replaces it. Full rules:
-[AGENTS.md](../../AGENTS.md). **Every ADR adds its row here, in the same PR.**
+the decision changes, a new ADR replaces it. **Every ADR adds its row here, in the same PR.**
 
 | No. | Title | Date | Status |
 | --- | --- | --- | --- |

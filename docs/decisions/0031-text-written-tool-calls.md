@@ -1,4 +1,4 @@
-# ADR-0031 — Tool calls written as text: parse them only when the response is nothing else
+# ADR-0031 - Tool calls written as text: parse them only when the response is nothing else
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-17

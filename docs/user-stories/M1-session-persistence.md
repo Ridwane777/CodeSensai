@@ -1,8 +1,8 @@
-# User stories — [M1] Session persistence & profiles
+# User stories - [M1] Session persistence & profiles
 
 CodeSensai scenario: Camille, working alone or with Marc's small team, on a long
-project. What she loses each time the CLI restarts — the conversation context
-and her working habits — is what M1 must give back.
+project. What she loses each time the CLI restarts - the conversation context
+and her working habits - is what M1 must give back.
 
 The acceptance criteria describe what the user observes, not how it is done:
 the storage and the location of the data are settled in the ADR dedicated to
@@ -12,7 +12,7 @@ M1.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: resume a session and recall a word: ✅ with both models (20 min 33 on CPU, 16 s on GPU).
 
-## US-M1-1 — Pick up where I left off
+## US-M1-1 - Pick up where I left off
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who works on the same project over several days,
@@ -31,7 +31,7 @@ M1.
 - The history is kept on the user's machine, outside the code repository, and
   cannot be committed by mistake.
 
-## US-M1-2 — Not repeat my preferences
+## US-M1-2 - Not repeat my preferences
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer with her own habits (Python 3.12, pytest, answers in French, no unnecessary dependency),
@@ -45,9 +45,9 @@ M1.
   saved preference (with "utilise pytest", a generated test uses pytest, not
   unittest).
 - If the profile file is missing or unreadable, the CLI still starts, with an
-  empty profile and a warning — it does not crash.
+  empty profile and a warning - it does not crash.
 
-## US-M1-3 — Choose which conversation to resume
+## US-M1-3 - Choose which conversation to resume
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who handles several topics in parallel (an authentication bug, an API redesign),

@@ -1,4 +1,4 @@
-"""`/structured` and run_structured_query (T5, ADR-0036) — without Ollama."""
+"""`/structured` and run_structured_query (T5, ADR-0036) - without Ollama."""
 import json
 
 import pytest

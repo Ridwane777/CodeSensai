@@ -1,4 +1,4 @@
-# Terms of use — CodeSensai
+# Terms of use - CodeSensai
 
 *Version of 2026-10-11. Non-commercial project; this text does not replace
 advice from a lawyer.*

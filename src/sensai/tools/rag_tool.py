@@ -1,6 +1,6 @@
 """
-[Workstream C — Ridwane] Exposes RAG search (knowledge/rag.py) as a Tool
-the agent can call — feature [R1] Basic RAG.
+[Workstream C - Ridwane] Exposes RAG search (knowledge/rag.py) as a Tool
+the agent can call - feature [R1] Basic RAG.
 
 The CLI already adds the relevant passages to every question automatically.
 This tool serves Workstream A's ReAct loop: the model can search by itself,

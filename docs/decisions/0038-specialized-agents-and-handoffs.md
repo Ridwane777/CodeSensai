@@ -1,4 +1,4 @@
-# ADR-0038 — Multi-Agent Orchestration: specialized agents and handoffs
+# ADR-0038 - Multi-Agent Orchestration: specialized agents and handoffs
 
 - **Status**: Accepted (2026-10-24)
 - **Date**: 2026-10-24

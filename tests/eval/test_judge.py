@@ -1,5 +1,5 @@
 """
-Tests the LLM judge — feature [EV1], ADR-0019.
+Tests the LLM judge - feature [EV1], ADR-0019.
 
 The judge is replaced by functions that return canned text: no test talks to
 Ollama. What we check is everything the code does with the model output

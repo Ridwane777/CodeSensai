@@ -44,7 +44,7 @@ def test_unicode_tag_characters_are_removed():
 
 
 def test_visible_text_newline_and_tab_are_kept():
-    text = "Line 1\n\tLine 2 — café ✓ 日本語"
+    text = "Line 1\n\tLine 2 - café ✓ 日本語"
     assert strip_invisible(text) == text
 
 

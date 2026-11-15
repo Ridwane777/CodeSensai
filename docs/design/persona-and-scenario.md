@@ -14,14 +14,14 @@ follows the same steps ([demo script](../demo/README.md#scenario-driven-script))
 
 The people below are fictional.
 
-## Primary persona — Camille Roux, developer who inherits a code base
+## Primary persona - Camille Roux, developer who inherits a code base
 
 | | |
 | --- | --- |
 | Role | Back-end Python developer, 3 years of experience |
 | Company | A 15-person software firm (an SME) that builds invoicing and reporting tools for accounting offices |
 | Situation | Has just taken over a small Python code base (a few dozen files, tests with `pytest`) written by a colleague who left. Little documentation, no one left to ask |
-| Constraint | The client contracts forbid sending the clients' code or data to a third-party cloud API: no hosted assistant (Copilot, ChatGPT, Claude…) on this code |
+| Constraint | The client contracts forbid sending the clients' code or data to a third-party cloud API: no hosted assistant (hosted coding assistant or chatbot) on this code |
 | Machine | A company laptop with no usable GPU, comparable to the team's reference machine (4 GB of VRAM, 16 GB of RAM, [infra-options.md](../research/infra-options.md)). The firm may buy one workstation with a 24 GB GPU, or rent one by the hour |
 | Tools | Terminal, VS Code, git; she uses CodeSensai in the terminal (`sensai`) and in the browser (`sensai-web`) |
 
@@ -39,7 +39,7 @@ The people below are fictional.
 - An assistant that writes files or runs commands without asking.
 - Losing the thread when she closes the terminal at the end of the day.
 
-## Secondary persona — Marc Dubois, tech lead who sets the tool up
+## Secondary persona - Marc Dubois, tech lead who sets the tool up
 
 | | |
 | --- | --- |
@@ -61,47 +61,47 @@ stands for Camille's invoice report, whose monthly average crashes for a client
 with no invoice. Steps are numbered **S0 to S9**; [traceability.md](traceability.md)
 and the demo script use the same numbers.
 
-**S0 — Before Camille arrives (Marc).** Marc installs CodeSensai on the
+**S0 - Before Camille arrives (Marc).** Marc installs CodeSensai on the
 machine that will run the model, writes `config.json`: a "reviewer" persona
 next to the default one, `files.write = ["src"]`, a blocked topic (salaries),
 the company's MCP server, a few-shot file with two good answers. He checks the
 prompt version in use (`v3`) on the Prompts page.
 *Features: B1, A5, T4, EV2, T1, A7, A4.*
 
-**S1 — Monday, 9:00: she resumes.** Camille opens `sensai-web`, reopens
+**S1 - Monday, 9:00: she resumes.** Camille opens `sensai-web`, reopens
 Friday's conversation from the sidebar and asks to pick up where she left off.
 The agent knows her preferences (pytest, answers in French) and the facts it
 saved about the project.
 *Features: M1, X1, M3.*
 
-**S2 — 9:05: she asks how to run the tests.** The agent searches the project,
+**S2 - 9:05: she asks how to run the tests.** The agent searches the project,
 answers with `pytest -q` and cites the file it comes from; the answer says it
 was inspired by one of Marc's few-shot examples.
 *Features: R1, R2, A7.*
 
-**S3 — 9:15: the bug.** A client reports that the monthly report crashes.
+**S3 - 9:15: the bug.** A client reports that the monthly report crashes.
 Camille asks the agent to find out why. The agent reads `stats.py`, runs the
 function in the disposable sandbox (no network, 256 MB, 10 s), sees the
 `ZeroDivisionError`, and explains the cause.
 *Features: A1, T4, T2, T1 (native tool calling).*
 
-**S4 — 9:25: the fix, approved.** The agent proposes to rewrite the function
+**S4 - 9:25: the fix, approved.** The agent proposes to rewrite the function
 with `write_file`. Camille sees the coloured diff; she first answers "no, raise
 a ValueError instead", the agent changes its fix; she allows the second
 version. A file read that the agent tries outside the project is refused.
 *Features: A3, T4.*
 
-**S5 — 10:00: a missing piece of information.** She asks the agent to add a
+**S5 - 10:00: a missing piece of information.** She asks the agent to add a
 test file; the agent asks her, in a form inside the chat, the file name and
 the style she wants, then reuses her answers.
 *Features: X4.*
 
-**S6 — 10:30: a wider change.** The report also needs a median. Camille asks
+**S6 - 10:30: a wider change.** The report also needs a median. Camille asks
 for it; the agent hands the task to its team (explorer → developer →
 reviewer), and the relays appear in the conversation.
 *Features: A2, X1.*
 
-**S7 — 11:00: outside knowledge, and secrets.** She asks which `pytest`
+**S7 - 11:00: outside knowledge, and secrets.** She asks which `pytest`
 version is current: the agent searches the web from an isolated browser and
 cites python.org-style sources instead of a number from memory. She then asks
 it to look at `deploiement.txt`, which holds an AWS key: the key is masked
@@ -109,7 +109,7 @@ before the model sees it. A company tool reached through MCP answers a lookup;
 a key it returns is masked too.
 *Features: T3, EV2, T1.*
 
-**S8 — Afternoon: memory and a long session.** She asks the agent to note the
+**S8 - Afternoon: memory and a long session.** She asks the agent to note the
 decision ("empty list → ValueError") in the project's state document
 `SENSAI.md`, and it saves the fact "monthly report: requires at least one
 invoice". The session grows long: the token bar fills, old messages are
@@ -120,7 +120,7 @@ variant; she asks for a JSON list of the functions of `stats.py` for a ticket
 script (`/structured`).
 *Features: M4, M3, M2, A6, X2, T5.*
 
-**S9 — 17:30: hand-over.** She asks the agent to schedule a summary of the
+**S9 - 17:30: hand-over.** She asks the agent to schedule a summary of the
 day's changes every morning (`schedule_task`), exports the conversation and
 creates a read-only share link for Marc, secrets masked. Marc opens the Journal
 page to see each tool call and its duration, evaluates the last answer on the

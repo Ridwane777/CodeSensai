@@ -1,4 +1,4 @@
-# ADR-0027 — EV2 input filter: deterministic rules, applied before everything else
+# ADR-0027 - EV2 input filter: deterministic rules, applied before everything else
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

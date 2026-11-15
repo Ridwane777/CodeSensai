@@ -1,5 +1,5 @@
 """
-Tests the `update_state` tool — feature [M4], ADR-0029.
+Tests the `update_state` tool - feature [M4], ADR-0029.
 
 `test_declares_write_risk` protects A3: without it, a prompt injection
 could make the agent write to SENSAI.md without confirmation.

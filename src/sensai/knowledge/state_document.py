@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Project state document — feature [M4], ADR-0029.
+[Workstream C - Ridwane] Project state document - feature [M4], ADR-0029.
 
 `SENSAI.md`, at the project root, summarizes where the work stands (done, in
 progress, decisions, known issues). The agent knows it from the first message
@@ -289,7 +289,7 @@ def handle_state_command(line: str, document: StateDocument) -> str | None:
             return "No change recorded."
         return "\n".join(
             f"{e['date']}  {e['action']:<7}  {e['section']}"
-            + (f"  — {e['summary']}" if e.get("summary") else "")
+            + (f"  - {e['summary']}" if e.get("summary") else "")
             for e in entries
         )
     if words[1] == "undo" and len(words) == 3:

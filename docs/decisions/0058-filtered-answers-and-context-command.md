@@ -1,4 +1,4 @@
-# ADR-0058 — The model's answer is filtered while it streams; /context shows what is sent
+# ADR-0058 - The model's answer is filtered while it streams; /context shows what is sent
 
 - **Status**: Accepted (2026-11-02, decided by Ridwane, Workstream C)
 - **Date**: 2026-11-01

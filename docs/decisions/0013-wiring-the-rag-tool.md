@@ -1,4 +1,4 @@
-# ADR-0013 — Wire the project search tool to the index opened by the CLI
+# ADR-0013 - Wire the project search tool to the index opened by the CLI
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

@@ -35,7 +35,7 @@ def preload(host: str, model: str, num_ctx: int | None = None) -> None:
     try:
         requests.post(f"{host}/api/generate", json=payload, timeout=300).raise_for_status()
     except requests.RequestException as e:
-        print(f"(warning: the model could not be preloaded — {e})", file=sys.stderr)
+        print(f"(warning: the model could not be preloaded - {e})", file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> None:
                      frontend_dir=own.frontend)
 
     url = f"http://{own.bind}:{own.port}/"
-    print(f"CodeSensai — web interface at {url}")
+    print(f"CodeSensai - web interface at {url}")
     print(f"  model: {runtime.model} · project: {runtime.project}")
     print(f"  sessions: {runtime.data_dir / SESSIONS_FILE}")
     if purged:

@@ -1,4 +1,4 @@
-# ADR-0029 — Project state document: `SENSAI.md`, updated section by section
+# ADR-0029 - Project state document: `SENSAI.md`, updated section by section
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-17
@@ -22,7 +22,7 @@ Constraints:
   pod: **32,768 tokens** (`OLLAMA_CONTEXT_LENGTH=32768`, pod setting,
   outside the repo);
 - comparable tools store this kind of memory in a Markdown file
-  in the project: `CLAUDE.md` (Claude Code), `memory-bank/` folder (Cline),
+  in the project: per-agent instruction files, `memory-bank/` folder (Cline),
   `CONVENTIONS.md` (Aider). *Stated from memory, not re-verified on
   2026-10-17.*
 

@@ -1,5 +1,5 @@
 """
-Chat commands `/schedule` and `/eval` — features [X5] and [EV1], ADR-0028.
+Chat commands `/schedule` and `/eval` - features [X5] and [EV1], ADR-0028.
 
 These are the same commands as `sensai-schedule` and `sensai-eval`, typed without
 leaving the conversation. The module reimplements nothing: it splits the line,

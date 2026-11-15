@@ -1,4 +1,4 @@
-# User stories — [A2] Multi-Agent Orchestration
+# User stories - [A2] Multi-Agent Orchestration
 
 Decisions:
 [ADR-0037](../decisions/0037-sub-agent-delegation-tool.md) (delegation through
@@ -19,7 +19,7 @@ rather than handle everything in a single line of reasoning.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `team_task` on `moyenne([])`: qwen3:8b ❌ (the team did not finish, even with 30 min); qwen3-coder:30b ❌ 0 of 4 with RAG off (the agent did not find `stats.py`, backlog #25), ✅ 3 of 3 with RAG on (64–73 s, project tests pass); with RAG off after `list_files` (ADR-0059): 0 of 3, blocked by the trial script's confirmations typed in advance (once the agent proposed the right change to `stats.py` and the script refused it). A run by hand found two bugs, fixed the same day (backlog #27): a team that wrote nothing was "approved" because the unchanged project's tests passed, and the explorer had no `list_files`. Rerun by hand after the fixes, RAG off: ✅ validated, the team changed `stats.py` and added a `pytest.raises(ValueError)` test, project tests pass; defects on the way listed in backlog #28.
 
-## US-A2-1 — Split a task into delegated sub-tasks
+## US-A2-1 - Split a task into delegated sub-tasks
 > **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer giving the agent a composite task,
@@ -47,7 +47,7 @@ reasoning that mixes everything.
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): `delegate_task` with the explorer role streamed the relays `main → explorateur → main` and the sub-agent's `subagent_step` events.
 
-## US-A2-2 — Not loop forever nor work behind the user's back
+## US-A2-2 - Not loop forever nor work behind the user's back
 > **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who wants neither a delegation loop nor ghost work,
@@ -67,7 +67,7 @@ deadline,
 
 > **Status on 2026-10-24:** ✅ Checked on the pod: 0 re-delegation (tool hidden), stop at the deadline with no tool or confirmation afterwards, partial answer returned; sub-agent failure rendered as a message (tested).
 
-## US-A2-3 — Specialised agents, each with its own tools
+## US-A2-3 - Specialised agents, each with its own tools
 > **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer handing a task to several agents,
@@ -85,7 +85,7 @@ never modifies a file).
 
 > **Status on 2026-10-24:** ✅ Checked on the pod: out of 10 write requests made to an explorer or a reviewer, 0 file created and 0 confirmation. Yet the model once claimed it had created the file: what it says is not proof.
 
-## US-A2-4 — Work passes from one agent to the next, with a critique
+## US-A2-4 - Work passes from one agent to the next, with a critique
 > **Update on 2026-11-06:** scenario step **S6**, a wider change, handed to the team ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer asking for a code change,

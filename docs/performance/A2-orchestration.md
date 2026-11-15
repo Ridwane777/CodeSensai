@@ -1,4 +1,4 @@
-# A2 — Multi-agent orchestration: real trials
+# A2 - Multi-agent orchestration: real trials
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `team_task` on `moyenne([])`: qwen3:8b on the laptop CPU ❌ (team does not finish); qwen3-coder:30b on a GPU ✅ 3 of 3 with RAG on (64–73 s), ✅ by hand with RAG off after `list_files` (ADR-0059) and the team fixes (backlog #27); open defects in backlog #28. Earlier measurements below.
 
@@ -30,9 +30,9 @@ percent.
 | Duration of a simple delegation (5 tasks) | 6.4 to 36.7 s | 6.2 to 29.9 s (unchanged, expected) |
 | Sub-agent after being abandoned by the gateway (8 s deadline) | keeps going until 28.2 s, 797 response chunks lost | stopped at 8.0 s; 0 tool calls and 0 threads afterwards |
 | Confirmation after abandonment (10 s deadline) | `write_file` requested at 23.8 s | no confirmation after the stop; returned at 21.2 s (a model call already started finished) |
-| Project prompt — remembered fact ("Redis 8") | 1/3 | 3/3 |
-| Project prompt — profile ("answer in English") | 0/3 | 2/3 |
-| Project prompt — neutral task | 3/3 | 3/3 |
+| Project prompt - remembered fact ("Redis 8") | 1/3 | 3/3 |
+| Project prompt - profile ("answer in English") | 0/3 | 2/3 |
+| Project prompt - neutral task | 3/3 | 3/3 |
 | Re-delegation, tasks that can be split | depth 2: an empty answer in 120 s (3 re-delegations), then 22 to 42 s | depth 1 and tool hidden: 10.7 to 38.3 s, full quality, 0 re-delegations |
 
 Two settings come directly from the measurements:
@@ -52,7 +52,7 @@ Two settings come directly from the measurements:
 | Tightened description alone | 0/5 | 0/5 |
 | + orchestration rule in prompt `v2`, run 1 | 0/5 | 4/5 |
 | same, run 2 | 1/5 | 3/5 |
-| Explicit request ("delegate to a sub-agent…") | — | 6/6 (2 runs) |
+| Explicit request ("delegate to a sub-agent…") | - | 6/6 (2 runs) |
 
 Recounted against the rule ("three files or more"): over 2 runs, 6 of 8
 tasks citing three files or more are delegated, and 2 of 12 requests that
@@ -86,7 +86,7 @@ tasks, the final code is **executed** (assertions): fix `moyenne`, fix
 | --- | --- | --- | --- | --- |
 | Before the reviewer fix | 9 | 9/9 | explorer → developer → reviewer, validated | 25.2 to 38.4 s |
 | Final version | 9 | 9/9 | 8 validated; 1 cut by a RunPod proxy network error (the file had already been written, correctly) | 26.6 to 44.6 s (96.9 s for the network error) |
-| "Docstrings" task, full report | 3 | — | validated 3/3, 1 write | 39.1 to 42.0 s |
+| "Docstrings" task, full report | 3 | - | validated 3/3, 1 write | 39.1 to 42.0 s |
 
 These tasks are easy: the developer gets them right the first time, so the
 correction loop did not trigger in this series. It is covered by the tests
@@ -99,8 +99,8 @@ wrong (or badly fixed), then on a correct file.
 
 | What the reviewer receives | Wrong work caught | Correct work validated |
 | --- | --- | --- |
-| the report alone | **0/6** (validated without opening the file, 2 to 4 s) | — |
-| + instruction "always read the files" | 0/6 (once 6 reads, and validated anyway) | — |
+| the report alone | **0/6** (validated without opening the file, 2 to 4 s) | - |
+| + instruction "always read the files" | 0/6 (once 6 reads, and validated anyway) | - |
 | **the exact content written** (chosen version) | **6/6** | 5/6 |
 
 The only "needs fixing" on correct work targeted the `moyenne` bug, which

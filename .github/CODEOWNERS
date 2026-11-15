@@ -2,7 +2,7 @@
 # when a PR touches their files.
 #
 # ⚠️ These are GitHub handles, not the names shown in commits: the two often
-# differ. A wrong handle raises no error, the line is just ignored — the file
+# differ. A wrong handle raises no error, the line is just ignored - the file
 # fails silently. To check a handle exists, open https://github.com/<handle>.
 #
 # GitHub only requests an owner's review if they have write access to the
@@ -14,17 +14,17 @@
 # Default: Workstream A, which owns the architecture and shared contracts.
 *                               @fresnel-cyber
 
-# Workstream B — code execution and guardrails
+# Workstream B - code execution and guardrails
 /src/sensai/execution/          @Meric-BG
 /src/sensai/tools/sandbox_tool.py  @Meric-BG
 /docs/research/model-choices.md          @Meric-BG
 /docs/research/infra-options.md          @Meric-BG
 
-# Workstream C — code search and session memory
+# Workstream C - code search and session memory
 /src/sensai/knowledge/          @Ridwane777
 /src/sensai/tools/rag_tool.py   @Ridwane777
 
-# Workstream D — web interface, observability, external integrations
+# Workstream D - web interface, observability, external integrations
 /src/sensai/web/                @Christopher142769
 /src/sensai/observability/      @Christopher142769
 /src/sensai/tools/mcp_tool.py   @Christopher142769

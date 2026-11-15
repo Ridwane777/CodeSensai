@@ -1,8 +1,8 @@
-# ADR-0048 — Export & Publication (X3): share links are random-token snapshots served by `sensai-web`
+# ADR-0048 - Export & Publication (X3): share links are random-token snapshots served by `sensai-web`
 
 - **Status**: Accepted (2026-11-01); amended by ADR-0056 (2026-11-02: share links off by default)
 - **Date**: 2026-10-29
-- **Deciders**: Ridwane (Workstream C), on behalf of Workstream D (Christopher) — to be confirmed by the team
+- **Deciders**: Ridwane (Workstream C), on behalf of Workstream D (Christopher) - to be confirmed by the team
 - **Workstream**: D (`web/shares.py`, `web/server.py`, `web/runtime.py`, `frontend/`)
 
 ## Context

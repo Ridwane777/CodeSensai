@@ -1,4 +1,4 @@
-# ADR-0040 — Web search: DuckDuckGo HTML first, Bing as fallback
+# ADR-0040 - Web search: DuckDuckGo HTML first, Bing as fallback
 
 - **Status**: Accepted (2026-10-24); supersedes [ADR-0014](0014-bing-search-engine.md)
 - **Date**: 2026-10-24

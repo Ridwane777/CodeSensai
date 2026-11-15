@@ -1,4 +1,4 @@
-"""Tests loading the JSONL dataset — feature [EV1], ADR-0019."""
+"""Tests loading the JSONL dataset - feature [EV1], ADR-0019."""
 import hashlib
 import json
 import re

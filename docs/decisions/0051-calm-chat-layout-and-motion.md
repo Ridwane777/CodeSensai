@@ -1,4 +1,4 @@
-# ADR-0051 — Calm chat: wider column, folded side panel, smooth motion and a visible "working" indicator
+# ADR-0051 - Calm chat: wider column, folded side panel, smooth motion and a visible "working" indicator
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-10-31
@@ -66,7 +66,7 @@ The chat page follows the third option:
 
 **Home page** (second pass the same day, after Christopher found it "too
 scattered": with the left sidebar, the full-screen poster cut the title and
-the cards overlapped): a two-column hero that stays inside the content area —
+the cards overlapped): a two-column hero that stays inside the content area -
 tagline, a "first question" field that opens the chat, three starters and the
 "Start the demo" / "Open the chat" button on the left; the AI portrait in a
 frame with one still terminal card on the right. No giant name, no code rain,
@@ -75,7 +75,7 @@ no parallax.
 **Home page, third pass** (same evening: still "too complicated", "give it more
 room", with a reference screenshot of a chat product's landing page and the
 request "no AI"): the two-column hero is replaced by a single dark stage that
-fills the screen — the name "CodeSensai" very large and translucent, one
+fills the screen - the name "CodeSensai" very large and translucent, one
 rounded question field over it, a warm halo of light on the right that
 breathes slowly, a short sentence and two buttons at the bottom. The AI
 portrait, the terminal card and the starters are removed from the home page

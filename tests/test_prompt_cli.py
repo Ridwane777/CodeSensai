@@ -1,5 +1,5 @@
 """
-Tests the `sensai-prompt` command end to end — feature [A4], ADR-0010.
+Tests the `sensai-prompt` command end to end - feature [A4], ADR-0010.
 
 `test_dod_history_then_rollback` replays the Definition of Done: show the
 prompt history, then go back to an older version in one command.

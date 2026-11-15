@@ -1,5 +1,5 @@
 """
-Agent reasoning loop — feature [A1] Reasoning Loops (ReAct).
+Agent reasoning loop - feature [A1] Reasoning Loops (ReAct).
 
 The Thought -> Action -> Observation cycle relies on Ollama's native tool
 calling (ADR-0003): the tool list goes in the request's `tools` field, and the
@@ -13,7 +13,7 @@ docs/architecture/web/api-contract.md.
 The agent never runs a tool itself: it goes through Workstream B's tool
 gateway (execution/gateway.py, ADR-0006), which applies permissions,
 validation, guardrails and confirmation before risky actions. This module does
-not import it — the interface builds it and hands it over — so that the core
+not import it - the interface builds it and hands it over - so that the core
 does not depend on Workstream B.
 """
 from __future__ import annotations
@@ -128,7 +128,7 @@ def run_agent_turn(
                 if message.get("content"):
                     # Reasoning comes before the reply: deliver it as one
                     # block as soon as the reply starts, rather than word by
-                    # word — one Thought per word would be unreadable in both
+                    # word - one Thought per word would be unreadable in both
                     # interfaces.
                     yield from _flush_thought(thinking)
                     content.append(message["content"])
@@ -186,7 +186,7 @@ def run_agent_turn(
             function = call.get("function") or {}
             name = function.get("name", "")
             # Ollama provides an id; if it is missing, make one unique within
-            # the turn — the interface needs it to link the call to its result.
+            # the turn - the interface needs it to link the call to its result.
             call_id = call.get("id") or f"{iteration}-{index}"
             arguments, problem = _parse_arguments(function.get("arguments"))
 
@@ -272,7 +272,7 @@ def _parse_arguments(raw: Any) -> tuple[dict[str, Any], str | None]:
     """Validate a tool call's arguments.
 
     Ollama normally returns them already deserialized, but the model writes
-    them: they are not trusted. Returns (arguments, problem) — a non-null
+    them: they are not trusted. Returns (arguments, problem) - a non-null
     problem prevents execution.
     """
     if raw is None:

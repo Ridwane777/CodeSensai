@@ -1,4 +1,4 @@
-# ADR-0003 — Native Ollama tool calling rather than parsing ReAct text
+# ADR-0003 - Native Ollama tool calling rather than parsing ReAct text
 
 Date: 2026-09-22
 Workstream: A (impacts B and C)
@@ -19,13 +19,13 @@ comply with [ADR-0001](0001-no-llm-framework.md).
 
 ## Considered options
 
-- **Text parsing** — a single format to master, works with any model. But
+- **Text parsing** - a single format to master, works with any model. But
   with a small local model like `qwen3:8b`, the output drifts: missing
   quotes, half-closed argument JSON, `Action:` in the middle of a sentence,
   two actions in the same turn. Each case gets patched in the parser, and
   those patches are exactly the kind of code we can no longer test or
   explain in a review.
-- **Native `tools` field** — Ollama returns `tool_calls` with the tool name
+- **Native `tools` field** - Ollama returns `tool_calls` with the tool name
   and its arguments already deserialized. Our tools' `parameters` schemas
   (`core/tools.py`) are already in the expected JSON Schema format: nothing
   to rewrite on the Workstream B and C side. Constraint: the chosen model
@@ -34,8 +34,8 @@ comply with [ADR-0001](0001-no-llm-framework.md).
 ## Decision
 The agent sends `registry.describe_all()` in the `tools` field of the Ollama
 request and reads tool calls from `message.tool_calls`. The
-Thought/Action/Observation cycle remains visible to the user — that is the
-reasoning-transparency requirement — but **the executed decision comes from
+Thought/Action/Observation cycle remains visible to the user - that is the
+reasoning-transparency requirement - but **the executed decision comes from
 the structured field, never from the displayed text**. Text parsing is kept
 only as a fallback if the configured model returns no `tool_calls`.
 

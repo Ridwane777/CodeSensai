@@ -187,7 +187,7 @@ test('form answers are injected into the text, unknown keys stay readable', () =
   e.answer(rid(got), { env: 'staging' })
   vi.advanceTimersByTime(100)
   const tok = got.find((x) => x.type === 'token') as { text: string }
-  expect(tok.text).toBe('Target: staging / —')
+  expect(tok.text).toBe('Target: staging / -')
 })
 
 const askingArgs: Scenario = {

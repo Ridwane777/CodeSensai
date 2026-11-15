@@ -1,4 +1,4 @@
-# ADR-0025 — Home hero laid out like a poster, without a 3D scene
+# ADR-0025 - Home hero laid out like a poster, without a 3D scene
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

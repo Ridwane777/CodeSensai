@@ -1,4 +1,4 @@
-# ADR-0012 — Disposable Docker containers for code execution and web search
+# ADR-0012 - Disposable Docker containers for code execution and web search
 
 Date: 2026-10-12
 Workstream: B
@@ -15,17 +15,17 @@ Docker. It was a separate package, with its own MCP server and pre-execution
 hooks, written before the tool gateway existed.
 
 ## Options considered
-- **Isolated subprocess** — fast and needs only Python, but cannot block the
+- **Isolated subprocess** - fast and needs only Python, but cannot block the
   network or hide files without extra work (namespaces, seccomp). Protects
   against accidents, not against a determined attacker.
-- **Docker container per call** — strong isolation, network off by default,
+- **Docker container per call** - strong isolation, network off by default,
   resource limits built in. Needs Docker on every machine that runs the demo and
   costs about a second per call.
-- **gVisor / Firecracker** — stronger still, but heavier to install than the
+- **gVisor / Firecracker** - stronger still, but heavier to install than the
   project needs.
-- **Web search by HTTP request (`requests`)** — simple, but it parses hostile
+- **Web search by HTTP request (`requests`)** - simple, but it parses hostile
   HTML inside the agent's own process, with the user's network and files in reach.
-- **Web search through a Chromium container** — a larger image, but a browser
+- **Web search through a Chromium container** - a larger image, but a browser
   exploit lands in a disposable unprivileged container, and only plain strings
   leave it.
 

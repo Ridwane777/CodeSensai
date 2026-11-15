@@ -1,5 +1,5 @@
 """
-Tests for session & profile persistence — feature [M1].
+Tests for session & profile persistence - feature [M1].
 
 Each test refers to an acceptance criterion in
 docs/user-stories/M1-session-persistence.md, and the tested choices come from

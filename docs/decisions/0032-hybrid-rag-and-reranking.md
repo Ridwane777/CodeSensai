@@ -1,4 +1,4 @@
-# ADR-0032 — Advanced RAG: hybrid search, RRF fusion and reranking by the model (R2)
+# ADR-0032 - Advanced RAG: hybrid search, RRF fusion and reranking by the model (R2)
 
 - **Status**: Accepted
 - **Date**: 2026-10-17

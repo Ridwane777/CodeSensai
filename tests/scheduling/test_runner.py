@@ -1,4 +1,4 @@
-"""Tests the execution of scheduled tasks — feature [X5], ADR-0016.
+"""Tests the execution of scheduled tasks - feature [X5], ADR-0016.
 
 Never Ollama: the agent is a fake generator that receives the same
 arguments as `run_agent_turn`.

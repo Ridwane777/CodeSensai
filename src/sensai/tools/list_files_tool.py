@@ -1,5 +1,5 @@
 """
-list_files — lists the project's files, read-only — feature [T4], ADR-0059.
+list_files - lists the project's files, read-only - feature [T4], ADR-0059.
 
 Without it the agent could not see which files exist when RAG is off: in the
 trial of 2026-11-06 it guessed `main.py`, `src/utils.py`… and never found

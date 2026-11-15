@@ -1,6 +1,6 @@
 """
-[Workstream C — Ridwane] Exposes updating the state document (SENSAI.md) as
-a Tool the agent can call — feature [M4], ADR-0029.
+[Workstream C - Ridwane] Exposes updating the state document (SENSAI.md) as
+a Tool the agent can call - feature [M4], ADR-0029.
 
 Risk `write`: every update goes through gateway confirmation (A3), which
 shows `describe_call`, i.e. the section before and after.
@@ -46,7 +46,7 @@ class UpdateStateTool:
         try:
             diff = self.document.preview(section, args.get("action", ""), args.get("content", ""))
         except StateError as e:
-            return f"{STATE_FILE}, section \"{section}\" — will be rejected: {e}"
+            return f"{STATE_FILE}, section \"{section}\" - will be rejected: {e}"
         return f"{STATE_FILE}, section \"{section}\" ({args.get('action')}):\n{diff}"
 
     def run(self, **kwargs: Any) -> ToolResult:

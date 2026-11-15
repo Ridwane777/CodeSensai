@@ -11,7 +11,7 @@ fallback, is in [dependencies.md](../dependencies.md).
 | Ollama | MIT | Keep the copyright notice if we redistribute Ollama (we do not: everyone installs it) | Official GitHub page |
 | Qwen3-8B (`qwen3:8b`) | Apache-2.0 | Keep the licence and notice if we redistribute the weights; state changes. Commercial use allowed. | Official Hugging Face card |
 | Qwen3-Coder-30B-A3B-Instruct (`qwen3-coder:30b`) | Apache-2.0 | Same | Official Hugging Face card |
-| `nemotron-3-nano:30b` (candidate) | **Not checked** | Read it **before** using it: NVIDIA models often have their own licence | — |
+| `nemotron-3-nano:30b` (candidate) | **Not checked** | Read it **before** using it: NVIDIA models often have their own licence | - |
 | `requests` | Apache-2.0 | Same as Apache | Package metadata |
 | `docker` (Python SDK) | Apache-2.0 | Same as Apache | Package metadata |
 | `puremagic` | MIT | Keep the notice | Package metadata |
@@ -31,7 +31,7 @@ fallback, is in [dependencies.md](../dependencies.md).
 | `certifi` | MPL-2.0 | Copyleft **at file level**: only changes to its own files would have to be published. We do not change them. | Package metadata |
 | AI portrait (`frontend/public/ai/portrait.webp`, derived from the PNG provided by Christopher) | **Not checked** | To establish **before any public release**: where this image was produced, which terms of use apply, whether reuse is allowed. It carried the text "TURNOVER MARKETING", a third party's brand: `frontend/scripts/prepare_ai_frames.py` erases it by default. Do not present the image as original until this is settled. | File provided; origin undocumented |
 | `framer-motion` | MIT | Keep the notice | Package metadata |
-| `pytest`, `ruff` and the `pytest` dependencies (`iniconfig`, `pluggy`: MIT; `packaging`: Apache-2.0 or BSD-2-Clause; `Pygments`: BSD-2-Clause) | — | Nothing: they are dev tools, not shipped with the product | Package metadata |
+| `pytest`, `ruff` and the `pytest` dependencies (`iniconfig`, `pluggy`: MIT; `packaging`: Apache-2.0 or BSD-2-Clause; `Pygments`: BSD-2-Clause) | - | Nothing: they are dev tools, not shipped with the product | Package metadata |
 
 No current dependency is under a "strong copyleft" licence (GPL, AGPL), which
 would require publishing CodeSensai's code under the same licence. **Check

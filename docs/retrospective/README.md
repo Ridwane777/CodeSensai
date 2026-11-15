@@ -1,4 +1,4 @@
-# CodeSensai — global retrospective
+# CodeSensai - global retrospective
 
 Written on 2026-10-25, with what we know at the end of the project. It looks
 at the **whole application**, component by component: what we chose, what
@@ -41,7 +41,7 @@ Ollama client (`core/ollama_client.py`), right before the HTTP request. A new
 path to the model (RAG, memory, sub-agents, MCP) is then protected by
 construction instead of by discipline.
 **When it is preferable.** As soon as more than one component builds the
-prompt — which was the case from week 2 (RAG, facts, state document).
+prompt - which was the case from week 2 (RAG, facts, state document).
 **Cost.** One pass of the filter over the whole prompt on every call (regular
 expressions; not measured here); risk of masking code that looks like a
 secret, already accepted for tool outputs.
@@ -168,7 +168,7 @@ never been tried with a real MCP server in the web interface.
 publishes an OpenAPI schema; **openapi-typescript** generates the client types
 from it, and the build fails when they no longer match.
 **When it is preferable.** As soon as the interface and the server are written
-by different people — here from week 2.
+by different people - here from week 2.
 **Cost.** A generation step in the front-end build; the streaming events
 (SSE) are not fully described by OpenAPI and still need a hand-written type.
 

@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Semantic answer cache — feature [A6].
+[Workstream C - Ridwane] Semantic answer cache - feature [A6].
 
 Embeddings capture the topic of a question, not the word that changes its
 meaning: with bge-m3, "maximum size" and "minimum size of an indexed file"

@@ -1,4 +1,4 @@
-# Known bugs and gaps — backlog (2026-11-01)
+# Known bugs and gaps - backlog (2026-11-01)
 
 What is known to be wrong or missing as of 2026-11-01, sorted by priority.
 Each entry points to where it was found, so it can be checked. Fixed issues are

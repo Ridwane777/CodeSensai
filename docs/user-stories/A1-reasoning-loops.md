@@ -1,4 +1,4 @@
-# A1 — Reasoning loop (ReAct)
+# A1 - Reasoning loop (ReAct)
 
 Persona: Camille, the developer of the scenario
 ([persona-and-scenario.md](../design/persona-and-scenario.md)).
@@ -32,7 +32,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 
 ---
 
-## US-A1-3 — Choose how long the agent may search before it stops
+## US-A1-3 - Choose how long the agent may search before it stops
 > **Update on 2026-11-06:** scenario step **S0**, Marc sets CodeSensai up ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 
@@ -45,7 +45,7 @@ As **Camille, handed a vague requirement by her lead**, I want the agent to **cl
 - When the limit is reached without a final answer, the turn ends with `max_iterations` and the CLI says "[Stopped] Maximum number of steps reached without a final answer." instead of showing an empty answer.
 - The same setting applies in `sensai-web` and in scheduled tasks.
 
-## US-A1-4 — A tool call written as text is not silently lost
+## US-A1-4 - A tool call written as text is not silently lost
 > **Update on 2026-11-06:** scenario step **S3**, the invoice report bug ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 

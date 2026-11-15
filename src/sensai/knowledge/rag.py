@@ -1,15 +1,15 @@
 """
-[Workstream C — Ridwane] RAG over the project's code and documentation — feature [R1].
+[Workstream C - Ridwane] RAG over the project's code and documentation - feature [R1].
 
 The catalog pipeline, step by step:
 
-1. `scan_files`   — find the files to index (no secrets, no noise);
-2. `chunk_file`   — split them by structure;
-3. `RagIndex.update` — compute embeddings and store them in SQLite, reprocessing
+1. `scan_files`   - find the files to index (no secrets, no noise);
+2. `chunk_file`   - split them by structure;
+3. `RagIndex.update` - compute embeddings and store them in SQLite, reprocessing
    only added, modified or deleted files;
-4. `RagIndex.search` — retrieve the passages closest to a question, above a
+4. `RagIndex.search` - retrieve the passages closest to a question, above a
    threshold;
-5. `format_context` — format them for the model, with their source.
+5. `format_context` - format them for the model, with their source.
 
 The choices (bge-m3, SQLite + numpy, structure-aware chunking, 0.54 threshold,
 exclusions) and their measurements: docs/decisions/0009-rag-over-the-codebase.md

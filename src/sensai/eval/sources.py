@@ -1,5 +1,5 @@
 """
-Reference passages the judge compares with the answer — feature [EV1], ADR-0019.
+Reference passages the judge compares with the answer - feature [EV1], ADR-0019.
 
 The judge knows nothing about the world: it says "supported" only if a supplied
 passage says so. Where these passages come from is a provider concern

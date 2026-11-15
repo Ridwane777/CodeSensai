@@ -1,4 +1,4 @@
-"""Tests the `sensai-eval` command end to end — feature [EV1], ADR-0019.
+"""Tests the `sensai-eval` command end to end - feature [EV1], ADR-0019.
 
 The judge and the generator are canned functions: we test the CLI, the file
 it writes and its exit codes, not Ollama.

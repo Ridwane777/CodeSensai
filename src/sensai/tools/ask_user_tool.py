@@ -1,5 +1,5 @@
 """
-[Workstream D] Asking the user a question — feature [X4] Questions & Forms (ADR-0046).
+[Workstream D] Asking the user a question - feature [X4] Questions & Forms (ADR-0046).
 
 The agent calls `ask_user` when it lacks information it cannot find on its
 own (a choice, a name, a preference). The tool does not know how answers are

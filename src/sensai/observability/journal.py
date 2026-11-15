@@ -1,5 +1,5 @@
 """
-[Workstream D — Christopher] Turn log [EV3]: what the agent did, measured on the
+[Workstream D - Christopher] Turn log [EV3]: what the agent did, measured on the
 server side and kept across sessions (ADR-0053).
 
 A SQLite file `<data_dir>/journal.db` (600, directory 700, like sessions):

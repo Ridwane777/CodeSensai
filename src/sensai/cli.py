@@ -5,7 +5,7 @@ changing the code.
 
 The CLI is the first interface to consume the agent's events
 (core/events.py). The web interface (Workstream D) consumes exactly the same
-ones, serialized as JSON — which guarantees both tell the same story.
+ones, serialized as JSON - which guarantees both tell the same story.
 See ADR-0005 and docs/architecture/web/api-contract.md.
 """
 import atexit
@@ -110,7 +110,7 @@ def confirm_in_terminal(request: ConfirmationRequest) -> bool:
     """CLI version of the confirmation before a risky action (ADR-0005, ADR-0006).
 
     The web provides its own version, with a button. The gateway does not
-    know which one it uses — that is the whole point.
+    know which one it uses - that is the whole point.
     """
     title, _, details = describe_request(request).partition("\n")
     return ui.confirm(title, details or "(no details)")
@@ -158,7 +158,7 @@ def preload_model(host: str, model: str, num_ctx: int | None = None) -> None:
             requests.post(f"{host}/api/generate", json=payload,
                           timeout=300).raise_for_status()
         except requests.RequestException as e:
-            ui.warn(f"(warning: the model could not be preloaded — {e})")
+            ui.warn(f"(warning: the model could not be preloaded - {e})")
 
 
 def _short_path(path: str) -> str:
@@ -200,7 +200,7 @@ def open_rag_index(settings: dict, data_dir: Path, project: str) -> RagIndex:
     if report.unsupported:
         ui.warn("Files not indexed (unsupported format):")
         for path, advice in report.unsupported:
-            ui.plain(f"  {path.relative_to(project)} — {advice}", "dim")
+            ui.plain(f"  {path.relative_to(project)} - {advice}", "dim")
     return index
 
 
@@ -222,7 +222,7 @@ def open_answer_cache(settings: dict, data_dir: Path, project: str) -> AnswerCac
                            OllamaEmbedder(settings["host"], settings["rag_model"]),
                            model=settings["model"])
     except (sqlite3.Error, OSError) as e:
-        ui.warn(f"(warning: answer cache disabled — {e})")
+        ui.warn(f"(warning: answer cache disabled - {e})")
         return None
 
 
@@ -240,7 +240,7 @@ def open_fewshot_index(settings: dict, host: str) -> FewShotIndex | None:
     # working directory (PR #96 review).
     path = resolve_path(configured)
     if path is None:
-        ui.warn(f"(warning: few-shot examples disabled — file not found: "
+        ui.warn(f"(warning: few-shot examples disabled - file not found: "
                 f"{configured})")
         return None
     index = FewShotIndex(
@@ -249,7 +249,7 @@ def open_fewshot_index(settings: dict, host: str) -> FewShotIndex | None:
     try:
         count = index.load(path)
     except (FewShotError, EmbeddingError) as e:
-        ui.warn(f"(warning: few-shot examples disabled — {e})")
+        ui.warn(f"(warning: few-shot examples disabled - {e})")
         return None
     ui.info(f"Few-shot examples loaded ({count}) for automatic selection (A7).")
     return index
@@ -304,7 +304,7 @@ def main() -> None:
     except sqlite3.Error as e:
         # Unreadable database: do not overwrite it (it may hold recoverable
         # conversations) and work without history.
-        ui.warn(f"(warning: {db_path} unreadable ({e}) — history disabled "
+        ui.warn(f"(warning: {db_path} unreadable ({e}) - history disabled "
                 "for this session, the database was not modified)")
         store = None
     profile_path = data_dir / PROFILE_FILE
@@ -313,7 +313,7 @@ def main() -> None:
     except ValueError as e:
         # A broken profile must not prevent work: warn and start without it
         # instead of crashing.
-        ui.warn(f"(warning: {e} — starting with an empty profile)")
+        ui.warn(f"(warning: {e} - starting with an empty profile)")
         profile = Profile()
     retention_days = settings["retention_days"]
     session_id, turns = "", []
@@ -323,7 +323,7 @@ def main() -> None:
         try:
             purged = store.purge(retention_days, keep=settings["session"])
         except sqlite3.Error as e:
-            ui.warn(f"(warning: could not purge old sessions — {e})")
+            ui.warn(f"(warning: could not purge old sessions - {e})")
             purged = 0
         if purged:
             pluriel = "s" if purged > 1 else ""
@@ -336,7 +336,7 @@ def main() -> None:
         except KeyError:
             ui.error(f"[Error] Unknown session: {settings['session']}. It may have been "
                      f"purged (no message for more than {retention_days} days) "
-                     "or the id is mistyped — see /sessions.")
+                     "or the id is mistyped - see /sessions.")
             return
 
     # Rules added in config.json (EV2, ADR-0027): a malformed rule stops
@@ -359,7 +359,7 @@ def main() -> None:
     try:
         state.purge(retention_days)
     except (OSError, ValueError) as e:
-        ui.warn(f"(warning: could not purge the {state.path.name} log — {e})")
+        ui.warn(f"(warning: could not purge the {state.path.name} log - {e})")
 
     # --- Turn log (EV3, ADR-0053): the same file as the web server ---
     journal = open_journal(data_dir)
@@ -367,7 +367,7 @@ def main() -> None:
         try:
             journal.purge(retention_days)
         except (OSError, sqlite3.Error) as e:
-            ui.warn(f"(warning: could not purge the turn log — {e})")
+            ui.warn(f"(warning: could not purge the turn log - {e})")
 
     # --- Structured fact memory (feature M3, ADR-0030) ---
     facts = FactStore(data_dir / FACTS_FILE, project)
@@ -394,7 +394,7 @@ def main() -> None:
         try:
             known = facts.as_prompt()
         except (OSError, sqlite3.Error) as e:
-            ui.warn(f"(warning: fact memory unreadable — {e})")
+            ui.warn(f"(warning: fact memory unreadable - {e})")
             known = ""
         persona_prompt = personas.get(active_persona_id).as_prompt()
         return build_system_prompt(base_prompt, profile, resumed_note, now=session_start,
@@ -437,7 +437,7 @@ def main() -> None:
         output_filters=[filter_output],
     )
     # Sub-agent delegation (A2, ADR-0037): added after the gateway because
-    # the tool uses it to run the sub-agent — with the same permissions,
+    # the tool uses it to run the sub-agent - with the same permissions,
     # guardrails and confirmations as the main agent.
     delegate = DelegateTool(host, model, tools, system_prompt=system_prompt, num_ctx=num_ctx)
     delegate.timeout_s = tools.preferences.delegation_timeout_s
@@ -453,7 +453,7 @@ def main() -> None:
 
     # Per-persona tool restriction (A5, ADR-0043): a persona can only ADD
     # disabled tools to those already denied by config.json, never re-allow
-    # one — the base stays the user's policy.
+    # one - the base stays the user's policy.
     base_tool_preferences = tools.preferences
 
     def apply_persona_tools() -> None:
@@ -480,7 +480,7 @@ def main() -> None:
         lines.append(("persona", f"{personas.get(active_persona_id).name} (/persona to change)"))
     notes = []
     if not base_prompt:
-        notes.append("(warning: no system prompt loaded — see: sensai-prompt check)")
+        notes.append("(warning: no system prompt loaded - see: sensai-prompt check)")
     ui.banner(lines, notes)
     prompt = ui.Prompt(data_dir / "cli_history")
     if ui.interactive():
@@ -520,7 +520,7 @@ def main() -> None:
             try:
                 ensure_rag_index()
             except (EmbeddingError, sqlite3.Error, OSError) as e:
-                ui.warn(f"(warning: project search unavailable — {e})")
+                ui.warn(f"(warning: project search unavailable - {e})")
         view = ui.TurnView()
         found = ""
         messages = [{"role": "system", "content": system_prompt()},
@@ -542,7 +542,7 @@ def main() -> None:
             try:
                 store.save(session_id, history.turns)
             except sqlite3.Error as e:
-                ui.warn(f"(warning: could not save the session — {e})")
+                ui.warn(f"(warning: could not save the session - {e})")
 
     while True:
         # "No, and say what to do" on a confirmation: the instruction is sent as
@@ -648,7 +648,7 @@ def main() -> None:
 
         # A persona that restricts tools (A5, ADR-0043) neither reads nor
         # feeds the cache (A6): an answer cached under a permissive persona
-        # could depend on a tool this one forbids — serving it anyway would
+        # could depend on a tool this one forbids - serving it anyway would
         # bypass the restriction unnoticed (PR #95 review). Computed after the
         # routing above, so on the persona actually used for this turn.
         cache_usable = cache is not None and not personas.get(active_persona_id).tools_disabled
@@ -660,7 +660,7 @@ def main() -> None:
             try:
                 hit = cache.lookup(user_input)
             except (EmbeddingError, sqlite3.Error, OSError, ValueError) as e:
-                ui.warn(f"(warning: answer cache disabled for this session — {e})")
+                ui.warn(f"(warning: answer cache disabled for this session - {e})")
                 cache = None
         if hit is not None:
             ui.cached_answer(hit.answer, hit.question, hit.created_at, hit.similarity)
@@ -685,11 +685,11 @@ def main() -> None:
             except (EmbeddingError, sqlite3.Error, OSError) as e:
                 # Without embeddings the assistant is still useful: carry on without search.
                 ui.warn(f"(warning: project search disabled for this "
-                        f"session — {e})")
+                        f"session - {e})")
                 rag_on = False
 
         # Automatic few-shot (A7, ADR-0044): nothing is added if no example is
-        # close enough — unlike RAG, a doubtful few-shot would mislead the model
+        # close enough - unlike RAG, a doubtful few-shot would mislead the model
         # more than its absence would hurt.
         fewshot_block = None
         if fewshot_index is not None:
@@ -697,7 +697,7 @@ def main() -> None:
                 example = fewshot_index.best_match(user_input)
             except EmbeddingError as e:
                 ui.warn(f"(warning: few-shot examples disabled for this "
-                        f"session — {e})")
+                        f"session - {e})")
                 fewshot_index = None
                 example = None
             if example is not None and not worth_attaching(example, user_input,
@@ -722,10 +722,10 @@ def main() -> None:
 
         if settings.get("token_budget", True):
             # Token budget and rolling summary (M2, ADR-0045): AFTER adding
-            # RAG and few-shot above, not before — otherwise the budget would
+            # RAG and few-shot above, not before - otherwise the budget would
             # not count what actually goes to the model (PR #97 review). Only
             # the messages SENT this turn are compacted, never history.turns
-            # or the saved session (M1) — resuming later finds the history intact.
+            # or the saved session (M1) - resuming later finds the history intact.
             try:
                 messages, compressed = compress_messages(
                     host, model, messages,
@@ -735,7 +735,7 @@ def main() -> None:
                 )
             except CompressionError as e:
                 ui.warn(f"(warning: automatic history summary "
-                        f"failed for this turn — {e})")
+                        f"failed for this turn - {e})")
             else:
                 if compressed:
                     ui.info("(older history summarized to stay within the token budget)")
@@ -744,7 +744,7 @@ def main() -> None:
                     # fewer turns than keep_recent): it goes as is, but we warn
                     # rather than let Ollama truncate silently.
                     ui.warn("(warning: this turn's context exceeds the token "
-                            "budget and cannot be summarized — Ollama may truncate it)")
+                            "budget and cannot be summarized - Ollama may truncate it)")
 
         reponse_builder = AnswerBuilder()
         echec = False
@@ -805,7 +805,7 @@ def main() -> None:
                 cache.store(user_input, reponse, [*sources, STATE_FILE],
                             time.monotonic() - started)
             except (EmbeddingError, sqlite3.Error, OSError) as e:
-                ui.warn(f"(warning: answer not cached — {e})")
+                ui.warn(f"(warning: answer not cached - {e})")
 
 
 if __name__ == "__main__":

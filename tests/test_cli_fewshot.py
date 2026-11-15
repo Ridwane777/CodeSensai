@@ -100,7 +100,7 @@ def test_missing_file_does_not_prevent_conversation(lancer, tmp_path, capsys):
 
 def test_secret_in_an_example_is_masked(lancer, tmp_path):
     """PR #96 review: the examples file may come from a real session, with a
-    secret in the recorded answer — it must never reach the model in clear
+    secret in the recorded answer - it must never reach the model in clear
     text, as with RAG passages (EV2)."""
     path = tmp_path / "exemples_secret.jsonl"
     path.write_text(

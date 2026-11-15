@@ -1,4 +1,4 @@
-# User stories — [EV3] Journal and metrics
+# User stories - [EV3] Journal and metrics
 
 Interface: `frontend/`; journal store:
 `src/sensai/observability/journal.py` ([ADR-0053](../decisions/0053-server-side-turn-journal.md), Proposed).
@@ -26,7 +26,7 @@ Other user stories of the interface: [README.md](README.md).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: turn journal and metrics through the web API: ✅ with both set-ups.
 
-## US-EV3-1 — Read back what the agent did
+## US-EV3-1 - Read back what the agent did
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: `read_file`, its arguments, 21 ms, "Success".
 >
@@ -41,7 +41,7 @@ Other user stories of the interface: [README.md](README.md).
 - With no call, the page says so and explains how to produce one.
 - *(Added 2026-11-01)* With the real server, the journal of the open conversation is still there after reloading the page; secrets in the arguments are masked.
 
-## US-EV3-2 — Spot a reliability or slowness problem
+## US-EV3-2 - Spot a reliability or slowness problem
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ✅ Checked with the real agent: the indicators are computed on the real calls (1 call, 21 ms on average, 0 % failures). The "Tokens used" box was still simulated (0).
 >
@@ -53,7 +53,7 @@ Other user stories of the interface: [README.md](README.md).
 
 **Acceptance criteria:**
 - With the simulated engine, the indicators are computed from the calls really emitted during the session: after two calls of 410 ms (failure) and 380 ms (success), the page shows 2 calls, 395 ms and 50 % failures.
-- Before any call, the number of calls is 0 and the mean latency and failure rate show "—" rather than a misleading zero.
+- Before any call, the number of calls is 0 and the mean latency and failure rate show "-" rather than a misleading zero.
 - *(Added 2026-11-01)* With the real server, the metrics cover every conversation of the last 7 days and include the time spent waiting for the model.
 
 

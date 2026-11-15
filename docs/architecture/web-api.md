@@ -1,8 +1,8 @@
-# Technical requirements — Web server (HTTP facade over the core)
+# Technical requirements - Web server (HTTP facade over the core)
 
 > Moved from `docs/user-stories/` on 2026-11-02: these are technical requirements shared by the features, not user stories of one catalogue feature.
 
-Workstream D — Interface & wiring (Christopher). These stories describe how the **web server**
+Workstream D - Interface & wiring (Christopher). These stories describe how the **web server**
 should behave, seen from the browser, **before** aligning the ADRs. They complete
 [README.md](../user-stories/README.md), which describes the interface itself.
 
@@ -51,7 +51,7 @@ behaviour comes from:
 
 ## Answer and reasoning
 
-### US-WEB-1 — See the answer arrive as it is written
+### US-WEB-1 - See the answer arrive as it is written
 **As** Camille, the developer asking the agent a question from the browser,
 **I want** the answer to appear word by word instead of arriving in one block,
 **so that** I do not wait blindly while the model works.
@@ -64,7 +64,7 @@ behaviour comes from:
 - `done.reason` is `final_answer`, `error` or `max_iterations` (the core stops after 6 model calls per turn).
 - Empty or whitespace-only content is refused with `400` before opening the stream, without calling the model.
 
-### US-WEB-2 — Understand what the agent is doing
+### US-WEB-2 - Understand what the agent is doing
 **As** Camille, the developer who wants to check the agent's work,
 **I want** to see its reasoning and each tool it calls, with the result,
 **so that** I can correct it early if it goes wrong.
@@ -86,7 +86,7 @@ behaviour comes from:
 
 ## Confirmation before a risky action
 
-### US-WEB-3 — Allow or refuse before an action happens
+### US-WEB-3 - Allow or refuse before an action happens
 **As** Camille, the developer who keeps control of her project,
 **I want** no code to run and no file to be written without my explicit consent from the browser,
 **so that** the agent cannot do anything irreversible without me.
@@ -100,7 +100,7 @@ behaviour comes from:
 - An answer to an unknown, already resolved or expired `confirm_id` is ignored with no effect: `404` or `409`, never an execution.
 - A confirmer that crashes or answers anything other than `true` is treated as a refusal.
 
-### US-WEB-4 — Closing the tab must not run anything
+### US-WEB-4 - Closing the tab must not run anything
 **As** Camille, the developer who closes her tab in the middle of a confirmation,
 **I want** the pending action to be abandoned,
 **so that** I do not find anything executed in my absence.
@@ -112,7 +112,7 @@ behaviour comes from:
 
 ## Sessions
 
-### US-WEB-5 — Resume where I left off
+### US-WEB-5 - Resume where I left off
 **As** Camille, the developer working several days on the same project,
 **I want** to create a session or resume an existing one, and find its history,
 **so that** I do not have to explain the context again.
@@ -132,7 +132,7 @@ behaviour comes from:
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): a conversation was listed, reloaded and continued (the agent remembered the function discussed), and reopened from the sidebar in the browser.
 
-### US-WEB-6 — Find my sessions and my preferences
+### US-WEB-6 - Find my sessions and my preferences
 **As** Camille, the developer coming back to a project,
 **I want** to list my sessions and manage my preference profile,
 **so that** I can choose the conversation to resume and not repeat my habits.
@@ -161,7 +161,7 @@ behaviour comes from:
 
 ## Conversation control
 
-### US-WEB-7 — Stop the agent and redirect it
+### US-WEB-7 - Stop the agent and redirect it
 **As** Camille, the developer whose agent is heading the wrong way,
 **I want** to stop it mid-generation, or give it a new instruction without waiting,
 **so that** I do not waste time or compute.
@@ -177,7 +177,7 @@ behaviour comes from:
 > **Status on 2026-10-29:** ◐ Partly. Besides the "■ Stop" button, pressing Escape in the message field now
 > stops the answer too (#103). Checked by frontend tests, not with the real agent.
 
-### US-WEB-8 — Explore another direction without losing the first
+### US-WEB-8 - Explore another direction without losing the first
 **As** Camille, the developer who phrased a request badly,
 **I want** to edit a past message and get a new answer while keeping the old one,
 **so that** I can compare two directions.
@@ -193,7 +193,7 @@ behaviour comes from:
 
 > **Update on 2026-11-01:** ✅ Checked with `qwen3-coder:30b` ([trial](../performance/trials/trial-2026-11-01.md)): a fork at 2 messages gave a conversation with 2 messages.
 
-### US-WEB-9 — Answer the agent in a form
+### US-WEB-9 - Answer the agent in a form
 **As** Camille, the developer whose agent is missing a piece of information,
 **I want** to answer it through a form rather than retyping free text,
 **so that** I save time and avoid misunderstandings.
@@ -219,7 +219,7 @@ behaviour comes from:
 
 ## Leaving the session
 
-### US-WEB-10 — Keep a record of the session
+### US-WEB-10 - Keep a record of the session
 **As** Camille, the developer who must report on her work,
 **I want** to download a session as JSON or Markdown,
 **so that** I can archive it or pass it on.
@@ -231,7 +231,7 @@ behaviour comes from:
 - PDF is not produced by the server: the interface uses the browser's print function.
 - Export goes through the same secret filters as the stream (US-WEB-14).
 
-### US-WEB-11 — Show a session to someone without an account
+### US-WEB-11 - Show a session to someone without an account
 **As** Camille, the developer who wants to show her work to a colleague,
 **I want** to generate a read-only viewing link,
 **so that** they can read the session in a browser without installing anything.
@@ -249,7 +249,7 @@ behaviour comes from:
 > stored under the SHA-256 of a random token, expiring after 7 days. `GET /share/<token>` needs no token, serves
 > escaped static HTML with no script (CSP `default-src 'none'`, `noindex`, `no-referrer`, `no-store`); unknown,
 > revoked or expired links all give the same 404 page. Differences with the criteria: there is no server setting
-> that disables sharing — a link exists only when the user clicks "Create a share link", and it is reachable
+> that disables sharing - a link exists only when the user clicks "Create a share link", and it is reachable
 > only by whoever can reach `sensai-web` (127.0.0.1 by default); revocation is
 > `POST /api/shares/<token>/revoke` (→ `204` / `404` `SHARE_NOT_FOUND`) instead of `DELETE /api/sessions/{id}/share`,
 > and the interface has no revoke button yet. Checked by tests, not with the real agent.
@@ -258,7 +258,7 @@ behaviour comes from:
 
 ## Observability
 
-### US-WEB-12 — See what a session costs and does
+### US-WEB-12 - See what a session costs and does
 **As** Camille, the developer monitoring the agent,
 **I want** to know the token usage, each tool's duration and the failures,
 **so that** I can spot drift without rereading every line.
@@ -271,7 +271,7 @@ behaviour comes from:
 
 ## Security and robustness
 
-### US-WEB-13 — Nobody but me drives my agent
+### US-WEB-13 - Nobody but me drives my agent
 **As** Camille, the developer running the server on her machine,
 **I want** the API to refuse any unauthenticated access,
 **so that** nobody can run code on my machine.
@@ -284,7 +284,7 @@ behaviour comes from:
 - A wrong, missing or malformed token gives the same `401` response, without saying which case it is.
 - The remote Ollama pod is not publicly reachable (rule from ADR-0004, taken over by Workstream A).
 
-### US-WEB-14 — No secret leaves through the stream
+### US-WEB-14 - No secret leaves through the stream
 **As** Camille, the developer whose project contains keys,
 **I want** no secret to go through the browser,
 **so that** they are not exposed in a shared tab, a screenshot or an export.
@@ -294,7 +294,7 @@ behaviour comes from:
 - Export and sharing use the same filters.
 - **Known limit not to hide**: the text written by the model (`token`, `thought`) is not filtered by the gateway, which only sees tools. If the model copies a secret into its answer, it appears. Whether to filter streamed text is to be decided with Workstream B; until then, it is documented as a residual risk.
 
-### US-WEB-15 — Errors I can understand
+### US-WEB-15 - Errors I can understand
 **As** Camille, the developer whose model is sometimes unreachable,
 **I want** clear errors and a server that does not crash,
 **so that** I know what to do without reading logs.
@@ -306,7 +306,7 @@ behaviour comes from:
 - A slow or cut client does not block other sessions: an agent turn does not freeze the server (the core is synchronous and blocking, so it runs outside the event loop).
 - Two sessions can run at the same time without mixing their events or their confirmations.
 
-### US-WEB-16 — Know who I am talking to and what is plugged in
+### US-WEB-16 - Know who I am talking to and what is plugged in
 **As** Camille, the developer who opens the web interface,
 **I want** to know the server's state and its useful configuration,
 **so that** I can show the model, the list of tools and a clear message if the server is down.

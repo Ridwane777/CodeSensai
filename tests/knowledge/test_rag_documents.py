@@ -1,5 +1,5 @@
 """
-Document indexing (PDF, Office, EPUB) by the RAG — issue #64, ADR-0034.
+Document indexing (PDF, Office, EPUB) by the RAG - issue #64, ADR-0034.
 
 Like LlamaIndex, AnythingLLM or PrivateGPT, the RAG converts documents at
 indexing time. The converter is faked here; the real one runs in the sandbox

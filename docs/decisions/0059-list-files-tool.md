@@ -1,4 +1,4 @@
-# ADR-0059 — A read-only `list_files` tool so the agent can see the project
+# ADR-0059 - A read-only `list_files` tool so the agent can see the project
 
 - **Status**: Proposed
 - **Date**: 2026-11-06
@@ -20,7 +20,7 @@ needs `bge-m3` (1.2 GB) and minutes of indexing on a laptop
 
 | Option | Pros | Cons |
 | --- | --- | --- |
-| **A read-only `list_files` tool** | Fixes the cause: the agent looks before it reads; no model, no index; reuses `FilePermissions` and the RAG walk; what Claude Code, Cursor or Aider do | One more tool described in every prompt (tokens); a cap to choose |
+| **A read-only `list_files` tool** | Fixes the cause: the agent looks before it reads; no model, no index; reuses `FilePermissions` and the RAG walk; what existing coding agents do | One more tool described in every prompt (tokens); a cap to choose |
 | The file list in the system prompt | Nothing for the model to decide | Tokens on every turn (heavy for `qwen3:8b` on CPU, ~10 tokens/s to read the prompt); stale as soon as the agent creates a file; does not scale to a large project |
 | Make RAG mandatory | No new tool | `bge-m3` and indexing become required; RAG answers "where is X", not "which files exist" |
 | Let `run_code` list the files | No new tool | The sandbox does not see the project, and each call asks for confirmation |

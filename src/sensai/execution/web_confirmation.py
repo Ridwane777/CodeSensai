@@ -1,5 +1,5 @@
 """
-[Workstream B — Meric] Confirmation from the browser — feature [A3] Human-in-the-Loop,
+[Workstream B - Meric] Confirmation from the browser - feature [A3] Human-in-the-Loop,
 web version (issue #47).
 
 Cross-workstream contract (ADR-0005, ADR-0006): the gateway calls a

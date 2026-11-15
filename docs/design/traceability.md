@@ -1,4 +1,4 @@
-# Traceability matrix — brief to implementation
+# Traceability matrix - brief to implementation
 
 One row per catalogue feature in scope ([ADR-0008](../decisions/0008-scope-all-features.md):
 the 28 features; scope decision accepted in [ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md)).

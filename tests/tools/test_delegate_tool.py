@@ -1,4 +1,4 @@
-"""Tests the `delegate_task` tool — feature [A2], ADR-0037.
+"""Tests the `delegate_task` tool - feature [A2], ADR-0037.
 
 `run_turn` is replaced by a fake turn (no Ollama): each test checks a single
 DelegateTool behavior; the real ReAct loop is already tested by

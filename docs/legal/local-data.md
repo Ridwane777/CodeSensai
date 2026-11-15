@@ -1,4 +1,4 @@
-# Data kept by CodeSensai — [M1] sessions and profile
+# Data kept by CodeSensai - [M1] sessions and profile
 
 This document describes what each feature stores, where, and the risks that
 follow. It is completed by each lot (sandbox, RAG, web) as soon as it stores

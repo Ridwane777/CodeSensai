@@ -5,7 +5,7 @@ what the agent sends back to the model.
 
 Tools go through the real ToolGateway (ADR-0006), as in production.
 The confirmation tests matter most: they fail if someone lets a risky
-action run without explicit consent — for example by wiring the agent
+action run without explicit consent - for example by wiring the agent
 back to the raw registry.
 """
 from typing import Any, ClassVar
@@ -56,7 +56,7 @@ def fake(monkeypatch):
 
 
 class RiskyTool:
-    """Tool that records whether it ran — to prove it did not."""
+    """Tool that records whether it ran - to prove it did not."""
     name = "run_code"
     description = "Runs code."
     parameters: ClassVar[dict[str, Any]] = {
@@ -331,7 +331,7 @@ class TypedTool:
 
 def test_a_lone_call_in_the_answer_is_parsed_and_goes_through_confirmation(fake):
     """ADR-0031: qwen3-coder's native format, when Ollama did not recognize it,
-    is parsed as a call — and goes through the gateway like any other."""
+    is parsed as a call - and goes through the gateway like any other."""
     risky = RiskyTool()
     requests = []
     fake([text(TEXTUAL_CALL), text("Done.")])

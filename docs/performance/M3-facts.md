@@ -1,4 +1,4 @@
-# Real-model trial — [M3] Fact memory
+# Real-model trial - [M3] Fact memory
 
 > **Latest trial, 2026-11-06** ([report](trials/trial-2026-11-06.md)), qwen3:8b on the team laptop (CPU) and qwen3-coder:30b on a 24 GB GPU pod: `/remember` then `/profile`: ✅ with both set-ups (< 1 s). Earlier measurements below.
 
@@ -67,8 +67,8 @@ After the fix, structured calls with all 8 tools (6 runs each):
 | | Retries only | + text parsing (ADR-0031) | + name consistency |
 | --- | --- | --- | --- |
 | Facts saved | 2/5 | 6/6 | **6/6** |
-| "Redis 8" replaces "Redis 7" | — | ❌ 7 remains, under another name | ✅ replaced (the agent looks up the entry first) |
-| Duplicates | — | 3 names for the same data | 1 duplicate, same value |
+| "Redis 8" replaces "Redis 7" | - | ❌ 7 remains, under another name | ✅ replaced (the agent looks up the entry first) |
+| Duplicates | - | 3 names for the same data | 1 duplicate, same value |
 
 "Name consistency": spaces, `_` and `-` are equivalent; the confirmation and
 the `save_fact` reply show the entity's already known attributes; the prompt

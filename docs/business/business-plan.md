@@ -1,4 +1,4 @@
-# Business plan — CodeSensai
+# Business plan - CodeSensai
 
 Written on 2026-10-25; translated from French and updated on 2026-11-01 (test
 and ADR counts, delivered features, local vs rented GPU). Educational project: this plan describes what CodeSensai would be as a
@@ -39,7 +39,7 @@ delivered and checked with the real model
 
 **What sets it apart**: no API key is required, and every risky action goes
 through a confirmation and tested guardrails (85 adversarial cases: 66
-stopped — 45 blocked, 12 masked, 9 flagged — and 19 known gaps tracked, EV4).
+stopped - 45 blocked, 12 masked, 9 flagged - and 19 known gaps tracked, EV4).
 The code stays on the machine **only if the model runs on that machine**: our
 demos and measurements used a rented GPU (RunPod), because none of our laptops
 can run the 30B model at a usable speed. The trade-offs are on the
@@ -50,7 +50,7 @@ can run the 30B model at a usable speed. The trade-offs are on the
 | Offer | Model | Where the model runs | What CodeSensai does differently |
 | --- | --- | --- | --- |
 | GitHub Copilot, Cursor | Per-seat subscription | At the provider | Local, no subscription |
-| Claude Code, Codex and other command-line agents of model providers | Subscription or pay per use | At the provider | Local; open model of your choice |
+| Command-line agents of model providers | Subscription or pay per use | At the provider | Local; open model of your choice |
 | Aider, Continue, Cline (open source) | Free; model of your choice, local possible | Local or remote | Project memory, team of agents, built-in and tested guardrails and confirmations |
 
 Online competitors have stronger models than what runs on a 24 GB GPU:
@@ -101,10 +101,10 @@ hour (≈ $0.22 to $0.44/h, [costs.md](costs.md)).
 
 | Lot | Person | Responsibility |
 | --- | --- | --- |
-| A — Brain | Fresnel | agent loop, prompts, multi-agent, structured output |
-| B — Hands | Meric | tools, sandbox, web search, gateway, evaluation |
-| C — Memory | Ridwane | sessions, RAG, facts, state document, cache |
-| D — Interface | Christopher (GitHub: Christopher142769) | web interface, MCP |
+| A - Brain | Fresnel | agent loop, prompts, multi-agent, structured output |
+| B - Hands | Meric | tools, sandbox, web search, gateway, evaluation |
+| C - Memory | Ridwane | sessions, RAG, facts, state document, cache |
+| D - Interface | Christopher (GitHub: Christopher142769) | web interface, MCP |
 
 ## 8. Costs
 

@@ -1,4 +1,4 @@
-# User stories — [T5] Structured Output
+# User stories - [T5] Structured Output
 
 Decision: [ADR-0036](../decisions/0036-structured-output-json-schema-format.md).
 
@@ -11,7 +11,7 @@ feed it into another tool), without extracting the information from free text.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/structured` on the project: ❌ with qwen3:8b; qwen3-coder:30b 0 of 4 with RAG off (no way to list files, backlog #25), 1 of 3 with RAG on. Cause found: typed first, `/structured` ran before the project index was opened, so the search answered "project not indexed" and the agent guessed file names. Fixed the same day (`ensure_rag_index()` in `cli.py`, test in `tests/test_cli_rag.py`); after the fix qwen3-coder:30b with RAG on: ✅ 3 of 3, `{"fonction": "moyenne", "fichier": "stats.py"}`, 17–24 s; with RAG off once `list_files` was added (ADR-0059): ✅ 3 of 3, 10–12 s. qwen3:8b after the fix, RAG on: ❌, it called no tool and named one of its own MCP tools.
 
-## US-T5-1 — Get an answer that follows a given schema
+## US-T5-1 - Get an answer that follows a given schema
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who will consume the answer in a script,
@@ -27,7 +27,7 @@ guessing where each field is.
 - The answer shown in the chat is the formatted (indented) JSON, not
   a prose description of the JSON.
 
-## US-T5-2 — Be clearly warned when the constraint cannot be met
+## US-T5-2 - Be clearly warned when the constraint cannot be met
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who uses `/structured` in a script,
@@ -46,7 +46,7 @@ receiving a truncated object without knowing it.
   naming the start of the answer received rather than presenting it as a
   structured result.
 
-## US-T5-3 — A structured answer about the real project
+## US-T5-3 - A structured answer about the real project
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who asks for a JSON about her code,

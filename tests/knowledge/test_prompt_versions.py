@@ -1,5 +1,5 @@
 """
-Tests the prompt version registry — feature [A4], ADR-0010.
+Tests the prompt version registry - feature [A4], ADR-0010.
 
 The tested principle: a version is immutable, the `active` bookmark moves.
 `test_rollback_loses_nothing` is the Definition of Done: go back to an older

@@ -1,8 +1,8 @@
-# ADR-0053 — Turn journal (EV3): a local SQLite store written by the web server and the CLI
+# ADR-0053 - Turn journal (EV3): a local SQLite store written by the web server and the CLI
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-11-01
-- **Deciders**: Ridwane (Lot C), on behalf of the owning lot (Lot D, Christopher, observability) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of the owning lot (Lot D, Christopher, observability) - to be confirmed by the team
 - **Lot concerned**: D (`observability/journal.py`, `web/runtime.py`, `web/server.py`, `frontend/src/pages/Journal.tsx`), A (`cli.py` turn loop)
 
 ## Context

@@ -1,5 +1,5 @@
 """
-Tests the project state document — feature [M4], ADR-0029.
+Tests the project state document - feature [M4], ADR-0029.
 
 The test that carries the DoD is `test_other_sections_stay_byte_identical`:
 it fails if an update touches anything other than the target section, which

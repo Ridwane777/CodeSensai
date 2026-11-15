@@ -1,26 +1,26 @@
-# ADR-0006 — A gateway enforces permissions, validation and confirmation on every tool
+# ADR-0006 - A gateway enforces permissions, validation and confirmation on every tool
 
 Date: 2026-10-07
 Workstream: B (impacts A, C, D)
-Status: accepted — approved by Workstream A (2026-10-11): the ReAct loop calls tools through the gateway
+Status: accepted - approved by Workstream A (2026-10-11): the ReAct loop calls tools through the gateway
 
 ## Context
 [ADR-0002](0002-shared-tool-registry.md) provides a common contract (`Tool`)
 and a registry. It says nothing about what must happen *around* the call:
 who may call what, who validates arguments and results, when the user is
 asked. Without a common rule, each tool (sandbox, RAG, MCP, files, web
-search) would reinvent these checks — or forget them. And ADR-0005 points
+search) would reinvent these checks - or forget them. And ADR-0005 points
 out that exposing the agent on the web means exposing code execution: these
 checks are the only barrier.
 
 ## Considered options
-- **Each tool does its own checks** — rejected: A3 and EV2 would have to be
+- **Each tool does its own checks** - rejected: A3 and EV2 would have to be
   wired N times, and tool N+1 would forget them without anything flagging
   it.
-- **Extend `ToolRegistry.call` in `core/tools.py`** — rejected for now: a
+- **Extend `ToolRegistry.call` in `core/tools.py`** - rejected for now: a
   Workstream A file, where any change affects all four workstreams. May
   become the next step if Workstream A agrees.
-- **A `ToolGateway` wrapping the registry** (`execution/gateway.py`) —
+- **A `ToolGateway` wrapping the registry** (`execution/gateway.py`) -
   chosen: the registry and the `Tool` protocol do not change, an existing
   tool keeps working.
 

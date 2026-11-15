@@ -1,5 +1,5 @@
 """
-Tests the structured fact memory — feature [M3], ADR-0030.
+Tests the structured fact memory - feature [M3], ADR-0030.
 
 `test_a_fact_survives_a_new_instance` carries the M3 promise ("over time");
 `test_memory_is_specific_to_the_project` guards US-M3-3.

@@ -1,4 +1,4 @@
-# A6 — Semantic cache: user stories
+# A6 - Semantic cache: user stories
 
 Catalogue feature: **[A6] Semantic Cache (★★)**. Cache the answers and serve
 them directly for questions that are close in meaning (embedding comparison),
@@ -15,7 +15,7 @@ for different answers. Hence the use case chosen here, the "repository FAQ".
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: cache on, same question twice: qwen3:8b ✅ (5 min 37, then 0.5 s); qwen3-coder:30b ✅ (9.0 s, then 1.8 s). Identical question only, not a rephrasing.
 
-## US-A6-1 — The project FAQ
+## US-A6-1 - The project FAQ
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
@@ -32,7 +32,7 @@ Acceptance criteria:
 - The rate of answers served from the cache is measured on a set of
   realistic questions and documented.
 
-## US-A6-2 — Not be fooled
+## US-A6-2 - Not be fooled
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.
@@ -51,7 +51,7 @@ Acceptance criteria:
 - A turn in which the agent wrote a file or ran code is never cached, nor is
   a question that depends on the current conversation.
 
-## US-A6-3 — Know and decide
+## US-A6-3 - Know and decide
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 >
 > **Update on 2026-11-06:** the cache is **off by default** since 2026-11-02 ([ADR-0056](../decisions/0056-scope-review-features-to-drop-or-limit.md), item 5). It is turned on with `"cache": true` in `config.json` or `sensai --cache`; without it, every question goes to the model. The criteria below apply once it is on.

@@ -1,5 +1,5 @@
 """
-Tools of an external MCP server, callable by the agent — feature [T1]
+Tools of an external MCP server, callable by the agent - feature [T1]
 (ADR-0041).
 
 MCP (Model Context Protocol): a server exposes tools; we talk to it in

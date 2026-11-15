@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Structured memory tools — feature [M3], ADR-0030.
+[Workstream C - Ridwane] Structured memory tools - feature [M3], ADR-0030.
 
 `save_fact` (risk `write`): remember a fact, after confirmation.
 `recall_facts` (risk `read`): retrieve facts, without confirmation.
@@ -46,7 +46,7 @@ class RememberFactTool:
             return self.store.preview(args.get("entity"), args.get("attribute"),
                                       args.get("value"), args.get("mode", "replace"))
         except FactError as e:
-            return f"Remember a fact — will be rejected: {e}"
+            return f"Remember a fact - will be rejected: {e}"
 
     def run(self, **kwargs: Any) -> ToolResult:
         try:
@@ -116,7 +116,7 @@ class RecallFactsTool:
         if not facts:
             return ToolResult(ok=True, content="No fact saved for this search.",
                               data={"facts": []})
-        lines = [f"- {f['entity']} — {f['attribute']}: {f['value']} (as of {f['updated_at'][:10]})"
+        lines = [f"- {f['entity']} - {f['attribute']}: {f['value']} (as of {f['updated_at'][:10]})"
                  for f in facts]
         return ToolResult(ok=True, content=note + "Facts found:\n" + "\n".join(lines),
                           data={"facts": facts})

@@ -1,4 +1,4 @@
-# ADR-0007 — Session and profile persistence: SQLite in ~/.sensai, sessions per project
+# ADR-0007 - Session and profile persistence: SQLite in ~/.sensai, sessions per project
 
 Date: 2026-10-11
 Workstream: C (impacts A and D)
@@ -24,99 +24,99 @@ Constraints:
 - Standard library preferred: the requirements list `sqlite3` as an allowed
   dependency.
 
-To settle the location and startup behavior, we looked at how Claude Code
-does it: sessions in `~/.claude/projects/<project>/`, a new session by
+To settle the location and startup behavior, we looked at how existing command-line coding agents
+do it: sessions stored per project under the user's home folder, a new session by
 default with `--continue` to resume, profile as global and per-project
-`CLAUDE.md` files.
+instruction files.
 
 ## Considered options
 
 **Session storage**
-- **SQLite** — chosen. Standard library; a save is a transaction, so a CLI
+- **SQLite** - chosen. Standard library; a save is a transaction, so a CLI
   killed mid-write does not leave a half-written session; the web server can
   read while the CLI runs; listing sessions is a query. Lost: the database
   cannot be read by eye without a tool (the `sqlite3` command line is
   enough).
-- One JSON file per session — readable and easy to debug, but non-atomic
+- One JSON file per session - readable and easy to debug, but non-atomic
   writes without precautions, and listing sessions means opening every file.
-- A single JSON file — simplest to code, but rewritten in full on every
+- A single JSON file - simplest to code, but rewritten in full on every
   message, and one corrupted file loses all sessions.
-- Append-only JSONL, like Claude Code — robust to interruptions, but
+- Append-only JSONL, like other command-line agents - robust to interruptions, but
   `History.drop_last()` removes a turn after an error: an append-only file
   would keep that turn, or require extra undo logic.
 
 **Data location**
-- **`~/.sensai/`, sessions tied to the project** — chosen. The project is
+- **`~/.sensai/`, sessions tied to the project** - chosen. The project is
   the folder the CLI is launched from (absolute path). Outside any
   repository, so never committable, and contexts from different projects do
   not mix. Lost: one more column and filter.
-- `~/.sensai/` with no notion of project — simpler, but all sessions of all
+- `~/.sensai/` with no notion of project - simpler, but all sessions of all
   projects in a single list, and "resume the last one" may reopen the wrong
   project.
-- A `.sensai/` folder inside the project — separated per project with no
+- A `.sensai/` folder inside the project - separated per project with no
   code, but one forgotten `.gitignore` is enough to commit the history.
 
 **Startup behavior**
-- **Resume the project's last session** — chosen. Directly meets the
+- **Resume the project's last session** - chosen. Directly meets the
   Definition of Done and US-M1-1. `--new-session` starts from scratch,
   `--session <id>` resumes a specific session.
-- New session by default and `--continue` to resume (Claude Code's choice) —
+- New session by default and `--continue` to resume (the usual choice of command-line agents) -
   avoids context lingering from one topic to the next, but the DoD can only
   be demonstrated with an option. Rejected to match the DoD; remains
   defensible if usage shows that automatic resume gets in the way.
-- New session only, `--session <id>` to resume — no shortcut to the last
+- New session only, `--session <id>` to resume - no shortcut to the last
   session.
 
 **Profile**
-- **A global `profile.json`, editable by commands in the CLI and by hand** —
+- **A global `profile.json`, editable by commands in the CLI and by hand** -
   chosen. Fields `name`, `instructions`, `preferences` (list). Commands
   `/remember <text>`, `/profile`, `/forget`. Demonstrable live. Lost: a
   single profile for all projects.
-- Global profile + per-project profile (`CLAUDE.md` style) — closer to the
+- Global profile + per-project profile (per-project instruction file) - closer to the
   real need, but two levels to merge, test and explain. Rejected for time;
   it is the natural next step.
-- Free-form Markdown injected as is — no schema, but no adding or removing
+- Free-form Markdown injected as is - no schema, but no adding or removing
   a single preference.
-- JSON edited by hand only — the least code, but not very telling in a demo.
+- JSON edited by hand only - the least code, but not very telling in a demo.
 
 **Protecting files on the machine**
 - **Folder in `700`, files in `600`, only if CodeSensai creates the
-  folder** — chosen. Other accounts on the machine read neither the history
+  folder** - chosen. Other accounts on the machine read neither the history
   nor the profile. An existing folder is not modified: `--data-dir` may point
   to the user's home folder, whose permissions must not be changed.
-- System default permissions (umask, often `755`/`644`) — nothing to code,
+- System default permissions (umask, often `755`/`644`) - nothing to code,
   but any account on the machine can read the user's code and questions.
-- Database encryption — also protects a disk copy, but requires a
+- Database encryption - also protects a disk copy, but requires a
   dependency (SQLCipher) and key management; disproportionate for a local
   tool.
 
 **Deleting a session**
-- **No command in the CLI** — chosen. Reference command-line agents do
-  without it: Claude Code and Codex CLI do not offer one, to our knowledge
-  (sessions as files deleted by hand, automatic purge after a delay in
-  Claude Code). Gemini CLI has `/chat delete`, but only for explicitly saved
+- **No command in the CLI** - chosen. Reference command-line agents do
+  without it: the ones we looked at do not offer one, to our knowledge
+  (sessions as files deleted by hand, sometimes an automatic purge after a
+  delay). Some have `/chat delete`, but only for explicitly saved
   conversations. Per-conversation deletion is a web-interface use case
-  (ChatGPT, Claude). `SessionStore.delete()` exists in the code: Workstream D
+  (hosted chat assistants). `SessionStore.delete()` exists in the code: Workstream D
   can expose it in the web interface without other changes.
-- A `/delete <id>` command — useful to erase a conversation where a secret
+- A `/delete <id>` command - useful to erase a conversation where a secret
   was pasted, but redundant with deleting `~/.sensai` for CLI use, and one
   more command to test.
 
 **Retention period**
 - **Purge at startup of sessions with no message for 30 days,
-  configurable** — chosen. Same default as Claude Code. The reference is
+  configurable** - chosen. Same default as the command-line agents we looked at. The reference is
   `updated_at`, the date of the last exchanged message. `--retention-days` or
   the `retention_days` key in `config.json` change the duration; `0`
   disables the purge. This is the answer to secrets pasted by mistake: they
   do not stay on disk indefinitely.
-- `created_at` as reference — rejected: an active conversation started 31
+- `created_at` as reference - rejected: an active conversation started 31
   days ago would be deleted mid-work.
-- "Last opened" as reference — rejected: with resume by default, every
+- "Last opened" as reference - rejected: with resume by default, every
   launch opens the last session, which would therefore never be purged; and
   it would mean writing to the database on every open.
-- No purge — nothing to code, but unlimited retention of potentially
+- No purge - nothing to code, but unlimited retention of potentially
   sensitive data.
-- Keep a trace of deleted sessions to explain their absence — rejected: that
+- Keep a trace of deleted sessions to explain their absence - rejected: that
   would keep a trace of what we wanted to erase. The "unknown session"
   message mentions the purge as a possible cause.
 

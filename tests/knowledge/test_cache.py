@@ -1,5 +1,5 @@
 """
-Tests for the semantic cache — feature [A6].
+Tests for the semantic cache - feature [A6].
 
 Each block refers to a user story in docs/user-stories/A6-semantic-cache.md;
 the tested choices come from docs/decisions/0033-conservative-semantic-cache.md.

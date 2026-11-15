@@ -1,4 +1,4 @@
-# ADR-0021 — Agent visual: the supplied portrait, static, with a subtle glow and ribbon
+# ADR-0021 - Agent visual: the supplied portrait, static, with a subtle glow and ribbon
 
 - **Status**: Superseded by ADR-0056 (2026-11-02: the 3D visual is removed from the code)
 - **Date**: 2026-10-13

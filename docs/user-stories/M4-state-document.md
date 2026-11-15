@@ -1,4 +1,4 @@
-# User stories — [M4] Artifact & State Document
+# User stories - [M4] Artifact & State Document
 
 Issue #39, mandatory since ADR-0008 (scope: all
 28 features). Translated from French on 2026-10-29.
@@ -22,7 +22,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/state`: ✅ with both set-ups (< 1 s).
 
-## US-M4-1 — Know where the project stands when coming back to it
+## US-M4-1 - Know where the project stands when coming back to it
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer coming back to her project after several days,
@@ -37,7 +37,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
 - If the file does not exist, the agent creates it with the base sections at
   the first update.
 
-## US-M4-2 — A targeted update, never a destructive one
+## US-M4-2 - A targeted update, never a destructive one
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who wrote part of the document myself,
@@ -51,7 +51,7 @@ location, edit format, confirmation) are settled in the ADR dedicated to M4.
   refused with a clear message, and the file stays intact.
 - An interrupted write (crash, Ctrl+C) never leaves a half-written file.
 
-## US-M4-3 — See and control what the agent changes
+## US-M4-3 - See and control what the agent changes
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Camille, the developer who lets the agent maintain the document,

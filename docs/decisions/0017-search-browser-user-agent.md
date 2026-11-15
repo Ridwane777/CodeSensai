@@ -1,4 +1,4 @@
-# ADR-0017 — Web search: Chromium presents itself as a regular browser (user-agent)
+# ADR-0017 - Web search: Chromium presents itself as a regular browser (user-agent)
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

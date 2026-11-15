@@ -1,4 +1,4 @@
-# User stories — [X3] Export and publication
+# User stories - [X3] Export and publication
 
 Interface: `frontend/`.
 
@@ -23,7 +23,7 @@ Other user stories of the interface: [README.md](README.md).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: export and share link with `share_links` on: ✅ with both set-ups.
 
-## US-X3-1 — Keep a record of the session
+## US-X3-1 - Keep a record of the session
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** ◐ Partly. The Markdown preview contains the real conversation and its tool calls (checked). The JSON, Markdown and PDF files are produced by the browser from what is displayed, and have not been downloaded with the real agent. The server also offers an export with secrets filtered out (`/export`), which the interface does not use yet.
 
@@ -37,7 +37,7 @@ Other user stories of the interface: [README.md](README.md).
 - An export of an empty conversation gives valid files, without error.
 - A preview of the Markdown is visible before the export.
 
-## US-X3-2 — Share the session through a link
+## US-X3-2 - Share the session through a link
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Status on 2026-10-18:** 🎭 Simulated: the share link stays fake, and the interface says so.
 >
@@ -62,7 +62,7 @@ Other user stories of the interface: [README.md](README.md).
 
 ---
 
-## US-X3-3 — Export the session from the server, secrets masked
+## US-X3-3 - Export the session from the server, secrets masked
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 > **Update on 2026-11-01:** ✅ checked with the real agent.
 

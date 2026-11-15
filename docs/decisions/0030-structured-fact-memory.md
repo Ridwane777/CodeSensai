@@ -1,4 +1,4 @@
-# ADR-0030 — Structured memory: "entity, attribute, value" facts maintained by the agent itself
+# ADR-0030 - Structured memory: "entity, attribute, value" facts maintained by the agent itself
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-17

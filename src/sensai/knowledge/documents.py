@@ -1,5 +1,5 @@
 """
-[Workstream C — Ridwane] Detect a file's format and say how to read it — issue #64.
+[Workstream C - Ridwane] Detect a file's format and say how to read it - issue #64.
 
 ADR-0034, levels 1 and 4: the type comes from the content (magic bytes), not
 the extension. A known document format (`CONVERTIBLE`) is converted to text

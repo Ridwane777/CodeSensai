@@ -1,5 +1,5 @@
 """
-Evaluation dataset (JSONL, one question per line) — feature [EV1],
+Evaluation dataset (JSONL, one question per line) - feature [EV1],
 ADR-0019.
 
     {"id": "cas-1", "question": "...",

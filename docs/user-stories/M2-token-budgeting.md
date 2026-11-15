@@ -1,14 +1,14 @@
-# M2 — Token Budgeting & Semantic Compression
+# M2 - Token Budgeting & Semantic Compression
 
 See [ADR-0045](../decisions/0045-token-budget-sliding-summary.md) for the
 design (approximate token count, sliding-window summary via the chat model
 itself, never touching the saved session). The session-persistence half of
-M2's old scope (resuming a conversation across runs) is delivered by M1 —
+M2's old scope (resuming a conversation across runs) is delivered by M1 -
 see [M1-session-persistence.md](M1-session-persistence.md).
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `/context`: ✅ with both set-ups (< 1 s).
 
-## US-M2-1 — A long session keeps working instead of hitting a wall (was User Story 1 of M2-token-budgeting.md)
+## US-M2-1 - A long session keeps working instead of hitting a wall (was User Story 1 of M2-token-budgeting.md)
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer in a long debugging session**, I want **the agent to keep
@@ -18,24 +18,24 @@ cross some invisible limit**.
 
 ### Acceptance criteria
 
-- Once the estimated size of what would be sent to the model — including
-  the project passages and the few-shot example attached to the question —
+- Once the estimated size of what would be sent to the model - including
+  the project passages and the few-shot example attached to the question -
   crosses a configurable budget (`token_budget_max`, by default derived
   from the context window `num_ctx` minus a margin for the answer: 6192
   tokens for the default 8192 window, an estimate, see ADR-0045), the
   oldest turns are condensed into one summary before the next question is
-  sent — not after the model has already failed to answer.
+  sent - not after the model has already failed to answer.
 - The summary is produced by the same chat model already in use, in a
   separate call, before the real question's own call.
 - The most recent turns (`token_budget_keep_recent`, default 6) are never
   summarized: the immediate context of the current question stays exact.
 - If the summary can't be produced (the model is unreachable), the turn
-  still proceeds with the uncompressed history — the feature degrades
+  still proceeds with the uncompressed history - the feature degrades
   without blocking the conversation, and the user is told.
 - The same budget applies in the web interface: a long web session is
   summarized the way a long CLI session is.
 
-## US-M2-2 — Resuming later still finds the whole conversation (was User Story 2 of M2-token-budgeting.md)
+## US-M2-2 - Resuming later still finds the whole conversation (was User Story 2 of M2-token-budgeting.md)
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who closes the CLI and comes back the next day**
@@ -49,11 +49,11 @@ condensed away for an earlier question is still there if I need it later**.
   for the current question; it never rewrites what is saved to the
   session (`SessionStore`, M1).
 - Resuming a session later (`sensai --session <id>`) shows the exact same
-  message history it would have shown before any compression happened —
+  message history it would have shown before any compression happened -
   only a long enough *new* conversation on top of it may trigger
   compression again, independently, from the full history.
 
-## US-M2-3 — Ollama never cuts the conversation without anyone noticing (was User Story 3 of M2-token-budgeting.md)
+## US-M2-3 - Ollama never cuts the conversation without anyone noticing (was User Story 3 of M2-token-budgeting.md)
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer whose conversation (or whose project passages) is larger than the
@@ -73,7 +73,7 @@ built on a context that Ollama silently truncated**.
   above the window is refused at startup.
 - When a turn is over budget but nothing can be summarized (one very large
   message, or fewer turns than the ones always kept exact), it is sent as is
-  and a warning says that Ollama may truncate it — in the CLI, and as a
+  and a warning says that Ollama may truncate it - in the CLI, and as a
   notice in the web interface.
 
 > **Update on 2026-10-29:** ◐ Web interface ([ADR-0050](../decisions/0050-real-web-features-on-demand-evaluation.md), proposed): every turn sends a `usage` event (`used`, `budget`, `num_ctx`, `estimated: true`) before the answer, shown as the token bar with the context %; counts are **estimated** (characters / 4), not the model's own. When the sliding summary ran, a `compression` event (`saved_tokens`) shows the notice. Tested (`tests/web/test_real_features.py`, `frontend/tests/realFeatures.test.tsx`), not yet with the real model.
@@ -82,19 +82,19 @@ built on a context that Ollama silently truncated**.
 
 ---
 
-## Part merged from `M2-context-management.md` on 2026-11-02: M2 — Context and history management
+## Part merged from `M2-context-management.md` on 2026-11-02: M2 - Context and history management
 
 > Filed as A6 when it was created; A6 is Semantic Cache in the catalogue.
 > US-M2-4 is delivered by M1 ([M1-session-persistence.md](M1-session-persistence.md));
 > US-M2-5 (a context that does not exceed the model's limits) became
-> [M2] Token Budgeting & Semantic Compression, delivered on 2026-10-27 — see
+> [M2] Token Budgeting & Semantic Compression, delivered on 2026-10-27 - see
 > US-M2-1 to US-M2-3 above and
 > [ADR-0045](../decisions/0045-token-budget-sliding-summary.md).
 
 Persona: Camille, the developer of the scenario
 ([persona-and-scenario.md](../design/persona-and-scenario.md)).
 
-## US-M2-4 — The conversation history persists between sessions (was User Story 1 of M2-context-management.md)
+## US-M2-4 - The conversation history persists between sessions (was User Story 1 of M2-context-management.md)
 > **Update on 2026-11-06:** scenario step **S1**, Camille resumes Friday's work ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer in the middle of a long debugging session**, I want **my conversation to be saved and to be able to resume it later**, so that **I can continue a 2-hour debugging session without losing the context**.
@@ -106,7 +106,7 @@ As **Camille, the developer in the middle of a long debugging session**, I want 
 - When I restart the app, I can resume an existing session
 - The agent has access to the whole past history (no arbitrary limit)
 
-## US-M2-5 — The model's context stays readable and consistent (was User Story 2 of M2-context-management.md)
+## US-M2-5 - The model's context stays readable and consistent (was User Story 2 of M2-context-management.md)
 > **Update on 2026-11-06:** scenario step **S8**, memory and a long session ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 As **Camille, the developer who relies on the agent's answers**, I want **the system prompt and the messages to be well organised** before they are sent to the model, so that **the model receives a clear instruction and a structured history**.

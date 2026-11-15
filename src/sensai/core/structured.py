@@ -1,5 +1,5 @@
 """
-Output guaranteed by a JSON schema — feature [T5] Structured Output.
+Output guaranteed by a JSON schema - feature [T5] Structured Output.
 
 Ollama constrains the model's decoding to the given schema (`format` field of
 the `/api/chat` API, ADR-0036): the reply is JSON matching the requested

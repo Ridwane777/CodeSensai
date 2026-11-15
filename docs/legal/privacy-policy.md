@@ -1,4 +1,4 @@
-# Privacy policy — CodeSensai
+# Privacy policy - CodeSensai
 
 *Version of 2026-10-29. Published by the CodeSensai project team; this text does not
 replace a lawyer's advice. See the [risk analysis](README.md).*

@@ -1,5 +1,5 @@
 """
-[Workstream D] Conversation share links — feature [X3] Export & Publishing (ADR-0048).
+[Workstream D] Conversation share links - feature [X3] Export & Publishing (ADR-0048).
 
 A link = a random token (`secrets.token_urlsafe`, 256 bits) that opens a
 read-only page, without authentication: `GET /share/<token>`.

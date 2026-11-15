@@ -1,5 +1,5 @@
 """
-Tests few-shot example selection — feature [A7], ADR-0044.
+Tests few-shot example selection - feature [A7], ADR-0044.
 
 Same `FakeEmbedder` (hashed bag of words) as `test_rag.py`: two questions
 sharing words have close vectors, which is enough to test the search

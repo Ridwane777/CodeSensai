@@ -1,5 +1,5 @@
 """
-Scheduled tasks and their storage — feature [X5], ADR-0016.
+Scheduled tasks and their storage - feature [X5], ADR-0016.
 
 A task = a prompt replayed at a fixed interval. Everything lives in a single
 JSON file (`<data>/schedule/tasks.json`): a few tasks per user, so nothing
@@ -201,7 +201,7 @@ class TaskStore:
     def load(self) -> list[Task]:
         """The tasks; empty list if the file does not exist yet.
 
-        Raises ScheduleStoreError if the file is broken — without touching it.
+        Raises ScheduleStoreError if the file is broken - without touching it.
         """
         try:
             raw = self.path.read_text(encoding="utf-8")

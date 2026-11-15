@@ -1,4 +1,4 @@
-# ADR-0043 — Persona (A5): keyword routing, per-persona tool restriction, session-only personas
+# ADR-0043 - Persona (A5): keyword routing, per-persona tool restriction, session-only personas
 
 - **Status**: Accepted; partly superseded by ADR-0056 (2026-11-02: keyword routing and `/persona add` removed, tool restriction kept)
 - **Date**: 2026-10-27
@@ -49,7 +49,7 @@ pattern).
   not a ranked search.
 - Routing runs once per turn, **before the cache lookup** and before the
   system prompt is rebuilt. A chat command never reaches that point, but a
-  question that would be served from the cache does — and it must, because
+  question that would be served from the cache does - and it must, because
   the persona a question routes to decides whether the cache may answer it
   at all (see Consequences). A first version routed after the cache read, so
   a question that should have switched to a tool-restricted persona was
@@ -64,7 +64,7 @@ pattern).
   `disabled` set from the active persona's `tools_disabled`
   (`apply_persona_tools()`, called at startup, after `/persona use`, and
   after an automatic switch). A persona can never re-enable a tool the
-  global config disabled — the user's own restrictions stay the floor.
+  global config disabled - the user's own restrictions stay the floor.
 - `/persona add <id> <name> <role> <tone> <scope>` (quoted multi-word
   fields, parsed with `shlex`, matching `chat_commands.py`'s style) adds a
   persona to the in-memory `PersonaStore` for the running session only. The
@@ -79,10 +79,10 @@ pattern).
 - ✅ Reuses `ToolPreferences`/`ToolGateway` exactly as they already work for
   the global config: no new permission model, no new confirmation path.
 - ✅ A project that configures no `keywords` or `tools.disabled` sees no
-  behavior change at all from this ADR — both are purely additive.
+  behavior change at all from this ADR - both are purely additive.
 - ❌ Keyword routing matches whole words only: there is no plural handling
   and no stemming, so the keyword `test` does not fire on "tests" or
-  "testing" — each variant has to be listed in `keywords`. It is still a
+  "testing" - each variant has to be listed in `keywords`. It is still a
   word list, not a topic classifier: a question that never uses a listed
   word never switches, however clearly it is about the topic. Acceptable
   for a first iteration (the catalogue's own example is similarly coarse:
@@ -93,16 +93,16 @@ pattern).
   If a team wants chat-created personas to persist, this ADR needs a
   follow-up (not a rewrite) once that need is confirmed, not assumed.
 - ❌ Not wired into `sensai-schedule` (X5) or the web interface
-  (`src/sensai/web/runtime.py`) — same gap ADR-0042 already left for the
+  (`src/sensai/web/runtime.py`) - same gap ADR-0042 already left for the
   base feature. Neither entry point reads `settings["personas"]`, so a
   team running the web server gets no persona at all, not even the
   default one's name shown in the CLI banner. No tracking issue filed yet
-  (review: PR #95) — follow up once the web side of A5 is prioritized.
+  (review: PR #95) - follow up once the web side of A5 is prioritized.
 - ❌ A cached answer (A6) is scoped to `project` and `model`, never to the
   active persona. To avoid a persona's tool restriction being silently
   bypassed by a cache hit produced under a more permissive persona,
   `cli.py` skips the cache entirely (lookup and store) whenever the active
-  persona has any `tools_disabled` — simple and safe, but it means a
+  persona has any `tools_disabled` - simple and safe, but it means a
   tool-restricted persona never benefits from caching at all, even for a
   question its restriction has nothing to do with (review: PR #95). The
   check uses the persona *after* routing (see Decision), so it also covers

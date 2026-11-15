@@ -115,7 +115,7 @@ def test_empty_summary_keeps_raw_turns(lancer, capsys):
 
 def test_num_ctx_is_passed_to_summary_call(lancer):
     """PR #97 review: without num_ctx, Ollama silently truncates before the
-    budget gets a chance to act — it must be sent with the call."""
+    budget gets a chance to act - it must be sent with the call."""
     questions = [f"question number {i} with a bit of text to add weight" for i in range(10)]
     lancer(
         questions, token_budget_max=50, token_budget_keep_recent=2, num_ctx=4096,
@@ -214,7 +214,7 @@ def test_model_preload_sends_num_ctx(monkeypatch):
 
 
 def test_message_too_big_to_summarize_warns(lancer, capsys):
-    """PR #97 review: nothing to summarize, the message is sent as is — but the
+    """PR #97 review: nothing to summarize, the message is sent as is - but the
     user must be told, not find out from an answer built on a truncated context."""
     envoyes = lancer(["x" * 5000], token_budget_max=50)
 

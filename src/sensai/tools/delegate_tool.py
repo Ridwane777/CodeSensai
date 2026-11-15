@@ -1,5 +1,5 @@
 """
-Delegating a subtask to a sub-agent — feature [A2] Multi-Agent
+Delegating a subtask to a sub-agent - feature [A2] Multi-Agent
 Orchestration (ADR-0037).
 
 The main agent splits a complex task into subtasks and delegates each one to a

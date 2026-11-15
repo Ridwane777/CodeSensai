@@ -1,4 +1,4 @@
-# ADR-0023 — Web API access: token, local listening, a single public access
+# ADR-0023 - Web API access: token, local listening, a single public access
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

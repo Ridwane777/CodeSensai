@@ -47,7 +47,7 @@ def main(argv: list[str] | None = None) -> int:
 
     bad = [r for r in results if r.verdict in (corpus.REGRESSION, corpus.FIXED)]
     for r in bad:
-        print(f"{r.verdict}: {r.case.id} — observed {r.observed}, {r.detail}", file=sys.stderr)
+        print(f"{r.verdict}: {r.case.id} - observed {r.observed}, {r.detail}", file=sys.stderr)
     known = sum(r.verdict == corpus.KNOWN for r in results)
     print(f"{len(results)} cases, {known} known gaps, {len(bad)} to address -> {args.out}")
     return 1 if bad else 0

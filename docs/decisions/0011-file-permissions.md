@@ -1,4 +1,4 @@
-# ADR-0011 — File access: a per-path permission layer, deny by default
+# ADR-0011 - File access: a per-path permission layer, deny by default
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-13

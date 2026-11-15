@@ -1,5 +1,5 @@
 """
-Run an evaluation, produce a JSON report from it, compare two reports —
+Run an evaluation, produce a JSON report from it, compare two reports -
 feature [EV1], ADR-0019.
 
 A report keeps everything that can change a score: the judge (model, prompt and

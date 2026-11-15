@@ -215,7 +215,7 @@ class ToolGateway:
         """Same signature as ToolRegistry.call: the agent can switch between them."""
         started = time.monotonic()
         result, mode = self._pipeline(name, kwargs)
-        # Log the name, mode and outcome — never the arguments or the output:
+        # Log the name, mode and outcome - never the arguments or the output:
         # they may contain exactly what EV2 must protect.
         log.info(
             "tool=%s mode=%s ok=%s error=%s ms=%d",

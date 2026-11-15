@@ -1,8 +1,8 @@
-# ADR-0054 — Personas (A5) in the web: one persona per conversation, held in server memory
+# ADR-0054 - Personas (A5) in the web: one persona per conversation, held in server memory
 
 - **Status**: Accepted (2026-11-01, validated by the team)
 - **Date**: 2026-11-01
-- **Deciders**: Ridwane (Lot C), on behalf of Lot A (Fresnel) — to be confirmed by the team
+- **Deciders**: Ridwane (Lot C), on behalf of Lot A (Fresnel) - to be confirmed by the team
 - **Lot concerned**: A/A5 (`knowledge/persona.py`, feature owner), D (`web/runtime.py`, `web/server.py`, `frontend/`)
 
 ## Context

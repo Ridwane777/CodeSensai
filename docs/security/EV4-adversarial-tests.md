@@ -1,6 +1,6 @@
-# Adversarial tests — [EV4]
+# Adversarial tests - [EV4]
 
-Workstream B — Meric. Issue #38. This document states what holds, what breaks and
+Workstream B - Meric. Issue #38. This document states what holds, what breaks and
 what needs hardening when the **existing** defenses of CodeSensai are attacked
 (EV2 guardrails, tool gateway, file permissions, A3 confirmation, sandbox, web
 search). It introduces no new defense: it measures what is there.
@@ -79,13 +79,13 @@ runs in about 3 s; results do not depend on the machine, except the link cases
 
 | Category | Cases | Known gaps |
 | --- | --- | --- |
-| INJ — injection in a tool output | 13 | 5 |
-| EXF — secrets and personal data | 14 | 5 |
-| ARG — paths and arguments | 11 | 1 |
-| PERM — permissions and confirmation | 16 | 5 |
-| NET — web search | 10 | 2 |
-| SBX — code sandbox | 6 | 0 |
-| OUT — gateway and agent loop | 15 | 3 |
+| INJ - injection in a tool output | 13 | 5 |
+| EXF - secrets and personal data | 14 | 5 |
+| ARG - paths and arguments | 11 | 1 |
+| PERM - permissions and confirmation | 16 | 5 |
+| NET - web search | 10 | 2 |
+| SBX - code sandbox | 6 | 0 |
+| OUT - gateway and agent loop | 15 | 3 |
 
 Full table (verbatim copy of the generated file, kept identical by a test; its
 French labels come from `src/sensai/eval/adversarial.py`):
@@ -291,7 +291,7 @@ CORRIGÉ" (GAP FIXED): then reclassify it as OK in the corpus.
 | 3 | ARG-11 | Refuse reading a file with `st_nlink > 1`. | 1 h |
 | 3 | INJ-05 | Fold common homoglyphs (Cyrillic/Greek to Latin) after NFKC; does not cover everything. | 3 h |
 | 3 | INJ-08 | Keep the tail of the previous result in the turn and analyze the concatenation. | 3 h |
-| out of scope | INJ-06, EXF-07, 08 | Arbitrary encoding or computation cannot be detected by pattern. The countermeasure lies elsewhere: readable confirmation (PERM-15/16), network-less sandbox, `confirm_after_untrusted`. | — |
+| out of scope | INJ-06, EXF-07, 08 | Arbitrary encoding or computation cannot be detected by pattern. The countermeasure lies elsewhere: readable confirmation (PERM-15/16), network-less sandbox, `confirm_after_untrusted`. | - |
 
 How these gaps are tracked (strict expected failures, base64 and homoglyphs
 out of scope) is decided in

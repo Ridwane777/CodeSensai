@@ -1,4 +1,4 @@
-# ADR-0028 — `/schedule` and `/eval` in the chat: reuse the existing commands
+# ADR-0028 - `/schedule` and `/eval` in the chat: reuse the existing commands
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

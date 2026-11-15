@@ -1,4 +1,4 @@
-"""Tests scheduled tasks and their storage — feature [X5], ADR-0016."""
+"""Tests scheduled tasks and their storage - feature [X5], ADR-0016."""
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path

@@ -1,8 +1,8 @@
 """
 Shared contract for every tool the agent can call (feature [T1] MCP).
 
-Every feature that exposes a capability to the agent — sandbox, RAG, external
-MCP tool — implements this protocol. THIS contract is what lets the 3
+Every feature that exposes a capability to the agent - sandbox, RAG, external
+MCP tool - implements this protocol. THIS contract is what lets the 3
 workstreams work in parallel without stepping on each other: the agent only
 knows the ToolRegistry, never a tool's implementation.
 

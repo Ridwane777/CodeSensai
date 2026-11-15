@@ -1,4 +1,4 @@
-# ADR-0014 — Web search engine: Bing (HTML page) instead of DuckDuckGo
+# ADR-0014 - Web search engine: Bing (HTML page) instead of DuckDuckGo
 
 - **Status**: Superseded by [ADR-0040](0040-duckduckgo-web-search-with-bing-fallback.md)
 - **Date**: 2026-10-14

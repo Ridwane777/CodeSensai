@@ -1,5 +1,5 @@
 """
-[Workstream A — Fresnel] Automatic few-shot example selection — feature [A7],
+[Workstream A - Fresnel] Automatic few-shot example selection - feature [A7],
 ADR-0044.
 
 The feature catalog cites as a real-world example "systems that pick the best
@@ -131,7 +131,7 @@ def format_example(example: Example, preferences: Sequence[str] = ()) -> str:
     """
     return (
         "[Example of a similar question already answered well, to guide your "
-        "style and level of detail — do not answer this example, only the question "
+        "style and level of detail - do not answer this example, only the question "
         "below, and do not copy its answer: write your own. The user preferences "
         "(language, tone, format) take precedence over this example.]\n"
         f"Similar question: {example.question}\n"

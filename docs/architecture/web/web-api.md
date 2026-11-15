@@ -799,7 +799,7 @@ empty list.
 Over the turns started in the last `days` days (1-3650), all conversations and
 both interfaces. Durations are wall-clock: a tool's includes the user's
 confirmation time.
-### Personas (A5, Workstream A — [ADR-0054](../../decisions/0054-personas-in-the-web.md))
+### Personas (A5, Workstream A - [ADR-0054](../../decisions/0054-personas-in-the-web.md))
 
 Added on 2026-11-01. The persona is chosen **per conversation** and held in
 server memory (not saved in `sessions.db`, not restored after a restart). A
@@ -824,7 +824,7 @@ already disabled by `config.json` (main agent and sub-agents), and the answer
 cache is skipped if it disables tools. Errors: 404 `SESSION_NOT_FOUND`, 404
 `PERSONA_NOT_FOUND`, 409 `TURN_IN_PROGRESS`.
 
-### Prompt versions (A4, Workstream A — [ADR-0055](../../decisions/0055-prompt-versions-in-the-web.md))
+### Prompt versions (A4, Workstream A - [ADR-0055](../../decisions/0055-prompt-versions-in-the-web.md))
 
 Added on 2026-11-01. **Read-only on the registry** (`prompts/versions.json`):
 the web server never saves a version nor moves the active bookmark; that

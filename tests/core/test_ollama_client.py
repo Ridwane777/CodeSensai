@@ -1,4 +1,4 @@
-"""The body of requests sent to Ollama (`/api/chat`), without network — M2, ADR-0045."""
+"""The body of requests sent to Ollama (`/api/chat`), without network - M2, ADR-0045."""
 import json
 
 import pytest

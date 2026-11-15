@@ -1,4 +1,4 @@
-"""Tests the "unattended" policy of scheduled tasks — feature [X5].
+"""Tests the "unattended" policy of scheduled tasks - feature [X5].
 
 Nobody can answer "yes" to a confirmation: anything that needs one
 must be refused, whatever the preferences.

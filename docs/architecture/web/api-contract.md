@@ -1,6 +1,6 @@
 # Contract between the web interface and the core
 
-**Status: draft — to be validated between Workstream A and Workstream D before
+**Status: draft - to be validated between Workstream A and Workstream D before
 web development starts.** This is the document ADR-0005 describes as
 blocking: until it is accepted, Workstream D cannot work in
 parallel.
@@ -20,11 +20,11 @@ defined in `sensai/core/events.py`.
 | Type | Fields | What it is |
 |---|---|---|
 | `token` | `text` | A piece of the final answer, displayed as it streams |
-| `thought` | `text` | The reasoning before acting — to be presented differently from an answer |
+| `thought` | `text` | The reasoning before acting - to be presented differently from an answer |
 | `tool_call` | `id`, `name`, `arguments` | The agent asks for a tool to run |
 | `tool_return` | `id`, `name`, `ok`, `content` | The result of that tool |
 | `error` | `message` | The turn is lost (model unreachable, etc.) |
-| `done` | `reason` | End of the turn — always the last event |
+| `done` | `reason` | End of the turn - always the last event |
 
 Three rules that matter for display:
 
@@ -43,7 +43,7 @@ The wire names (`token`, `tool_call`, …) are pinned explicitly in
 
 ## The proposed HTTP routes
 
-To be discussed — this is the part that belongs to Workstream D.
+To be discussed - this is the part that belongs to Workstream D.
 
 ```
 POST   /api/sessions              -> { "session_id": "..." }
@@ -112,10 +112,10 @@ there than to make the core depend on a network round trip.
 
 It does not run the reasoning loop, does not decide which tool to call,
 does not format the history its own way. All of that comes from `sensai.core`.
-If something is missing, `core/` is extended — the CLI benefits too
+If something is missing, `core/` is extended - the CLI benefits too
 (ADR-0005).
 
-## Security — to address from the design stage
+## Security - to address from the design stage
 
 Exposing this agent on the web means exposing **code execution** on the
 web. A page reachable without authentication lets anyone run
@@ -130,6 +130,6 @@ Python on the host machine.
 
 - Is a `usage` event needed (tokens consumed, duration) for
   observability, or does the trace go alongside the stream?
-- How does the interface resume an interrupted stream — replay from the
+- How does the interface resume an interrupted stream - replay from the
   start of the turn, or give up?
 - Who creates the session: an explicit call, or the first message?

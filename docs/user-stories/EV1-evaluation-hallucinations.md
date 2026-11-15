@@ -1,4 +1,4 @@
-# User stories — [EV1] Answer evaluation and hallucination detection
+# User stories - [EV1] Answer evaluation and hallucination detection
 
 Issue #53. Code: `src/sensai/eval/`, command
 `sensai-eval`. Choice and trade-offs:
@@ -16,7 +16,7 @@ right.
 
 > **Update on 2026-11-06:** feature trial ([2026-11-06](../performance/trials/trial-2026-11-06.md)), qwen3:8b on the laptop CPU and qwen3-coder:30b on a GPU pod: `sensai-eval run` on 5 cases: qwen3:8b ✅ (25 min); qwen3-coder:30b ✅ (19 s; relevance 3.40/5, coherence 5.00/5, faithfulness 0.42).
 
-## US-EV1-1 — Know whether a new prompt improves or degrades the answers
+## US-EV1-1 - Know whether a new prompt improves or degrades the answers
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who changes the system prompt (A4),
@@ -29,7 +29,7 @@ right.
 - `sensai-eval compare a.json b.json` shows, for relevance, coherence, faithfulness, the share of flagged claims and the number of judge errors, the values of A, of B and the difference B minus A, then the differences case by case.
 - Cases present in only one of the two reports are listed, not silently ignored.
 
-## US-EV1-2 — See which claims are doubtful, and which passage to look at
+## US-EV1-2 - See which claims are doubtful, and which passage to look at
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who receives a report,
@@ -43,7 +43,7 @@ right.
 - With no passage supplied, no claim is declared supported (the example's `sans-source` case: the judge must not use its own knowledge).
 - A case's faithfulness is the share of `SUPPORTED` claims; it is empty (`null`) when the answer has no claim to check, and never counted as 0 or 1.
 
-## US-EV1-3 — A judge failure must not pass for a bad answer
+## US-EV1-3 - A judge failure must not pass for a bad answer
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead who runs the evaluation on a small local model,
@@ -56,7 +56,7 @@ right.
 - A case in error is never scored 0: it is excluded from the averages and counted in `summary.judge_errors`, which the displayed summary mentions.
 - A case with no answer (and without `--generate`) is `skipped`, also counted separately.
 
-## US-EV1-4 — Do not compare two reports that do not measure the same thing
+## US-EV1-4 - Do not compare two reports that do not measure the same thing
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead comparing two reports made at different times,
@@ -75,7 +75,7 @@ made; the judge's reliability is therefore not measured (see the limits in
 the evaluation document). The `--sources rag` mode was only tested with a
 simulated index in the tests.
 
-## US-EV1-5 — Run an evaluation from the chat
+## US-EV1-5 - Run an evaluation from the chat
 > **Update on 2026-11-06:** scenario step **S9**, hand-over to Marc ([scenario](../design/persona-and-scenario.md#the-day-camille-fixes-the-invoice-report)).
 
 **As** Marc, the lead presenting the agent to the team,

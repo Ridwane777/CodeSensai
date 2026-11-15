@@ -1,4 +1,4 @@
-"""Turn log [EV3] (Workstream D — Christopher): storage and timing."""
+"""Turn log [EV3] (Workstream D - Christopher): storage and timing."""
 import os
 import sqlite3
 import stat

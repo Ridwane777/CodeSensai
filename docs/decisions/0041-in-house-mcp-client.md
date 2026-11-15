@@ -1,4 +1,4 @@
-# ADR-0041 — MCP (T1): a hand-written stdio client, servers declared in config.json
+# ADR-0041 - MCP (T1): a hand-written stdio client, servers declared in config.json
 
 - **Status**: Accepted (2026-10-24)
 - **Date**: 2026-10-24

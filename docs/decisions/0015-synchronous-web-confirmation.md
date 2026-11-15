@@ -1,4 +1,4 @@
-# ADR-0015 — Confirmation from the browser: a synchronous broker, without changing the gateway contract
+# ADR-0015 - Confirmation from the browser: a synchronous broker, without changing the gateway contract
 
 - **Status**: Accepted (2026-11-01, approved by the team)
 - **Date**: 2026-10-14

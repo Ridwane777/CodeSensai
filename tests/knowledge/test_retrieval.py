@@ -1,5 +1,5 @@
 """
-Tests for advanced RAG — feature [R2].
+Tests for advanced RAG - feature [R2].
 
 Each block maps to a user story in docs/user-stories/R2-advanced-rag.md;
 the choices under test come from docs/decisions/0032-hybrid-rag-and-reranking.md.
