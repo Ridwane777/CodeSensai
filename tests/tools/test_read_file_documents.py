@@ -49,7 +49,8 @@ def test_a_pdf_is_converted_and_read(perms, pdf):
 def test_converted_text_is_paged_like_a_text_file(perms, pdf):
     text = "\n".join(f"ligne {i}" for i in range(1, 11))
     converter = FakeConverter(ConversionResult(ok=True, text=text))
-    result = ReadFileTool(perms, converter=converter).run(path="requirements.pdf", offset=4, limit=2)
+    tool = ReadFileTool(perms, converter=converter)
+    result = tool.run(path="requirements.pdf", offset=4, limit=2)
     assert "ligne 4\nligne 5" in result.content
     assert "offset=6" in result.content
 

@@ -196,7 +196,9 @@ class ScriptedJudge:
 
 
 def run_case(fn, max_retries=2, passages=PASSAGES):
-    return judge_case("What does f do?", "f returns 1.", passages, fn, "Q={{QUESTION}}", max_retries)
+    return judge_case(
+        "What does f do?", "f returns 1.", passages, fn, "Q={{QUESTION}}", max_retries
+    )
 
 
 def test_successful_judge_case_computes_scores_citations_and_flagged_claims():

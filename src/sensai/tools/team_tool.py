@@ -175,7 +175,9 @@ class TeamTool:
                 self.notify(f"team: {role} at work")
             path.append(role)
             self.on_handoff(role)
-            result = self.delegate.delegate(instruction, role=role, deadline=deadline, on_call=record)
+            result = self.delegate.delegate(
+                instruction, role=role, deadline=deadline, on_call=record
+            )
             steps.append((role, result.content))
             return result
 

@@ -1,4 +1,7 @@
-"""The schedule_task tool (X5, ADR-0052): schedule in natural language, but never without approval."""
+"""The schedule_task tool (X5, ADR-0052).
+
+Schedules in natural language, but never without approval.
+"""
 import json
 
 from sensai.core.events import Done, Token
@@ -56,7 +59,8 @@ def test_task_that_schedules_a_task_is_refused(tmp_path):
 
 def test_invalid_arguments(tmp_path):
     tool = ScheduleTaskTool(tmp_path)
-    assert tool.run(id="Résumé_TODO !", prompt="x", every="1h").ok  # normalized (accented input on purpose)
+    # normalized (accented input on purpose)
+    assert tool.run(id="Résumé_TODO !", prompt="x", every="1h").ok
     assert [t.id for t in tool.store.load()] == ["resume-todo"]
     assert not tool.run(id="___", prompt="x", every="1h").ok
     assert not tool.run(id="ok", prompt="  ", every="1h").ok

@@ -322,7 +322,12 @@ def test_le_prompt_suit_la_mise_a_jour_du_document(lancer_agent, projet, monkeyp
     reponses = iter([True])
     observe = lancer_agent(
         ["First", "Second"],
-        appels=[("update_state", {"section": "In progress", "action": "replace", "content": "- M4"})],
+        appels=[
+            (
+                "update_state",
+                {"section": "In progress", "action": "replace", "content": "- M4"},
+            )
+        ],
         confirmer=lambda request: next(reponses, False),
     )
 

@@ -3,8 +3,8 @@ Real trial run of the Workstream B tools through the gateway (T2, T3, T4, A3,
 guardrails), without a model: the ReAct loop (A1) that would let the model call
 them did not exist yet. Results: docs/performance/trials/trial-2026-10-13.md.
 
-    python scripts/essai_outils.py            # T2, T4, A3, guardrails
-    python scripts/essai_outils.py --web      # + T3 (sensai-browser image required)
+    python scripts/trial_tools.py            # T2, T4, A3, guardrails
+    python scripts/trial_tools.py --web      # + T3 (sensai-browser image required)
 
 Prerequisites: a responding Docker; for --web,
 `docker build -t sensai-browser:latest docker/browser`.

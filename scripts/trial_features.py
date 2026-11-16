@@ -9,8 +9,8 @@ project (temporary directory) with its own `SENSAI_HOME`: neither the
 repository nor ~/.sensai is touched.
 
 Results are written as they come (a long trial run may be cut short):
-    python scripts/essai_features.py --out docs/performance/data/features-qwen3-8b.json
-    python scripts/essai_features.py --only T4,A3 --out /tmp/trial.json
+    python scripts/trial_features.py --out docs/performance/data/features-qwen3-8b.json
+    python scripts/trial_features.py --only T4,A3 --out /tmp/trial.json
 
 Prerequisites: Ollama with the model and bge-m3; Docker and the
 `python:3.12-slim` (T2) and `sensai-browser` (T3) images.

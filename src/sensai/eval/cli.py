@@ -81,7 +81,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Passage origin: the dataset (default) or the project index (R1)",
     )
     run.add_argument("--judge-model", help="Judge model (default: the config.json model)")
-    run.add_argument("--judge-prompt-version", help="`judge` prompt version (default: the active one)")
+    run.add_argument(
+        "--judge-prompt-version", help="`judge` prompt version (default: the active one)"
+    )
     run.add_argument("--host", help="Ollama URL (default: config.json)")
     run.add_argument(
         "--generate",

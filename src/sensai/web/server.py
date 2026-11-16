@@ -378,7 +378,8 @@ def create_app(
                                              session_id=session_id)
                 if new_turns is not None:
                     runtime.store.save(session_id, new_turns)
-            except Exception:  # the session may have been deleted meanwhile: never leave a hanging stream
+            # the session may have been deleted meanwhile: never leave a hanging stream
+            except Exception:
                 log.exception("web turn failed")
                 emit({"type": "error", "message": "Internal server error."})
                 emit({"type": "done", "reason": "error"})

@@ -33,7 +33,8 @@ from sensai.tools.echo_tool import EchoTool
 SPIKE = Path(__file__).resolve().parents[2] / "docs" / "design" / "web_facade_spike.py"
 spec = importlib.util.spec_from_file_location("web_facade_spike", SPIKE)
 spike = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = spike  # required before exec_module: @dataclass looks the module up by name
+# required before exec_module: @dataclass looks the module up by name
+sys.modules[spec.name] = spike
 spec.loader.exec_module(spike)
 
 TOKEN = "test-token"

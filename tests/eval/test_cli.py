@@ -152,7 +152,8 @@ def test_run_generate_fills_missing_answers(tmp_path, fake_judge, monkeypatch):
     assert report["generator"]["model"] and report["generator"]["system_prompt_version"]
     messages = sent[0][2]
     assert messages[0]["role"] == "system"
-    assert "[S1] dataset" in messages[-1]["content"] and "What does f do?" in messages[-1]["content"]
+    content = messages[-1]["content"]
+    assert "[S1] dataset" in content and "What does f do?" in content
 
 
 def test_run_without_answer_or_generate_skips_the_case(tmp_path, fake_judge):

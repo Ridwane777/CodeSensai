@@ -195,7 +195,8 @@ def faithfulness(claims: list[dict]) -> float | None:
 def _corrective_message(error: Exception) -> str:
     return (
         f"Your answer is unusable: {error}. Answer again with only "
-        'the requested JSON object ({"relevance", "coherence", "claims"}), with no surrounding text.'
+        'the requested JSON object ({"relevance", "coherence", "claims"}), '
+        "with no surrounding text."
     )
 
 
